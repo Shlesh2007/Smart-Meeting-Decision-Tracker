@@ -1,11 +1,21 @@
 # Smart Meeting Decision Tracker (SMDT)
 
-A full-stack enterprise application designed to manage the end-to-end lifecycle of organizational meetings: **Meeting ➔ Discussion ➔ Decision ➔ Action Items ➔ Assignment ➔ Progress ➔ Completion**.
+A comprehensive enterprise web application designed to streamline the lifecycle of organizational meetings: **Meeting Setup ➔ Discussion ➔ Decision Recording ➔ Action Item Tracking ➔ Dependency Enforcement ➔ Completion & Audit**.
 
 ---
 
 ## 1. Project Overview
-The Smart Meeting Decision Tracker (SMDT) empowers teams to conduct productive meetings, capture key discussion points, record definitive decisions, and enforce follow-up action accountability through dependency validation and version-audited decision tracking.
+
+**Smart Meeting Decision Tracker (SMDT)** helps organizations convert unproductive meeting discussions into actionable, trackable decisions. 
+
+### Key Features:
+- **Authentication & OAuth 2.0**: Email/Password authentication with 6-digit OTP verification, plus Single Sign-On (SSO) via **Google** and **GitHub**.
+- **Meeting Management**: Schedule, track, and search meetings by status (`UPCOMING`, `IN_PROGRESS`, `COMPLETED`), type, date, or title.
+- **Discussion & Decisions**: Capture meeting discussion points and link definitive decisions with full version history and audit snapshots (`DecisionHistory`).
+- **Action Item Management**: Assign tasks to users with due dates, priority levels, and **dependency locking** (an action item cannot be marked `COMPLETED` until all prerequisite tasks are completed).
+- **Meeting Notifications & Entry OTP**: Send instant email reminders to meeting participants and generate 6-digit entry OTPs for secure meeting check-in.
+- **Analytics & Dashboard**: Interactive visual dashboards providing completion rates, overdue action tracking, and workload breakdown by user.
+- **Dark/Light Mode**: Seamless UI theme toggling with accessible high-contrast navigation.
 
 ---
 
@@ -13,60 +23,61 @@ The Smart Meeting Decision Tracker (SMDT) empowers teams to conduct productive m
 
 ### Frontend
 - **Framework**: Next.js 14+ (App Router)
-- **UI Library**: Ant Design (`antd`)
-- **Styling**: Tailwind CSS & CSS Modules
-- **Language**: TypeScript
-- **HTTP Client**: Axios (with JWT Interceptors)
-- **Icons & Charts**: `@ant-design/icons`, `lucide-react`, `recharts`
-- **Testing**: Vitest & React Testing Library
+- **Library**: React 18+
+- **Language**: TypeScript / JavaScript
+- **Styling**: Tailwind CSS & Ant Design (`antd`)
+- **Icons & Visualization**: `@ant-design/icons`, `lucide-react`, `recharts`
+- **HTTP Client**: Axios (with custom JWT & error handling interceptors)
 
 ### Backend
 - **Language**: Python 3.10+
 - **Framework**: Django 4.2+
 - **API Framework**: Django REST Framework (DRF)
-- **Authentication**: JWT (`djangorestframework-simplejwt`)
-- **Filtering**: `django-filter`, `rest_framework.filters`
+- **Authentication**: JWT (`djangorestframework-simplejwt`) & OAuth 2.0 (Google & GitHub)
+- **Filtering & Search**: `django-filter`, `rest_framework.filters`
 - **CORS**: `django-cors-headers`
 
 ### Database
-- **Primary / Production**: PostgreSQL
-- **Zero-Config Local Dev**: SQLite (supported out of the box, switchable via environment variables)
+- **Production**: PostgreSQL / MySQL
+- **Development**: SQLite (supported out of the box for zero-config local setup)
 
 ---
 
 ## 3. Project Structure
 
 ```
-smart-meeting-tracker/
-├── backend/
-│   ├── manage.py
-│   ├── requirements.txt
-│   ├── .env.example
-│   ├── smart_meeting_tracker/    # Core Django Settings & Routing
-│   ├── apps/
-│   │   ├── authentication/       # User Custom Model & Role JWT Auth
-│   │   ├── teams/                # Team Management
-│   │   ├── meetings/             # Meeting CRUD, Filters & Search
-│   │   ├── discussions/          # Discussion Topics & Priority
-│   │   ├── decisions/            # Decisions & Version Audit Snapshots
-│   │   ├── actions/              # Action Items & Dependency Validation
-│   │   └── analytics/            # Dashboard Analytics & Charts API
-│   └── tests/                    # Backend Automated Tests Suite
-├── frontend/
-│   ├── package.json
-│   ├── tsconfig.json
-│   ├── tailwind.config.js
-│   ├── next.config.mjs
-│   ├── .env.example
+SMDT/
+├── backend/                        # Django REST API Backend
+│   ├── manage.py                   # Django management script
+│   ├── requirements.txt            # Python dependencies
+│   ├── .env.example                # Template for backend environment variables
+│   ├── smart_meeting_tracker/      # Django root settings and main URL routing
+│   │   ├── settings.py
+│   │   ├── urls.py
+│   │   └── wsgi.py
+│   ├── apps/                       # Modularized Django applications
+│   │   ├── authentication/         # Custom User model, OAuth 2.0, OTP password reset
+│   │   ├── teams/                  # Team & department models and endpoints
+│   │   ├── meetings/               # Meeting scheduling, search, OTP & reminder emails
+│   │   ├── discussions/            # Discussion topics and priority tracking
+│   │   ├── decisions/              # Decision recording & version audit history
+│   │   ├── actions/                # Action items, overdue logic, & dependency blocking
+│   │   └── analytics/              # Dashboard metrics & chart API data
+│   └── tests/                      # Automated test suite
+├── frontend/                       # Next.js Frontend Application
+│   ├── package.json                # Node dependencies and scripts
+│   ├── tailwind.config.js          # Tailwind styling configuration
+│   ├── next.config.mjs             # Next.js configuration
+│   ├── .env.example                # Template for frontend environment variables
+│   ├── public/                     # Static assets and OAuth callback fallback
 │   └── src/
-│       ├── app/                  # Next.js App Router Pages
-│       ├── components/           # Reusable Ant Design UI Components
-│       ├── services/             # Axios API Client Modules
-│       ├── context/              # Authentication React Context
-│       └── types/                # TypeScript Interfaces
-├── README.md                     # Comprehensive Setup & Architecture Guide
-├── CODE_EXPLANATION_GUIDE.md     # File-by-File Educational Breakdown for Reviews
-└── .gitignore
+│       ├── app/                    # Next.js App Router pages (login, dashboard, meetings, actions)
+│       ├── components/             # Reusable UI components (Navbar, Modals, Badges)
+│       ├── context/                # React Contexts (AuthContext with Auth Guard, ThemeContext)
+│       ├── services/               # Modularized Axios API clients
+│       └── types/                  # TypeScript definitions
+├── README.md                       # Comprehensive Project Documentation
+└── .gitignore                      # Git ignore file excluding secrets and build outputs
 ```
 
 ---
@@ -74,174 +85,275 @@ smart-meeting-tracker/
 ## 4. Installation & Setup
 
 ### Prerequisites
-- Node.js v18+ and npm
-- Python 3.10+
-- PostgreSQL (Optional; defaults to SQLite if Postgres credentials are not set)
+- **Node.js**: v18.0.0 or higher
+- **npm**: v9.0.0 or higher
+- **Python**: v3.10 or higher
+- **PostgreSQL / MySQL** *(Optional: defaults to SQLite if database environment variables are omitted)*
+
+---
 
 ### Backend Setup
-1. Navigate to the backend directory:
+
+1. **Navigate to the backend directory**:
    ```bash
    cd backend
    ```
-2. Create and activate a virtual environment:
-   ```bash
-   python -m venv venv
-   # On Windows:
-   venv\Scripts\activate
-   # On macOS/Linux:
-   source venv/bin/activate
-   ```
-3. Install dependencies:
+
+2. **Create and activate a virtual environment**:
+   - **Windows (PowerShell)**:
+     ```powershell
+     python -m venv venv
+     .\venv\Scripts\Activate.ps1
+     ```
+   - **macOS / Linux**:
+     ```bash
+     python3 -m venv venv
+     source venv/bin/activate
+     ```
+
+3. **Install Python dependencies**:
    ```bash
    pip install -r requirements.txt
    ```
-4. Copy the environment variables file:
+
+4. **Set up Environment Variables**:
+   Copy `.env.example` to `.env`:
    ```bash
    cp .env.example .env
    ```
-5. Apply database migrations:
+   *Edit `.env` to configure your database, secret key, Google/GitHub OAuth credentials, and email settings (see Environment Variables section below).*
+
+5. **Apply Database Migrations**:
    ```bash
    python manage.py migrate
    ```
 
+6. **Create Superuser (Optional)**:
+   ```bash
+   python manage.py createsuperuser
+   ```
+
+---
+
 ### Frontend Setup
-1. Navigate to the frontend directory:
+
+1. **Navigate to the frontend directory**:
    ```bash
    cd frontend
    ```
-2. Install dependencies:
+
+2. **Install Node dependencies**:
    ```bash
    npm install
    ```
-3. Copy environment variables:
+
+3. **Set up Environment Variables**:
+   Copy `.env.example` to `.env.local`:
    ```bash
    cp .env.example .env.local
    ```
+   *Verify that `NEXT_PUBLIC_API_BASE_URL` points to `http://localhost:8080/api`.*
 
 ---
 
-## 5. Running the Application
+### Environment Variables Guide
 
-1. **Start Backend API Server**:
-   ```bash
-   cd backend
-   python manage.py runserver 8080
-   ```
-   *API will run at `http://localhost:8080/api/`*
+#### Backend (`backend/.env`)
+```env
+# General
+SECRET_KEY=django-insecure-your-secret-key-here
+DEBUG=True
+ALLOWED_HOSTS=localhost,127.0.0.1
 
-2. **Start Frontend Next.js Server**:
-   ```bash
-   cd frontend
-   npm run dev
-   ```
-   *Frontend will run at `http://localhost:3000`*
+# Database (Leave blank to use SQLite for development)
+DB_ENGINE=django.db.backends.postgresql
+DB_NAME=smdt_db
+DB_USER=postgres
+DB_PASSWORD=your_password
+DB_HOST=localhost
+DB_PORT=5432
+
+# CORS
+CORS_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+
+# OAuth 2.0 Credentials
+GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+GITHUB_CLIENT_ID=your-github-client-id
+GITHUB_CLIENT_SECRET=your-github-client-secret
+
+# Email Backend (Default: console backend for local testing)
+EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_HOST_USER=your-email@gmail.com
+EMAIL_HOST_PASSWORD=your-app-password
+```
+
+#### Frontend (`frontend/.env.local`)
+```env
+NEXT_PUBLIC_API_BASE_URL=http://localhost:8080/api
+NEXT_PUBLIC_GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
+NEXT_PUBLIC_GITHUB_CLIENT_ID=your-github-client-id
+```
 
 ---
 
-## 6. API Endpoint Documentation
+## 5. Running the Project
 
+### 1. Start Backend Django API Server
+From the `backend/` directory:
+```bash
+python manage.py runserver 8080
+```
+- API Base URL: `http://localhost:8080/api/`
+- Django Admin Console: `http://localhost:8080/admin/`
+
+### 2. Start Frontend Next.js Web App
+From the `frontend/` directory in a new terminal window:
+```bash
+npm run dev
+```
+- Application Web Interface: `http://localhost:3000`
+
+---
+
+## 6. API Documentation
+
+### Authentication & User Management
 | Method | Endpoint | Description | Auth Required |
 | :--- | :--- | :--- | :--- |
-| `POST` | `/api/auth/register/` | Register new user account | No |
-| `POST` | `/api/auth/token/` | Login & obtain JWT Access/Refresh tokens | No |
-| `GET` | `/api/auth/profile/` | Fetch current authenticated profile | Yes |
-| `GET/POST` | `/api/meetings/` | List/Create Meetings (supports `?search=`, `?status=`, `?meeting_type=`, `?start_date=`) | Yes |
-| `GET/PUT` | `/api/meetings/{id}/` | Get meeting detail with discussions & decisions | Yes |
-| `GET/POST` | `/api/discussions/` | List/Create discussion points for a meeting | Yes |
-| `POST` | `/api/decisions/` | Record decision for a discussion (Creates Version 1) | Yes |
-| `PUT` | `/api/decisions/{id}/` | Update decision (Creates new `DecisionHistory` version snapshot) | Yes |
-| `GET` | `/api/decisions/{id}/history/` | View decision version audit history | Yes |
-| `GET/POST` | `/api/actions/` | List/Create action items | Yes |
-| `GET` | `/api/actions/my_actions/` | Fetch logged-in user's assigned actions | Yes |
+| `POST` | `/api/auth/register/` | Register a new user | No |
+| `POST` | `/api/auth/login/` | Authenticate & obtain JWT Access/Refresh tokens | No |
+| `POST` | `/api/auth/oauth/google/` | Login/Register via Google OAuth 2.0 | No |
+| `POST` | `/api/auth/oauth/github/` | Login/Register via GitHub OAuth 2.0 | No |
+| `POST` | `/api/auth/password-reset/request-otp/` | Send 6-digit OTP to user email for password reset | No |
+| `POST` | `/api/auth/password-reset/verify-otp/` | Verify 6-digit OTP code | No |
+| `POST` | `/api/auth/password-reset/confirm/` | Reset password using verified OTP | No |
+| `GET` | `/api/auth/profile/` | Fetch current logged-in user profile | Yes |
+
+### Meetings & Notifications
+| Method | Endpoint | Description | Auth Required |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/meetings/` | List meetings (supports `?search=`, `?status=`, `?start_date=`) | Yes |
+| `POST` | `/api/meetings/` | Create a new meeting | Yes |
+| `GET` | `/api/meetings/{id}/` | Retrieve meeting details, discussions, decisions, & actions | Yes |
+| `PUT/PATCH` | `/api/meetings/{id}/` | Update meeting status or details | Yes |
+| `POST` | `/api/meetings/{id}/send-reminder/` | Email reminder to all registered participants | Yes |
+| `POST` | `/api/meetings/{id}/send-otp/` | Email 6-digit entry OTP for meeting check-in | Yes |
+
+### Discussions, Decisions & Action Items
+| Method | Endpoint | Description | Auth Required |
+| :--- | :--- | :--- | :--- |
+| `GET/POST` | `/api/discussions/` | List or create discussion items for a meeting | Yes |
+| `POST` | `/api/decisions/` | Record a decision for a discussion topic (Version 1) | Yes |
+| `PUT/PATCH` | `/api/decisions/{id}/` | Update decision text (Creates immutable `DecisionHistory` snapshot) | Yes |
+| `GET` | `/api/decisions/{id}/history/` | Fetch full version audit history for a decision | Yes |
+| `GET/POST` | `/api/actions/` | List or create action items | Yes |
+| `GET` | `/api/actions/my_actions/` | List action items assigned to the logged-in user | Yes |
 | `PATCH` | `/api/actions/{id}/` | Update action status (Enforces dependency locks) | Yes |
-| `GET` | `/api/analytics/dashboard/` | Fetch dashboard stats, metrics, and chart data | Yes |
+
+### Analytics
+| Method | Endpoint | Description | Auth Required |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/analytics/dashboard/` | Fetch high-level meeting metrics, action completion stats, and overdue charts | Yes |
 
 ---
 
-## 7. Database Design & Entity Relationship
+## 7. Database Design & Entity Relationships
 
+### Entity Relationship Diagram (ERD)
+
+```mermaid
+erDiagram
+    USER ||--o{ MEETING : organizes
+    USER ||--o{ ACTION_ITEM : assigned_to
+    USER ||--o{ DECISION_HISTORY : modified_by
+    USER ||--o{ PASSWORD_RESET_OTP : requested_by
+
+    MEETING ||--o{ DISCUSSION_TOPIC : contains
+    MEETING }|--|{ USER : participants
+
+    DISCUSSION_TOPIC ||--o| DECISION : results_in
+    DECISION ||--o{ DECISION_HISTORY : tracks_version
+    DECISION ||--o{ ACTION_ITEM : generates
+
+    ACTION_ITEM }|--|{ ACTION_ITEM : depends_on
 ```
-+----------------+       +-------------------+       +-------------------+
-|      User      |       |      Meeting      |       |    Discussion     |
-+----------------+       +-------------------+       +-------------------+
-| id (PK)        |1     *| id (PK)           |1     *| id (PK)           |
-| username       |-------| title             |-------| meeting_id (FK)   |
-| email          |       | meeting_date      |       | title             |
-| role           |       | start_time        |       | priority          |
-| department     |       | status            |       | created_by_id(FK) |
-+----------------+       +-------------------+       +-------------------+
-                                                       |1
-                                                       |1 (One-to-One)
-                                                     +-------------------+
-                                                     |     Decision      |
-                                                     +-------------------+
-                                                     | id (PK)           |
-                                                     | status            |
-                                                     | decision (Text)   |
-                                                     | version (Int)     |
-                                                     +-------------------+
-                                                       |1              |1
-                                                       |*              |*
-                                     +-------------------+   +-------------------+
-                                     |  DecisionHistory  |   |    ActionItem     |
-                                     +-------------------+   +-------------------+
-                                     | version           |   | id (PK)           |
-                                     | decision_text     |   | title             |
-                                     | changed_by_id(FK) |   | assigned_to_id(FK)|
-                                     +-------------------+   | due_date          |
-                                                             | status            |
-                                                             +-------------------+
-                                                               |*             ^
-                                                               | (Self-M2M)   |
-                                                               +--------------+
-```
+
+### Model Descriptions & Relationships
+1. **User (`User`)**: Custom Django user model extended with `role` (`ADMIN`, `ORGANIZER`, `MEMBER`), `department`, and optional OAuth provider IDs.
+2. **Meeting (`Meeting`)**: Stores title, description, start/end time, meeting link/location, status, organizer (FK to User), and participants (M2M to User).
+3. **DiscussionTopic (`DiscussionTopic`)**: Belongs to a single `Meeting` (FK). Captures agenda items, notes, and priority level.
+4. **Decision (`Decision`)**: One-to-One relationship with `DiscussionTopic`. Stores agreed-upon decision text and current `version` integer.
+5. **DecisionHistory (`DecisionHistory`)**: Immutable snapshot table storing past decision text versions, version numbers, modification timestamps, and author (FK to User).
+6. **ActionItem (`ActionItem`)**: Belongs to a `Decision` (FK) and assigned to a `User` (FK). Includes `title`, `due_date`, `status` (`PENDING`, `IN_PROGRESS`, `COMPLETED`, `CANCELLED`), and a **Self Many-to-Many relationship** (`dependencies`) pointing to required antecedent `ActionItem` tasks.
+7. **PasswordResetOTP (`PasswordResetOTP`)**: Stores 6-digit OTP hashes, user reference, expiration timestamp (10 min lifetime), and single-use `is_used` flag.
 
 ---
 
 ## 8. Important Business Rules
 
-1. **Rule 1 — Overdue Actions**:
-   - Calculated as: `due_date < current_date` AND `status != COMPLETED` (and not cancelled).
-   - Displayed with red warning badges in tables, alert drawer on dashboard, and overdue counters.
+### 1. Overdue Action Item Logic
+- An action item is classified as **Overdue** if:
+  $$\text{due\_date} < \text{current\_date} \quad \text{AND} \quad \text{status} \neq \text{'COMPLETED'}$$
+- Overdue items trigger visible red alerts across dashboard summary tiles, action tables, and analytics reports.
 
-2. **Rule 2 — Action Dependencies**:
-   - An action can depend on one or more prerequisite actions.
-   - **Backend Enforcement**: When attempting to set status = `COMPLETED`, backend verifies all dependencies in `dependencies.all()`. If any dependency status is not `COMPLETED`, backend raises a `ValidationError` (400 Bad Request) preventing execution.
+### 2. Action Dependency Locks
+- An `ActionItem` can declare zero or more prerequisite `ActionItem` dependencies.
+- **Backend Validation Rule**: When a user attempts to update an action item's status to `COMPLETED`, the backend iterates over `dependencies.all()`. If any dependency has a status other than `COMPLETED`, the backend aborts the transaction and returns a `400 Bad Request` with an explicit error message stating which prerequisite tasks must be finished first.
 
-3. **Rule 3 — Decision History**:
-   - Updating a decision does NOT overwrite previous records.
-   - When a decision is updated, `version` increments by 1 and an immutable snapshot record is stored in `DecisionHistory`. Users can inspect full version timelines via the Version History modal.
+### 3. Decision History & Version Auditing
+- Decisions are immutable in historical record: updating an existing `Decision` record does **not** overwrite previous entries.
+- Every update automatically increments the `version` counter by $+1$ and writes a complete snapshot into `DecisionHistory` recording the exact text, author, and timestamp.
 
-4. **Rule 4 — Backend Validation & Permissions**:
-   - Admins can manage users, promote roles, manage teams, and access all meetings.
-   - Members can participate in meetings, add discussions, record decisions, and update assigned action items.
+### 4. Permissions & Auth Guard
+- **Authentication Guard**: Unauthenticated users trying to access protected routes (`/dashboard`, `/meetings`, `/actions`, etc.) are automatically redirected to `/login` via the frontend `AuthContext`.
+- **Role Permissions**:
+  - `ADMIN`: Full administrative control over all meetings, teams, user accounts, and system configuration.
+  - `ORGANIZER`: Can create meetings, invite participants, record decisions, and assign action items.
+  - `MEMBER`: Can view assigned meetings, participate in discussions, record decision updates, and complete assigned action items.
 
 ---
 
 ## 9. Testing
 
-### Running Backend Tests
+### Running Backend Automated Tests
 From the `backend/` directory:
 ```bash
 python manage.py test tests
 ```
-*Executes tests covering Auth, Meetings, Actions, Overdue calculation, Action dependency blocking, and Decision history snapshotting.*
+The Django test suite covers:
+- User registration, login, and JWT token issuance.
+- OTP password reset request, validation, and single-use enforcement.
+- Action item dependency blocking (verifying 400 response when prerequisites are incomplete).
+- Overdue action item status calculations.
+- Decision version incrementing and `DecisionHistory` snapshot creation.
 
-### Running Frontend Tests
+### Running Frontend Tests & Verification
 From the `frontend/` directory:
 ```bash
-npm test
+npm run test
 ```
-*Executes Vitest component tests for badges, empty states, and status renders.*
+Or run a static build check to verify TypeScript and Next.js page compilation:
+```bash
+npm run build
+```
 
 ---
 
 ## 10. Assumptions
-- Meeting start time must precede end time.
-- Users are assigned to a single department or team for filtering purposes.
-- SQLite is sufficient for single-developer local evaluation, while PostgreSQL is specified for production deployments.
+
+1. **Meeting Time Bounds**: Meeting `start_time` must occur prior to `end_time`.
+2. **Email Backend**: In local development (`DEBUG=True`), Django uses the console email backend (`django.core.mail.backends.console.EmailBackend`) which prints generated OTP codes and meeting reminders directly to the backend terminal stdout.
+3. **Single Department**: Users belong to one primary department for team-level aggregation and filtering.
+4. **OAuth 2.0 Flow**: Google & GitHub authentication rely on direct browser authorization redirects with state validation.
 
 ---
 
 ## 11. Known Limitations
-- Real-time WebSockets notification push is not included; data refreshes via React state / manual reload actions.
+
+1. **Real-time Push Notifications**: The application currently relies on polling/manual page refresh or component state updates rather than WebSocket connections for live notifications.
+2. **GitHub OAuth Client Secret**: To enable automated email extraction from private GitHub profiles in production, `GITHUB_CLIENT_SECRET` must be set in `backend/.env`. In local test mode without secret validation, fallback synthetic profile emails are assigned if private email scope is unfulfilled.
+3. **Database Defaults**: While SQLite is configured for easy zero-setup local evaluation, production environments should configure PostgreSQL/MySQL in `backend/.env` for optimal concurrent transaction performance.
