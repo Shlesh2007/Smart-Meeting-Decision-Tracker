@@ -62,7 +62,7 @@ export default function CreateMeetingPage() {
     <div className="max-w-3xl mx-auto space-y-6">
       
       <div className="flex items-center space-x-3">
-        <Link href="/meetings">
+        <Link href="/meetings" className="no-underline">
           <Button icon={<ArrowLeftOutlined />} shape="circle" />
         </Link>
         <div>
@@ -170,7 +170,7 @@ export default function CreateMeetingPage() {
           </div>
 
           <div className="pt-4 border-t border-slate-100 dark:border-slate-700 flex justify-end space-x-3">
-            <Link href="/meetings">
+            <Link href="/meetings" className="no-underline">
               <Button size="large" className="rounded-xl">Cancel</Button>
             </Link>
             <Button type="primary" htmlType="submit" loading={submitting} size="large" className="bg-blue-600 hover:bg-blue-700 font-semibold rounded-xl border-none">

@@ -90,7 +90,7 @@ export default function MeetingDetailPage() {
     return (
       <div className="py-12 text-center">
         <Alert type="error" message="Meeting Not Found" description="The requested meeting does not exist." showIcon />
-        <Link href="/meetings" className="mt-4 inline-block">
+        <Link href="/meetings" className="mt-4 inline-block no-underline">
           <Button type="primary">Back to Meetings</Button>
         </Link>
       </div>
@@ -103,10 +103,10 @@ export default function MeetingDetailPage() {
       {/* Breadcrumb & Navigation */}
       <div className="flex justify-between items-center">
         <Breadcrumb items={[
-          { title: <Link href="/meetings">Meetings</Link> },
+          { title: <Link href="/meetings" className="no-underline">Meetings</Link> },
           { title: meeting.title }
         ]} />
-        <Link href="/meetings">
+        <Link href="/meetings" className="no-underline">
           <Button icon={<ArrowLeftOutlined />}>Back to Directory</Button>
         </Link>
       </div>
