@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>OAuth Callback Redirect</title>
+</head>
+<body style="font-family: sans-serif; text-align: center; padding-top: 50px;">
+  <h2>Completing Sign-In...</h2>
+  <script>
+    (function() {
+      const search = window.location.search;
+      const hash = window.location.hash;
+      const targetPort = '3000';
+      const targetUrl = 'http://localhost:' + targetPort + '/login' + search + hash;
+      window.location.href = targetUrl;
+    })();
+  </script>
+</body>
+</html>
