@@ -11,6 +11,11 @@ const inter = Inter({ subsets: ['latin'] });
 export const metadata = {
   title: 'Smart Meeting Decision Tracker',
   description: 'Manage meetings, capture discussions, record decisions, and track follow-up action dependencies.',
+  icons: {
+    icon: '/icon.svg',
+    shortcut: '/icon.svg',
+    apple: '/icon.svg',
+  },
 };
 
 export default function RootLayout({ children }) {

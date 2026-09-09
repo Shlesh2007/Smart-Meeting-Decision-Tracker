@@ -192,7 +192,7 @@ export default function AdminPage() {
               children: loading ? (
                 <LoadingSkeleton type="table" />
               ) : (
-                <Table columns={userColumns} dataSource={users} rowKey="id" pagination={{ pageSize: 8 }} />
+                <Table columns={userColumns} dataSource={users} rowKey="id" pagination={{ pageSize: 8 }} scroll={{ x: 'max-content' }} />
               ),
             },
             {

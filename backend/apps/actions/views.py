@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 import django_filters
 from django.utils import timezone
+from django.db.models import Q
 from .models import ActionItem
 from .serializers import ActionItemSerializer
 
@@ -22,8 +23,10 @@ class ActionItemFilter(django_filters.FilterSet):
 
     def filter_overdue(self, queryset, name, value):
         if value:
-            today = timezone.now().date()
-            return queryset.filter(due_date__lt=today).exclude(status__in=[ActionItem.Status.COMPLETED, ActionItem.Status.CANCELLED])
+            today = timezone.localdate()
+            return queryset.filter(due_date__lt=today).exclude(
+                Q(status__iexact=ActionItem.Status.COMPLETED) | Q(status__iexact=ActionItem.Status.CANCELLED)
+            )
         return queryset
 
 class ActionItemViewSet(viewsets.ModelViewSet):

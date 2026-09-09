@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { authService } from '../../services/api.js';
 import { Form, Input, Button, Card, message, Typography, Modal, Divider, Steps } from 'antd';
@@ -13,7 +14,8 @@ import {
 const { Title, Text } = Typography;
 
 export default function LoginPage() {
-  const { login } = useAuth();
+  const { login, refreshUser } = useAuth();
+  const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [oauthLoading, setOauthLoading] = useState(null);
 
@@ -52,9 +54,10 @@ export default function LoginPage() {
       // GitHub Code Callback
       setOauthLoading('github');
       authService.loginWithGithub({ code })
-        .then((data) => {
+        .then(async (data) => {
+          await refreshUser();
           message.success(data.message || 'Logged in with GitHub successfully!');
-          window.location.href = '/dashboard';
+          router.push('/dashboard');
         })
         .catch((err) => {
           message.error('GitHub authentication failed.');
@@ -67,9 +70,10 @@ export default function LoginPage() {
       if (token) {
         setOauthLoading('google');
         authService.loginWithGoogle({ credential: token })
-          .then((data) => {
+          .then(async (data) => {
+            await refreshUser();
             message.success(data.message || 'Logged in with Google successfully!');
-            window.location.href = '/dashboard';
+            router.push('/dashboard');
           })
           .catch((err) => {
             message.error('Google authentication failed.');
@@ -77,7 +81,7 @@ export default function LoginPage() {
           });
       }
     }
-  }, []);
+  }, [router, refreshUser]);
 
   // Direct Google OAuth Login Handler - Launches Real Google Consent Screen
   const handleGoogleOAuth = () => {

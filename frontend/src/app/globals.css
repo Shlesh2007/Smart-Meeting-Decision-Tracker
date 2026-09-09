@@ -19,3 +19,33 @@ a, a:hover, a:focus, a:visited {
 .shadow-xs {
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
 }
+
+/* Active Nav Tab / Tag Underline Effect */
+.nav-tab-active {
+  position: relative;
+  font-weight: 700 !important;
+  color: #2563eb !important; /* blue-600 */
+}
+
+.dark .nav-tab-active {
+  color: #60a5fa !important; /* blue-400 */
+}
+
+.nav-tab-active::after {
+  content: '' !important;
+  display: block !important;
+  position: absolute !important;
+  bottom: 0px !important;
+  left: 0.5rem !important;
+  right: 0.5rem !important;
+  height: 3.5px !important;
+  border-radius: 9999px !important;
+  background-color: #2563eb !important; /* blue-600 for light mode */
+  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.3);
+}
+
+.dark .nav-tab-active::after {
+  background-color: #60a5fa !important; /* blue-400 for dark mode */
+  box-shadow: 0 1px 4px rgba(96, 165, 250, 0.5);
+}
+

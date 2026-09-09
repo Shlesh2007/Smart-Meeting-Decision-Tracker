@@ -28,10 +28,10 @@ export default function RegisterPage() {
             return `${key.toUpperCase()}: ${detail}`;
           })
           .join(' | ');
-        message.error(errorMessages, 8);
+        message.error(errorMessages);
       } else {
         const rawMsg = err.response?.data?.error || err.message || 'Unknown network error';
-        message.error(`Registration Failed: ${rawMsg}. Check Browser Console (F12) for details.`, 8);
+        message.error(`Registration Failed: ${rawMsg}. Check Browser Console (F12) for details.`);
       }
     } finally {
       setSubmitting(false);

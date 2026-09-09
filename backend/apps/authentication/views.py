@@ -349,5 +349,3 @@ class GitHubOAuthView(APIView):
         except Exception as e:
             logger.error("GitHub OAuth Error: %s", str(e), exc_info=True)
             return Response({'error': f"OAuth processing failed: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
-
-

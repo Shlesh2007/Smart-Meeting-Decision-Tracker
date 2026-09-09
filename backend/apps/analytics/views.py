@@ -11,7 +11,7 @@ class DashboardAnalyticsView(APIView):
     permission_classes = (permissions.IsAuthenticated,)
 
     def get(self, request):
-        today = timezone.now().date()
+        today = timezone.localdate()
         user = request.user
 
         # Filter meetings and actions based on role & participation
@@ -30,37 +30,51 @@ class DashboardAnalyticsView(APIView):
             ).distinct()
 
         total_meetings = meetings_qs.count()
-        upcoming_meetings = meetings_qs.filter(meeting_date__gte=today, status=Meeting.Status.SCHEDULED).count()
+        upcoming_meetings = meetings_qs.filter(
+            meeting_date__gte=today
+        ).exclude(
+            Q(status__iexact=Meeting.Status.COMPLETED) | Q(status__iexact=Meeting.Status.CANCELLED)
+        ).count()
 
-        open_actions = actions_qs.filter(status__in=[
-            ActionItem.Status.TODO, ActionItem.Status.IN_PROGRESS, ActionItem.Status.BLOCKED
-        ]).count()
+        open_actions = actions_qs.filter(
+            Q(status__iexact=ActionItem.Status.TODO) |
+            Q(status__iexact=ActionItem.Status.IN_PROGRESS) |
+            Q(status__iexact=ActionItem.Status.BLOCKED)
+        ).count()
         
-        completed_actions = actions_qs.filter(status=ActionItem.Status.COMPLETED).count()
+        completed_actions = actions_qs.filter(
+            status__iexact=ActionItem.Status.COMPLETED
+        ).count()
         
         overdue_actions = actions_qs.filter(
             due_date__lt=today
-        ).exclude(status__in=[ActionItem.Status.COMPLETED, ActionItem.Status.CANCELLED]).count()
+        ).exclude(
+            Q(status__iexact=ActionItem.Status.COMPLETED) | Q(status__iexact=ActionItem.Status.CANCELLED)
+        ).count()
         
         critical_actions = actions_qs.filter(
-            priority=ActionItem.Priority.CRITICAL
-        ).exclude(status__in=[ActionItem.Status.COMPLETED, ActionItem.Status.CANCELLED]).count()
+            priority__iexact=ActionItem.Priority.CRITICAL
+        ).exclude(
+            Q(status__iexact=ActionItem.Status.COMPLETED) | Q(status__iexact=ActionItem.Status.CANCELLED)
+        ).count()
 
         # Status distribution
-        status_counts = actions_qs.values('status').annotate(count=Count('id'))
-        status_distribution = {item['status']: item['count'] for item in status_counts}
+        status_counts = actions_qs.values('status').annotate(count=Count('id', distinct=True))
+        status_distribution = {item['status'].upper(): item['count'] for item in status_counts if item['status']}
 
         # Priority distribution
-        priority_counts = actions_qs.values('priority').annotate(count=Count('id'))
-        priority_distribution = {item['priority']: item['count'] for item in priority_counts}
+        priority_counts = actions_qs.values('priority').annotate(count=Count('id', distinct=True))
+        priority_distribution = {item['priority'].upper(): item['count'] for item in priority_counts if item['priority']}
 
         # Meeting Activity over time (grouped by date)
-        meeting_activity = meetings_qs.values('meeting_date').annotate(count=Count('id')).order_by('meeting_date')[:15]
+        meeting_activity = meetings_qs.values('meeting_date').annotate(count=Count('id', distinct=True)).order_by('meeting_date')[:15]
 
         # Recent Overdue List for Quick Action
         overdue_items = actions_qs.filter(
             due_date__lt=today
-        ).exclude(status__in=[ActionItem.Status.COMPLETED, ActionItem.Status.CANCELLED]).select_related('assigned_to')[:5]
+        ).exclude(
+            Q(status__iexact=ActionItem.Status.COMPLETED) | Q(status__iexact=ActionItem.Status.CANCELLED)
+        ).select_related('assigned_to')[:5]
 
         overdue_list = [
             {

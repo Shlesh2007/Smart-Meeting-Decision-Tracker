@@ -17,18 +17,20 @@ export const AuthProvider = ({ children }) => {
     try {
       const profile = await authService.getProfile();
       setUser(profile);
+      return profile;
     } catch (err) {
       setUser(null);
       authService.logout();
-    } finally {
-      setLoading(false);
+      throw err;
     }
   };
 
   useEffect(() => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
     if (token) {
-      refreshUser();
+      refreshUser()
+        .catch(() => {})
+        .finally(() => setLoading(false));
     } else {
       setLoading(false);
     }
@@ -41,49 +43,29 @@ export const AuthProvider = ({ children }) => {
       const isPublicPath = publicPaths.includes(pathname);
 
       if (!user && !isPublicPath) {
-        if (typeof window !== 'undefined') {
-          window.location.href = '/login';
-        }
+        router.push('/login');
       } else if (user && isPublicPath) {
-        if (typeof window !== 'undefined') {
-          window.location.href = '/dashboard';
-        }
+        router.push('/dashboard');
       }
     }
-  }, [user, loading, pathname]);
+  }, [user, loading, pathname, router]);
 
   const login = async (credentials) => {
-    setLoading(true);
-    try {
-      await authService.login(credentials);
-      await refreshUser();
-      if (typeof window !== 'undefined') {
-        window.location.href = '/dashboard';
-      }
-    } finally {
-      setLoading(false);
-    }
+    await authService.login(credentials);
+    await refreshUser();
+    router.push('/dashboard');
   };
 
   const register = async (payload) => {
-    setLoading(true);
-    try {
-      await authService.register(payload);
-      await refreshUser();
-      if (typeof window !== 'undefined') {
-        window.location.href = '/dashboard';
-      }
-    } finally {
-      setLoading(false);
-    }
+    await authService.register(payload);
+    await refreshUser();
+    router.push('/dashboard');
   };
 
   const logout = () => {
     authService.logout();
     setUser(null);
-    if (typeof window !== 'undefined') {
-      window.location.href = '/login';
-    }
+    router.push('/login');
   };
 
   const isAdmin = Boolean(user && user.role === 'ADMIN');

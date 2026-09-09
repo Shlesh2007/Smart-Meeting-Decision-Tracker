@@ -69,4 +69,4 @@ class ActionItem(models.Model):
         """
         if not self.due_date:
             return False
-        return (self.due_date < timezone.now().date()) and (self.status not in [self.Status.COMPLETED, self.Status.CANCELLED])
+        return (self.due_date < timezone.localdate()) and (self.status.upper() not in [self.Status.COMPLETED, self.Status.CANCELLED])

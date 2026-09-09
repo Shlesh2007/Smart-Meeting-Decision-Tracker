@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { meetingService } from '../../services/api.js';
 import { StatusBadge } from '../../components/StatusBadge.jsx';
 import { LoadingSkeleton } from '../../components/LoadingSkeleton.jsx';
@@ -10,13 +11,14 @@ import {
   Input, Select, DatePicker, Button, Table, Card, Tag, Avatar, Tooltip, Pagination
 } from 'antd';
 import {
-  SearchOutlined, PlusOutlined, UserOutlined, EyeOutlined, ReloadOutlined
+  SearchOutlined, PlusOutlined, UserOutlined, ReloadOutlined
 } from '@ant-design/icons';
 import { format } from 'date-fns';
 
 const { RangePicker } = DatePicker;
 
 export default function MeetingsPage() {
+  const router = useRouter();
   const [meetings, setMeetings] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -72,14 +74,16 @@ export default function MeetingsPage() {
       dataIndex: 'title',
       key: 'title',
       render: (text, record) => (
-        <Link href={`/meetings/${record.id}`} className="font-semibold text-slate-900 dark:text-slate-100 hover:text-blue-600 dark:hover:text-blue-400 no-underline block">
-          {text}
+        <div className="group">
+          <span className="font-semibold text-slate-900 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 block transition-colors">
+            {text}
+          </span>
           {record.description && (
-            <span className="block text-xs font-normal text-slate-500 truncate max-w-md">
+            <span className="block text-xs font-normal text-slate-500 dark:text-slate-400 truncate max-w-md">
               {record.description}
             </span>
           )}
-        </Link>
+        </div>
       ),
     },
     {
@@ -87,8 +91,8 @@ export default function MeetingsPage() {
       key: 'date',
       render: (_, record) => (
         <div className="text-xs">
-          <p className="font-medium text-slate-900 m-0">{format(new Date(record.meeting_date), 'PPP')}</p>
-          <p className="text-slate-500 m-0">{record.start_time} - {record.end_time}</p>
+          <p className="font-medium text-slate-900 dark:text-slate-100 m-0">{format(new Date(record.meeting_date), 'PPP')}</p>
+          <p className="text-slate-500 dark:text-slate-400 m-0">{record.start_time} - {record.end_time}</p>
         </div>
       ),
     },
@@ -122,17 +126,6 @@ export default function MeetingsPage() {
       dataIndex: 'discussions_count',
       key: 'discussions_count',
       render: (count) => <Tag color="blue">{count || 0} Points</Tag>,
-    },
-    {
-      title: 'Action',
-      key: 'action',
-      render: (_, record) => (
-        <Link href={`/meetings/${record.id}`} className="no-underline">
-          <Button icon={<EyeOutlined />} size="small" type="primary" ghost className="rounded-lg font-medium">
-            View Details
-          </Button>
-        </Link>
-      ),
     },
   ];
 
@@ -226,7 +219,7 @@ export default function MeetingsPage() {
           title="No Meetings Found"
           description="Try adjusting your search filters or schedule a new meeting."
           actionText="Create Meeting"
-          onAction={() => window.location.href = '/meetings/new'}
+          onAction={() => router.push('/meetings/new')}
         />
       ) : (
         <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-xs">
@@ -235,7 +228,12 @@ export default function MeetingsPage() {
             dataSource={meetings}
             rowKey="id"
             pagination={false}
+            scroll={{ x: 'max-content' }}
             className="w-full"
+            onRow={(record) => ({
+              onClick: () => router.push(`/meetings/${record.id}`),
+              className: 'cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors',
+            })}
           />
           <div className="p-4 flex justify-end border-t border-slate-100 dark:border-slate-700">
             <Pagination

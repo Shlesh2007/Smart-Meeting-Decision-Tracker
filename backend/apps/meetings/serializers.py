@@ -33,10 +33,21 @@ class MeetingSerializer(serializers.ModelSerializer):
         return obj.discussions.count()
 
     def validate(self, attrs):
-        start_time = attrs.get('start_time')
-        end_time = attrs.get('end_time')
+        start_time = attrs.get('start_time', self.instance.start_time if self.instance else None)
+        end_time = attrs.get('end_time', self.instance.end_time if self.instance else None)
         if start_time and end_time and start_time >= end_time:
             raise serializers.ValidationError({"end_time": "End time must be after start time."})
+
+        # Lock terminal meeting states (COMPLETED / CANCELLED) for non-admin users
+        if self.instance and self.instance.status in ['COMPLETED', 'CANCELLED']:
+            new_status = attrs.get('status')
+            request = self.context.get('request')
+            is_admin = bool(request and request.user and request.user.is_admin_role)
+            if new_status and new_status != self.instance.status and not is_admin:
+                raise serializers.ValidationError({
+                    "status": f"Meeting is already marked as {self.instance.status}. Status cannot be reverted."
+                })
+
         return attrs
 
     def create(self, validated_data):

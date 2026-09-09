@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import { useAuth } from '../../../context/AuthContext.jsx';
 import { meetingService, discussionService, actionService } from '../../../services/api.js';
 import { StatusBadge } from '../../../components/StatusBadge.jsx';
 import { LoadingSkeleton } from '../../../components/LoadingSkeleton.jsx';
@@ -10,8 +11,9 @@ import { DiscussionModal } from '../../../components/DiscussionModal.jsx';
 import { DecisionModal } from '../../../components/DecisionModal.jsx';
 import { ActionFormModal } from '../../../components/ActionFormModal.jsx';
 import { DecisionHistoryModal } from '../../../components/DecisionHistoryModal.jsx';
+import { EditMeetingModal } from '../../../components/EditMeetingModal.jsx';
 import {
-  Button, Card, Tag, Avatar, Tooltip, Alert, message, Breadcrumb
+  Button, Card, Tag, Avatar, Tooltip, Alert, message, Breadcrumb, Select
 } from 'antd';
 import {
   CalendarOutlined, ClockCircleOutlined, EnvironmentOutlined, UserOutlined,
@@ -23,6 +25,7 @@ import { format } from 'date-fns';
 export default function MeetingDetailPage() {
   const params = useParams();
   const meetingId = Number(params.id);
+  const { user, isAdmin } = useAuth();
 
   const [meeting, setMeeting] = useState(null);
   const [discussions, setDiscussions] = useState([]);
@@ -30,9 +33,11 @@ export default function MeetingDetailPage() {
   const [loading, setLoading] = useState(true);
   const [sendingReminder, setSendingReminder] = useState(false);
   const [sendingOtp, setSendingOtp] = useState(false);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
 
   // Modals state
   const [showDiscussionModal, setShowDiscussionModal] = useState(false);
+  const [showEditMeetingModal, setShowEditMeetingModal] = useState(false);
   const [activeDiscussionForDecision, setActiveDiscussionForDecision] = useState(null);
   const [activeDecisionForAction, setActiveDecisionForAction] = useState(null);
   const [activeHistoryDecisionId, setActiveHistoryDecisionId] = useState(null);
@@ -60,13 +65,40 @@ export default function MeetingDetailPage() {
     if (meetingId) loadData();
   }, [meetingId, loadData]);
 
+  const handleStatusChange = async (newStatus) => {
+    setUpdatingStatus(true);
+    try {
+      await meetingService.updateMeeting(meetingId, { status: newStatus });
+      message.success(`Meeting status changed to ${newStatus}`);
+      loadData();
+    } catch (err) {
+      const msg = err.response?.data?.status?.[0] || err.response?.data?.detail || 'Failed to update meeting status.';
+      message.error(msg);
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
+
+  const isMeetingPastOrEnded = Boolean(
+    meeting && (
+      meeting.status === 'COMPLETED' ||
+      meeting.status === 'CANCELLED' ||
+      new Date(meeting.meeting_date) < new Date(new Date().setHours(0, 0, 0, 0))
+    )
+  );
+
+  const isStatusLocked = Boolean(
+    meeting && (meeting.status === 'COMPLETED' || meeting.status === 'CANCELLED') && !isAdmin
+  );
+
   const handleSendReminder = async () => {
     setSendingReminder(true);
     try {
       const res = await meetingService.sendMeetingReminder(meetingId);
       message.success(res.message || 'Meeting reminder email sent successfully!');
     } catch (err) {
-      message.error('Failed to send meeting reminder email.');
+      const errMsg = err.response?.data?.error || 'Failed to send meeting reminder email.';
+      message.error(errMsg);
     } finally {
       setSendingReminder(false);
     }
@@ -78,7 +110,8 @@ export default function MeetingDetailPage() {
       const res = await meetingService.sendMeetingOTP(meetingId);
       message.success(res.message || `Meeting OTP code (${res.otp_code}) sent!`);
     } catch (err) {
-      message.error('Failed to send meeting OTP code.');
+      const errMsg = err.response?.data?.error || 'Failed to send meeting OTP code.';
+      message.error(errMsg);
     } finally {
       setSendingOtp(false);
     }
@@ -96,6 +129,10 @@ export default function MeetingDetailPage() {
       </div>
     );
   }
+
+  const canEditMeeting = Boolean(
+    meeting && (isAdmin || meeting.created_by === user?.id || meeting.created_by_detail?.id === user?.id)
+  );
 
   return (
     <div className="space-y-6">
@@ -115,9 +152,25 @@ export default function MeetingDetailPage() {
       <Card className="shadow-sm rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-800">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-4 border-b border-slate-100 dark:border-slate-700">
           <div>
-            <div className="flex items-center space-x-3 mb-2">
+            <div className="flex flex-wrap items-center gap-2 mb-2">
               <StatusBadge type="meetingType" value={meeting.meeting_type} />
               <StatusBadge type="meetingStatus" value={meeting.status} />
+              <Tooltip title={isStatusLocked ? 'Completed or Cancelled meetings are locked. Only Admins can modify status.' : ''}>
+                <Select
+                  value={meeting.status}
+                  onChange={handleStatusChange}
+                  loading={updatingStatus}
+                  disabled={isStatusLocked}
+                  size="small"
+                  className="w-36 font-semibold"
+                  options={[
+                    { label: '🕒 Scheduled', value: 'SCHEDULED' },
+                    { label: '🔄 In Progress', value: 'IN_PROGRESS' },
+                    { label: '✅ Completed', value: 'COMPLETED' },
+                    { label: '🚫 Cancelled', value: 'CANCELLED' }
+                  ]}
+                />
+              </Tooltip>
             </div>
             <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white m-0 tracking-tight">
               {meeting.title}
@@ -125,23 +178,39 @@ export default function MeetingDetailPage() {
           </div>
           
           <div className="flex flex-wrap gap-2">
-            <Button
-              icon={<MailOutlined />}
-              onClick={handleSendReminder}
-              loading={sendingReminder}
-              className="font-medium"
-            >
-              Send Reminder Email
-            </Button>
+            {canEditMeeting && (
+              <Button
+                icon={<EditOutlined />}
+                onClick={() => setShowEditMeetingModal(true)}
+                className="font-medium"
+              >
+                Edit Meeting Details
+              </Button>
+            )}
 
-            <Button
-              icon={<SafetyCertificateOutlined className="text-blue-600 dark:text-blue-400" />}
-              onClick={handleSendOTP}
-              loading={sendingOtp}
-              className="font-medium"
-            >
-              Send Meeting OTP
-            </Button>
+            <Tooltip title={isMeetingPastOrEnded ? 'Reminders can only be sent for upcoming active meetings' : ''}>
+              <Button
+                icon={<MailOutlined />}
+                onClick={handleSendReminder}
+                loading={sendingReminder}
+                disabled={isMeetingPastOrEnded}
+                className="font-medium"
+              >
+                Send Reminder Email
+              </Button>
+            </Tooltip>
+
+            <Tooltip title={isMeetingPastOrEnded ? 'OTP verification can only be sent for upcoming active meetings' : ''}>
+              <Button
+                icon={<SafetyCertificateOutlined className={isMeetingPastOrEnded ? '' : 'text-blue-600 dark:text-blue-400'} />}
+                onClick={handleSendOTP}
+                loading={sendingOtp}
+                disabled={isMeetingPastOrEnded}
+                className="font-medium"
+              >
+                Send Meeting OTP
+              </Button>
+            </Tooltip>
 
             <Button
               type="primary"
@@ -293,7 +362,7 @@ export default function MeetingDetailPage() {
                       </div>
                       {decision.reason && (
                         <div>
-                          <span className="text-xs font-bold text-slate-400 uppercase block">Rationale:</span>
+                          <span className="text-xs font-bold text-slate-400 uppercase block">Reason:</span>
                           <p className="text-sm italic text-slate-600 dark:text-slate-300 m-0">"{decision.reason}"</p>
                         </div>
                       )}
@@ -419,6 +488,13 @@ export default function MeetingDetailPage() {
         open={Boolean(activeHistoryDecisionId)}
         onClose={() => setActiveHistoryDecisionId(null)}
         decisionId={activeHistoryDecisionId}
+      />
+
+      <EditMeetingModal
+        open={showEditMeetingModal}
+        onClose={() => setShowEditMeetingModal(false)}
+        meeting={meeting}
+        onSuccess={loadData}
       />
 
     </div>

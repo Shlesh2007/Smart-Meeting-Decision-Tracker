@@ -68,7 +68,7 @@ export const DecisionHistoryModal = ({ open, onClose, decisionId }) => {
 
                   {record.reason && (
                     <div className="mb-2">
-                      <Text strong className="text-xs uppercase text-slate-500 block mb-1">Rationale / Reason</Text>
+                      <Text strong className="text-xs uppercase text-slate-500 block mb-1">Reason / Reason</Text>
                       <Text type="secondary" className="text-sm italic block bg-slate-100 p-2 rounded">
                         "{record.reason}"
                       </Text>

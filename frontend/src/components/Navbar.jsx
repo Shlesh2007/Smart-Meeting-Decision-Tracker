@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useTheme } from '../context/ThemeContext.jsx';
 import { ProfileModal } from './ProfileModal.jsx';
@@ -15,6 +15,7 @@ import {
 
 export const Navbar = () => {
   const pathname = usePathname();
+  const router = useRouter();
   const { user, logout, isAdmin } = useAuth();
   const { themeMode, toggleTheme } = useTheme();
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -28,6 +29,13 @@ export const Navbar = () => {
     { label: 'My Actions', path: '/my-actions', icon: <CheckSquareOutlined /> },
     ...(isAdmin ? [{ label: 'Admin Management', path: '/admin', icon: <TeamOutlined /> }] : [])
   ];
+
+  const handleNavigation = (path) => {
+    setDrawerOpen(false);
+    if (pathname !== path) {
+      router.push(path);
+    }
+  };
 
   const userMenuItems = [
     {
@@ -74,18 +82,21 @@ export const Navbar = () => {
               {navItems.map((item) => {
                 const isActive = pathname === item.path || (item.path !== '/dashboard' && pathname.startsWith(item.path));
                 return (
-                  <Link
+                  <button
                     key={item.path}
-                    href={item.path}
-                    className={`flex items-center space-x-2 px-3.5 py-2 rounded-lg text-sm font-medium transition-all no-underline ${
+                    type="button"
+                    onClick={() => handleNavigation(item.path)}
+                    className={`flex items-center space-x-2 px-3.5 py-2.5 text-sm transition-all border-0 bg-transparent cursor-pointer rounded-lg ${
                       isActive
-                        ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/70 dark:text-blue-300 font-semibold shadow-xs'
+                        ? 'nav-tab-active bg-blue-50/90 dark:bg-blue-950/80 shadow-xs'
                         : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800'
                     }`}
                   >
                     {item.icon}
-                    <span>{item.label}</span>
-                  </Link>
+                    <span className={isActive ? 'border-b-2 border-blue-600 dark:border-blue-400 pb-0.5 font-bold text-blue-600 dark:text-blue-400' : ''}>
+                      {item.label}
+                    </span>
+                  </button>
                 );
               })}
             </nav>
@@ -114,7 +125,7 @@ export const Navbar = () => {
                 {user.role}
               </Tag>
               
-              <Dropdown menu={{ items: userMenuItems }} placement="bottomRight" trigger={['click', 'hover']}>
+              <Dropdown menu={{ items: userMenuItems }} placement="bottomRight" trigger={['click']}>
                 <div className="flex items-center space-x-2.5 cursor-pointer transition-all p-1.5 rounded-lg hover:bg-slate-100/80 dark:hover:bg-slate-800 border border-transparent hover:border-slate-200 dark:hover:border-slate-700">
                   <Avatar icon={<UserOutlined />} className="bg-slate-700 font-bold shadow-xs" />
                   <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">{user.first_name || user.username}</span>
@@ -169,21 +180,26 @@ export const Navbar = () => {
                 </Tag>
               </div>
             </div>
-            {navItems.map((item) => (
-              <Link
-                key={item.path}
-                href={item.path}
-                onClick={() => setDrawerOpen(false)}
-                className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg text-base font-medium no-underline ${
-                  pathname === item.path
-                    ? 'bg-blue-50 dark:bg-blue-950/70 text-blue-700 dark:text-blue-300'
-                    : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
-                }`}
-              >
-                {item.icon}
-                <span>{item.label}</span>
-              </Link>
-            ))}
+            {navItems.map((item) => {
+              const isActive = pathname === item.path || (item.path !== '/dashboard' && pathname.startsWith(item.path));
+              return (
+                <button
+                  key={item.path}
+                  type="button"
+                  onClick={() => handleNavigation(item.path)}
+                  className={`flex items-center space-x-3 px-3 py-2.5 rounded-lg text-base transition-all border-0 bg-transparent text-left cursor-pointer w-full ${
+                    isActive
+                      ? 'nav-tab-active bg-blue-50/90 dark:bg-blue-950/80'
+                      : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
+                  }`}
+                >
+                  {item.icon}
+                  <span className={isActive ? 'border-b-2 border-blue-600 dark:border-blue-400 pb-0.5 font-bold text-blue-600 dark:text-blue-400' : ''}>
+                    {item.label}
+                  </span>
+                </button>
+              );
+            })}
 
             <Button
               type="default"

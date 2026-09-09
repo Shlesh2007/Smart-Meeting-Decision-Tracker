@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { ConfigProvider, theme as antdTheme } from 'antd';
+import { ConfigProvider, theme as antdTheme, message } from 'antd';
 
 const ThemeContext = createContext({
   themeMode: 'light',
@@ -10,6 +10,14 @@ const ThemeContext = createContext({
 
 export const ThemeProvider = ({ children }) => {
   const [themeMode, setThemeMode] = useState('light');
+
+  // Configure global message popups to auto-dismiss in 1 second
+  useEffect(() => {
+    message.config({
+      duration: 1,
+      maxCount: 3,
+    });
+  }, []);
 
   const applyTheme = (mode) => {
     if (typeof window === 'undefined') return;

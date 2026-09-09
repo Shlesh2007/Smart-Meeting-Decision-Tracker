@@ -234,6 +234,7 @@ export default function MyActionsPage() {
             dataSource={filteredActions}
             rowKey="id"
             pagination={{ pageSize: 10 }}
+            scroll={{ x: 'max-content' }}
             className="w-full"
           />
         )}

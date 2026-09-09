@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { meetingService, userService, teamService } from '../../../services/api.js';
 import {
   Form, Input, Select, DatePicker, TimePicker, Button, Card, message, Typography
@@ -12,6 +13,7 @@ import dayjs from 'dayjs';
 const { Title, Text } = Typography;
 
 export default function CreateMeetingPage() {
+  const router = useRouter();
   const [form] = Form.useForm();
   const [users, setUsers] = useState([]);
   const [teams, setTeams] = useState([]);
@@ -50,7 +52,7 @@ export default function CreateMeetingPage() {
     try {
       const created = await meetingService.createMeeting(payload);
       message.success('Meeting scheduled successfully!');
-      window.location.href = `/meetings/${created.id}`;
+      router.push(`/meetings/${created.id}`);
     } catch (err) {
       const msg = err.response?.data?.end_time?.[0] || err.response?.data?.detail || 'Failed to create meeting.';
       message.error(msg);

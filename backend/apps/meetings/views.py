@@ -39,12 +39,20 @@ class MeetingViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(created_by=self.request.user)
 
+    def perform_update(self, serializer):
+        meeting = self.get_object()
+        user = self.request.user
+        if not user.is_admin_role and meeting.created_by != user:
+            raise permissions.PermissionDenied("Only the meeting organizer or an Admin can edit meeting details.")
+        serializer.save()
+
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from django.core.mail import send_mail
 from django.conf import settings
+from datetime import date
 import random
 import logging
 
@@ -62,6 +70,10 @@ class SendMeetingOTPView(APIView):
         # Check access permission
         if not request.user.is_admin_role and meeting.created_by != request.user and request.user not in meeting.participants.all():
             return Response({'error': 'Permission denied.'}, status=status.HTTP_403_FORBIDDEN)
+
+        # Check meeting status and date validation
+        if meeting.status in ['COMPLETED', 'CANCELLED'] or meeting.meeting_date < date.today():
+            return Response({'error': 'Cannot send OTP code for past or completed/cancelled meetings.'}, status=status.HTTP_400_BAD_REQUEST)
 
         recipients = [p.email for p in meeting.participants.all() if p.email]
         if not recipients and meeting.created_by.email:
@@ -113,6 +125,10 @@ class SendMeetingReminderView(APIView):
 
         if not request.user.is_admin_role and meeting.created_by != request.user and request.user not in meeting.participants.all():
             return Response({'error': 'Permission denied.'}, status=status.HTTP_403_FORBIDDEN)
+
+        # Check meeting status and date validation
+        if meeting.status in ['COMPLETED', 'CANCELLED'] or meeting.meeting_date < date.today():
+            return Response({'error': 'Cannot send reminder email for past or completed/cancelled meetings.'}, status=status.HTTP_400_BAD_REQUEST)
 
         recipients = [p.email for p in meeting.participants.all() if p.email]
         if not recipients and meeting.created_by.email:

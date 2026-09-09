@@ -32,13 +32,13 @@ export const StatusBadge = ({ type, value }) => {
   if (type === 'meetingType') {
     const colors = {
       INTERNAL: 'blue',
-      CLIENT: 'geekblue',
+      CLIENT: 'purple',
       PROJECT: 'cyan',
       REVIEW: 'gold',
-      PLANNING: 'emerald',
-      OTHER: 'default'
+      PLANNING: 'green',
+      OTHER: 'magenta'
     };
-    return <Tag color={colors[value] || 'default'}>{value}</Tag>;
+    return <Tag color={colors[value] || 'blue'} className="font-semibold uppercase px-2 py-0.5 rounded">{value}</Tag>;
   }
 
   if (type === 'priority') {

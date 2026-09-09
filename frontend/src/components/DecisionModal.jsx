@@ -107,7 +107,7 @@ export const DecisionModal = ({
           </Form.Item>
         )}
 
-        <Form.Item name="reason" label="Rationale / Supporting Reason">
+        <Form.Item name="reason" label="Reason">
           <Input.TextArea rows={2} placeholder="e.g. Reduces database load and response latency by 80%" />
         </Form.Item>
       </Form>
