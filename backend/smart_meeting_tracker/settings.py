@@ -70,36 +70,25 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'smart_meeting_tracker.wsgi.application'
 
-# Database Configuration (Render DATABASE_URL preferred, PostgreSQL fallback, SQLite local)
+# Database Configuration (Render Cloud PostgreSQL in production, SQLite for local dev)
+IS_RENDER = 'RENDER' in os.environ or 'RENDER_SERVICE_ID' in os.environ
 DATABASE_URL = os.environ.get('DATABASE_URL')
-DB_ENGINE = os.environ.get('DB_ENGINE', 'sqlite3')
 
-if DATABASE_URL:
+if IS_RENDER and DATABASE_URL:
     DATABASES = {
         'default': dj_database_url.config(
             default=DATABASE_URL,
             conn_max_age=600,
             conn_health_checks=True,
+            ssl_require=True,
         )
     }
-elif DB_ENGINE.lower() in ('postgresql', 'postgres'):
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': os.environ.get('DB_NAME', 'smart_meeting_tracker'),
-            'USER': os.environ.get('DB_USER', 'postgres'),
-            'PASSWORD': os.environ.get('DB_PASSWORD', 'Shlesh@17'),
-            'HOST': os.environ.get('DB_HOST', 'localhost'),
-            'PORT': os.environ.get('DB_PORT', '5433'),
-            'CONN_MAX_AGE': 600,
-        }
-    }
 else:
+    # Safe 100% Local SQLite Engine — completely ignores any OS PGHOST or DATABASE_URL variables
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': BASE_DIR / 'db.sqlite3',
-            'CONN_MAX_AGE': 600,
         }
     }
 

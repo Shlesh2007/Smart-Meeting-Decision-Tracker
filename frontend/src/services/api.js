@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const rawApiUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api').trim();
+const rawApiUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api').trim();
 let sanitizedUrl = rawApiUrl.replace(/\/+$/, '');
 if (!sanitizedUrl.endsWith('/api')) {
   sanitizedUrl += '/api';
