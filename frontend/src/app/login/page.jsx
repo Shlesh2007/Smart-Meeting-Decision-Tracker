@@ -175,7 +175,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-[80vh] flex flex-col justify-center items-center py-4 sm:py-12 px-0 sm:px-6 lg:px-8 w-full max-w-md mx-auto">
+    <div className="min-h-[80vh] flex flex-col justify-center items-center py-4 sm:py-12 px-3 sm:px-6 lg:px-8 w-full max-w-md mx-auto">
       <div className="w-full text-center mb-6 px-2">
         <div className="w-12 h-12 rounded-xl bg-blue-600 text-white flex items-center justify-center mx-auto text-2xl shadow-lg mb-3">
           <ThunderboltOutlined />

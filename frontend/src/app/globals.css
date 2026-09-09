@@ -3,13 +3,31 @@
 @tailwind utilities;
 
 html, body {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+  margin: 0 !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
   width: 100% !important;
   max-width: 100vw !important;
   overflow-x: hidden !important;
   -webkit-text-size-adjust: 100%;
+}
+
+main {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* Ensure Ant Design Cards & Forms stay perfectly centered on mobile */
+.ant-card {
+  margin-left: auto !important;
+  margin-right: auto !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.ant-form {
+  width: 100% !important;
 }
 
 /* Ensure all Ant Design inputs, tables, and popups fit mobile screen */
