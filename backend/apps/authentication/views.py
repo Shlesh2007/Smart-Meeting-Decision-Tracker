@@ -105,7 +105,7 @@ class RequestPasswordResetOTPView(APIView):
             logger.error("Failed to send OTP email: %s", str(e))
 
         return Response({
-            'message': f'6-digit OTP sent to {user.email}. (Check server console log in development environment)',
+            'message': f'6-digit OTP code sent to {user.email}. Please check your email inbox.',
             'email': user.email
         }, status=status.HTTP_200_OK)
 
