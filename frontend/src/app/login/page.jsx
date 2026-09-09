@@ -123,7 +123,11 @@ export default function LoginPage() {
       message.success(res.message || 'OTP code sent to your email!');
       setResetStep(1);
     } catch (err) {
-      const msg = err.response?.data?.error || 'Failed to send OTP code.';
+      console.error('Request OTP Error:', err);
+      const msg = err.response?.data?.error 
+        || err.response?.data?.detail 
+        || (err.message === 'Network Error' ? 'Network Error: Unable to connect to backend server. Please check NEXT_PUBLIC_API_URL on Vercel.' : err.message) 
+        || 'Failed to send OTP code.';
       message.error(msg);
     } finally {
       setOtpLoading(false);
@@ -139,7 +143,7 @@ export default function LoginPage() {
       message.success(res.message || 'OTP verified successfully!');
       setResetStep(2);
     } catch (err) {
-      const msg = err.response?.data?.error || 'Invalid or expired OTP code.';
+      const msg = err.response?.data?.error || err.response?.data?.detail || err.message || 'Invalid or expired OTP code.';
       message.error(msg);
     } finally {
       setOtpLoading(false);
@@ -158,7 +162,7 @@ export default function LoginPage() {
       message.success(res.message || 'Password reset successfully!');
       setResetStep(3);
     } catch (err) {
-      const msg = err.response?.data?.error || 'Failed to reset password.';
+      const msg = err.response?.data?.error || err.response?.data?.detail || err.message || 'Failed to reset password.';
       message.error(msg);
     } finally {
       setOtpLoading(false);
