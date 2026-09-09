@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import get_user_model
-from django.core.mail import send_mail
+from django.core.mail import send_mail, get_connection, EmailMessage
 from django.conf import settings
 from django.utils import timezone
 from datetime import timedelta
@@ -95,21 +95,58 @@ class RequestPasswordResetOTPView(APIView):
             f"This code will expire in 10 minutes. If you did not request a password reset, please ignore this email.\n\n"
             f"Best regards,\nSmartMeeting Tracker Support Team"
         )
-        try:
-            send_mail(
-                subject=subject,
-                message=message_body,
-                from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', f'SmartMeeting Tracker <{user.email}>'),
-                recipient_list=[user.email],
-                fail_silently=False,
-            )
-        except Exception as e:
-            logger.error("Failed to send OTP email to %s: %s", user.email, str(e))
-            err_str = str(e)
-            if "535" in err_str or "Username and Password not accepted" in err_str or "authentication" in err_str.lower():
-                user_msg = f"SMTP Authentication Failed: {err_str}. Please check your EMAIL_HOST_USER and EMAIL_HOST_PASSWORD environment variables."
-            elif "timed out" in err_str.lower() or "timeout" in err_str.lower():
-                user_msg = f"SMTP Connection Timed Out: {err_str}. Please verify your EMAIL_HOST and EMAIL_PORT settings."
+        # Multi-Port Resilient Email Delivery (Tries configured port, 2525, 465, 587)
+        email_sent = False
+        last_error = None
+
+        configured_port = int(getattr(settings, 'EMAIL_PORT', 587))
+        ports_to_try = [
+            (configured_port, configured_port != 465, configured_port == 465),
+            (2525, True, False),
+            (465, False, True),
+            (587, True, False),
+        ]
+
+        seen_ports = set()
+        unique_ports = []
+        for p, tls, ssl in ports_to_try:
+            if p not in seen_ports:
+                seen_ports.add(p)
+                unique_ports.append((p, tls, ssl))
+
+        for port, use_tls, use_ssl in unique_ports:
+            try:
+                connection = get_connection(
+                    backend='django.core.mail.backends.smtp.EmailBackend',
+                    host=getattr(settings, 'EMAIL_HOST', 'smtp-relay.brevo.com'),
+                    port=port,
+                    username=getattr(settings, 'EMAIL_HOST_USER', ''),
+                    password=getattr(settings, 'EMAIL_HOST_PASSWORD', ''),
+                    use_tls=use_tls,
+                    use_ssl=use_ssl,
+                    timeout=getattr(settings, 'EMAIL_TIMEOUT', 10),
+                )
+                mail = EmailMessage(
+                    subject=subject,
+                    body=message_body,
+                    from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', f'SmartMeeting Tracker <{user.email}>'),
+                    to=[user.email],
+                    connection=connection,
+                )
+                mail.send(fail_silently=False)
+                email_sent = True
+                logger.info("OTP Email successfully sent to %s via port %s", user.email, port)
+                break
+            except Exception as e:
+                last_error = e
+                logger.warning("Attempt to send OTP email to %s via port %s failed: %s", user.email, port, str(e))
+
+        if not email_sent:
+            err_str = str(last_error) if last_error else "Unknown SMTP Error"
+            if "535" in err_str or "authentication" in err_str.lower():
+                user_msg = f"SMTP Authentication Failed: {err_str}. Please check EMAIL_HOST_USER and EMAIL_HOST_PASSWORD."
+            elif "timed out" in err_str.lower() or "timeout" in err_str.lower() or "unreachable" in err_str.lower():
+                user_msg = f"SMTP Connection Timed Out across ports: {err_str}. Please verify Brevo SMTP host connectivity."
             else:
                 user_msg = f"Failed to send OTP email: {err_str}"
             return Response({'error': user_msg}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
