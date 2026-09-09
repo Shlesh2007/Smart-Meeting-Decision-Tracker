@@ -97,12 +97,15 @@ class RequestPasswordResetOTPView(APIView):
             send_mail(
                 subject=subject,
                 message=message_body,
-                from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@smartmeetingtracker.com'),
+                from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', f'SmartMeeting Tracker <{user.email}>'),
                 recipient_list=[user.email],
                 fail_silently=False,
             )
         except Exception as e:
-            logger.error("Failed to send OTP email: %s", str(e))
+            logger.error("Failed to send OTP email to %s: %s", user.email, str(e))
+            return Response({
+                'error': f'Failed to send OTP email: {str(e)}. Please check backend EMAIL_HOST_PASSWORD App Password.'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return Response({
             'message': f'6-digit OTP code sent to {user.email}. Please check your email inbox.',
