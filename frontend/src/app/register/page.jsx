@@ -52,11 +52,12 @@ export default function RegisterPage() {
         </p>
       </div>
 
-      <Card
-        style={{ width: '100%', maxWidth: '480px', marginLeft: 'auto', marginRight: 'auto', borderRadius: '16px', boxSizing: 'border-box' }}
-        styles={{ body: { padding: '20px 16px' } }}
-        className="shadow-xs border border-slate-200/80 dark:border-slate-700/80 dark:bg-slate-800"
-      >
+      <div style={{ width: '100%', maxWidth: '500px', marginLeft: 'auto', marginRight: 'auto', boxSizing: 'border-box' }}>
+        <Card
+          style={{ width: '100%', borderRadius: '16px', boxSizing: 'border-box' }}
+          styles={{ body: { padding: '24px 20px' } }}
+          className="shadow-xs border border-slate-200/80 dark:border-slate-700/80 dark:bg-slate-800"
+        >
         <Form
           name="register_form"
           layout="vertical"

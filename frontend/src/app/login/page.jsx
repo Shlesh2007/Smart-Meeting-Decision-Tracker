@@ -188,88 +188,89 @@ export default function LoginPage() {
         </p>
       </div>
 
-      <Card
-        style={{ width: '100%', maxWidth: '420px', marginLeft: 'auto', marginRight: 'auto', borderRadius: '16px', boxSizing: 'border-box' }}
-        styles={{ body: { padding: '20px 16px' } }}
-        className="shadow-xs border border-slate-200/80 dark:border-slate-700/80 dark:bg-slate-800"
-      >
-        <Form
-          name="login_form"
-          layout="vertical"
-          onFinish={onFinish}
-          autoComplete="off"
-          size="large"
+      <div style={{ width: '100%', maxWidth: '440px', marginLeft: 'auto', marginRight: 'auto', boxSizing: 'border-box' }}>
+        <Card
+          style={{ width: '100%', borderRadius: '16px', boxSizing: 'border-box' }}
+          styles={{ body: { padding: '24px 20px' } }}
+          className="shadow-xs border border-slate-200/80 dark:border-slate-700/80 dark:bg-slate-800"
         >
-          <Form.Item
-            name="username"
-            label="Username"
-            rules={[{ required: true, message: 'Please enter your username!' }]}
+          <Form
+            name="login_form"
+            layout="vertical"
+            onFinish={onFinish}
+            autoComplete="off"
+            size="large"
           >
-            <Input prefix={<UserOutlined className="text-gray-400" />} placeholder="e.g. admin or john_doe" />
-          </Form.Item>
-
-          <Form.Item
-            name="password"
-            label="Password"
-            rules={[{ required: true, message: 'Please enter your password!' }]}
-            className="mb-1"
-          >
-            <Input.Password prefix={<LockOutlined className="text-gray-400" />} placeholder="••••••••" />
-          </Form.Item>
-
-          <div className="text-right mb-5">
-            <button
-              type="button"
-              onClick={() => {
-                closeResetModal();
-                setIsForgotModalOpen(true);
-              }}
-              className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-500 focus:outline-none cursor-pointer bg-transparent border-0 p-0"
+            <Form.Item
+              name="username"
+              label="Username"
+              rules={[{ required: true, message: 'Please enter your username!' }]}
             >
-              Forgot password?
-            </button>
-          </div>
+              <Input prefix={<UserOutlined className="text-gray-400" />} placeholder="e.g. admin or john_doe" />
+            </Form.Item>
 
-          <Form.Item className="mt-4 mb-2">
-            <Button type="primary" htmlType="submit" loading={submitting} block className="font-semibold bg-blue-600 hover:bg-blue-700 rounded-xl border-none">
-              Sign In
+            <Form.Item
+              name="password"
+              label="Password"
+              rules={[{ required: true, message: 'Please enter your password!' }]}
+              className="mb-1"
+            >
+              <Input.Password prefix={<LockOutlined className="text-gray-400" />} placeholder="••••••••" />
+            </Form.Item>
+
+            <div className="text-right mb-5">
+              <button
+                type="button"
+                onClick={() => {
+                  closeResetModal();
+                  setIsForgotModalOpen(true);
+                }}
+                className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-500 focus:outline-none cursor-pointer bg-transparent border-0 p-0"
+              >
+                Forgot password?
+              </button>
+            </div>
+
+            <Form.Item className="mt-4 mb-2">
+              <Button type="primary" htmlType="submit" loading={submitting} block className="font-semibold bg-blue-600 hover:bg-blue-700 rounded-xl border-none">
+                Sign In
+              </Button>
+            </Form.Item>
+          </Form>
+
+          {/* OAuth 2.0 Buttons */}
+          <Divider style={{ margin: '16px 0', fontSize: '12px', color: '#94a3b8' }}>
+            <span style={{ whiteSpace: 'nowrap' }}>Or continue with</span>
+          </Divider>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', width: '100%', marginBottom: '12px' }}>
+            <Button
+              icon={<GoogleOutlined className="text-red-500" />}
+              onClick={handleGoogleOAuth}
+              loading={oauthLoading === 'google'}
+              style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '12px' }}
+              className="font-medium border-gray-200 dark:border-slate-700 hover:border-gray-300"
+            >
+              Google
             </Button>
-          </Form.Item>
-        </Form>
-
-        {/* OAuth 2.0 Buttons */}
-        <Divider style={{ margin: '16px 0', fontSize: '12px', color: '#94a3b8' }}>
-          <span style={{ whiteSpace: 'nowrap' }}>Or continue with</span>
-        </Divider>
-
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', width: '100%', marginBottom: '12px' }}>
-          <Button
-            icon={<GoogleOutlined className="text-red-500" />}
-            onClick={handleGoogleOAuth}
-            loading={oauthLoading === 'google'}
-            style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '12px' }}
-            className="font-medium border-gray-200 dark:border-slate-700 hover:border-gray-300"
-          >
-            Google
-          </Button>
-          <Button
-            icon={<GithubOutlined className="text-gray-800 dark:text-white" />}
-            onClick={handleGithubOAuth}
-            loading={oauthLoading === 'github'}
-            style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '12px' }}
-            className="font-medium border-gray-200 dark:border-slate-700 hover:border-gray-300"
-          >
-            GitHub
-          </Button>
-        </div>
-
-        <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700 text-center text-sm text-slate-600 dark:text-slate-400">
-          Don't have an account?{' '}
-          <Link href="/register" className="font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-500 no-underline">
-            Register now
-          </Link>
-        </div>
-      </Card>
+            <Button
+              icon={<GithubOutlined className="text-gray-800 dark:text-white" />}
+              onClick={handleGithubOAuth}
+              loading={oauthLoading === 'github'}
+              style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '12px' }}
+              className="font-medium border-gray-200 dark:border-slate-700 hover:border-gray-300"
+            >
+              GitHub
+            </Button>
+          </div>
+          <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700 text-center text-sm text-slate-600 dark:text-slate-400">
+            Don't have an account?{' '}
+            <Link href="/register" className="font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-500 no-underline">
+              Register now
+            </Link>
+          </div>
+        </Card>
+      </div>
 
       {/* 3-Step OTP Password Reset Modal */}
       <Modal
