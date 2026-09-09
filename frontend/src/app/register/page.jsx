@@ -39,20 +39,24 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-[85vh] flex flex-col justify-center items-center py-4 sm:py-12 px-3 sm:px-6 lg:px-8 w-full max-w-lg mx-auto">
-      <div className="w-full text-center mb-6 px-2">
+    <div style={{ minHeight: '85vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', width: '100%', padding: '16px 12px', boxSizing: 'border-box' }}>
+      <div style={{ width: '100%', textAlign: 'center', marginBottom: '24px' }}>
         <div className="w-12 h-12 rounded-xl bg-blue-600 text-white flex items-center justify-center mx-auto text-2xl shadow-lg mb-3">
           <ThunderboltOutlined />
         </div>
-        <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight m-0">
+        <h1 style={{ fontSize: '1.4rem', fontWeight: 800, margin: 0 }} className="text-slate-900 dark:text-white tracking-tight">
           Create Your Account
         </h1>
-        <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-xs mx-auto mt-1.5 m-0 leading-relaxed">
+        <p style={{ fontSize: '0.85rem', color: '#64748b', maxWidth: '280px', margin: '6px auto 0', lineHeight: 1.4 }} className="dark:text-slate-400">
           Join your team to participate in meeting decisions & action tracking
         </p>
       </div>
 
-      <Card className="w-full max-w-full shadow-xs rounded-2xl border border-slate-200/80 dark:border-slate-700/80 dark:bg-slate-800" styles={{ body: { padding: '16px' } }}>
+      <Card
+        style={{ width: '100%', maxWidth: '480px', marginLeft: 'auto', marginRight: 'auto', borderRadius: '16px', boxSizing: 'border-box' }}
+        styles={{ body: { padding: '20px 16px' } }}
+        className="shadow-xs border border-slate-200/80 dark:border-slate-700/80 dark:bg-slate-800"
+      >
         <Form
           name="register_form"
           layout="vertical"

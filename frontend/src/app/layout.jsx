@@ -36,7 +36,7 @@ export default function RootLayout({ children }) {
           <ThemeProvider>
             <AuthProvider>
               <Navbar />
-              <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 overflow-x-hidden">
+              <main style={{ width: '100%', maxWidth: '1280px', marginLeft: 'auto', marginRight: 'auto', padding: '16px 12px', boxSizing: 'border-box', overflowX: 'hidden' }} className="flex-1">
                 {children}
               </main>
             </AuthProvider>
