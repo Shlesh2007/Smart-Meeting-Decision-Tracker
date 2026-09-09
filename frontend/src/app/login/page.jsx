@@ -336,7 +336,7 @@ export default function LoginPage() {
             <Form form={verifyOtpForm} layout="vertical" onFinish={handleVerifyOTP}>
               <div className="bg-blue-50 dark:bg-slate-800 p-3 rounded-lg border border-blue-100 dark:border-slate-700 mb-4">
                 <p className="text-xs text-blue-700 dark:text-blue-300 m-0">
-                  A 6-digit OTP code was sent to <strong>{resetEmail}</strong>. (In local development, check your backend server terminal log).
+                  A 6-digit OTP code was sent to <strong>{resetEmail}</strong>. Please check your email inbox.
                 </p>
               </div>
 

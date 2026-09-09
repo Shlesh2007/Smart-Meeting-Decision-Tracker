@@ -86,15 +86,69 @@ class RequestPasswordResetOTPView(APIView):
             expires_at=expires_at
         )
 
-        # Send Email
+        # Send Executive HTML Email
         subject = "SmartMeeting Tracker - Password Reset Verification Code"
+        recipient_name = user.first_name or user.username
+        
         message_body = (
-            f"Hello {user.first_name or user.username},\n\n"
-            f"Your 6-digit OTP verification code for resetting your password is:\n\n"
-            f"    {otp_code}\n\n"
+            f"Hello {recipient_name},\n\n"
+            f"Your 6-digit OTP verification code for resetting your password is: {otp_code}\n\n"
             f"This code will expire in 10 minutes. If you did not request a password reset, please ignore this email.\n\n"
-            f"Best regards,\nSmartMeeting Tracker Support Team"
+            f"Best regards,\nSmartMeeting Decision Tracker Support Team"
         )
+
+        html_body = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            body {{ font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif; background-color: #f8fafc; margin: 0; padding: 24px; color: #1e293b; }}
+            .container {{ max-width: 540px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }}
+            .header {{ background: linear-gradient(135deg, #1e3a8a, #2563eb); padding: 28px 32px; text-align: left; }}
+            .header h1 {{ color: #ffffff; margin: 0; font-size: 20px; font-weight: 800; tracking-tight; }}
+            .header p {{ color: #93c5fd; margin: 4px 0 0 0; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }}
+            .body-content {{ padding: 32px; }}
+            .greeting {{ font-size: 16px; font-weight: 700; color: #0f172a; margin-top: 0; }}
+            .text {{ font-size: 14px; line-height: 1.6; color: #475569; margin-bottom: 18px; }}
+            .otp-box {{ background-color: #f0f9ff; border: 2px dashed #0284c7; border-radius: 12px; padding: 22px; text-align: center; margin: 24px 0; }}
+            .otp-code {{ font-size: 36px; font-weight: 900; font-family: 'Courier New', Courier, monospace; letter-spacing: 10px; color: #0369a1; display: inline-block; margin: 0; }}
+            .badge {{ display: inline-block; background-color: #fef2f2; color: #dc2626; border: 1px solid #fecaca; font-size: 12px; font-weight: 700; padding: 4px 12px; border-radius: 20px; margin-top: 12px; }}
+            .footer {{ background-color: #f8fafc; border-top: 1px solid #f1f5f9; padding: 20px 32px; text-align: center; font-size: 12px; color: #94a3b8; line-height: 1.5; }}
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>⚡ SmartMeeting Decision Tracker</h1>
+              <p>Security & Verification Portal</p>
+            </div>
+            <div class="body-content">
+              <p class="greeting">Hello {recipient_name},</p>
+              <p class="text">We received a request to reset the password for your SmartMeeting Decision Tracker account. Use the 6-digit verification code below to proceed:</p>
+              
+              <div class="otp-box">
+                <div class="otp-code">{otp_code}</div>
+                <div><span class="badge">⏰ Code expires in 10 minutes</span></div>
+              </div>
+
+              <p class="text" style="font-size: 13px; color: #64748b;">
+                If you did not request a password reset, please ignore this message or contact support if you suspect unauthorized activity.
+              </p>
+              <p class="text" style="margin-bottom: 0;">
+                Best regards,<br>
+                <strong style="color: #1e293b;">SmartMeeting Decision Tracker Team</strong>
+              </p>
+            </div>
+            <div class="footer">
+              This is an automated security notification sent by SmartMeeting Decision Tracker.<br>
+              © {timezone.now().year} SmartMeeting Tracker. All rights reserved.
+            </div>
+          </div>
+        </body>
+        </html>
+        """
+
         # 1. Primary Attempt: Brevo HTTPS REST API (Bypasses all cloud/ISP SMTP port blocks)
         email_sent = False
         last_error = None
@@ -112,6 +166,7 @@ class RequestPasswordResetOTPView(APIView):
                 'sender': {'name': 'SmartMeeting Tracker', 'email': sender_email},
                 'to': [{'email': user.email}],
                 'subject': subject,
+                'htmlContent': html_body,
                 'textContent': message_body
             }
             resp = requests.post('https://api.brevo.com/v3/smtp/email', json=api_payload, headers=api_headers, timeout=8)
@@ -164,11 +219,12 @@ class RequestPasswordResetOTPView(APIView):
                     )
                     mail = EmailMessage(
                         subject=subject,
-                        body=message_body,
+                        body=html_body,
                         from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', f'SmartMeeting Tracker <{user.email}>'),
                         to=[user.email],
                         connection=connection,
                     )
+                    mail.content_subtype = "html"
                     mail.send(fail_silently=False)
                     email_sent = True
                     logger.info("OTP Email successfully sent to %s via Brevo SMTP port %s", user.email, port)
