@@ -52,7 +52,7 @@ export default function RegisterPage() {
         </Text>
       </div>
 
-      <Card className="w-full shadow-xs rounded-2xl border border-slate-200/80 dark:border-slate-700/80 dark:bg-slate-800">
+      <Card className="w-full max-w-full shadow-xs rounded-2xl border border-slate-200/80 dark:border-slate-700/80 dark:bg-slate-800" styles={{ body: { padding: '16px' } }}>
         <Form
           name="register_form"
           layout="vertical"
@@ -103,9 +103,9 @@ export default function RegisterPage() {
               label="Account Role"
               rules={[{ required: true, message: 'Role is required' }]}
             >
-              <Select options={[
-                { label: 'Member (Participate & Update assigned actions)', value: 'MEMBER' },
-                { label: 'Admin (Manage users, teams & meetings)', value: 'ADMIN' }
+              <Select className="w-full" options={[
+                { label: 'Member (Participate & Update actions)', value: 'MEMBER' },
+                { label: 'Admin (Manage users & meetings)', value: 'ADMIN' }
               ]} />
             </Form.Item>
 

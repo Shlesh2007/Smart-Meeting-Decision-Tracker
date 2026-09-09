@@ -188,7 +188,7 @@ export default function LoginPage() {
         </Text>
       </div>
 
-      <Card className="w-full shadow-xs rounded-2xl border border-slate-200/80 dark:border-slate-700/80 dark:bg-slate-800">
+      <Card className="w-full max-w-full shadow-xs rounded-2xl border border-slate-200/80 dark:border-slate-700/80 dark:bg-slate-800" styles={{ body: { padding: '16px' } }}>
         <Form
           name="login_form"
           layout="vertical"
@@ -236,11 +236,12 @@ export default function LoginPage() {
         {/* OAuth 2.0 Buttons */}
         <Divider className="my-4 text-xs text-gray-400">Or continue with</Divider>
 
-        <div className="grid grid-cols-2 gap-3 mb-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-2">
           <Button
             icon={<GoogleOutlined className="text-red-500" />}
             onClick={handleGoogleOAuth}
             loading={oauthLoading === 'google'}
+            block
             className="flex items-center justify-center font-medium border-gray-200 dark:border-slate-700 hover:border-gray-300 rounded-xl"
           >
             Google
@@ -249,6 +250,7 @@ export default function LoginPage() {
             icon={<GithubOutlined className="text-gray-800 dark:text-white" />}
             onClick={handleGithubOAuth}
             loading={oauthLoading === 'github'}
+            block
             className="flex items-center justify-center font-medium border-gray-200 dark:border-slate-700 hover:border-gray-300 rounded-xl"
           >
             GitHub

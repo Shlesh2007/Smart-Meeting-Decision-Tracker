@@ -18,16 +18,28 @@ main {
   box-sizing: border-box !important;
 }
 
-/* Ensure Ant Design Cards & Forms stay perfectly centered on mobile */
-.ant-card {
-  margin-left: auto !important;
-  margin-right: auto !important;
+/* Prevent any inner element from forcing card expansion or overflowing right */
+.ant-card, .ant-card-body, .ant-form, .ant-form-item, .ant-input, .ant-input-affix-wrapper, .ant-btn {
   max-width: 100% !important;
   box-sizing: border-box !important;
 }
 
-.ant-form {
+.ant-select, .ant-select-single, .ant-select-selector {
+  max-width: 100% !important;
+  overflow: hidden !important;
+}
+
+.ant-select-selection-item, .ant-select-selection-placeholder {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+/* Ensure mobile cards sit centered with symmetric bounds */
+.ant-card {
   width: 100% !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
 }
 
 /* Ensure all Ant Design inputs, tables, and popups fit mobile screen */
