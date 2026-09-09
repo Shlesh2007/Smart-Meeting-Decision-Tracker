@@ -10,12 +10,16 @@ A comprehensive enterprise web application designed to streamline the lifecycle 
 
 ### Key Features:
 - **Authentication & OAuth 2.0**: Email/Password authentication with 6-digit OTP verification, plus Single Sign-On (SSO) via **Google** and **GitHub**.
+- **Brevo Executive Email Delivery System**: Enterprise-grade HTTPS REST API email delivery (`https://api.brevo.com/v3/smtp/email`) with multi-port SMTP relay fallbacks (587, 2525, 465) for OTP codes, password resets, and meeting notifications.
+- **Profile Details Management**: Edit user profile details (`first_name`, `last_name`, `department`) with read-only protection on email mutation.
+- **Secure OTP Email Update Flow**: 2-step verification flow where requesting an email change dispatches a 6-digit verification code directly to the **new email inbox** before updating the database.
+- **Permanent Account Deletion (Danger Zone)**: Self account deletion allowing users to permanently delete their profile, credentials, and OTP records with password or OAuth confirmation.
 - **Meeting Management**: Schedule, track, and search meetings by status (`UPCOMING`, `IN_PROGRESS`, `COMPLETED`), type, date, or title.
 - **Discussion & Decisions**: Capture meeting discussion points and link definitive decisions with full version history and audit snapshots (`DecisionHistory`).
 - **Action Item Management**: Assign tasks to users with due dates, priority levels, and **dependency locking** (an action item cannot be marked `COMPLETED` until all prerequisite tasks are completed).
 - **Meeting Notifications & Entry OTP**: Send instant email reminders to meeting participants and generate 6-digit entry OTPs for secure meeting check-in.
-- **Analytics & Dashboard**: Interactive visual dashboards providing completion rates, overdue action tracking, and workload breakdown by user.
-- **Dark/Light Mode**: Seamless UI theme toggling with accessible high-contrast navigation.
+- **Analytics & Dashboard**: High-density visual dashboards providing completion rates, overdue action tracking, 6-column KPI metrics, 12-column analytics matrix, and workload breakdown by user.
+- **Dark/Light Mode**: Seamless UI theme toggling with accessible high-contrast navigation and glowing avatar styling.
 
 ---
 
@@ -27,13 +31,14 @@ A comprehensive enterprise web application designed to streamline the lifecycle 
 - **Language**: TypeScript / JavaScript
 - **Styling**: Tailwind CSS & Ant Design (`antd`)
 - **Icons & Visualization**: `@ant-design/icons`, `lucide-react`, `recharts`
-- **HTTP Client**: Axios (with custom JWT & error handling interceptors)
+- **HTTP Client**: Axios (with custom JWT token injection & error handling interceptors)
 
 ### Backend
 - **Language**: Python 3.10+
 - **Framework**: Django 4.2+
 - **API Framework**: Django REST Framework (DRF)
 - **Authentication**: JWT (`djangorestframework-simplejwt`) & OAuth 2.0 (Google & GitHub)
+- **Email Delivery**: Brevo HTTPS REST API (`api.brevo.com/v3/smtp/email`) & Django SMTP Relay
 - **Filtering & Search**: `django-filter`, `rest_framework.filters`
 - **CORS**: `django-cors-headers`
 
@@ -52,11 +57,11 @@ SMDT/
 │   ├── requirements.txt            # Python dependencies
 │   ├── .env.example                # Template for backend environment variables
 │   ├── smart_meeting_tracker/      # Django root settings and main URL routing
-│   │   ├── settings.py
+│   │   ├── settings.py             # Global configuration & Brevo IPv4 socket override
 │   │   ├── urls.py
 │   │   └── wsgi.py
 │   ├── apps/                       # Modularized Django applications
-│   │   ├── authentication/         # Custom User model, OAuth 2.0, OTP password reset
+│   │   ├── authentication/         # Custom User model, OAuth 2.0, OTP password reset & email change, account deletion
 │   │   ├── teams/                  # Team & department models and endpoints
 │   │   ├── meetings/               # Meeting scheduling, search, OTP & reminder emails
 │   │   ├── discussions/            # Discussion topics and priority tracking
@@ -72,7 +77,7 @@ SMDT/
 │   ├── public/                     # Static assets and OAuth callback fallback
 │   └── src/
 │       ├── app/                    # Next.js App Router pages (login, dashboard, meetings, actions)
-│       ├── components/             # Reusable UI components (Navbar, Modals, Badges)
+│       ├── components/             # Reusable UI components (Navbar, ProfileModal, EmptyState)
 │       ├── context/                # React Contexts (AuthContext with Auth Guard, ThemeContext)
 │       ├── services/               # Modularized Axios API clients
 │       └── types/                  # TypeScript definitions
@@ -121,7 +126,7 @@ SMDT/
    ```bash
    cp .env.example .env
    ```
-   *Edit `.env` to configure your database, secret key, Google/GitHub OAuth credentials, and email settings (see Environment Variables section below).*
+   *Edit `.env` to configure your database, secret key, Google/GitHub OAuth credentials, and Brevo email settings (see Environment Variables section below).*
 
 5. **Apply Database Migrations**:
    ```bash
@@ -152,7 +157,7 @@ SMDT/
    ```bash
    cp .env.example .env.local
    ```
-   *Verify that `NEXT_PUBLIC_API_BASE_URL` points to `http://localhost:8080/api`.*
+   *Verify that `NEXT_PUBLIC_API_BASE_URL` points to `http://localhost:8000/api`.*
 
 ---
 
@@ -163,7 +168,7 @@ SMDT/
 # General
 SECRET_KEY=django-insecure-your-secret-key-here
 DEBUG=True
-ALLOWED_HOSTS=localhost,127.0.0.1
+ALLOWED_HOSTS=localhost,127.0.0.1,.onrender.com
 
 # Database (Leave blank to use SQLite for development)
 DB_ENGINE=django.db.backends.postgresql
@@ -182,18 +187,18 @@ GOOGLE_CLIENT_SECRET=your-google-client-secret
 GITHUB_CLIENT_ID=your-github-client-id
 GITHUB_CLIENT_SECRET=your-github-client-secret
 
-# Email Backend (Default: console backend for local testing)
-EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
-EMAIL_HOST=smtp.gmail.com
+# Brevo Email API & Multi-Port SMTP Relay Settings
+EMAIL_HOST=smtp-relay.brevo.com
 EMAIL_PORT=587
 EMAIL_USE_TLS=True
-EMAIL_HOST_USER=your-email@gmail.com
-EMAIL_HOST_PASSWORD=your-app-password
+EMAIL_HOST_USER=shleshdarji317@gmail.com
+EMAIL_HOST_PASSWORD=xkeysib-your-brevo-api-key-here
+DEFAULT_FROM_EMAIL=SmartMeeting Tracker <shleshdarji317@gmail.com>
 ```
 
 #### Frontend (`frontend/.env.local`)
 ```env
-NEXT_PUBLIC_API_BASE_URL=http://localhost:8080/api
+NEXT_PUBLIC_API_URL=http://localhost:8000/api
 NEXT_PUBLIC_GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
 NEXT_PUBLIC_GITHUB_CLIENT_ID=your-github-client-id
 ```
@@ -205,10 +210,10 @@ NEXT_PUBLIC_GITHUB_CLIENT_ID=your-github-client-id
 ### 1. Start Backend Django API Server
 From the `backend/` directory:
 ```bash
-python manage.py runserver 8080
+python manage.py runserver 8000
 ```
-- API Base URL: `http://localhost:8080/api/`
-- Django Admin Console: `http://localhost:8080/admin/`
+- API Base URL: `http://localhost:8000/api/`
+- Django Admin Console: `http://localhost:8000/admin/`
 
 ### 2. Start Frontend Next.js Web App
 From the `frontend/` directory in a new terminal window:
@@ -221,17 +226,21 @@ npm run dev
 
 ## 6. API Documentation
 
-### Authentication & User Management
+### Authentication & User Profile Management
 | Method | Endpoint | Description | Auth Required |
 | :--- | :--- | :--- | :--- |
-| `POST` | `/api/auth/register/` | Register a new user | No |
-| `POST` | `/api/auth/login/` | Authenticate & obtain JWT Access/Refresh tokens | No |
+| `POST` | `/api/auth/register/` | Register a new user account | No |
+| `POST` | `/api/auth/token/` | Authenticate & obtain JWT Access/Refresh tokens | No |
 | `POST` | `/api/auth/oauth/google/` | Login/Register via Google OAuth 2.0 | No |
 | `POST` | `/api/auth/oauth/github/` | Login/Register via GitHub OAuth 2.0 | No |
-| `POST` | `/api/auth/password-reset/request-otp/` | Send 6-digit OTP to user email for password reset | No |
-| `POST` | `/api/auth/password-reset/verify-otp/` | Verify 6-digit OTP code | No |
+| `POST` | `/api/auth/password-reset/request-otp/` | Send 6-digit OTP via Brevo API for password reset | No |
+| `POST` | `/api/auth/password-reset/verify-otp/` | Verify password reset 6-digit OTP code | No |
 | `POST` | `/api/auth/password-reset/confirm/` | Reset password using verified OTP | No |
 | `GET` | `/api/auth/profile/` | Fetch current logged-in user profile | Yes |
+| `PATCH` | `/api/auth/profile/` | Update profile fields (`first_name`, `last_name`, `department`) | Yes |
+| `POST` | `/api/auth/profile/request-email-change/` | Request email update & send 6-digit OTP to **new email inbox** | Yes |
+| `POST` | `/api/auth/profile/verify-email-change/` | Verify OTP code & update user email address | Yes |
+| `DELETE`| `/api/auth/profile/delete-account/` | Permanently delete user account & credentials from database | Yes |
 
 ### Meetings & Notifications
 | Method | Endpoint | Description | Auth Required |
@@ -240,8 +249,8 @@ npm run dev
 | `POST` | `/api/meetings/` | Create a new meeting | Yes |
 | `GET` | `/api/meetings/{id}/` | Retrieve meeting details, discussions, decisions, & actions | Yes |
 | `PUT/PATCH` | `/api/meetings/{id}/` | Update meeting status or details | Yes |
-| `POST` | `/api/meetings/{id}/send-reminder/` | Email reminder to all registered participants | Yes |
-| `POST` | `/api/meetings/{id}/send-otp/` | Email 6-digit entry OTP for meeting check-in | Yes |
+| `POST` | `/api/meetings/{id}/send-reminder/` | Email reminder to all registered participants via Brevo | Yes |
+| `POST` | `/api/meetings/{id}/send-otp/` | Email 6-digit entry OTP for meeting check-in via Brevo | Yes |
 
 ### Discussions, Decisions & Action Items
 | Method | Endpoint | Description | Auth Required |
@@ -283,13 +292,13 @@ erDiagram
 ```
 
 ### Model Descriptions & Relationships
-1. **User (`User`)**: Custom Django user model extended with `role` (`ADMIN`, `ORGANIZER`, `MEMBER`), `department`, and optional OAuth provider IDs.
+1. **User (`User`)**: Custom Django user model extended with `role` (`ADMIN`, `MEMBER`), `department`, and optional OAuth provider IDs.
 2. **Meeting (`Meeting`)**: Stores title, description, start/end time, meeting link/location, status, organizer (FK to User), and participants (M2M to User).
 3. **DiscussionTopic (`DiscussionTopic`)**: Belongs to a single `Meeting` (FK). Captures agenda items, notes, and priority level.
 4. **Decision (`Decision`)**: One-to-One relationship with `DiscussionTopic`. Stores agreed-upon decision text and current `version` integer.
 5. **DecisionHistory (`DecisionHistory`)**: Immutable snapshot table storing past decision text versions, version numbers, modification timestamps, and author (FK to User).
 6. **ActionItem (`ActionItem`)**: Belongs to a `Decision` (FK) and assigned to a `User` (FK). Includes `title`, `due_date`, `status` (`PENDING`, `IN_PROGRESS`, `COMPLETED`, `CANCELLED`), and a **Self Many-to-Many relationship** (`dependencies`) pointing to required antecedent `ActionItem` tasks.
-7. **PasswordResetOTP (`PasswordResetOTP`)**: Stores 6-digit OTP hashes, user reference, expiration timestamp (10 min lifetime), and single-use `is_used` flag.
+7. **PasswordResetOTP (`PasswordResetOTP`)**: Stores 6-digit OTP hashes, user email reference, expiration timestamp (10 min lifetime), and verification status flag.
 
 ---
 
@@ -308,11 +317,14 @@ erDiagram
 - Decisions are immutable in historical record: updating an existing `Decision` record does **not** overwrite previous entries.
 - Every update automatically increments the `version` counter by $+1$ and writes a complete snapshot into `DecisionHistory` recording the exact text, author, and timestamp.
 
-### 4. Permissions & Auth Guard
+### 4. OTP Email Change Security
+- Updating an email address cannot be executed via direct profile updates (`PATCH /api/auth/profile/`).
+- The system enforces a 2-step verification process where the 6-digit code is dispatched directly to the **new requested email address** to confirm ownership before updating `User.email`.
+
+### 5. Permissions & Auth Guard
 - **Authentication Guard**: Unauthenticated users trying to access protected routes (`/dashboard`, `/meetings`, `/actions`, etc.) are automatically redirected to `/login` via the frontend `AuthContext`.
 - **Role Permissions**:
   - `ADMIN`: Full administrative control over all meetings, teams, user accounts, and system configuration.
-  - `ORGANIZER`: Can create meetings, invite participants, record decisions, and assign action items.
   - `MEMBER`: Can view assigned meetings, participate in discussions, record decision updates, and complete assigned action items.
 
 ---
@@ -331,29 +343,14 @@ The Django test suite covers:
 - Overdue action item status calculations.
 - Decision version incrementing and `DecisionHistory` snapshot creation.
 
-### Running Frontend Tests & Verification
+### Running Frontend Build Verification
 From the `frontend/` directory:
-```bash
-npm run test
-```
-Or run a static build check to verify TypeScript and Next.js page compilation:
 ```bash
 npm run build
 ```
 
 ---
 
-## 10. Assumptions
+## 10. License & Copyright
 
-1. **Meeting Time Bounds**: Meeting `start_time` must occur prior to `end_time`.
-2. **Email Backend**: In local development (`DEBUG=True`), Django uses the console email backend (`django.core.mail.backends.console.EmailBackend`) which prints generated OTP codes and meeting reminders directly to the backend terminal stdout.
-3. **Single Department**: Users belong to one primary department for team-level aggregation and filtering.
-4. **OAuth 2.0 Flow**: Google & GitHub authentication rely on direct browser authorization redirects with state validation.
-
----
-
-## 11. Known Limitations
-
-1. **Real-time Push Notifications**: The application currently relies on polling/manual page refresh or component state updates rather than WebSocket connections for live notifications.
-2. **GitHub OAuth Client Secret**: To enable automated email extraction from private GitHub profiles in production, `GITHUB_CLIENT_SECRET` must be set in `backend/.env`. In local test mode without secret validation, fallback synthetic profile emails are assigned if private email scope is unfulfilled.
-3. **Database Defaults**: While SQLite is configured for easy zero-setup local evaluation, production environments should configure PostgreSQL/MySQL in `backend/.env` for optimal concurrent transaction performance.
+© 2026 Smart Meeting Decision Tracker. All rights reserved.
