@@ -46,6 +46,14 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
     def get_object(self):
         return self.request.user
 
+    def update(self, request, *args, **kwargs):
+        if 'email' in request.data and request.data['email'].strip().lower() != request.user.email.lower():
+            return Response(
+                {'error': 'Email address cannot be updated directly. Please use the "Change Email" OTP verification flow.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        return super().update(request, *args, **kwargs)
+
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all().order_by('-date_joined')
     serializer_class = UserSerializer
@@ -492,3 +500,256 @@ class GitHubOAuthView(APIView):
         except Exception as e:
             logger.error("GitHub OAuth Error: %s", str(e), exc_info=True)
             return Response({'error': f"OAuth processing failed: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+# --- OTP EMAIL CHANGE VIEWS ---
+
+class RequestEmailChangeOTPView(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def post(self, request):
+        new_email = request.data.get('new_email', '').strip().lower()
+        if not new_email:
+            return Response({'error': 'Please provide a new email address.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if '@' not in new_email or '.' not in new_email:
+            return Response({'error': 'Please enter a valid email address.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if new_email == request.user.email.lower():
+            return Response({'error': 'The new email address is identical to your current email address.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if User.objects.filter(email__iexact=new_email).exclude(id=request.user.id).exists():
+            return Response({'error': 'This email address is already registered to another account.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Generate 6-digit random OTP
+        otp_code = f"{random.randint(100000, 999999)}"
+        expires_at = timezone.now() + timedelta(minutes=10)
+
+        # Store OTP record for new_email
+        PasswordResetOTP.objects.create(
+            email=new_email,
+            otp_code=otp_code,
+            expires_at=expires_at
+        )
+
+        subject = "SmartMeeting Tracker - Verify Your New Email Address"
+        recipient_name = request.user.first_name or request.user.username
+
+        message_body = (
+            f"Hello {recipient_name},\n\n"
+            f"You requested to update your SmartMeeting Decision Tracker account email to: {new_email}\n"
+            f"Your 6-digit OTP verification code is: {otp_code}\n\n"
+            f"This code will expire in 10 minutes. If you did not request this email change, please ignore this message.\n\n"
+            f"Best regards,\nSmartMeeting Decision Tracker Team"
+        )
+
+        html_body = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            body {{ font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif; background-color: #f8fafc; margin: 0; padding: 24px; color: #1e293b; }}
+            .container {{ max-width: 540px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }}
+            .header {{ background: linear-gradient(135deg, #1e3a8a, #2563eb); padding: 28px 32px; text-align: left; }}
+            .header h1 {{ color: #ffffff; margin: 0; font-size: 20px; font-weight: 800; tracking-tight; }}
+            .header p {{ color: #93c5fd; margin: 4px 0 0 0; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }}
+            .body-content {{ padding: 32px; }}
+            .greeting {{ font-size: 16px; font-weight: 700; color: #0f172a; margin-top: 0; }}
+            .text {{ font-size: 14px; line-height: 1.6; color: #475569; margin-bottom: 18px; }}
+            .otp-box {{ background-color: #f0f9ff; border: 2px dashed #0284c7; border-radius: 12px; padding: 22px; text-align: center; margin: 24px 0; }}
+            .otp-code {{ font-size: 36px; font-weight: 900; font-family: 'Courier New', Courier, monospace; letter-spacing: 10px; color: #0369a1; display: inline-block; margin: 0; }}
+            .badge {{ display: inline-block; background-color: #fef2f2; color: #dc2626; border: 1px solid #fecaca; font-size: 12px; font-weight: 700; padding: 4px 12px; border-radius: 20px; margin-top: 12px; }}
+            .footer {{ background-color: #f8fafc; border-top: 1px solid #f1f5f9; padding: 20px 32px; text-align: center; font-size: 12px; color: #94a3b8; line-height: 1.5; }}
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>⚡ SmartMeeting Decision Tracker</h1>
+              <p>Email Change Verification</p>
+            </div>
+            <div class="body-content">
+              <p class="greeting">Hello {recipient_name},</p>
+              <p class="text">We received a request to update your SmartMeeting Decision Tracker account email to <strong>{new_email}</strong>. Use the 6-digit verification code below to confirm this change:</p>
+              
+              <div class="otp-box">
+                <div class="otp-code">{otp_code}</div>
+                <div><span class="badge">⏰ Code expires in 10 minutes</span></div>
+              </div>
+
+              <p class="text" style="font-size: 13px; color: #64748b;">
+                If you did not request this email change, please ignore this message or contact support if you suspect unauthorized activity.
+              </p>
+              <p class="text" style="margin-bottom: 0;">
+                Best regards,<br>
+                <strong style="color: #1e293b;">SmartMeeting Decision Tracker Team</strong>
+              </p>
+            </div>
+            <div class="footer">
+              This is an automated security notification sent by SmartMeeting Decision Tracker.<br>
+              © {timezone.now().year} SmartMeeting Tracker. All rights reserved.
+            </div>
+          </div>
+        </body>
+        </html>
+        """
+
+        # Dispatch via Brevo HTTPS REST API (with SMTP fallback)
+        email_sent = False
+        last_error = None
+
+        brevo_api_key = getattr(settings, 'EMAIL_HOST_PASSWORD', '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')
+        sender_email = getattr(settings, 'EMAIL_HOST_USER', 'shleshdarji317@gmail.com')
+
+        try:
+            api_headers = {
+                'accept': 'application/json',
+                'api-key': brevo_api_key,
+                'content-type': 'application/json',
+            }
+            api_payload = {
+                'sender': {'name': 'SmartMeeting Tracker', 'email': sender_email},
+                'to': [{'email': new_email}],
+                'subject': subject,
+                'htmlContent': html_body,
+                'textContent': message_body
+            }
+            resp = requests.post('https://api.brevo.com/v3/smtp/email', json=api_payload, headers=api_headers, timeout=8)
+            if resp.status_code in (200, 201, 202):
+                email_sent = True
+                logger.info("Email Change OTP delivered to %s via Brevo HTTPS API", new_email)
+            else:
+                logger.warning("Brevo API returned %s: %s", resp.status_code, resp.text)
+                api_error_detail = resp.text
+                try:
+                    err_json = resp.json()
+                    api_error_detail = err_json.get('message', resp.text)
+                except Exception:
+                    pass
+                last_error = f"Brevo API HTTP {resp.status_code}: {api_error_detail}"
+        except Exception as api_err:
+            logger.warning("Brevo API call failed for email change: %s", str(api_err))
+            last_error = f"Brevo Network Error: {str(api_err)}"
+
+        if not email_sent:
+            brevo_host = getattr(settings, 'EMAIL_HOST', 'smtp-relay.brevo.com')
+            configured_port = int(getattr(settings, 'EMAIL_PORT', 587))
+            brevo_ports = [
+                (configured_port, configured_port != 465, configured_port == 465),
+                (2525, True, False),
+                (587, True, False),
+                (465, False, True),
+            ]
+            seen_ports = set()
+            unique_ports = []
+            for p, tls, ssl in brevo_ports:
+                if p not in seen_ports:
+                    seen_ports.add(p)
+                    unique_ports.append((p, tls, ssl))
+
+            for port, use_tls, use_ssl in unique_ports:
+                try:
+                    connection = get_connection(
+                        backend='django.core.mail.backends.smtp.EmailBackend',
+                        host=brevo_host,
+                        port=port,
+                        username=sender_email,
+                        password=brevo_api_key,
+                        use_tls=use_tls,
+                        use_ssl=use_ssl,
+                        timeout=getattr(settings, 'EMAIL_TIMEOUT', 5),
+                    )
+                    mail = EmailMessage(
+                        subject=subject,
+                        body=html_body,
+                        from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', f'SmartMeeting Tracker <{sender_email}>'),
+                        to=[new_email],
+                        connection=connection,
+                    )
+                    mail.content_subtype = "html"
+                    mail.send(fail_silently=False)
+                    email_sent = True
+                    logger.info("Email Change OTP sent to %s via Brevo SMTP port %s", new_email, port)
+                    break
+                except Exception as e:
+                    logger.warning("Brevo SMTP attempt to %s via port %s failed: %s", new_email, port, str(e))
+
+        if not email_sent:
+            err_str = str(last_error) if last_error else "Unknown Brevo Delivery Error"
+            return Response({'error': f"Brevo Email Delivery Failed: {err_str}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response({
+            'message': f'6-digit OTP verification code sent to {new_email}. Please check your email inbox.',
+            'new_email': new_email
+        }, status=status.HTTP_200_OK)
+
+
+class VerifyEmailChangeOTPView(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def post(self, request):
+        new_email = request.data.get('new_email', '').strip().lower()
+        otp_code = request.data.get('otp_code', '').strip()
+
+        if not new_email or not otp_code:
+            return Response({'error': 'New email and OTP code are required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        otp_record = PasswordResetOTP.objects.filter(
+            email__iexact=new_email,
+            otp_code=otp_code,
+            expires_at__gte=timezone.now()
+        ).first()
+
+        if not otp_record:
+            return Response({'error': 'Invalid or expired OTP code. Please request a new OTP.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if User.objects.filter(email__iexact=new_email).exclude(id=request.user.id).exists():
+            return Response({'error': 'This email address is already registered to another account.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = request.user
+        user.email = new_email
+        user.save()
+
+        # Delete used OTP
+        otp_record.delete()
+
+        return Response({
+            'message': f'Your email address has been updated successfully to {new_email}!',
+            'user': UserSerializer(user, context={'request': request}).data
+        }, status=status.HTTP_200_OK)
+
+
+class DeleteAccountView(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def delete(self, request):
+        user = request.user
+        password = request.data.get('password', '')
+        confirmation = request.data.get('confirmation', '').strip()
+
+        # If user has a set password, verify it
+        if user.has_usable_password():
+            if not password:
+                return Response({'error': 'Password is required to confirm account deletion.'}, status=status.HTTP_400_BAD_REQUEST)
+            if not user.check_password(password):
+                return Response({'error': 'Incorrect password. Account deletion failed.'}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            # For OAuth users without password
+            if confirmation.upper() != 'DELETE':
+                return Response({'error': 'Please type "DELETE" to confirm account deletion.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user_email = user.email
+        # Delete all associated OTP records from PostgreSQL database
+        PasswordResetOTP.objects.filter(email__iexact=user_email).delete()
+
+        # Permanently delete user record from PostgreSQL database
+        user.delete()
+
+        logger.info("User account %s permanently deleted from PostgreSQL database.", user_email)
+
+        return Response({
+            'message': 'Your account has been deleted successfully.'
+        }, status=status.HTTP_200_OK)
+
+

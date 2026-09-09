@@ -64,6 +64,22 @@ export const authService = {
     const res = await api.get('/auth/profile/');
     return res.data;
   },
+  updateProfile: async (data) => {
+    const res = await api.patch('/auth/profile/', data);
+    return res.data;
+  },
+  requestEmailChangeOTP: async (new_email) => {
+    const res = await api.post('/auth/profile/request-email-change/', { new_email });
+    return res.data;
+  },
+  verifyEmailChangeOTP: async (new_email, otp_code) => {
+    const res = await api.post('/auth/profile/verify-email-change/', { new_email, otp_code });
+    return res.data;
+  },
+  deleteAccount: async (payload) => {
+    const res = await api.delete('/auth/profile/delete-account/', { data: payload });
+    return res.data;
+  },
   logout: () => {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('access_token');

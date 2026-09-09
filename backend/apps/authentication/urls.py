@@ -3,6 +3,7 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     RegisterView, UserProfileView, UserViewSet,
     RequestPasswordResetOTPView, VerifyPasswordResetOTPView, ConfirmPasswordResetView,
+    RequestEmailChangeOTPView, VerifyEmailChangeOTPView, DeleteAccountView,
     GoogleOAuthView, GitHubOAuthView
 )
 
@@ -13,6 +14,11 @@ urlpatterns = [
     path('register/', RegisterView.as_view(), name='auth_register'),
     path('profile/', UserProfileView.as_view(), name='auth_profile'),
     
+    # Profile Email Change & Account Deletion Endpoints
+    path('profile/request-email-change/', RequestEmailChangeOTPView.as_view(), name='auth_request_email_change_otp'),
+    path('profile/verify-email-change/', VerifyEmailChangeOTPView.as_view(), name='auth_verify_email_change_otp'),
+    path('profile/delete-account/', DeleteAccountView.as_view(), name='auth_delete_account'),
+
     # OTP Password Reset Endpoints
     path('password-reset/request-otp/', RequestPasswordResetOTPView.as_view(), name='auth_request_otp'),
     path('password-reset/verify-otp/', VerifyPasswordResetOTPView.as_view(), name='auth_verify_otp'),
