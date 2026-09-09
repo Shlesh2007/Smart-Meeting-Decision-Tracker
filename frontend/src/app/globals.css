@@ -6,9 +6,35 @@ html, body {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  width: 100%;
-  overflow-x: hidden;
+  width: 100% !important;
+  max-width: 100vw !important;
+  overflow-x: hidden !important;
   -webkit-text-size-adjust: 100%;
+}
+
+/* Ensure all Ant Design inputs, tables, and popups fit mobile screen */
+.ant-picker-range, .ant-picker {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.ant-select {
+  max-width: 100% !important;
+}
+
+.ant-table-wrapper {
+  max-width: 100% !important;
+  overflow-x: auto !important;
+}
+
+.ant-card-body {
+  padding: 16px !important;
+}
+
+@media (min-width: 640px) {
+  .ant-card-body {
+    padding: 24px !important;
+  }
 }
 
 a, a:hover, a:focus, a:visited {
