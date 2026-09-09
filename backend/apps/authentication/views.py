@@ -99,7 +99,7 @@ class RequestPasswordResetOTPView(APIView):
         email_sent = False
         last_error = None
 
-        brevo_api_key = getattr(settings, 'EMAIL_HOST_PASSWORD', 'xsmtpsib-260e04f287433f4a6e660399174238bb6fd48d9dce10b0c52d16d0612fc5987d-j0V1f3fmP4l7KXl4')
+        brevo_api_key = getattr(settings, 'EMAIL_HOST_PASSWORD', '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')
         sender_email = getattr(settings, 'EMAIL_HOST_USER', 'shleshdarji317@gmail.com')
 
         try:
@@ -120,10 +120,16 @@ class RequestPasswordResetOTPView(APIView):
                 logger.info("OTP Email successfully delivered to %s via Brevo HTTPS API", user.email)
             else:
                 logger.warning("Brevo API returned %s: %s", resp.status_code, resp.text)
-                last_error = f"Brevo API ({resp.status_code}): {resp.text}"
+                api_error_detail = resp.text
+                try:
+                    err_json = resp.json()
+                    api_error_detail = err_json.get('message', resp.text)
+                except Exception:
+                    pass
+                last_error = f"Brevo API HTTP {resp.status_code}: {api_error_detail}"
         except Exception as api_err:
             logger.warning("Brevo API call failed: %s", str(api_err))
-            last_error = api_err
+            last_error = f"Brevo Network Error: {str(api_err)}"
 
         # 2. Secondary Fallback: Brevo Multi-Port SMTP Relay (587, 2525, 465)
         if not email_sent:
@@ -143,6 +149,7 @@ class RequestPasswordResetOTPView(APIView):
                     seen_ports.add(p)
                     unique_ports.append((p, tls, ssl))
 
+            smtp_errors = []
             for port, use_tls, use_ssl in unique_ports:
                 try:
                     connection = get_connection(
@@ -153,7 +160,7 @@ class RequestPasswordResetOTPView(APIView):
                         password=brevo_api_key,
                         use_tls=use_tls,
                         use_ssl=use_ssl,
-                        timeout=getattr(settings, 'EMAIL_TIMEOUT', 6),
+                        timeout=getattr(settings, 'EMAIL_TIMEOUT', 5),
                     )
                     mail = EmailMessage(
                         subject=subject,
@@ -167,7 +174,7 @@ class RequestPasswordResetOTPView(APIView):
                     logger.info("OTP Email successfully sent to %s via Brevo SMTP port %s", user.email, port)
                     break
                 except Exception as e:
-                    last_error = e
+                    smtp_errors.append(f"Port {port}: {str(e)}")
                     logger.warning("Brevo SMTP attempt to %s via port %s failed: %s", user.email, port, str(e))
 
         if not email_sent:
