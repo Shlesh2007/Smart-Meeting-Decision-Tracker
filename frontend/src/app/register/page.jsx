@@ -39,20 +39,20 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-[85vh] flex flex-col justify-center items-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center mb-6">
+    <div className="min-h-[85vh] flex flex-col justify-center items-center py-4 sm:py-12 px-0 sm:px-6 lg:px-8 w-full max-w-lg mx-auto">
+      <div className="w-full text-center mb-6 px-2">
         <div className="w-12 h-12 rounded-xl bg-blue-600 text-white flex items-center justify-center mx-auto text-2xl shadow-lg mb-3">
           <ThunderboltOutlined />
         </div>
-        <Title level={2} className="m-0 text-slate-900 dark:text-white tracking-tight">
+        <Title level={2} className="m-0 text-slate-900 dark:text-white tracking-tight text-xl sm:text-2xl">
           Create Your Account
         </Title>
-        <Text type="secondary" className="text-sm dark:text-slate-400">
+        <Text type="secondary" className="text-xs sm:text-sm dark:text-slate-400">
           Join your team to participate in meeting decisions & action tracking
         </Text>
       </div>
 
-      <Card className="w-full max-w-lg shadow-xs rounded-2xl border border-slate-200/80 dark:border-slate-700/80 dark:bg-slate-800">
+      <Card className="w-full shadow-xs rounded-2xl border border-slate-200/80 dark:border-slate-700/80 dark:bg-slate-800">
         <Form
           name="register_form"
           layout="vertical"
