@@ -1,11 +1,20 @@
 import axios from 'axios';
 
-const rawApiUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api').trim();
-let sanitizedUrl = rawApiUrl.replace(/\/+$/, '');
-if (!sanitizedUrl.endsWith('/api')) {
-  sanitizedUrl += '/api';
-}
-const API_URL = sanitizedUrl;
+const getApiBaseUrl = () => {
+  const envUrl = (process.env.NEXT_PUBLIC_API_URL || '').trim();
+  if (envUrl && envUrl.startsWith('http')) {
+    let sanitized = envUrl.replace(/\/+$/, '');
+    if (!sanitized.endsWith('/api')) sanitized += '/api';
+    return sanitized;
+  }
+  // When running on live Vercel/deployed host, fallback to Render live backend URL
+  if (typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && !window.location.hostname.includes('127.0.0.1')) {
+    return 'https://smart-meeting-tracker-backend.onrender.com/api';
+  }
+  return 'http://localhost:8000/api';
+};
+
+const API_URL = getApiBaseUrl();
 
 export const api = axios.create({
   baseURL: API_URL,
