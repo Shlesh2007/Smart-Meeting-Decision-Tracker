@@ -1,6 +1,11 @@
 import axios from 'axios';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
+const rawApiUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api').trim();
+let sanitizedUrl = rawApiUrl.replace(/\/+$/, '');
+if (!sanitizedUrl.endsWith('/api')) {
+  sanitizedUrl += '/api';
+}
+const API_URL = sanitizedUrl;
 
 export const api = axios.create({
   baseURL: API_URL,
@@ -9,9 +14,13 @@ export const api = axios.create({
   },
 });
 
-// Interceptor to inject JWT Access Token
+// Interceptor to inject JWT Access Token and sanitize relative endpoint URLs
 api.interceptors.request.use(
   (config) => {
+    // Ensure relative URL doesn't strip /api from baseURL
+    if (config.url && config.url.startsWith('/') && config.baseURL && config.baseURL.endsWith('/api')) {
+      config.url = config.url.substring(1);
+    }
     if (typeof window !== 'undefined') {
       const token = localStorage.getItem('access_token');
       if (token) {
