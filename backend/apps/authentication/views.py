@@ -103,9 +103,14 @@ class RequestPasswordResetOTPView(APIView):
             )
         except Exception as e:
             logger.error("Failed to send OTP email to %s: %s", user.email, str(e))
-            return Response({
-                'error': f'Failed to send OTP email: {str(e)}. Please check backend EMAIL_HOST_PASSWORD App Password.'
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            err_str = str(e)
+            if "535" in err_str or "Username and Password not accepted" in err_str:
+                user_msg = "Gmail Authentication Failed: Please check your 16-character Gmail App Password in Render Environment Variables."
+            elif "timed out" in err_str.lower() or "timeout" in err_str.lower():
+                user_msg = "SMTP Connection Timed Out: Please try setting EMAIL_PORT=465 in Render Environment Variables."
+            else:
+                user_msg = f"Failed to send OTP email: {err_str}"
+            return Response({'error': user_msg}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return Response({
             'message': f'6-digit OTP code sent to {user.email}. Please check your email inbox.',
