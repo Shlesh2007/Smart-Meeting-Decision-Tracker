@@ -11,7 +11,7 @@ import {
   Input, Select, DatePicker, Button, Table, Card, Tag, Avatar, Tooltip, Pagination
 } from 'antd';
 import {
-  SearchOutlined, PlusOutlined, UserOutlined, ReloadOutlined
+  SearchOutlined, PlusOutlined, UserOutlined, ReloadOutlined, CalendarOutlined
 } from '@ant-design/icons';
 import { format } from 'date-fns';
 
@@ -218,6 +218,7 @@ export default function MeetingsPage() {
         <EmptyState
           title="No Meetings Found"
           description="Try adjusting your search filters or schedule a new meeting."
+          icon={<CalendarOutlined />}
           actionText="Create Meeting"
           onAction={() => router.push('/meetings/new')}
         />
