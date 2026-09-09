@@ -99,7 +99,7 @@ export default function LoginPage() {
   const handleGoogleOAuth = () => {
     setOauthLoading('google');
     const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '1051715789667-m86kur6hnaciip8cp4ghoq08eeso6et3.apps.googleusercontent.com';
-    const redirectUri = encodeURIComponent(window.location.origin);
+    const redirectUri = encodeURIComponent(`${window.location.origin}/login`);
     const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&scope=email%20profile&prompt=select_account`;
     window.location.href = googleAuthUrl;
   };
