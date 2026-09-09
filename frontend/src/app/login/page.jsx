@@ -238,15 +238,17 @@ export default function LoginPage() {
         </Form>
 
         {/* OAuth 2.0 Buttons */}
-        <Divider className="my-4 text-xs text-gray-400">Or continue with</Divider>
+        <Divider style={{ margin: '16px 0', fontSize: '12px', color: '#94a3b8' }}>
+          <span style={{ whiteSpace: 'nowrap' }}>Or continue with</span>
+        </Divider>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mb-2">
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', width: '100%', marginBottom: '12px' }}>
           <Button
             icon={<GoogleOutlined className="text-red-500" />}
             onClick={handleGoogleOAuth}
             loading={oauthLoading === 'google'}
-            block
-            className="flex items-center justify-center font-medium border-gray-200 dark:border-slate-700 hover:border-gray-300 rounded-xl"
+            style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '12px' }}
+            className="font-medium border-gray-200 dark:border-slate-700 hover:border-gray-300"
           >
             Google
           </Button>
@@ -254,8 +256,8 @@ export default function LoginPage() {
             icon={<GithubOutlined className="text-gray-800 dark:text-white" />}
             onClick={handleGithubOAuth}
             loading={oauthLoading === 'github'}
-            block
-            className="flex items-center justify-center font-medium border-gray-200 dark:border-slate-700 hover:border-gray-300 rounded-xl"
+            style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '12px' }}
+            className="font-medium border-gray-200 dark:border-slate-700 hover:border-gray-300"
           >
             GitHub
           </Button>

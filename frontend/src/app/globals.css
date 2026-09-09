@@ -18,12 +18,15 @@ main {
   box-sizing: border-box !important;
 }
 
-/* Ensure typography spans, headers, and text elements wrap on mobile */
-.ant-typography, span, p, h1, h2, h3, h4, h5, h6 {
+/* Ensure typography spans, headers, and text elements wrap gracefully on mobile */
+.ant-typography, p, h1, h2, h3, h4, h5, h6 {
   max-width: 100% !important;
   overflow-wrap: break-word !important;
-  word-break: break-word !important;
-  white-space: normal;
+}
+
+/* Ensure divider text and button text stay on a single line */
+.ant-divider-inner-text, .ant-btn {
+  white-space: nowrap !important;
 }
 
 /* Prevent any inner element from forcing card expansion or overflowing right */
