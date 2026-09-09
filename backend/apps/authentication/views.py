@@ -71,7 +71,9 @@ class RequestPasswordResetOTPView(APIView):
 
         user = User.objects.filter(email__iexact=account).first() or User.objects.filter(username__iexact=account).first()
         if not user:
-            return Response({'error': 'No registered account found with that email or username.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({
+                'error': f'No registered account found with email/username "{account}". Please Sign Up first to create your account on the live database.'
+            }, status=status.HTTP_404_NOT_FOUND)
 
         # Generate 6-digit random OTP
         otp_code = f"{random.randint(100000, 999999)}"

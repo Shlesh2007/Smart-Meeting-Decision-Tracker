@@ -142,14 +142,14 @@ STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Email Configuration (SMTP backend if EMAIL_HOST_PASSWORD is set, else console fallback)
+# Email Configuration (Brevo / Sendinblue SMTP or custom SMTP)
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'shleshdarji317@gmail.com').strip()
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '').replace(' ', '').strip()
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', 'xsmtpsib-260e04f287433f4a6e660399174238bb6fd48d9dce10b0c52d16d0612fc5987d-j0V1f3fmP4l7KXl4').replace(' ', '').strip()
 EMAIL_TIMEOUT = int(os.environ.get('EMAIL_TIMEOUT', 10))  # 10 second socket timeout
 
 if EMAIL_HOST_PASSWORD:
     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-    EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com').strip()
+    EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp-relay.brevo.com').strip()
     EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
     if EMAIL_PORT == 465:
         EMAIL_USE_TLS = False
@@ -159,7 +159,7 @@ if EMAIL_HOST_PASSWORD:
         EMAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL', 'False').lower() in ('true', '1', 't')
 else:
     EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend')
-    EMAIL_HOST = 'smtp.gmail.com'
+    EMAIL_HOST = 'smtp-relay.brevo.com'
     EMAIL_PORT = 587
     EMAIL_USE_TLS = True
     EMAIL_USE_SSL = False
