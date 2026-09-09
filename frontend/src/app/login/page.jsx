@@ -43,15 +43,22 @@ export default function LoginPage() {
     }
   };
 
+  const processedOAuthRef = React.useRef(false);
+
   // Auto-handle OAuth Callbacks on Page Load
   React.useEffect(() => {
     if (typeof window === 'undefined') return;
+    if (processedOAuthRef.current) return;
+
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get('code');
     const hash = window.location.hash;
 
     if (code) {
-      // GitHub Code Callback
+      processedOAuthRef.current = true;
+      // Strip single-use code from URL immediately to prevent duplicate code submissions on re-renders
+      window.history.replaceState({}, document.title, window.location.pathname);
+
       setOauthLoading('github');
       authService.loginWithGithub({ code })
         .then(async (data) => {
@@ -60,11 +67,15 @@ export default function LoginPage() {
           router.push('/dashboard');
         })
         .catch((err) => {
-          message.error('GitHub authentication failed.');
+          const errMsg = err.response?.data?.error || 'GitHub authentication failed.';
+          message.error(errMsg);
           setOauthLoading(null);
         });
     } else if (hash && hash.includes('access_token')) {
-      // Google Access Token Callback
+      processedOAuthRef.current = true;
+      // Strip access_token hash from URL immediately to prevent duplicate submissions
+      window.history.replaceState({}, document.title, window.location.pathname);
+
       const hashParams = new URLSearchParams(hash.replace('#', '?'));
       const token = hashParams.get('access_token') || hashParams.get('id_token');
       if (token) {
@@ -76,7 +87,8 @@ export default function LoginPage() {
             router.push('/dashboard');
           })
           .catch((err) => {
-            message.error('Google authentication failed.');
+            const errMsg = err.response?.data?.error || 'Google authentication failed.';
+            message.error(errMsg);
             setOauthLoading(null);
           });
       }

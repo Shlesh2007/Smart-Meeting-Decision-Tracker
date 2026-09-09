@@ -1,11 +1,28 @@
 from django.contrib import admin
 from django.urls import path, include
+from django.http import JsonResponse
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
 
+def api_root_health_check(request):
+    return JsonResponse({
+        'status': 'online',
+        'app': 'Smart Meeting Decision Tracker API',
+        'message': 'API backend is running smoothly on Render!',
+        'endpoints': [
+            '/api/auth/token/',
+            '/api/auth/profile/',
+            '/api/meetings/',
+            '/api/actions/',
+            '/api/analytics/dashboard/'
+        ]
+    })
+
 urlpatterns = [
+    path('', api_root_health_check),
+    path('api/', api_root_health_check),
     path('admin/', admin.site.urls),
     
     # Auth endpoints

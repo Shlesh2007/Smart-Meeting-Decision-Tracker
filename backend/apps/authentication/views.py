@@ -188,14 +188,24 @@ class GoogleOAuthView(APIView):
             if not credential and not email:
                 return Response({'error': 'Google credential or token is required.'}, status=status.HTTP_400_BAD_REQUEST)
 
-            # In production, verify Google token using Google API endpoint
+            # Verify Google token using userinfo endpoint (for access_token) or tokeninfo endpoint (for id_token)
             if credential and not email:
                 try:
-                    resp = requests.get(f'https://oauth2.googleapis.com/tokeninfo?id_token={credential}', timeout=5)
-                    if resp.status_code == 200:
-                        data = resp.json()
+                    userinfo_resp = requests.get(
+                        'https://www.googleapis.com/oauth2/v3/userinfo',
+                        headers={'Authorization': f'Bearer {credential}'},
+                        timeout=5
+                    )
+                    if userinfo_resp.status_code == 200:
+                        data = userinfo_resp.json()
                         email = data.get('email')
-                        name = data.get('name', name)
+                        name = data.get('name') or f"{data.get('given_name', '')} {data.get('family_name', '')}".strip() or name
+                    else:
+                        tokeninfo_resp = requests.get(f'https://oauth2.googleapis.com/tokeninfo?id_token={credential}', timeout=5)
+                        if tokeninfo_resp.status_code == 200:
+                            data = tokeninfo_resp.json()
+                            email = data.get('email')
+                            name = data.get('name', name)
                 except Exception as e:
                     logger.warning("Google token verification warning: %s", str(e))
 
@@ -210,7 +220,6 @@ class GoogleOAuthView(APIView):
             user = User.objects.filter(email__iexact=email).first()
 
             if not user:
-                # Ensure unique username
                 base_username = username_candidate
                 counter = 1
                 while User.objects.filter(username=username_candidate).exists():
