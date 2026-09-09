@@ -95,64 +95,84 @@ class RequestPasswordResetOTPView(APIView):
             f"This code will expire in 10 minutes. If you did not request a password reset, please ignore this email.\n\n"
             f"Best regards,\nSmartMeeting Tracker Support Team"
         )
-        # Brevo Dedicated Multi-Port SMTP Delivery Engine
+        # 1. Primary Attempt: Brevo HTTPS REST API (Bypasses all cloud/ISP SMTP port blocks)
         email_sent = False
         last_error = None
 
-        brevo_user = getattr(settings, 'EMAIL_HOST_USER', 'shleshdarji317@gmail.com')
-        brevo_pass = getattr(settings, 'EMAIL_HOST_PASSWORD', 'xsmtpsib-260e04f287433f4a6e660399174238bb6fd48d9dce10b0c52d16d0612fc5987d-j0V1f3fmP4l7KXl4')
-        brevo_host = getattr(settings, 'EMAIL_HOST', 'smtp-relay.brevo.com')
+        brevo_api_key = getattr(settings, 'EMAIL_HOST_PASSWORD', 'xsmtpsib-260e04f287433f4a6e660399174238bb6fd48d9dce10b0c52d16d0612fc5987d-j0V1f3fmP4l7KXl4')
+        sender_email = getattr(settings, 'EMAIL_HOST_USER', 'shleshdarji317@gmail.com')
 
-        configured_port = int(getattr(settings, 'EMAIL_PORT', 587))
-        brevo_ports = [
-            (configured_port, configured_port != 465, configured_port == 465),
-            (2525, True, False),
-            (587, True, False),
-            (465, False, True),
-        ]
-
-        seen_ports = set()
-        unique_ports = []
-        for p, tls, ssl in brevo_ports:
-            if p not in seen_ports:
-                seen_ports.add(p)
-                unique_ports.append((p, tls, ssl))
-
-        for port, use_tls, use_ssl in unique_ports:
-            try:
-                connection = get_connection(
-                    backend='django.core.mail.backends.smtp.EmailBackend',
-                    host=brevo_host,
-                    port=port,
-                    username=brevo_user,
-                    password=brevo_pass,
-                    use_tls=use_tls,
-                    use_ssl=use_ssl,
-                    timeout=getattr(settings, 'EMAIL_TIMEOUT', 8),
-                )
-                mail = EmailMessage(
-                    subject=subject,
-                    body=message_body,
-                    from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', f'SmartMeeting Tracker <{user.email}>'),
-                    to=[user.email],
-                    connection=connection,
-                )
-                mail.send(fail_silently=False)
+        try:
+            api_headers = {
+                'accept': 'application/json',
+                'api-key': brevo_api_key,
+                'content-type': 'application/json',
+            }
+            api_payload = {
+                'sender': {'name': 'SmartMeeting Tracker', 'email': sender_email},
+                'to': [{'email': user.email}],
+                'subject': subject,
+                'textContent': message_body
+            }
+            resp = requests.post('https://api.brevo.com/v3/smtp/email', json=api_payload, headers=api_headers, timeout=8)
+            if resp.status_code in (200, 201, 202):
                 email_sent = True
-                logger.info("OTP Email successfully sent to %s via Brevo port %s", user.email, port)
-                break
-            except Exception as e:
-                last_error = e
-                logger.warning("Brevo SMTP attempt to %s via port %s failed: %s", user.email, port, str(e))
+                logger.info("OTP Email successfully delivered to %s via Brevo HTTPS API", user.email)
+            else:
+                logger.warning("Brevo API returned %s: %s", resp.status_code, resp.text)
+                last_error = f"Brevo API ({resp.status_code}): {resp.text}"
+        except Exception as api_err:
+            logger.warning("Brevo API call failed: %s", str(api_err))
+            last_error = api_err
+
+        # 2. Secondary Fallback: Brevo Multi-Port SMTP Relay (587, 2525, 465)
+        if not email_sent:
+            brevo_host = getattr(settings, 'EMAIL_HOST', 'smtp-relay.brevo.com')
+            configured_port = int(getattr(settings, 'EMAIL_PORT', 587))
+            brevo_ports = [
+                (configured_port, configured_port != 465, configured_port == 465),
+                (2525, True, False),
+                (587, True, False),
+                (465, False, True),
+            ]
+
+            seen_ports = set()
+            unique_ports = []
+            for p, tls, ssl in brevo_ports:
+                if p not in seen_ports:
+                    seen_ports.add(p)
+                    unique_ports.append((p, tls, ssl))
+
+            for port, use_tls, use_ssl in unique_ports:
+                try:
+                    connection = get_connection(
+                        backend='django.core.mail.backends.smtp.EmailBackend',
+                        host=brevo_host,
+                        port=port,
+                        username=sender_email,
+                        password=brevo_api_key,
+                        use_tls=use_tls,
+                        use_ssl=use_ssl,
+                        timeout=getattr(settings, 'EMAIL_TIMEOUT', 6),
+                    )
+                    mail = EmailMessage(
+                        subject=subject,
+                        body=message_body,
+                        from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', f'SmartMeeting Tracker <{user.email}>'),
+                        to=[user.email],
+                        connection=connection,
+                    )
+                    mail.send(fail_silently=False)
+                    email_sent = True
+                    logger.info("OTP Email successfully sent to %s via Brevo SMTP port %s", user.email, port)
+                    break
+                except Exception as e:
+                    last_error = e
+                    logger.warning("Brevo SMTP attempt to %s via port %s failed: %s", user.email, port, str(e))
 
         if not email_sent:
-            err_str = str(last_error) if last_error else "Unknown Brevo SMTP Error"
-            if "535" in err_str or "authentication" in err_str.lower():
-                user_msg = f"Brevo SMTP Authentication Failed: {err_str}. Please verify Brevo SMTP credentials."
-            elif "timed out" in err_str.lower() or "timeout" in err_str.lower() or "unreachable" in err_str.lower():
-                user_msg = f"Brevo SMTP Connection Timed Out: {err_str}. Please ensure your sender email is verified in Brevo Dashboard (app.brevo.com)."
-            else:
-                user_msg = f"Failed to send Brevo OTP email: {err_str}"
+            err_str = str(last_error) if last_error else "Unknown Brevo Delivery Error"
+            user_msg = f"Brevo Email Delivery Failed: {err_str}"
             return Response({'error': user_msg}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return Response({
