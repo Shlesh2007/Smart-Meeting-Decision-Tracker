@@ -18,6 +18,14 @@ main {
   box-sizing: border-box !important;
 }
 
+/* Ensure typography spans, headers, and text elements wrap on mobile */
+.ant-typography, span, p, h1, h2, h3, h4, h5, h6 {
+  max-width: 100% !important;
+  overflow-wrap: break-word !important;
+  word-break: break-word !important;
+  white-space: normal;
+}
+
 /* Prevent any inner element from forcing card expansion or overflowing right */
 .ant-card, .ant-card-body, .ant-form, .ant-form-item, .ant-input, .ant-input-affix-wrapper, .ant-btn {
   max-width: 100% !important;

@@ -44,12 +44,12 @@ export default function RegisterPage() {
         <div className="w-12 h-12 rounded-xl bg-blue-600 text-white flex items-center justify-center mx-auto text-2xl shadow-lg mb-3">
           <ThunderboltOutlined />
         </div>
-        <Title level={2} className="m-0 text-slate-900 dark:text-white tracking-tight text-xl sm:text-2xl">
+        <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight m-0">
           Create Your Account
-        </Title>
-        <Text type="secondary" className="text-xs sm:text-sm dark:text-slate-400">
+        </h1>
+        <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-xs mx-auto mt-1.5 m-0 leading-relaxed">
           Join your team to participate in meeting decisions & action tracking
-        </Text>
+        </p>
       </div>
 
       <Card className="w-full max-w-full shadow-xs rounded-2xl border border-slate-200/80 dark:border-slate-700/80 dark:bg-slate-800" styles={{ body: { padding: '16px' } }}>
