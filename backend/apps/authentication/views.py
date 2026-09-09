@@ -95,21 +95,25 @@ class RequestPasswordResetOTPView(APIView):
             f"This code will expire in 10 minutes. If you did not request a password reset, please ignore this email.\n\n"
             f"Best regards,\nSmartMeeting Tracker Support Team"
         )
-        # Multi-Port Resilient Email Delivery (Tries configured port, 2525, 465, 587)
+        # Brevo Dedicated Multi-Port SMTP Delivery Engine
         email_sent = False
         last_error = None
 
+        brevo_user = getattr(settings, 'EMAIL_HOST_USER', 'shleshdarji317@gmail.com')
+        brevo_pass = getattr(settings, 'EMAIL_HOST_PASSWORD', 'xsmtpsib-260e04f287433f4a6e660399174238bb6fd48d9dce10b0c52d16d0612fc5987d-j0V1f3fmP4l7KXl4')
+        brevo_host = getattr(settings, 'EMAIL_HOST', 'smtp-relay.brevo.com')
+
         configured_port = int(getattr(settings, 'EMAIL_PORT', 587))
-        ports_to_try = [
+        brevo_ports = [
             (configured_port, configured_port != 465, configured_port == 465),
             (2525, True, False),
-            (465, False, True),
             (587, True, False),
+            (465, False, True),
         ]
 
         seen_ports = set()
         unique_ports = []
-        for p, tls, ssl in ports_to_try:
+        for p, tls, ssl in brevo_ports:
             if p not in seen_ports:
                 seen_ports.add(p)
                 unique_ports.append((p, tls, ssl))
@@ -118,13 +122,13 @@ class RequestPasswordResetOTPView(APIView):
             try:
                 connection = get_connection(
                     backend='django.core.mail.backends.smtp.EmailBackend',
-                    host=getattr(settings, 'EMAIL_HOST', 'smtp-relay.brevo.com'),
+                    host=brevo_host,
                     port=port,
-                    username=getattr(settings, 'EMAIL_HOST_USER', ''),
-                    password=getattr(settings, 'EMAIL_HOST_PASSWORD', ''),
+                    username=brevo_user,
+                    password=brevo_pass,
                     use_tls=use_tls,
                     use_ssl=use_ssl,
-                    timeout=getattr(settings, 'EMAIL_TIMEOUT', 10),
+                    timeout=getattr(settings, 'EMAIL_TIMEOUT', 8),
                 )
                 mail = EmailMessage(
                     subject=subject,
@@ -135,20 +139,20 @@ class RequestPasswordResetOTPView(APIView):
                 )
                 mail.send(fail_silently=False)
                 email_sent = True
-                logger.info("OTP Email successfully sent to %s via port %s", user.email, port)
+                logger.info("OTP Email successfully sent to %s via Brevo port %s", user.email, port)
                 break
             except Exception as e:
                 last_error = e
-                logger.warning("Attempt to send OTP email to %s via port %s failed: %s", user.email, port, str(e))
+                logger.warning("Brevo SMTP attempt to %s via port %s failed: %s", user.email, port, str(e))
 
         if not email_sent:
-            err_str = str(last_error) if last_error else "Unknown SMTP Error"
+            err_str = str(last_error) if last_error else "Unknown Brevo SMTP Error"
             if "535" in err_str or "authentication" in err_str.lower():
-                user_msg = f"SMTP Authentication Failed: {err_str}. Please check EMAIL_HOST_USER and EMAIL_HOST_PASSWORD."
+                user_msg = f"Brevo SMTP Authentication Failed: {err_str}. Please verify Brevo SMTP credentials."
             elif "timed out" in err_str.lower() or "timeout" in err_str.lower() or "unreachable" in err_str.lower():
-                user_msg = f"SMTP Connection Timed Out across ports: {err_str}. Please verify Brevo SMTP host connectivity."
+                user_msg = f"Brevo SMTP Connection Timed Out: {err_str}. Please ensure your sender email is verified in Brevo Dashboard (app.brevo.com)."
             else:
-                user_msg = f"Failed to send OTP email: {err_str}"
+                user_msg = f"Failed to send Brevo OTP email: {err_str}"
             return Response({'error': user_msg}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return Response({
