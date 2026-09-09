@@ -62,26 +62,26 @@ export default function DashboardPage() {
     <div className="space-y-6">
       
       {/* Executive Welcome Hero Header */}
-      <div className="bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 rounded-2xl p-6 shadow-xs flex flex-col md:flex-row justify-between items-start md:items-center gap-4 transition-all">
+      <div className="bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 rounded-2xl p-4 sm:p-6 shadow-xs flex flex-col md:flex-row justify-between items-start md:items-center gap-4 transition-all">
         <div className="space-y-1">
           <div className="flex items-center space-x-2">
-            <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight m-0">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight m-0">
               Welcome back, {user?.first_name || user?.username}!
             </h1>
-            <span className="text-2xl">👋</span>
+            <span className="text-xl sm:text-2xl">👋</span>
           </div>
-          <p className="text-slate-500 dark:text-slate-400 text-sm m-0">
+          <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm m-0">
             Here is your smart meeting overview and action item tracking summary.
           </p>
         </div>
-        <div className="flex items-center space-x-3">
-          <Link href="/meetings/new" className="no-underline">
-            <Button type="primary" size="large" icon={<PlusOutlined />} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl border-none shadow-xs flex items-center">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full md:w-auto">
+          <Link href="/meetings/new" className="no-underline w-full sm:w-auto">
+            <Button type="primary" size="large" icon={<PlusOutlined />} className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl border-none shadow-xs flex items-center justify-center">
               Schedule Meeting
             </Button>
           </Link>
-          <Link href="/my-actions" className="no-underline">
-            <Button size="large" className="bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-100 font-semibold rounded-xl border-slate-200 dark:border-slate-600 flex items-center">
+          <Link href="/my-actions" className="no-underline w-full sm:w-auto">
+            <Button size="large" className="w-full sm:w-auto bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-100 font-semibold rounded-xl border-slate-200 dark:border-slate-600 flex items-center justify-center">
               My Action Items
             </Button>
           </Link>
@@ -95,16 +95,16 @@ export default function DashboardPage() {
           showIcon
           icon={<ExclamationCircleOutlined className="text-rose-500 text-lg" />}
           message={
-            <div className="flex justify-between items-center w-full">
-              <span className="font-semibold text-slate-800 dark:text-slate-200">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 w-full">
+              <span className="font-semibold text-xs sm:text-sm text-slate-800 dark:text-slate-200">
                 ⚠️ Attention: You have {metrics.overdue_actions} overdue action item(s) requiring immediate attention!
               </span>
-              <Link href="/my-actions?tab=OVERDUE" className="text-blue-600 dark:text-blue-400 font-bold hover:underline text-sm ml-4 no-underline">
+              <Link href="/my-actions?tab=OVERDUE" className="text-blue-600 dark:text-blue-400 font-bold hover:underline text-xs sm:text-sm no-underline whitespace-nowrap">
                 View Overdue Actions <ArrowRightOutlined />
               </Link>
             </div>
           }
-          className="border-rose-200 bg-rose-50/70 dark:bg-rose-950/30 dark:border-rose-900/50 rounded-2xl"
+          className="border-rose-200 bg-rose-50/70 dark:bg-rose-950/30 dark:border-rose-900/50 rounded-2xl p-3 sm:p-4"
         />
       )}
 

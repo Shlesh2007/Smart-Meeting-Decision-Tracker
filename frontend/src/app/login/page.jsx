@@ -18,6 +18,7 @@ export default function LoginPage() {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [oauthLoading, setOauthLoading] = useState(null);
+  const passwordInputRef = React.useRef(null);
 
   // OTP Password Reset Wizard States
   const [isForgotModalOpen, setIsForgotModalOpen] = useState(false);
@@ -206,7 +207,14 @@ export default function LoginPage() {
               label="Username"
               rules={[{ required: true, message: 'Please enter your username!' }]}
             >
-              <Input prefix={<UserOutlined className="text-gray-400" />} placeholder="e.g. admin or john_doe" />
+              <Input
+                prefix={<UserOutlined className="text-gray-400" />}
+                placeholder="e.g. admin or john_doe"
+                onPressEnter={(e) => {
+                  e.preventDefault();
+                  passwordInputRef.current?.focus();
+                }}
+              />
             </Form.Item>
 
             <Form.Item
@@ -215,7 +223,11 @@ export default function LoginPage() {
               rules={[{ required: true, message: 'Please enter your password!' }]}
               className="mb-1"
             >
-              <Input.Password prefix={<LockOutlined className="text-gray-400" />} placeholder="••••••••" />
+              <Input.Password
+                ref={passwordInputRef}
+                prefix={<LockOutlined className="text-gray-400" />}
+                placeholder="••••••••"
+              />
             </Form.Item>
 
             <div className="text-right mb-5">
