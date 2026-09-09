@@ -29,26 +29,8 @@ main {
   white-space: nowrap !important;
 }
 
-/* Prevent any inner element from forcing card expansion or overflowing right */
-.ant-card, .ant-card-body, .ant-form, .ant-form-item, .ant-input, .ant-input-affix-wrapper, .ant-btn {
-  max-width: 100% !important;
-  box-sizing: border-box !important;
-}
-
-.ant-select, .ant-select-single, .ant-select-selector {
-  max-width: 100% !important;
-  overflow: hidden !important;
-}
-
-.ant-select-selection-item, .ant-select-selection-placeholder {
-  white-space: nowrap !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-}
-
-/* Ensure mobile cards sit centered with symmetric bounds */
+/* Ensure cards stay centered horizontally */
 .ant-card {
-  width: 100% !important;
   margin-left: auto !important;
   margin-right: auto !important;
 }
