@@ -37,10 +37,11 @@ export const Navbar = () => {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Notification state
+  // Notification state & controlled popover visibility
   const [notifications, setNotifications] = useState([]);
   const [hasUnread, setHasUnread] = useState(true);
   const [loadingNotifications, setLoadingNotifications] = useState(false);
+  const [popoverOpen, setPopoverOpen] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -153,6 +154,7 @@ export const Navbar = () => {
               key={n.id}
               onClick={() => {
                 setHasUnread(false);
+                setPopoverOpen(false);
                 router.push(n.link);
               }}
               className="p-2.5 rounded-lg bg-slate-50/80 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 hover:border-blue-300 dark:hover:border-blue-800 transition-all cursor-pointer flex items-start space-x-2.5 group"
@@ -173,9 +175,16 @@ export const Navbar = () => {
 
       <div className="pt-2 border-t border-slate-100 dark:border-slate-800 text-[10px] text-slate-400 flex justify-between items-center">
         <span>SmartMeeting Alerts</span>
-        <Link href="/my-actions" className="no-underline text-blue-600 dark:text-blue-400 font-bold hover:underline">
+        <button
+          type="button"
+          onClick={() => {
+            setPopoverOpen(false);
+            router.push('/my-actions');
+          }}
+          className="no-underline text-blue-600 dark:text-blue-400 font-bold hover:underline bg-transparent border-0 cursor-pointer text-[10px]"
+        >
           View Actions →
-        </Link>
+        </button>
       </div>
     </div>
   );
@@ -331,6 +340,8 @@ export const Navbar = () => {
               trigger="click"
               placement="bottomRight"
               arrow={false}
+              open={popoverOpen}
+              onOpenChange={(newOpen) => setPopoverOpen(newOpen)}
             >
               <div className="relative cursor-pointer p-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
                 <BellOutlined className="text-base" />
