@@ -330,11 +330,20 @@ erDiagram
 - Updating an email address cannot be executed via direct profile updates (`PATCH /api/auth/profile/`).
 - The system enforces a 2-step verification process where the 6-digit code is dispatched directly to the **new requested email address** to confirm ownership before updating `User.email`.
 
-### 5. Permissions & Auth Guard
-- **Authentication Guard**: Unauthenticated users trying to access protected routes (`/dashboard`, `/meetings`, `/actions`, etc.) are automatically redirected to `/login` via the frontend `AuthContext`.
-- **Role Permissions**:
-  - `ADMIN`: Full administrative control over all meetings, teams, user accounts, and system configuration.
-  - `MEMBER`: Can view assigned meetings, participate in discussions, record decision updates, and complete assigned action items.
+### 5. Role-Based Access Control (RBAC) System
+The application enforces a strict 4-tier role hierarchy across backend API permissions, DRF object-level checks, and frontend UI routing:
+
+```
+OWNER (Primary Organization Owner)
+  ├── ADMIN (System Administrator)
+  ├── MANAGER (Team / Meeting Lead)
+  └── MEMBER (Regular Member / Participant)
+```
+
+- **`OWNER`**: Full organization control, user role management (assign `ADMIN`, `MANAGER`, `MEMBER`), delete users, view all meetings, action items, and analytics. Ownership protection prevents self-demotion if single owner and blocks `ADMIN` users from modifying or deleting `OWNER` accounts. Bootstrapped safely via `python manage.py create_owner`.
+- **`ADMIN`**: Manage allowed users (`MANAGER`, `MEMBER`), create/manage meetings & teams, view org-wide analytics & action items. Cannot modify or delete `OWNER`, cannot assign `OWNER` role, or promote self/others to `OWNER`.
+- **`MANAGER`**: Manage team meetings, assign action items to team members, view team analytics & team meetings. Cannot access org settings or modify `ADMIN`/`OWNER` users.
+- **`MEMBER`**: View participating meetings, update status on **own** assigned action items, view personal dashboard. Public signups automatically assign `MEMBER` role after email OTP verification. Cannot modify other users' action items or sensitive fields.
 
 ---
 
