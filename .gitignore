@@ -1,29 +1,25 @@
-# Environment & Secrets
+# Environment Variables (Secrets)
 .env
 .env.local
-*.env*
-
-# Node / Next.js
-node_modules/
-.next/
-out/
-build/
-dist/
+.env.development.local
+.env.test.local
+.env.production.local
 
 # Python / Django
 __pycache__/
 *.py[cod]
 *$py.class
-*.sqlite3
-*.db
-venv/
+*.so
+.Python
 env/
-.venv/
-staticfiles/
-media/
+venv/
+ENV/
+db.sqlite3
+*.log
 
-# System & IDE
+# Node / Next.js
+node_modules/
+.next/
+out/
+dist/
 .DS_Store
-Thumbs.db
-.vscode/
-.idea/

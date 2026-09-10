@@ -3,7 +3,7 @@ import { Inter } from 'next/font/google';
 import { AntdRegistry } from '@ant-design/nextjs-registry';
 import { ThemeProvider } from '../context/ThemeContext.jsx';
 import { AuthProvider } from '../context/AuthContext.jsx';
-import { Navbar } from '../components/Navbar.jsx';
+import { MainLayout } from '../components/MainLayout.jsx';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -31,14 +31,11 @@ export default function RootLayout({ children }) {
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
       </head>
-      <body className={`${inter.className} bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 min-h-screen flex flex-col antialiased`}>
+      <body className={`${inter.className} bg-slate-50 text-slate-900 min-h-screen flex flex-col antialiased`}>
         <AntdRegistry>
           <ThemeProvider>
             <AuthProvider>
-              <Navbar />
-              <main className="flex-1 lg:pl-64 transition-all w-full max-w-[1600px] mx-auto p-3 sm:p-6 overflow-x-hidden">
-                {children}
-              </main>
+              <MainLayout>{children}</MainLayout>
             </AuthProvider>
           </ThemeProvider>
         </AntdRegistry>

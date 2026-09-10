@@ -39,7 +39,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <div style={{ minHeight: '85vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', width: '100%', padding: '16px 12px', boxSizing: 'border-box' }}>
+    <div style={{ minHeight: 'calc(100vh - 4rem)', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', width: '100%', padding: '16px 12px', boxSizing: 'border-box' }}>
       <div style={{ width: '100%', textAlign: 'center', marginBottom: '24px' }}>
         <div className="w-12 h-12 rounded-xl bg-blue-600 text-white flex items-center justify-center mx-auto text-2xl shadow-lg mb-3">
           <ThunderboltOutlined />

@@ -161,7 +161,7 @@ class RequestPasswordResetOTPView(APIView):
         email_sent = False
         last_error = None
 
-        brevo_api_key = getattr(settings, 'EMAIL_HOST_PASSWORD', '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')
+        brevo_api_key = getattr(settings, 'EMAIL_HOST_PASSWORD', '')
         sender_email = getattr(settings, 'EMAIL_HOST_USER', 'shleshdarji317@gmail.com')
 
         try:
@@ -599,7 +599,7 @@ class RequestEmailChangeOTPView(APIView):
         email_sent = False
         last_error = None
 
-        brevo_api_key = getattr(settings, 'EMAIL_HOST_PASSWORD', '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')
+        brevo_api_key = getattr(settings, 'EMAIL_HOST_PASSWORD', '')
         sender_email = getattr(settings, 'EMAIL_HOST_USER', 'shleshdarji317@gmail.com')
 
         try:

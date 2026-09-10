@@ -70,21 +70,32 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'smart_meeting_tracker.wsgi.application'
 
-# Database Configuration (Render Cloud PostgreSQL in production, SQLite for local dev)
-IS_RENDER = 'RENDER' in os.environ or 'RENDER_SERVICE_ID' in os.environ
-DATABASE_URL = os.environ.get('DATABASE_URL')
+# Database Configuration (Render Cloud PostgreSQL in production when DATABASE_URL is set, SQLite for local dev)
+DATABASE_URL = os.environ.get('DATABASE_URL', '').strip()
 
-if IS_RENDER and DATABASE_URL:
+def is_valid_database_url(url):
+    if not url:
+        return False
+    if '@host:' in url or '@host/' in url or url.endswith('@host') or url == 'host':
+        return False
+    try:
+        host = url.split('@')[-1].split('/')[0].split(':')[0]
+        # Internal Render hostnames like 'dpg-dagfuvf40ujc73f1nh1g-a' (no dot) are internal to Render cloud network only
+        if host and '.' not in host and host != 'localhost':
+            return False
+    except Exception:
+        pass
+    return True
+
+if is_valid_database_url(DATABASE_URL):
     DATABASES = {
-        'default': dj_database_url.config(
-            default=DATABASE_URL,
+        'default': dj_database_url.parse(
+            DATABASE_URL,
             conn_max_age=600,
             conn_health_checks=True,
-            ssl_require=True,
         )
     }
 else:
-    # Safe 100% Local SQLite Engine — completely ignores any OS PGHOST or DATABASE_URL variables
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
@@ -156,7 +167,7 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp-relay.brevo.com').strip()
 EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'shleshdarji317@gmail.com').strip()
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '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').replace(' ', '').strip()
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', os.environ.get('BREVO_API_KEY', '')).replace(' ', '').strip()
 EMAIL_TIMEOUT = int(os.environ.get('EMAIL_TIMEOUT', 10))  # 10 second socket timeout
 
 if EMAIL_PORT == 465:

@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 380 90" width="380" height="90">
+  <defs>
+    <linearGradient id="fullBgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3b82f6" />
+      <stop offset="50%" stop-color="#2563eb" />
+      <stop offset="100%" stop-color="#1d4ed8" />
+    </linearGradient>
+    <linearGradient id="fullBadgeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#22c55e" />
+      <stop offset="100%" stop-color="#16a34a" />
+    </linearGradient>
+  </defs>
+
+  <!-- Left Icon Badge -->
+  <g transform="translate(0, 0)">
+    <rect x="5" y="5" width="80" height="80" rx="20" fill="url(#fullBgGrad)" />
+
+    <!-- Calendar Outer Frame -->
+    <rect x="18" y="22" width="54" height="43" rx="7" fill="none" stroke="#ffffff" stroke-width="4" />
+    <line x1="18" y1="33" x2="72" y2="33" stroke="#ffffff" stroke-width="2.5" />
+
+    <!-- Top Rings -->
+    <rect x="30" y="16" width="4.5" height="9" rx="2" fill="#ffffff" />
+    <rect x="55.5" y="16" width="4.5" height="9" rx="2" fill="#ffffff" />
+
+    <!-- Users -->
+    <circle cx="33" cy="42" r="4" fill="#ffffff" />
+    <path d="M 26 52 C 26 47, 40 47, 40 52" fill="#ffffff" />
+
+    <circle cx="57" cy="42" r="4" fill="#ffffff" />
+    <path d="M 50 52 C 50 47, 64 47, 64 52" fill="#ffffff" />
+
+    <circle cx="45" cy="40" r="5.5" fill="#ffffff" />
+    <path d="M 36 53 C 36 47, 54 47, 54 53" fill="#ffffff" />
+
+    <!-- Green Check Badge -->
+    <circle cx="66" cy="62" r="13" fill="url(#fullBadgeGrad)" stroke="#ffffff" stroke-width="3" />
+    <path d="M 60 62 L 64 66 L 72 57" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+  </g>
+
+  <!-- Text Section -->
+  <g transform="translate(100, 0)">
+    <!-- Smart Meeting -->
+    <text x="0" y="46" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-weight="800" font-size="36" letter-spacing="-0.5">
+      <tspan fill="#0f172a">Smart </tspan>
+      <tspan fill="#2563eb">Meeting</tspan>
+    </text>
+
+    <!-- DECISION TRACKER -->
+    <text x="2" y="68" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-weight="700" font-size="14" fill="#64748b" letter-spacing="4">
+      DECISION TRACKER
+    </text>
+  </g>
+</svg>
