@@ -61,19 +61,50 @@ export const AuthProvider = ({ children }) => {
     navigate('/dashboard');
   };
 
+  const requestRegisterOTP = async (payload) => {
+    return await authService.requestRegisterOTP(payload);
+  };
+
+  const confirmRegister = async (payload) => {
+    const res = await authService.confirmRegister(payload);
+    await refreshUser();
+    navigate('/dashboard');
+    return res;
+  };
+
   const logout = () => {
     authService.logout();
     setUser(null);
     navigate('/login');
   };
 
-  const isAdmin = Boolean(user && user.role === 'ADMIN');
+  const isOwner = Boolean(user && user.role === 'OWNER');
+  const isAdmin = Boolean(user && (user.role === 'OWNER' || user.role === 'ADMIN'));
+  const isManager = Boolean(user && (user.role === 'OWNER' || user.role === 'ADMIN' || user.role === 'MANAGER'));
+  const isMember = Boolean(user);
+  const hasRole = (roleArray) => Array.isArray(roleArray) && user && roleArray.includes(user.role);
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col justify-center items-center bg-slate-50">
-        <Spin size="large" tip="Loading Smart Meeting Tracker..." />
-      </div>
+      <AuthContext.Provider
+        value={{
+          user: null,
+          loading: true,
+          login,
+          register,
+          requestRegisterOTP,
+          confirmRegister,
+          logout,
+          refreshUser,
+          isOwner: false,
+          isAdmin: false,
+          isManager: false,
+          isMember: false,
+          hasRole: () => false
+        }}
+      >
+        {children}
+      </AuthContext.Provider>
     );
   }
 
@@ -89,11 +120,26 @@ export const AuthProvider = ({ children }) => {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, refreshUser, isAdmin }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        login,
+        register,
+        requestRegisterOTP,
+        confirmRegister,
+        logout,
+        refreshUser,
+        isOwner,
+        isAdmin,
+        isManager,
+        isMember,
+        hasRole
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
 };
 
 export const useAuth = () => useContext(AuthContext);
-

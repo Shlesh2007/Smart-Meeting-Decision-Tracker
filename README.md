@@ -138,7 +138,12 @@ SMDT/
    python manage.py migrate
    ```
 
-6. **Create Superuser (Optional)**:
+6. **Create Initial Organization OWNER**:
+   ```bash
+   python manage.py create_owner --username=company_owner --email=owner@company.com --password=Password123!
+   ```
+
+7. **Create Superuser (Optional)**:
    ```bash
    python manage.py createsuperuser
    ```

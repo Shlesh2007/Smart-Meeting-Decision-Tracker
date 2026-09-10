@@ -3,16 +3,30 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { userService, teamService } from '../services/api.js';
 import { LoadingSkeleton } from '../components/LoadingSkeleton.jsx';
 import {
-  Card, Table, Tag, Button, Select, Modal, Form, Input, message, Tabs, Alert, Avatar, Popconfirm
+  Card, Table, Tag, Button, Select, Modal, Form, Input, message, Tabs, Alert, Avatar, Popconfirm, Tooltip
 } from 'antd';
 import {
   TeamOutlined, UserOutlined, PlusOutlined, SafetyOutlined, LockOutlined,
-  EditOutlined, DeleteOutlined, UsergroupAddOutlined
+  EditOutlined, DeleteOutlined, UsergroupAddOutlined, CrownOutlined
 } from '@ant-design/icons';
 import { format } from 'date-fns';
 
+const getRoleTag = (role) => {
+  switch (role) {
+    case 'OWNER':
+      return <Tag color="gold" className="font-bold border-amber-400 bg-amber-50 text-amber-900"><CrownOutlined className="mr-1 text-amber-600" />OWNER</Tag>;
+    case 'ADMIN':
+      return <Tag color="volcano" className="font-bold">ADMIN</Tag>;
+    case 'MANAGER':
+      return <Tag color="cyan" className="font-bold">MANAGER</Tag>;
+    case 'MEMBER':
+    default:
+      return <Tag color="blue" className="font-bold">MEMBER</Tag>;
+  }
+};
+
 export default function Admin() {
-  const { user, isAdmin } = useAuth();
+  const { user, isOwner, isAdmin } = useAuth();
   const [users, setUsers] = useState([]);
   const [teams, setTeams] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -95,8 +109,8 @@ export default function Admin() {
           type="error"
           showIcon
           icon={<LockOutlined className="text-2xl" />}
-          message="Access Restricted (Admin Only)"
-          description="You must have an Admin role to access the User & Team Management Portal."
+          message="Access Restricted (Admin / Owner Only)"
+          description="You must have an Admin or Owner role to access the User & Team Management Portal."
         />
       </div>
     );
@@ -108,9 +122,20 @@ export default function Admin() {
       message.success(`Updated ${targetUser.username}'s role to ${newRole}`);
       loadData();
     } catch (err) {
-      message.error('Failed to update user role.');
+      const errMsg = err.response?.data?.role?.[0] || err.response?.data?.detail || 'Failed to update user role.';
+      message.error(errMsg);
     }
   };
+
+  // Role options available based on caller role
+  const allowedRoleOptions = isOwner ? [
+    { label: 'Member', value: 'MEMBER' },
+    { label: 'Manager', value: 'MANAGER' },
+    { label: 'Admin', value: 'ADMIN' },
+  ] : [
+    { label: 'Member', value: 'MEMBER' },
+    { label: 'Manager', value: 'MANAGER' },
+  ];
 
   const userColumns = [
     {
@@ -118,7 +143,10 @@ export default function Admin() {
       key: 'name',
       render: (_, u) => (
         <div>
-          <span className="font-semibold text-slate-900 dark:text-slate-100 block">{u.full_name}</span>
+          <span className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+            {u.full_name}
+            {u.role === 'OWNER' && <CrownOutlined className="text-amber-500 text-xs" />}
+          </span>
           <span className="text-xs text-slate-500 dark:text-slate-400">{u.username}</span>
         </div>
       ),
@@ -129,11 +157,7 @@ export default function Admin() {
       title: 'Current Role',
       dataIndex: 'role',
       key: 'role',
-      render: (role) => (
-        <Tag color={role === 'ADMIN' ? 'volcano' : 'blue'} className="font-bold">
-          {role}
-        </Tag>
-      ),
+      render: (role) => getRoleTag(role),
     },
     {
       title: 'Joined Date',
@@ -144,18 +168,31 @@ export default function Admin() {
     {
       title: 'Manage Role',
       key: 'action',
-      render: (_, u) => (
-        <Select
-          value={u.role}
-          onChange={(newRole) => handleRoleChange(u, newRole)}
-          disabled={u.id === user?.id}
-          className="w-32"
-          options={[
-            { label: 'Member', value: 'MEMBER' },
-            { label: 'Admin', value: 'ADMIN' }
-          ]}
-        />
-      ),
+      render: (_, u) => {
+        const isTargetOwner = u.role === 'OWNER';
+        const isSelf = u.id === user?.id;
+        const isDisabled = isSelf || (isTargetOwner && !isOwner) || (!isOwner && u.role === 'ADMIN');
+
+        if (isTargetOwner && !isOwner) {
+          return (
+            <Tooltip title="Organization Owner account is protected and cannot be modified by Admins">
+              <span className="text-xs text-slate-400 italic flex items-center gap-1 font-semibold">
+                <LockOutlined className="text-amber-600" /> Protected Owner
+              </span>
+            </Tooltip>
+          );
+        }
+
+        return (
+          <Select
+            value={u.role}
+            onChange={(newRole) => handleRoleChange(u, newRole)}
+            disabled={isDisabled}
+            className="w-32"
+            options={allowedRoleOptions}
+          />
+        );
+      },
     },
   ];
 
@@ -165,9 +202,9 @@ export default function Admin() {
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white m-0 flex items-center space-x-2">
             <SafetyOutlined className="text-blue-600 dark:text-blue-400" />
-            <span>Admin Management Portal</span>
+            <span>Admin & Role Management Portal</span>
           </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 m-0">Manage system users, assign roles, and configure organization teams.</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400 m-0">Manage organization users, role hierarchy (Owner, Admin, Manager, Member), and teams.</p>
         </div>
         <Button type="primary" icon={<PlusOutlined />} onClick={openCreateTeam} className="bg-blue-600 hover:bg-blue-700 font-semibold rounded-xl border-none shadow-xs">
           Create New Team
@@ -268,9 +305,7 @@ export default function Admin() {
                                       <span className="text-slate-400">{m.email}</span>
                                     </div>
                                   </div>
-                                  <Tag color={m.role === 'ADMIN' ? 'volcano' : 'blue'} className="m-0 text-[10px]">
-                                    {m.role}
-                                  </Tag>
+                                  {getRoleTag(m.role)}
                                 </div>
                               ))}
                             </div>

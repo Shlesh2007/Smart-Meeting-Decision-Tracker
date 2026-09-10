@@ -42,9 +42,29 @@ class MeetingViewSet(viewsets.ModelViewSet):
     def perform_update(self, serializer):
         meeting = self.get_object()
         user = self.request.user
-        if not user.is_admin_role and meeting.created_by != user:
-            raise permissions.PermissionDenied("Only the meeting organizer or an Admin can edit meeting details.")
+        
+        # OWNER / ADMIN can update any meeting
+        if user.is_admin_role:
+            serializer.save()
+            return
+
+        # MANAGER can update meetings they created or team meetings they belong to
+        if user.is_manager_role:
+            if meeting.created_by == user or (meeting.team and meeting.team.members.filter(id=user.id).exists()):
+                serializer.save()
+                return
+
+        # MEMBER can only update meetings they created
+        if meeting.created_by != user:
+            raise permissions.PermissionDenied("Only the meeting organizer, team manager, or an Admin/Owner can edit meeting details.")
+
         serializer.save()
+
+    def perform_destroy(self, instance):
+        user = self.request.user
+        if not user.is_admin_role and instance.created_by != user:
+            raise permissions.PermissionDenied("Only the meeting organizer or an Admin/Owner can delete this meeting.")
+        instance.delete()
 
 
 from rest_framework.views import APIView

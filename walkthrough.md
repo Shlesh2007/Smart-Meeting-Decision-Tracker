@@ -1,33 +1,28 @@
-# Walkthrough - Meetings Calendar Feature
+# Walkthrough - Redesigned SaaS Loading Screen & RBAC System
 
-We have integrated an interactive **Calendar View** directly into the **Meetings Directory** (`/meetings`). 
-
-## 🚀 Key Changes Implemented
-
-### 1. Unified View Switcher on Meetings Page (`/meetings`)
-- Location: [`frontend/src/pages/Meetings.jsx`](file:///d:/SMDT/frontend/src/pages/Meetings.jsx)
-- Added an Ant Design `Segmented` toggle switch in the Meetings header: **List View 📄** | **Calendar View 📅**.
-- Kept navigation clean: all meeting features live together on the **Meetings** page under `/meetings`.
-- Both views share live search, status filtering, meeting type filtering, and date range filters.
-
-### 2. Interactive Calendar Component (`MeetingCalendar.jsx`)
-- Location: [`frontend/src/components/MeetingCalendar.jsx`](file:///d:/SMDT/frontend/src/components/MeetingCalendar.jsx)
-- Monthly calendar powered by Ant Design's `Calendar` and Tailwind CSS styling.
-- Rendered badges are color-coded by meeting status:
-  - 🔵 **Scheduled**: Blue badge
-  - 🟠 **In Progress**: Amber badge
-  - 🟢 **Completed**: Emerald badge
-  - 🔴 **Cancelled**: Rose badge
-- **Interactive Tooltips & Popovers:** Hovering or clicking a date cell displays a detailed card with:
-  - Meeting title, start time, end time, location, participant count.
-  - Direct link to view meeting details.
-  - Quick action button to schedule a new meeting for that date.
+We have redesigned the initial loading screen for **Smart Meeting Decision Tracker** to provide a premium, enterprise-grade SaaS visual experience while preserving all existing application initialization, authentication, and routing logic.
 
 ---
 
-## 🧪 Verification
+## 🎨 Redesigned SaaS Loading Screen (`InitialSplashScreen.jsx`)
 
-1. Navigate to [`/meetings`](file:///d:/SMDT/frontend/src/pages/Meetings.jsx).
-2. Toggle between **List View** and **Calendar View** using the segmented toggle in the top header.
-3. In **Calendar View**, hover over date cells with scheduled meetings to inspect details.
-4. Click any meeting pill to jump directly to its meeting detail page.
+### 1. Consistent Brand Identity
+- **Title:** `Smart Meeting`
+- **Subtitle:** `DECISION TRACKER`
+- Removed non-compliant branding strings (such as *"SmartMeeting Tracker"*).
+
+### 2. Premium Visual Direction
+- **Background:** Deep navy background tone (`#080D1F`).
+- **Subtle Background Glow:** Soft blue radial aura behind the logo (`bg-blue-600/15 blur-3xl`).
+- **Clean Center Proportions:** Perfectly centered vertically and horizontally on desktop, tablet, and mobile displays.
+
+### 3. User-Friendly Loading Stages & Indicators
+- **Header Text:** *"Preparing your workspace..."*
+- **Rotated Loading Stages:**
+  1. `⚡ Securing your workspace...`
+  2. `⚡ Loading your meetings...`
+  3. `⚡ Organizing action items...`
+  4. `⚡ Preparing your dashboard...`
+  5. `⚡ Almost ready...`
+- **Progress Bar:** Thin (`h-1`), rounded, blue accent bar with subtle glow (`shadow-[0_0_10px_rgba(59,130,246,0.5)]`).
+- **Accessibility:** Configured with `role="status"` and `aria-live="polite"` attributes.

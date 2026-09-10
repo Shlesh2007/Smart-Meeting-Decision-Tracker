@@ -14,19 +14,26 @@ class DashboardAnalyticsView(APIView):
         today = timezone.localdate()
         user = request.user
 
-        # Filter meetings and actions based on role & participation
+        # Filter meetings and actions based on role hierarchy
         if user.is_admin_role:
             meetings_qs = Meeting.objects.all()
             actions_qs = ActionItem.objects.all()
-        else:
+        elif user.is_manager_role:
             meetings_qs = Meeting.objects.filter(
                 Q(created_by=user) | Q(participants=user) | Q(team__members=user)
             ).distinct()
             actions_qs = ActionItem.objects.filter(
                 Q(assigned_to=user) | Q(created_by=user) |
-                Q(decision__discussion__meeting__participants=user) |
                 Q(decision__discussion__meeting__created_by=user) |
                 Q(decision__discussion__meeting__team__members=user)
+            ).distinct()
+        else:
+            # MEMBER role: strictly personal metrics
+            meetings_qs = Meeting.objects.filter(
+                Q(created_by=user) | Q(participants=user) | Q(team__members=user)
+            ).distinct()
+            actions_qs = ActionItem.objects.filter(
+                Q(assigned_to=user) | Q(created_by=user)
             ).distinct()
 
         total_meetings = meetings_qs.count()

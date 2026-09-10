@@ -64,6 +64,18 @@ export const authService = {
     }
     return res.data;
   },
+  requestRegisterOTP: async (payload) => {
+    const res = await api.post('/auth/register/request-otp/', payload);
+    return res.data;
+  },
+  confirmRegister: async (payload) => {
+    const res = await api.post('/auth/register/confirm/', payload);
+    if (res.data.access) {
+      localStorage.setItem('access_token', res.data.access);
+      localStorage.setItem('refresh_token', res.data.refresh);
+    }
+    return res.data;
+  },
   getProfile: async () => {
     const res = await api.get('/auth/profile/');
     return res.data;

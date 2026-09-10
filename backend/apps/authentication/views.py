@@ -12,10 +12,236 @@ import requests
 import logging
 from .serializers import UserSerializer, RegisterSerializer
 from .models import PasswordResetOTP
-from .permissions import IsAdminUserRole
+from .permissions import IsAdminUserRole, CanManageUsersPermission, IsOwnerUserRole, IsManagerUserRole
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
+
+class RequestRegisterOTPView(APIView):
+    permission_classes = (permissions.AllowAny,)
+
+    def post(self, request):
+        email = request.data.get('email', '').strip().lower()
+        username = request.data.get('username', '').strip()
+        first_name = request.data.get('first_name', '').strip()
+        password = request.data.get('password', '')
+        password_confirm = request.data.get('password_confirm', '')
+
+        if not email or not username or not password:
+            return Response({'error': 'Username, email, and password are required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if password != password_confirm:
+            return Response({'password': 'Passwords do not match.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if len(password) < 6:
+            return Response({'password': 'Password must be at least 6 characters long.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if User.objects.filter(username__iexact=username).exists():
+            return Response({'username': 'A user with that username already exists.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if User.objects.filter(email__iexact=email).exists():
+            return Response({'email': 'A user with this email address already exists.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Generate 6-digit OTP code
+        otp_code = f"{random.randint(100000, 999999)}"
+        expires_at = timezone.now() + timedelta(minutes=10)
+
+        PasswordResetOTP.objects.create(
+            email=email,
+            otp_code=otp_code,
+            expires_at=expires_at
+        )
+
+        subject = "SmartMeeting Tracker - Account Registration Verification Code"
+        recipient_name = first_name or username
+
+        message_body = (
+            f"Hello {recipient_name},\n\n"
+            f"Thank you for signing up for SmartMeeting Decision Tracker!\n"
+            f"Your 6-digit OTP verification code to complete registration is: {otp_code}\n\n"
+            f"This code will expire in 10 minutes.\n\n"
+            f"Best regards,\nSmartMeeting Tracker Team"
+        )
+
+        html_body = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            body {{ font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif; background-color: #f8fafc; margin: 0; padding: 24px; color: #1e293b; }}
+            .container {{ max-width: 540px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }}
+            .header {{ background: linear-gradient(135deg, #1e3a8a, #2563eb); padding: 28px 32px; text-align: left; }}
+            .header h1 {{ color: #ffffff; margin: 0; font-size: 20px; font-weight: 800; tracking-tight; }}
+            .header p {{ color: #93c5fd; margin: 4px 0 0 0; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }}
+            .body-content {{ padding: 32px; }}
+            .greeting {{ font-size: 16px; font-weight: 700; color: #0f172a; margin-top: 0; }}
+            .text {{ font-size: 14px; line-height: 1.6; color: #475569; margin-bottom: 18px; }}
+            .otp-box {{ background-color: #f0f9ff; border: 2px dashed #0284c7; border-radius: 12px; padding: 22px; text-align: center; margin: 24px 0; }}
+            .otp-code {{ font-size: 36px; font-weight: 900; font-family: 'Courier New', Courier, monospace; letter-spacing: 10px; color: #0369a1; display: inline-block; margin: 0; }}
+            .badge {{ display: inline-block; background-color: #fef2f2; color: #dc2626; border: 1px solid #fecaca; font-size: 12px; font-weight: 700; padding: 4px 12px; border-radius: 20px; margin-top: 12px; }}
+            .footer {{ background-color: #f8fafc; border-top: 1px solid #f1f5f9; padding: 20px 32px; text-align: center; font-size: 12px; color: #94a3b8; line-height: 1.5; }}
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>⚡ SmartMeeting Decision Tracker</h1>
+              <p>Account Registration Verification</p>
+            </div>
+            <div class="body-content">
+              <p class="greeting">Hello {recipient_name},</p>
+              <p class="text">Thank you for registering your SmartMeeting Decision Tracker account. Use the 6-digit verification code below to verify your email address and activate your account:</p>
+              
+              <div class="otp-box">
+                <div class="otp-code">{otp_code}</div>
+                <div><span class="badge">⏰ Code expires in 10 minutes</span></div>
+              </div>
+
+              <p class="text" style="font-size: 13px; color: #64748b;">
+                If you did not attempt to register an account, please ignore this email.
+              </p>
+              <p class="text" style="margin-bottom: 0;">
+                Best regards,<br>
+                <strong style="color: #1e293b;">SmartMeeting Decision Tracker Team</strong>
+              </p>
+            </div>
+            <div class="footer">
+              This is an automated security notification sent by SmartMeeting Decision Tracker.<br>
+              © {timezone.now().year} SmartMeeting Tracker. All rights reserved.
+            </div>
+          </div>
+        </body>
+        </html>
+        """
+
+        email_sent = False
+        last_error = None
+
+        brevo_api_key = getattr(settings, 'EMAIL_HOST_PASSWORD', '')
+        sender_email = getattr(settings, 'EMAIL_HOST_USER', 'shleshdarji317@gmail.com')
+
+        try:
+            api_headers = {
+                'accept': 'application/json',
+                'api-key': brevo_api_key,
+                'content-type': 'application/json',
+            }
+            api_payload = {
+                'sender': {'name': 'SmartMeeting Tracker', 'email': sender_email},
+                'to': [{'email': email}],
+                'subject': subject,
+                'htmlContent': html_body,
+                'textContent': message_body
+            }
+            resp = requests.post('https://api.brevo.com/v3/smtp/email', json=api_payload, headers=api_headers, timeout=8)
+            if resp.status_code in (200, 201, 202):
+                email_sent = True
+                logger.info("Registration Verification OTP delivered to %s via Brevo API", email)
+            else:
+                logger.warning("Brevo API returned %s: %s", resp.status_code, resp.text)
+                last_error = f"Brevo API HTTP {resp.status_code}"
+        except Exception as api_err:
+            logger.warning("Brevo API call failed for registration: %s", str(api_err))
+            last_error = str(api_err)
+
+        if not email_sent:
+            brevo_host = getattr(settings, 'EMAIL_HOST', 'smtp-relay.brevo.com')
+            configured_port = int(getattr(settings, 'EMAIL_PORT', 587))
+            brevo_ports = [
+                (configured_port, configured_port != 465, configured_port == 465),
+                (2525, True, False),
+                (587, True, False),
+            ]
+            for port, use_tls, use_ssl in brevo_ports:
+                try:
+                    connection = get_connection(
+                        backend='django.core.mail.backends.smtp.EmailBackend',
+                        host=brevo_host,
+                        port=port,
+                        username=sender_email,
+                        password=brevo_api_key,
+                        use_tls=use_tls,
+                        use_ssl=use_ssl,
+                        timeout=5,
+                    )
+                    mail = EmailMessage(
+                        subject=subject,
+                        body=html_body,
+                        from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', f'SmartMeeting Tracker <{sender_email}>'),
+                        to=[email],
+                        connection=connection,
+                    )
+                    mail.content_subtype = "html"
+                    mail.send(fail_silently=False)
+                    email_sent = True
+                    break
+                except Exception as e:
+                    logger.warning("SMTP fallback failed: %s", str(e))
+
+        if not email_sent:
+            return Response({'error': f'Failed to deliver email OTP: {last_error or "Delivery Error"}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response({
+            'message': f'6-digit OTP verification code sent to {email}. Please check your email inbox.',
+            'email': email
+        }, status=status.HTTP_200_OK)
+
+
+class ConfirmRegisterView(APIView):
+    permission_classes = (permissions.AllowAny,)
+
+    def post(self, request):
+        email = request.data.get('email', '').strip().lower()
+        username = request.data.get('username', '').strip()
+        first_name = request.data.get('first_name', '').strip()
+        last_name = request.data.get('last_name', '').strip()
+        password = request.data.get('password', '')
+        department = request.data.get('department', '').strip()
+        otp_code = request.data.get('otp_code', '').strip()
+
+        if not email or not username or not password or not otp_code:
+            return Response({'error': 'Email, username, password, and OTP code are required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        otp_record = PasswordResetOTP.objects.filter(
+            email__iexact=email,
+            otp_code=otp_code,
+            expires_at__gte=timezone.now()
+        ).first()
+
+        if not otp_record:
+            return Response({'error': 'Invalid or expired OTP verification code.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if User.objects.filter(username__iexact=username).exists():
+            return Response({'username': 'A user with that username already exists.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if User.objects.filter(email__iexact=email).exists():
+            return Response({'email': 'A user with this email address already exists.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Create user with role MEMBER (explicitly enforced for public signup)
+        user = User.objects.create_user(
+            username=username,
+            email=email,
+            password=password,
+            first_name=first_name,
+            last_name=last_name,
+            role=User.Role.MEMBER,
+            department=department
+        )
+
+        # Delete used OTP
+        otp_record.delete()
+
+        # Generate JWT Tokens
+        refresh = RefreshToken.for_user(user)
+
+        return Response({
+            'user': UserSerializer(user, context={'request': request}).data,
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+            'message': 'Account registered and email verified successfully!'
+        }, status=status.HTTP_201_CREATED)
+
 
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
@@ -57,14 +283,58 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all().order_by('-date_joined')
     serializer_class = UserSerializer
-    permission_classes = (permissions.IsAuthenticated,)
+    permission_classes = (CanManageUsersPermission,)
     search_fields = ('username', 'email', 'first_name', 'last_name', 'department')
     filterset_fields = ('role', 'department')
 
-    def get_permissions(self):
-        if self.action in ['destroy', 'create', 'update', 'partial_update']:
-            return [IsAdminUserRole()]
-        return [permissions.IsAuthenticated()]
+    def perform_create(self, serializer):
+        user = self.request.user
+        role_to_assign = serializer.validated_data.get('role', User.Role.MEMBER)
+        
+        # ADMIN cannot create OWNER or ADMIN users
+        if not user.is_owner_role and user.is_admin_role:
+            if role_to_assign in [User.Role.OWNER, User.Role.ADMIN]:
+                raise permissions.PermissionDenied("ADMIN cannot create OWNER or ADMIN accounts.")
+
+        serializer.save()
+
+    def perform_update(self, serializer):
+        target_user = self.get_object()
+        caller = self.request.user
+
+        # ADMIN cannot modify OWNER
+        if target_user.role == User.Role.OWNER and not caller.is_owner_role:
+            raise permissions.PermissionDenied("ADMIN cannot modify the OWNER account.")
+
+        # ADMIN cannot modify other ADMIN accounts
+        if target_user.role == User.Role.ADMIN and not caller.is_owner_role and caller.id != target_user.id:
+            raise permissions.PermissionDenied("ADMIN cannot modify another ADMIN account.")
+
+        new_role = serializer.validated_data.get('role')
+        if new_role and new_role == User.Role.OWNER and not caller.is_owner_role:
+            raise permissions.PermissionDenied("Only the current OWNER can assign the OWNER role.")
+
+        # Prevent removing ownership if caller is the only OWNER
+        if target_user.role == User.Role.OWNER and new_role and new_role != User.Role.OWNER:
+            owner_count = User.objects.filter(role=User.Role.OWNER).count()
+            if owner_count <= 1:
+                from rest_framework import serializers as drf_serializers
+                raise drf_serializers.ValidationError({'role': 'The organization must have at least one OWNER. Ownership cannot be removed.'})
+
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        caller = self.request.user
+        if instance.role == User.Role.OWNER:
+            if not caller.is_owner_role:
+                raise permissions.PermissionDenied("ADMIN cannot delete the OWNER account.")
+            from rest_framework import serializers as drf_serializers
+            raise drf_serializers.ValidationError({'error': 'OWNER account cannot be deleted directly.'})
+
+        if instance.role == User.Role.ADMIN and not caller.is_owner_role:
+            raise permissions.PermissionDenied("ADMIN cannot delete another ADMIN account.")
+
+        instance.delete()
 
 
 # --- OTP PASSWORD RESET VIEWS ---

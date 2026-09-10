@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext.jsx';
 import { AuthProvider } from './context/AuthContext.jsx';
 import { MainLayout } from './components/MainLayout.jsx';
+import { InitialSplashScreen } from './components/InitialSplashScreen.jsx';
 
 import Home from './pages/Home.jsx';
 import Login from './pages/Login.jsx';
@@ -19,23 +20,25 @@ export default function App() {
   return (
     <BrowserRouter>
       <ThemeProvider>
-        <AuthProvider>
-          <MainLayout>
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/meetings" element={<Meetings />} />
-              <Route path="/meetings/new" element={<CreateMeeting />} />
-              <Route path="/meetings/:id" element={<MeetingDetail />} />
-              <Route path="/my-actions" element={<MyActions />} />
-              <Route path="/admin" element={<Admin />} />
-              <Route path="/oauth-callback" element={<OAuthCallback />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </MainLayout>
-        </AuthProvider>
+        <InitialSplashScreen>
+          <AuthProvider>
+            <MainLayout>
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/meetings" element={<Meetings />} />
+                <Route path="/meetings/new" element={<CreateMeeting />} />
+                <Route path="/meetings/:id" element={<MeetingDetail />} />
+                <Route path="/my-actions" element={<MyActions />} />
+                <Route path="/admin" element={<Admin />} />
+                <Route path="/oauth-callback" element={<OAuthCallback />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </MainLayout>
+          </AuthProvider>
+        </InitialSplashScreen>
       </ThemeProvider>
     </BrowserRouter>
   );

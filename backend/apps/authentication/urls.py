@@ -1,7 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
-    RegisterView, UserProfileView, UserViewSet,
+    RegisterView, RequestRegisterOTPView, ConfirmRegisterView, UserProfileView, UserViewSet,
     RequestPasswordResetOTPView, VerifyPasswordResetOTPView, ConfirmPasswordResetView,
     RequestEmailChangeOTPView, VerifyEmailChangeOTPView, DeleteAccountView,
     GoogleOAuthView, GitHubOAuthView
@@ -12,6 +12,8 @@ router.register('users', UserViewSet, basename='user')
 
 urlpatterns = [
     path('register/', RegisterView.as_view(), name='auth_register'),
+    path('register/request-otp/', RequestRegisterOTPView.as_view(), name='auth_register_request_otp'),
+    path('register/confirm/', ConfirmRegisterView.as_view(), name='auth_register_confirm'),
     path('profile/', UserProfileView.as_view(), name='auth_profile'),
     
     # Profile Email Change & Account Deletion Endpoints
