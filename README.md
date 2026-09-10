@@ -139,9 +139,15 @@ SMDT/
    ```
 
 6. **Create Initial Organization OWNER**:
-   ```bash
-   python manage.py create_owner --username=company_owner --email=owner@company.com --password=Password123!
-   ```
+   - **Local CLI**:
+     ```bash
+     python manage.py create_owner --username=company_owner --email=owner@company.com --password=Password123!
+     ```
+   - **Cloud Deployment (Hands-Free Auto-Seeding)**:
+     Set environment variables (`INITIAL_OWNER_USERNAME`, `INITIAL_OWNER_EMAIL`, `INITIAL_OWNER_PASSWORD`) in your cloud provider panel (Render/Railway/Heroku) and add this command to your build/release script:
+     ```bash
+     python manage.py migrate && python manage.py create_owner
+     ```
 
 7. **Create Superuser (Optional)**:
    ```bash
@@ -203,6 +209,11 @@ EMAIL_USE_TLS=True
 EMAIL_HOST_USER=shleshdarji317@gmail.com
 EMAIL_HOST_PASSWORD=xkeysib-your-brevo-api-key-here
 DEFAULT_FROM_EMAIL=SmartMeeting Tracker <shleshdarji317@gmail.com>
+
+# Initial Owner Auto-Seeding (Optional for Cloud Deployments)
+INITIAL_OWNER_USERNAME=company_owner
+INITIAL_OWNER_EMAIL=owner@company.com
+INITIAL_OWNER_PASSWORD=Password123!
 ```
 
 #### Frontend (`frontend/.env.local`)
