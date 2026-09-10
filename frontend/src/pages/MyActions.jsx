@@ -162,7 +162,7 @@ export default function MyActions() {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-xs transition-colors duration-200">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-xs transition-colors duration-200">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white m-0 flex items-center space-x-2">
             <CheckSquareOutlined className="text-blue-600 dark:text-blue-400" />
@@ -170,7 +170,7 @@ export default function MyActions() {
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 m-0">Track and update all follow-up action items assigned to you.</p>
         </div>
-        <Button icon={<ReloadOutlined />} onClick={fetchMyActions} className="rounded-xl">Refresh Board</Button>
+        <Button icon={<ReloadOutlined />} onClick={fetchMyActions} className="rounded-xl w-full sm:w-auto">Refresh Board</Button>
       </div>
 
       {overdueCount > 0 && (

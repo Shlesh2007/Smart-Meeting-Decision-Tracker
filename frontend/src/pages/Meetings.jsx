@@ -4,11 +4,12 @@ import { meetingService } from '../services/api.js';
 import { StatusBadge } from '../components/StatusBadge.jsx';
 import { LoadingSkeleton } from '../components/LoadingSkeleton.jsx';
 import { EmptyState } from '../components/EmptyState.jsx';
+import { MeetingCalendar } from '../components/MeetingCalendar.jsx';
 import {
-  Input, Select, DatePicker, Button, Table, Card, Tag, Avatar, Tooltip, Pagination
+  Input, Select, DatePicker, Button, Table, Card, Tag, Avatar, Tooltip, Pagination, Segmented
 } from 'antd';
 import {
-  SearchOutlined, PlusOutlined, UserOutlined, ReloadOutlined, CalendarOutlined
+  SearchOutlined, PlusOutlined, UserOutlined, ReloadOutlined, CalendarOutlined, UnorderedListOutlined
 } from '@ant-design/icons';
 import { format } from 'date-fns';
 import dayjs from 'dayjs';
@@ -17,6 +18,8 @@ const { RangePicker } = DatePicker;
 
 export default function Meetings() {
   const navigate = useNavigate();
+  const [viewMode, setViewMode] = useState('table');
+
   const [meetings, setMeetings] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -33,7 +36,7 @@ export default function Meetings() {
     setError(false);
 
     const params = {
-      page,
+      page: viewMode === 'calendar' ? 1 : page,
       search: search || undefined,
       meeting_type: meetingType || undefined,
       status: status || undefined,
@@ -51,7 +54,7 @@ export default function Meetings() {
       })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
-  }, [page, search, meetingType, status, dateRange]);
+  }, [page, search, meetingType, status, dateRange, viewMode]);
 
   useEffect(() => {
     fetchMeetings();
@@ -130,18 +133,45 @@ export default function Meetings() {
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-xs transition-colors duration-200">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white m-0">Meetings Directory</h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 m-0">View, search, and manage team meetings across your organization.</p>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white m-0">
+            {viewMode === 'calendar' ? 'Meetings Calendar' : 'Meetings Directory'}
+          </h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 m-0">
+            {viewMode === 'calendar'
+              ? 'Visual monthly schedule of team meetings and scheduled sessions.'
+              : 'View, search, and manage team meetings across your organization.'}
+          </p>
         </div>
-        <Link to="/meetings/new" className="no-underline">
-          <Button type="primary" icon={<PlusOutlined />} size="large" className="bg-blue-600 hover:bg-blue-700 font-semibold rounded-xl border-none shadow-xs">
-            Create Meeting
-          </Button>
-        </Link>
+        
+        <div className="flex items-center space-x-3 w-full md:w-auto justify-between md:justify-end">
+          <Segmented
+            value={viewMode}
+            onChange={(val) => setViewMode(val)}
+            options={[
+              {
+                label: 'List View',
+                value: 'table',
+                icon: <UnorderedListOutlined />,
+              },
+              {
+                label: 'Calendar View',
+                value: 'calendar',
+                icon: <CalendarOutlined />,
+              },
+            ]}
+            className="p-1 rounded-xl bg-slate-100 dark:bg-slate-700 font-bold"
+          />
+
+          <Link to="/meetings/new" className="no-underline">
+            <Button type="primary" icon={<PlusOutlined />} size="large" className="bg-blue-600 hover:bg-blue-700 font-semibold rounded-xl border-none shadow-xs">
+              Create Meeting
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <Card className="shadow-xs rounded-2xl dark:bg-slate-800 dark:border-slate-700/80">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
           <Input
             prefix={<SearchOutlined className="text-slate-400" />}
             placeholder="Search meeting title or location..."
@@ -211,6 +241,8 @@ export default function Meetings() {
           <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">Please verify backend connection and try again.</p>
           <Button type="primary" onClick={fetchMeetings}>Retry</Button>
         </div>
+      ) : viewMode === 'calendar' ? (
+        <MeetingCalendar meetings={meetings} loading={loading} />
       ) : meetings.length === 0 ? (
         <EmptyState
           title="No Meetings Found"

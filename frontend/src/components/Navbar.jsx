@@ -280,8 +280,8 @@ export const Navbar = () => {
       </aside>
 
       {/* Top Navigation Header Bar */}
-      <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-slate-200 shadow-xs lg:pl-64 transition-all">
-        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
+      <header className="sticky top-0 z-30 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-700 shadow-xs lg:pl-64 transition-all">
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between gap-4">
           
           {/* Mobile Logo Brand */}
           <div className="flex items-center lg:hidden">
