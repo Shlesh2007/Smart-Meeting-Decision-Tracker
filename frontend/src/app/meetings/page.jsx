@@ -14,6 +14,7 @@ import {
   SearchOutlined, PlusOutlined, UserOutlined, ReloadOutlined, CalendarOutlined
 } from '@ant-design/icons';
 import { format } from 'date-fns';
+import dayjs from 'dayjs';
 
 const { RangePicker } = DatePicker;
 
@@ -42,7 +43,7 @@ export default function MeetingsPage() {
       status: status || undefined,
     };
 
-    if (dateRange) {
+    if (dateRange && dateRange[0] && dateRange[1]) {
       params.start_date = dateRange[0];
       params.end_date = dateRange[1];
     }
@@ -186,8 +187,13 @@ export default function MeetingsPage() {
           />
 
           <RangePicker
+            value={
+              dateRange && dateRange[0] && dateRange[1]
+                ? [dayjs(dateRange[0]), dayjs(dateRange[1])]
+                : null
+            }
             onChange={(dates, dateStrings) => {
-              if (dates) {
+              if (dates && dates[0] && dates[1]) {
                 setDateRange([dateStrings[0], dateStrings[1]]);
               } else {
                 setDateRange(null);
@@ -199,7 +205,7 @@ export default function MeetingsPage() {
 
         <div className="flex justify-between items-center pt-2 text-xs text-slate-500 dark:text-slate-400">
           <span>Found <strong>{total}</strong> meeting(s) matching filter criteria.</span>
-          <Button type="text" size="small" icon={<ReloadOutlined />} onClick={handleResetFilters} className="text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400">
+          <Button type="text" size="small" icon={<ReloadOutlined />} onClick={handleResetFilters} className="text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 font-medium">
             Reset Filters
           </Button>
         </div>

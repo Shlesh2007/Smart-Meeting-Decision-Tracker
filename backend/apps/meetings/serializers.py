@@ -53,20 +53,29 @@ class MeetingSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         participants = validated_data.pop('participants', [])
         team = validated_data.get('team')
-        validated_data['created_by'] = self.context['request'].user
+        user = self.context['request'].user
+        validated_data['created_by'] = user
         meeting = Meeting.objects.create(**validated_data)
         
         if participants:
             meeting.participants.set(participants)
             if team:
-                # Also include all team members
                 for member in team.members.all():
                     meeting.participants.add(member)
         elif team:
-            # Auto add all team members as participants
             meeting.participants.set(team.members.all())
-        else:
-            # Auto add creator
-            meeting.participants.add(self.context['request'].user)
+        
+        # Always ensure creator/organizer is included as a participant
+        meeting.participants.add(user)
             
         return meeting
+
+    def update(self, instance, validated_data):
+        participants = validated_data.pop('participants', None)
+        instance = super().update(instance, validated_data)
+        if participants is not None:
+            instance.participants.set(participants)
+            # Always ensure organizer/creator is included as a participant
+            if instance.created_by:
+                instance.participants.add(instance.created_by)
+        return instance

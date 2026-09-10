@@ -33,6 +33,17 @@ export const EditMeetingModal = ({ open, onClose, meeting, onSuccess }) => {
       const startTime = meeting.start_time ? dayjs(meeting.start_time, 'HH:mm:ss') : dayjs();
       const endTime = meeting.end_time ? dayjs(meeting.end_time, 'HH:mm:ss') : dayjs().add(1, 'hour');
 
+      // Ensure at least creator or existing participants are populated
+      let participantIds = Array.isArray(meeting.participants)
+        ? meeting.participants
+        : meeting.participants_detail
+        ? meeting.participants_detail.map(p => p.id)
+        : [];
+
+      if (participantIds.length === 0 && meeting.created_by) {
+        participantIds = [meeting.created_by];
+      }
+
       form.setFieldsValue({
         title: meeting.title,
         description: meeting.description,
@@ -41,13 +52,20 @@ export const EditMeetingModal = ({ open, onClose, meeting, onSuccess }) => {
         location: meeting.location,
         meeting_type: meeting.meeting_type,
         team: meeting.team,
-        participant_ids: meeting.participants || []
+        participant_ids: participantIds
       });
     }
   }, [meeting, open, form]);
 
   const handleFinish = async (values) => {
     setSubmitting(true);
+    let selectedParticipants = values.participant_ids || [];
+
+    // Ensure meeting never has 0 participants: retain creator if empty
+    if (selectedParticipants.length === 0 && meeting?.created_by) {
+      selectedParticipants = [meeting.created_by];
+    }
+
     const payload = {
       title: values.title,
       description: values.description,
@@ -57,7 +75,7 @@ export const EditMeetingModal = ({ open, onClose, meeting, onSuccess }) => {
       location: values.location,
       meeting_type: values.meeting_type,
       team: values.team || null,
-      participant_ids: values.participant_ids || []
+      participant_ids: selectedParticipants
     };
 
     try {
@@ -152,6 +170,7 @@ export const EditMeetingModal = ({ open, onClose, meeting, onSuccess }) => {
           <Form.Item
             name="participant_ids"
             label="Invite Individual Participants"
+            rules={[{ required: true, message: 'At least 1 participant (or host) is required.' }]}
           >
             <Select
               mode="multiple"

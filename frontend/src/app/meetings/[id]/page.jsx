@@ -246,18 +246,27 @@ export default function MeetingDetailPage() {
         </div>
 
         {/* Participants Section */}
-        <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
+        <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center space-x-3">
-            <span className="text-xs font-bold uppercase text-slate-400 dark:text-slate-400">Participants ({meeting.participants_detail?.length || 0}):</span>
+            <span className="text-xs font-bold uppercase text-slate-400 dark:text-slate-400">
+              Participants ({meeting.participants_detail?.length || (meeting.created_by_detail ? 1 : 0)}):
+            </span>
             <Avatar.Group maxCount={6}>
-              {meeting.participants_detail?.map((p) => (
+              {(meeting.participants_detail && meeting.participants_detail.length > 0
+                ? meeting.participants_detail
+                : meeting.created_by_detail
+                ? [meeting.created_by_detail]
+                : []
+              ).map((p) => (
                 <Tooltip key={p.id} title={`${p.full_name} (${p.role})`}>
-                  <Avatar icon={<UserOutlined />} className="bg-blue-600" />
+                  <Avatar icon={<UserOutlined />} className="bg-blue-600 font-bold" />
                 </Tooltip>
               ))}
             </Avatar.Group>
           </div>
-          <span className="text-xs text-slate-400 dark:text-slate-400">Organized by: {meeting.created_by_detail?.full_name || 'Admin'}</span>
+          <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold">
+            Organized by: <strong className="text-slate-900 dark:text-slate-200">{meeting.created_by_detail?.full_name || 'Admin'}</strong>
+          </span>
         </div>
       </Card>
 

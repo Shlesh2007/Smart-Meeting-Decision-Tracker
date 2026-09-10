@@ -156,7 +156,7 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp-relay.brevo.com').strip()
 EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
 EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', 'shleshdarji317@gmail.com').strip()
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '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').replace(' ', '').strip()
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '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').replace(' ', '').strip()
 EMAIL_TIMEOUT = int(os.environ.get('EMAIL_TIMEOUT', 10))  # 10 second socket timeout
 
 if EMAIL_PORT == 465:
