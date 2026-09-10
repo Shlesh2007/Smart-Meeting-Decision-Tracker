@@ -26,9 +26,10 @@ A comprehensive enterprise web application designed to streamline the lifecycle 
 ## 2. Technology Stack
 
 ### Frontend
-- **Framework**: Next.js 14+ (App Router)
+- **Build Tool / Framework**: Vite 5+ (React 18 Single Page Application)
+- **Routing**: React Router v6 (`react-router-dom`)
 - **Library**: React 18+
-- **Language**: TypeScript / JavaScript
+- **Language**: JavaScript / TypeScript
 - **Styling**: Tailwind CSS & Ant Design (`antd`)
 - **Icons & Visualization**: `@ant-design/icons`, `lucide-react`, `recharts`
 - **HTTP Client**: Axios (with custom JWT token injection & error handling interceptors)
@@ -69,18 +70,22 @@ SMDT/
 │   │   ├── actions/                # Action items, overdue logic, & dependency blocking
 │   │   └── analytics/              # Dashboard metrics & chart API data
 │   └── tests/                      # Automated test suite
-├── frontend/                       # Next.js Frontend Application
+├── frontend/                       # Vite + React 18 SPA Frontend Application
 │   ├── package.json                # Node dependencies and scripts
-│   ├── tailwind.config.js          # Tailwind styling configuration
-│   ├── next.config.mjs             # Next.js configuration
-│   ├── .env.example                # Template for frontend environment variables
-│   ├── public/                     # Static assets and OAuth callback fallback
+│   ├── vite.config.js              # Vite dev server and build engine configuration
+│   ├── tailwind.config.js          # Tailwind CSS configuration
+│   ├── postcss.config.js           # PostCSS configuration
+│   ├── index.html                  # SPA HTML entry point
+│   ├── .env.local                  # Local environment variables
+│   ├── public/                     # Static assets (logo, icons)
 │   └── src/
-│       ├── app/                    # Next.js App Router pages (login, dashboard, meetings, actions)
-│       ├── components/             # Reusable UI components (Navbar, ProfileModal, EmptyState)
+│       ├── pages/                  # React SPA pages (Home, Login, Register, Dashboard, Meetings, MyActions, Admin)
+│       ├── components/             # Reusable UI components (Navbar, ProfileModal, EmptyState, Charts)
 │       ├── context/                # React Contexts (AuthContext with Auth Guard, ThemeContext)
 │       ├── services/               # Modularized Axios API clients
-│       └── types/                  # TypeScript definitions
+│       ├── App.jsx                 # Central React Router v6 component
+│       ├── main.jsx                # React DOM root entry point
+│       └── index.css               # Global Tailwind CSS styles
 ├── README.md                       # Comprehensive Project Documentation
 └── .gitignore                      # Git ignore file excluding secrets and build outputs
 ```
@@ -153,11 +158,10 @@ SMDT/
    ```
 
 3. **Set up Environment Variables**:
-   Copy `.env.example` to `.env.local`:
+   Create or edit `.env.local`:
    ```bash
-   cp .env.example .env.local
+   NEXT_PUBLIC_API_URL=http://localhost:8080/api
    ```
-   *Verify that `NEXT_PUBLIC_API_BASE_URL` points to `http://localhost:8000/api`.*
 
 ---
 
@@ -198,7 +202,7 @@ DEFAULT_FROM_EMAIL=SmartMeeting Tracker <shleshdarji317@gmail.com>
 
 #### Frontend (`frontend/.env.local`)
 ```env
-NEXT_PUBLIC_API_URL=http://localhost:8000/api
+NEXT_PUBLIC_API_URL=http://localhost:8080/api
 NEXT_PUBLIC_GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
 NEXT_PUBLIC_GITHUB_CLIENT_ID=your-github-client-id
 ```
@@ -210,12 +214,12 @@ NEXT_PUBLIC_GITHUB_CLIENT_ID=your-github-client-id
 ### 1. Start Backend Django API Server
 From the `backend/` directory:
 ```bash
-python manage.py runserver 8000
+python manage.py runserver 8080
 ```
-- API Base URL: `http://localhost:8000/api/`
-- Django Admin Console: `http://localhost:8000/admin/`
+- API Base URL: `http://localhost:8080/api/`
+- Django Admin Console: `http://localhost:8080/admin/`
 
-### 2. Start Frontend Next.js Web App
+### 2. Start Frontend Vite React SPA App
 From the `frontend/` directory in a new terminal window:
 ```bash
 npm run dev

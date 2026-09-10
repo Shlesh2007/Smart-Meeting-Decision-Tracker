@@ -1,7 +1,5 @@
-'use client';
-
 import React, { useEffect, useState } from 'react';
-import Link from 'next/link';
+import { Link } from 'react-router-dom';
 import { Button } from 'antd';
 import { CheckCircleOutlined } from '@ant-design/icons';
 import { format, parseISO } from 'date-fns';
@@ -44,7 +42,7 @@ export const RecentCompletedActions = () => {
           </div>
         </div>
 
-        <Link href="/my-actions?tab=COMPLETED" className="no-underline">
+        <Link to="/my-actions?tab=COMPLETED" className="no-underline">
           <Button type="link" size="small" className="text-[11px] text-blue-600 dark:text-blue-400 font-bold p-0">
             View All →
           </Button>

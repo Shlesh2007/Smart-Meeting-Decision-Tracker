@@ -1,8 +1,5 @@
-'use client';
-
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { ProfileModal } from './ProfileModal.jsx';
 import { Logo } from './Logo.jsx';
@@ -27,8 +24,9 @@ import {
 import { format } from 'date-fns';
 
 export const Navbar = () => {
-  const pathname = usePathname();
-  const router = useRouter();
+  const location = useLocation();
+  const pathname = location.pathname;
+  const navigate = useNavigate();
   const { user, logout, isAdmin } = useAuth();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
@@ -105,7 +103,7 @@ export const Navbar = () => {
   const handleNavigation = (path) => {
     setDrawerOpen(false);
     if (pathname !== path) {
-      router.push(path);
+      navigate(path);
     }
   };
 
@@ -152,7 +150,7 @@ export const Navbar = () => {
               onClick={() => {
                 setHasUnread(false);
                 setPopoverOpen(false);
-                router.push(n.link);
+                navigate(n.link);
               }}
               className="p-2.5 rounded-lg bg-slate-50 border border-slate-100 hover:border-blue-300 transition-all cursor-pointer flex items-start space-x-2.5 group"
             >
@@ -176,7 +174,7 @@ export const Navbar = () => {
           type="button"
           onClick={() => {
             setPopoverOpen(false);
-            router.push('/my-actions');
+            navigate('/my-actions');
           }}
           className="no-underline text-blue-600 font-bold hover:underline bg-transparent border-0 cursor-pointer text-[10px]"
         >
@@ -216,7 +214,7 @@ export const Navbar = () => {
         
         {/* Sidebar Brand Header */}
         <div className="p-4 border-b border-slate-200/80 flex items-center">
-          <Link href="/dashboard" className="no-underline flex items-center">
+          <Link to="/dashboard" className="no-underline flex items-center">
             <Logo variant="full" height={42} />
           </Link>
         </div>
@@ -287,7 +285,7 @@ export const Navbar = () => {
           
           {/* Mobile Logo Brand */}
           <div className="flex items-center lg:hidden">
-            <Link href="/dashboard" className="no-underline flex items-center">
+            <Link to="/dashboard" className="no-underline flex items-center">
               <Logo variant="full" height={32} />
             </Link>
           </div>
@@ -357,7 +355,7 @@ export const Navbar = () => {
       {/* Clean Light Mobile Offcanvas Navigation Drawer */}
       <Drawer
         title={
-          <Link href="/dashboard" className="no-underline flex items-center" onClick={() => setDrawerOpen(false)}>
+          <Link to="/dashboard" className="no-underline flex items-center" onClick={() => setDrawerOpen(false)}>
             <Logo variant="full" height={36} />
           </Link>
         }

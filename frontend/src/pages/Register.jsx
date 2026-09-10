@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext.jsx';
-import { Logo } from '../../components/Logo.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
+import { Logo } from '../components/Logo.jsx';
 import { Form, Input, Button, Card, Select, message, Typography } from 'antd';
 import { UserOutlined, MailOutlined, LockOutlined, ThunderboltOutlined } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
 
-export default function RegisterPage() {
+export default function Register() {
   const { register } = useAuth();
   const [submitting, setSubmitting] = useState(false);
 
@@ -20,17 +20,19 @@ export default function RegisterPage() {
       console.error('Registration API Call Error Detail:', err);
 
       const errData = err.response?.data;
-      if (errData && typeof errData === 'object') {
-        const errorMessages = Object.entries(errData)
-          .map(([key, val]) => {
-            const detail = Array.isArray(val) ? val.join(' ') : String(val);
-            return `${key.toUpperCase()}: ${detail}`;
-          })
-          .join(' | ');
-        message.error(errorMessages);
+      if (errData && typeof errData === 'object' && !Array.isArray(errData)) {
+        Object.entries(errData).forEach(([key, val]) => {
+          const detail = Array.isArray(val) ? val.join(' ') : String(val);
+          if (key === 'non_field_errors' || key === 'detail' || key === 'error') {
+            message.error(detail);
+          } else {
+            const formattedField = key.charAt(0).toUpperCase() + key.slice(1).replace('_', ' ');
+            message.error(`${formattedField}: ${detail}`);
+          }
+        });
       } else {
-        const rawMsg = err.response?.data?.error || err.message || 'Unknown network error';
-        message.error(`Registration Failed: ${rawMsg}. Check Browser Console (F12) for details.`);
+        const rawMsg = err.response?.data?.error || err.response?.data?.detail || err.message || 'Registration failed.';
+        message.error(rawMsg);
       }
     } finally {
       setSubmitting(false);

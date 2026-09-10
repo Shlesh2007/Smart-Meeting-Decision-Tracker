@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext.jsx';
-import { authService } from '../../services/api.js';
-import { Logo } from '../../components/Logo.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
+import { authService } from '../services/api.js';
+import { Logo } from '../components/Logo.jsx';
 import { Form, Input, Button, Card, message, Typography, Modal, Divider, Steps } from 'antd';
 import {
   UserOutlined, LockOutlined, ThunderboltOutlined, InfoCircleOutlined,
@@ -11,7 +11,7 @@ import {
 
 const { Title, Text } = Typography;
 
-export default function LoginPage() {
+export default function Login() {
   const { login, refreshUser } = useAuth();
   const navigate = useNavigate();
   const [submitting, setSubmitting] = useState(false);
@@ -20,7 +20,7 @@ export default function LoginPage() {
 
   // OTP Password Reset Wizard States
   const [isForgotModalOpen, setIsForgotModalOpen] = useState(false);
-  const [resetStep, setResetStep] = useState(0); // 0: Request OTP, 1: Verify OTP, 2: New Password, 3: Success
+  const [resetStep, setResetStep] = useState(0);
   const [resetEmail, setResetEmail] = useState('');
   const [otpCode, setOtpCode] = useState('');
   const [otpLoading, setOtpLoading] = useState(false);
@@ -44,7 +44,6 @@ export default function LoginPage() {
 
   const processedOAuthRef = React.useRef(false);
 
-  // Auto-handle OAuth Callbacks on Page Load
   React.useEffect(() => {
     if (typeof window === 'undefined') return;
     if (processedOAuthRef.current) return;
@@ -55,7 +54,6 @@ export default function LoginPage() {
 
     if (code) {
       processedOAuthRef.current = true;
-      // Strip single-use code from URL immediately to prevent duplicate code submissions on re-renders
       window.history.replaceState({}, document.title, window.location.pathname);
 
       setOauthLoading('github');
@@ -72,7 +70,6 @@ export default function LoginPage() {
         });
     } else if (hash && hash.includes('access_token')) {
       processedOAuthRef.current = true;
-      // Strip access_token hash from URL immediately to prevent duplicate submissions
       window.history.replaceState({}, document.title, window.location.pathname);
 
       const hashParams = new URLSearchParams(hash.replace('#', '?'));
@@ -94,25 +91,22 @@ export default function LoginPage() {
     }
   }, [navigate, refreshUser]);
 
-  // Direct Google OAuth Login Handler - Launches Real Google Consent Screen
   const handleGoogleOAuth = () => {
     setOauthLoading('google');
-    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '1051715789667-m86kur6hnaciip8cp4ghoq08eeso6et3.apps.googleusercontent.com';
+    const clientId = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_GOOGLE_CLIENT_ID) || '1051715789667-m86kur6hnaciip8cp4ghoq08eeso6et3.apps.googleusercontent.com';
     const redirectUri = encodeURIComponent(`${window.location.origin}/login`);
     const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&scope=email%20profile&prompt=select_account`;
     window.location.href = googleAuthUrl;
   };
 
-  // Direct GitHub OAuth Login Handler - Launches Real GitHub Authorization
   const handleGithubOAuth = () => {
     setOauthLoading('github');
-    const clientId = process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID || 'Ov23li85R8iyZCz0Yn3h';
+    const clientId = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_GITHUB_CLIENT_ID) || 'Ov23li85R8iyZCz0Yn3h';
     const redirectUri = encodeURIComponent(`${window.location.origin}/login`);
     const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=user:email&prompt=consent`;
     window.location.href = githubAuthUrl;
   };
 
-  // Step 1: Request OTP
   const handleRequestOTP = async (values) => {
     setOtpLoading(true);
     try {
@@ -124,7 +118,7 @@ export default function LoginPage() {
       console.error('Request OTP Error:', err);
       const msg = err.response?.data?.error 
         || err.response?.data?.detail 
-        || (err.message === 'Network Error' ? 'Network Error: Unable to connect to backend server. Please check NEXT_PUBLIC_API_URL on Vercel.' : err.message) 
+        || (err.message === 'Network Error' ? 'Network Error: Unable to connect to backend server.' : err.message) 
         || 'Failed to send OTP code.';
       message.error(msg);
     } finally {
@@ -132,7 +126,6 @@ export default function LoginPage() {
     }
   };
 
-  // Step 2: Verify OTP Code
   const handleVerifyOTP = async (values) => {
     setOtpLoading(true);
     try {
@@ -148,7 +141,6 @@ export default function LoginPage() {
     }
   };
 
-  // Step 3: Set New Password
   const handleConfirmNewPassword = async (values) => {
     if (values.new_password !== values.confirm_password) {
       message.error('Passwords do not match.');
@@ -250,7 +242,6 @@ export default function LoginPage() {
             </Form.Item>
           </Form>
 
-          {/* OAuth 2.0 Buttons */}
           <Divider style={{ margin: '16px 0', fontSize: '12px', color: '#94a3b8' }}>
             <span style={{ whiteSpace: 'nowrap' }}>Or continue with</span>
           </Divider>
@@ -284,7 +275,6 @@ export default function LoginPage() {
         </Card>
       </div>
 
-      {/* 3-Step OTP Password Reset Modal */}
       <Modal
         title="Reset Password via OTP"
         open={isForgotModalOpen}
@@ -305,7 +295,6 @@ export default function LoginPage() {
             ]}
           />
 
-          {/* STEP 0: Request OTP */}
           {resetStep === 0 && (
             <Form form={requestOtpForm} layout="vertical" onFinish={handleRequestOTP}>
               <p className="text-sm text-gray-600 mb-4">
@@ -327,7 +316,6 @@ export default function LoginPage() {
             </Form>
           )}
 
-          {/* STEP 1: Verify OTP */}
           {resetStep === 1 && (
             <Form form={verifyOtpForm} layout="vertical" onFinish={handleVerifyOTP}>
               <div className="bg-blue-50 dark:bg-slate-800 p-3 rounded-lg border border-blue-100 dark:border-slate-700 mb-4">
@@ -366,7 +354,6 @@ export default function LoginPage() {
             </Form>
           )}
 
-          {/* STEP 2: Set New Password */}
           {resetStep === 2 && (
             <Form form={newPasswordForm} layout="vertical" onFinish={handleConfirmNewPassword}>
               <p className="text-sm text-gray-600 dark:text-slate-300 mb-4">
@@ -401,7 +388,6 @@ export default function LoginPage() {
             </Form>
           )}
 
-          {/* STEP 3: Success Screen */}
           {resetStep === 3 && (
             <div className="py-6 text-center space-y-3">
               <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto text-2xl">
@@ -423,7 +409,3 @@ export default function LoginPage() {
     </div>
   );
 }
-
-
-
-

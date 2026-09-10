@@ -1,9 +1,9 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { meetingService } from '../../services/api.js';
-import { StatusBadge } from '../../components/StatusBadge.jsx';
-import { LoadingSkeleton } from '../../components/LoadingSkeleton.jsx';
-import { EmptyState } from '../../components/EmptyState.jsx';
+import { meetingService } from '../services/api.js';
+import { StatusBadge } from '../components/StatusBadge.jsx';
+import { LoadingSkeleton } from '../components/LoadingSkeleton.jsx';
+import { EmptyState } from '../components/EmptyState.jsx';
 import {
   Input, Select, DatePicker, Button, Table, Card, Tag, Avatar, Tooltip, Pagination
 } from 'antd';
@@ -15,14 +15,13 @@ import dayjs from 'dayjs';
 
 const { RangePicker } = DatePicker;
 
-export default function MeetingsPage() {
+export default function Meetings() {
   const navigate = useNavigate();
   const [meetings, setMeetings] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
-  // Filters
   const [search, setSearch] = useState('');
   const [meetingType, setMeetingType] = useState('');
   const [status, setStatus] = useState('');
@@ -129,8 +128,6 @@ export default function MeetingsPage() {
 
   return (
     <div className="space-y-6">
-      
-      {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-xs transition-colors duration-200">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white m-0">Meetings Directory</h1>
@@ -143,10 +140,8 @@ export default function MeetingsPage() {
         </Link>
       </div>
 
-      {/* Filter Control Bar */}
       <Card className="shadow-xs rounded-2xl dark:bg-slate-800 dark:border-slate-700/80">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-3">
-          
           <Input
             prefix={<SearchOutlined className="text-slate-400" />}
             placeholder="Search meeting title or location..."
@@ -208,7 +203,6 @@ export default function MeetingsPage() {
         </div>
       </Card>
 
-      {/* Main Content State Rendering */}
       {loading ? (
         <LoadingSkeleton type="table" />
       ) : error ? (
@@ -250,7 +244,6 @@ export default function MeetingsPage() {
           </div>
         </div>
       )}
-
     </div>
   );
 }

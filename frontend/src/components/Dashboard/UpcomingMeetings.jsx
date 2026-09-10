@@ -1,7 +1,5 @@
-'use client';
-
 import React, { useEffect, useState } from 'react';
-import Link from 'next/link';
+import { Link } from 'react-router-dom';
 import { Button, Tag } from 'antd';
 import {
   CalendarOutlined,
@@ -102,7 +100,7 @@ export const UpcomingMeetings = ({ meetings: initialMeetings }) => {
         </div>
 
         <div className="shrink-0 flex items-center justify-end">
-          <Link href={`/meetings/${m.id}`} className="no-underline">
+          <Link to={`/meetings/${m.id}`} className="no-underline">
             <Button
               type="primary"
               size="small"
@@ -132,7 +130,7 @@ export const UpcomingMeetings = ({ meetings: initialMeetings }) => {
           </div>
         </div>
 
-        <Link href="/meetings" className="no-underline">
+        <Link to="/meetings" className="no-underline">
           <Button type="link" size="small" className="text-[11px] text-blue-600 dark:text-blue-400 font-bold p-0">
             View All ({meetings.length}) →
           </Button>
@@ -154,7 +152,7 @@ export const UpcomingMeetings = ({ meetings: initialMeetings }) => {
                 Schedule your next meeting to start capturing discussions and action items.
               </p>
             </div>
-            <Link href="/meetings/new" className="no-underline inline-block pt-1">
+            <Link to="/meetings/new" className="no-underline inline-block pt-1">
               <Button type="primary" size="small" icon={<PlusOutlined />} className="bg-blue-600 text-[10px] font-bold rounded-lg border-none h-6 px-2.5">
                 Schedule Meeting
               </Button>

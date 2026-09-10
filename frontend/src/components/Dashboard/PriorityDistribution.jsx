@@ -1,37 +1,12 @@
-'use client';
-
 import React from 'react';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { BarChartOutlined } from '@ant-design/icons';
 
 const PRIORITIES = [
-  {
-    key: 'CRITICAL',
-    label: 'Critical Priority',
-    colorBg: 'bg-red-500',
-    colorText: 'text-red-600 dark:text-red-400',
-    barColor: '#ef4444',
-  },
-  {
-    key: 'HIGH',
-    label: 'High Priority',
-    colorBg: 'bg-orange-500',
-    colorText: 'text-orange-600 dark:text-orange-400',
-    barColor: '#f97316',
-  },
-  {
-    key: 'MEDIUM',
-    label: 'Medium Priority',
-    colorBg: 'bg-amber-500',
-    colorText: 'text-amber-600 dark:text-amber-400',
-    barColor: '#f59e0b',
-  },
-  {
-    key: 'LOW',
-    label: 'Low Priority',
-    colorBg: 'bg-emerald-500',
-    colorText: 'text-emerald-600 dark:text-emerald-400',
-    barColor: '#10b981',
-  },
+  { key: 'CRITICAL', label: 'Critical Priority', color: '#ef4444' },
+  { key: 'HIGH', label: 'High Priority', color: '#f97316' },
+  { key: 'MEDIUM', label: 'Medium Priority', color: '#f59e0b' },
+  { key: 'LOW', label: 'Low Priority', color: '#10b981' },
 ];
 
 export const PriorityDistribution = ({ priorityDistribution = {} }) => {
@@ -40,7 +15,15 @@ export const PriorityDistribution = ({ priorityDistribution = {} }) => {
     0
   );
 
-  const maxVal = Math.max(...PRIORITIES.map((p) => priorityDistribution[p.key] || 0), 1);
+  const rawChartData = PRIORITIES.map((p) => ({
+    name: p.label,
+    value: priorityDistribution[p.key] || 0,
+    color: p.color,
+    key: p.key,
+  }));
+
+  const chartData = rawChartData.filter((item) => item.value > 0);
+  const zeroChartData = [{ name: 'No Priority Data', value: 1, color: '#e2e8f0' }];
 
   return (
     <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 sm:p-4 shadow-xs transition-all h-full flex flex-col justify-between">
@@ -61,36 +44,51 @@ export const PriorityDistribution = ({ priorityDistribution = {} }) => {
         </span>
       </div>
 
-      {/* Priority Progress Bars */}
-      <div className="my-2.5 space-y-2">
-        {PRIORITIES.map((p) => {
-          const count = priorityDistribution[p.key] || 0;
-          const percentage = Math.round((count / maxVal) * 100);
+      {/* Centered Pie Chart Container (No side legend / progress bars) */}
+      <div className="my-2.5 relative w-full h-44 flex items-center justify-center">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={total > 0 ? chartData : zeroChartData}
+              cx="50%"
+              cy="50%"
+              innerRadius={42}
+              outerRadius={65}
+              paddingAngle={total > 0 ? 3 : 0}
+              dataKey="value"
+              strokeWidth={0}
+            >
+              {(total > 0 ? chartData : zeroChartData).map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={entry.color} />
+              ))}
+            </Pie>
+            {total > 0 && (
+              <Tooltip
+                content={({ active, payload }) => {
+                  if (active && payload && payload.length) {
+                    const data = payload[0];
+                    const pct = Math.round((data.value / total) * 100);
+                    return (
+                      <div className="bg-slate-900 text-white text-[11px] px-3 py-1.5 rounded-lg shadow-lg border border-slate-700">
+                        <p className="font-bold m-0">{data.name}</p>
+                        <p className="m-0 text-slate-300 font-semibold">{data.value} items ({pct}%)</p>
+                      </div>
+                    );
+                  }
+                  return null;
+                }}
+              />
+            )}
+          </PieChart>
+        </ResponsiveContainer>
 
-          return (
-            <div key={p.key} className="space-y-1">
-              <div className="flex justify-between items-center text-[11px]">
-                <div className="flex items-center space-x-2">
-                  <span className={`w-2 h-2 rounded-full ${p.colorBg}`} />
-                  <span className="font-medium text-slate-700 dark:text-slate-300">
-                    {p.label}
-                  </span>
-                </div>
-                <span className="font-bold text-slate-900 dark:text-white">
-                  {count}
-                </span>
-              </div>
-
-              {/* Progress Bar Container */}
-              <div className="w-full bg-slate-100 dark:bg-slate-800/80 rounded-full h-1.5 overflow-hidden">
-                <div
-                  className={`h-1.5 rounded-full transition-all duration-300 ${p.colorBg}`}
-                  style={{ width: count > 0 ? `${Math.max(percentage, 5)}%` : '0%' }}
-                />
-              </div>
-            </div>
-          );
-        })}
+        {/* Center Total Count Label inside Donut */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
+          <span className="text-xl font-black text-slate-900 dark:text-white tracking-tight leading-none">
+            {total}
+          </span>
+          <span className="text-[9px] uppercase font-bold text-slate-400 mt-0.5">Total Items</span>
+        </div>
       </div>
 
       {/* Footer Summary */}

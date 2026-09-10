@@ -1,14 +1,14 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { useAuth } from '../../../context/AuthContext.jsx';
-import { meetingService, discussionService, actionService } from '../../../services/api.js';
-import { StatusBadge } from '../../../components/StatusBadge.jsx';
-import { LoadingSkeleton } from '../../../components/LoadingSkeleton.jsx';
-import { DiscussionModal } from '../../../components/DiscussionModal.jsx';
-import { DecisionModal } from '../../../components/DecisionModal.jsx';
-import { ActionFormModal } from '../../../components/ActionFormModal.jsx';
-import { DecisionHistoryModal } from '../../../components/DecisionHistoryModal.jsx';
-import { EditMeetingModal } from '../../../components/EditMeetingModal.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
+import { meetingService, discussionService, actionService } from '../services/api.js';
+import { StatusBadge } from '../components/StatusBadge.jsx';
+import { LoadingSkeleton } from '../components/LoadingSkeleton.jsx';
+import { DiscussionModal } from '../components/DiscussionModal.jsx';
+import { DecisionModal } from '../components/DecisionModal.jsx';
+import { ActionFormModal } from '../components/ActionFormModal.jsx';
+import { DecisionHistoryModal } from '../components/DecisionHistoryModal.jsx';
+import { EditMeetingModal } from '../components/EditMeetingModal.jsx';
 import {
   Button, Card, Tag, Avatar, Tooltip, Alert, message, Breadcrumb, Select
 } from 'antd';
@@ -19,7 +19,7 @@ import {
 } from '@ant-design/icons';
 import { format } from 'date-fns';
 
-export default function MeetingDetailPage() {
+export default function MeetingDetail() {
   const params = useParams();
   const meetingId = Number(params.id);
   const { user, isAdmin } = useAuth();
@@ -32,7 +32,6 @@ export default function MeetingDetailPage() {
   const [sendingOtp, setSendingOtp] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
 
-  // Modals state
   const [showDiscussionModal, setShowDiscussionModal] = useState(false);
   const [showEditMeetingModal, setShowEditMeetingModal] = useState(false);
   const [activeDiscussionForDecision, setActiveDiscussionForDecision] = useState(null);
@@ -133,8 +132,6 @@ export default function MeetingDetailPage() {
 
   return (
     <div className="space-y-6">
-      
-      {/* Breadcrumb & Navigation */}
       <div className="flex justify-between items-center">
         <Breadcrumb items={[
           { title: <Link to="/meetings" className="no-underline">Meetings</Link> },
@@ -145,7 +142,6 @@ export default function MeetingDetailPage() {
         </Link>
       </div>
 
-      {/* Meeting Header Info Card */}
       <Card className="shadow-sm rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-800">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-4 border-b border-slate-100 dark:border-slate-700">
           <div>
@@ -220,7 +216,6 @@ export default function MeetingDetailPage() {
           </div>
         </div>
 
-
         {meeting.description && (
           <p className="text-slate-600 dark:text-slate-300 text-sm mt-3 mb-4 leading-relaxed">
             {meeting.description}
@@ -242,7 +237,6 @@ export default function MeetingDetailPage() {
           </div>
         </div>
 
-        {/* Participants Section */}
         <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center space-x-3">
             <span className="text-xs font-bold uppercase text-slate-400 dark:text-slate-400">
@@ -267,7 +261,6 @@ export default function MeetingDetailPage() {
         </div>
       </Card>
 
-      {/* Discussion Points & Decisions Section */}
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <h2 className="text-xl font-bold text-slate-900 dark:text-white m-0 flex items-center space-x-2">
@@ -292,8 +285,6 @@ export default function MeetingDetailPage() {
 
             return (
               <Card key={disc.id} className="shadow-sm rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-800 overflow-hidden">
-                
-                {/* Discussion Header */}
                 <div className="flex justify-between items-start pb-3 border-b border-slate-100 dark:border-slate-700">
                   <div>
                     <div className="flex items-center space-x-2 mb-1">
@@ -310,7 +301,6 @@ export default function MeetingDetailPage() {
                   </span>
                 </div>
 
-                {/* Decision Sub-Block */}
                 <div className="mt-4 bg-slate-50/80 dark:bg-slate-900/60 p-4 rounded-xl border border-slate-200 dark:border-slate-700">
                   <div className="flex justify-between items-center mb-2">
                     <div className="flex items-center space-x-2">
@@ -375,7 +365,6 @@ export default function MeetingDetailPage() {
                     </div>
                   )}
 
-                  {/* Action Items List under this Decision */}
                   {decision && decision.status === 'DECISION_MADE' && (
                     <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
                       <div className="flex justify-between items-center mb-3">
@@ -425,7 +414,6 @@ export default function MeetingDetailPage() {
                                     <span>Due Date: <strong className={action.is_overdue ? 'text-rose-600' : ''}>{format(new Date(action.due_date), 'MMM dd, yyyy')}</strong></span>
                                   </div>
 
-                                  {/* Action Dependencies Display */}
                                   {action.dependency_details && action.dependency_details.length > 0 && (
                                     <div className="mt-2 pt-1 flex items-center space-x-2 text-xs">
                                       <span className="font-bold text-slate-500">Prerequisites:</span>
@@ -462,7 +450,6 @@ export default function MeetingDetailPage() {
         )}
       </div>
 
-      {/* Modals */}
       <DiscussionModal
         open={showDiscussionModal}
         onClose={() => setShowDiscussionModal(false)}
@@ -502,7 +489,6 @@ export default function MeetingDetailPage() {
         meeting={meeting}
         onSuccess={loadData}
       />
-
     </div>
   );
 }

@@ -1,10 +1,10 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext.jsx';
-import { authService } from '../../services/api.js';
+import { useAuth } from '../context/AuthContext.jsx';
+import { authService } from '../services/api.js';
 import { Spin, message } from 'antd';
 
-export default function OAuthCallbackPage() {
+export default function OAuthCallback() {
   const navigate = useNavigate();
   const { refreshUser } = useAuth();
 

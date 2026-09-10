@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { meetingService, userService, teamService } from '../../../services/api.js';
+import { meetingService, userService, teamService } from '../services/api.js';
 import {
   Form, Input, Select, DatePicker, TimePicker, Button, Card, message, Typography
 } from 'antd';
@@ -9,7 +9,7 @@ import dayjs from 'dayjs';
 
 const { Title, Text } = Typography;
 
-export default function CreateMeetingPage() {
+export default function CreateMeeting() {
   const navigate = useNavigate();
   const [form] = Form.useForm();
   const [users, setUsers] = useState([]);
@@ -59,7 +59,6 @@ export default function CreateMeetingPage() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
-      
       <div className="flex items-center space-x-3">
         <Link to="/meetings" className="no-underline">
           <Button icon={<ArrowLeftOutlined />} shape="circle" />

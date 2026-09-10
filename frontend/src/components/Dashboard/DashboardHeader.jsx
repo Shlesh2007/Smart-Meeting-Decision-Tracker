@@ -1,10 +1,9 @@
-'use client';
-
 import React from 'react';
-import Link from 'next/link';
+import { Link } from 'react-router-dom';
 import { Button } from 'antd';
 import { PlusOutlined, SyncOutlined, CalendarOutlined, ThunderboltOutlined } from '@ant-design/icons';
 import { format } from 'date-fns';
+import { Logo } from '../Logo.jsx';
 
 export const DashboardHeader = ({ user, onRefresh, loading }) => {
   const formattedDate = format(new Date(), 'EEEE, MMM d, yyyy');
@@ -21,9 +20,7 @@ export const DashboardHeader = ({ user, onRefresh, loading }) => {
       
       {/* Greeting & Date Info */}
       <div className="flex items-center space-x-3">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white flex items-center justify-center font-black text-lg shadow-sm shadow-blue-500/20 shrink-0">
-          ⚡
-        </div>
+        <Logo variant="icon" height={40} className="shrink-0" />
         <div className="space-y-0.5">
           <div className="flex items-center space-x-2.5 flex-wrap">
             <h1 className="text-base sm:text-lg font-extrabold text-slate-900 dark:text-white m-0 tracking-tight leading-snug">
@@ -42,7 +39,7 @@ export const DashboardHeader = ({ user, onRefresh, loading }) => {
 
       {/* Action Buttons */}
       <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap shrink-0">
-        <Link href="/meetings/new" className="no-underline">
+        <Link to="/meetings/new" className="no-underline">
           <Button
             type="primary"
             icon={<PlusOutlined />}
@@ -52,7 +49,7 @@ export const DashboardHeader = ({ user, onRefresh, loading }) => {
           </Button>
         </Link>
         
-        <Link href="/my-actions" className="no-underline">
+        <Link to="/my-actions" className="no-underline">
           <Button
             icon={<ThunderboltOutlined />}
             className="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold rounded-lg border-slate-200 dark:border-slate-700 text-xs h-8.5 px-3.5 flex items-center"

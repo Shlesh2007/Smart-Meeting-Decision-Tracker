@@ -1,9 +1,9 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { actionService } from '../../services/api.js';
-import { StatusBadge } from '../../components/StatusBadge.jsx';
-import { LoadingSkeleton } from '../../components/LoadingSkeleton.jsx';
-import { EmptyState } from '../../components/EmptyState.jsx';
+import { actionService } from '../services/api.js';
+import { StatusBadge } from '../components/StatusBadge.jsx';
+import { LoadingSkeleton } from '../components/LoadingSkeleton.jsx';
+import { EmptyState } from '../components/EmptyState.jsx';
 import {
   Tabs, Card, Table, Select, Button, Tag, message, Alert, Input
 } from 'antd';
@@ -12,8 +12,8 @@ import {
 } from '@ant-design/icons';
 import { format } from 'date-fns';
 
-export default function MyActionsPage() {
-  const searchParams = useSearchParams();
+export default function MyActions() {
+  const [searchParams] = useSearchParams();
   const initialTab = searchParams.get('tab') || 'ALL';
 
   const [actions, setActions] = useState([]);
@@ -58,7 +58,6 @@ export default function MyActionsPage() {
     }
   };
 
-  // Filter actions based on tab & search
   const filteredActions = actions.filter((item) => {
     const matchesSearch = item.title.toLowerCase().includes(search.toLowerCase()) ||
       (item.description && item.description.toLowerCase().includes(search.toLowerCase()));
@@ -163,8 +162,6 @@ export default function MyActionsPage() {
 
   return (
     <div className="space-y-6">
-      
-      {/* Header */}
       <div className="flex justify-between items-center bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-xs transition-colors duration-200">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white m-0 flex items-center space-x-2">
@@ -185,7 +182,6 @@ export default function MyActionsPage() {
         />
       )}
 
-      {/* Tabs & Filters */}
       <Card className="shadow-xs rounded-xl dark:bg-slate-800 dark:border-slate-700">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
           <Tabs

@@ -1,7 +1,5 @@
-'use client';
-
 import React, { useState } from 'react';
-import Link from 'next/link';
+import { Link } from 'react-router-dom';
 import { PlusOutlined, CalendarOutlined, ThunderboltOutlined, RightOutlined } from '@ant-design/icons';
 import { ActionFormModal } from '../ActionFormModal.jsx';
 
@@ -28,7 +26,7 @@ export const QuickActions = () => {
         {/* Action Buttons Grid */}
         <div className="my-2 space-y-2">
           {/* Action 1: Schedule Meeting */}
-          <Link href="/meetings/new" className="no-underline block">
+          <Link to="/meetings/new" className="no-underline block">
             <div className="p-2.5 rounded-lg bg-blue-50/60 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900/60 hover:bg-blue-100/60 dark:hover:bg-blue-900/50 transition-all flex items-center justify-between group cursor-pointer">
               <div className="flex items-center space-x-2.5">
                 <div className="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center text-xs font-bold shadow-xs shrink-0">
@@ -69,7 +67,7 @@ export const QuickActions = () => {
           </div>
 
           {/* Action 3: View Calendar */}
-          <Link href="/meetings" className="no-underline block">
+          <Link to="/meetings" className="no-underline block">
             <div className="p-2.5 rounded-lg bg-indigo-50/60 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/60 hover:bg-indigo-100/60 dark:hover:bg-indigo-900/50 transition-all flex items-center justify-between group cursor-pointer">
               <div className="flex items-center space-x-2.5">
                 <div className="w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center text-xs font-bold shadow-xs shrink-0">

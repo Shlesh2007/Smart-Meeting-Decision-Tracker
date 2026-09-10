@@ -1,15 +1,13 @@
-'use client';
-
 import React from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { PieChartOutlined } from '@ant-design/icons';
 
 const STATUS_CONFIG = [
-  { key: 'TODO', label: 'Todo', color: '#9ca3af', bgClass: 'bg-slate-400' },
-  { key: 'IN_PROGRESS', label: 'In Progress', color: '#2563eb', bgClass: 'bg-blue-600' },
-  { key: 'BLOCKED', label: 'Blocked', color: '#ef4444', bgClass: 'bg-red-500' },
-  { key: 'COMPLETED', label: 'Completed', color: '#10b981', bgClass: 'bg-emerald-500' },
-  { key: 'CANCELLED', label: 'Cancelled', color: '#6b7280', bgClass: 'bg-gray-500' },
+  { key: 'TODO', label: 'Todo', color: '#9ca3af' },
+  { key: 'IN_PROGRESS', label: 'In Progress', color: '#2563eb' },
+  { key: 'BLOCKED', label: 'Blocked', color: '#ef4444' },
+  { key: 'COMPLETED', label: 'Completed', color: '#10b981' },
+  { key: 'CANCELLED', label: 'Cancelled', color: '#6b7280' },
 ];
 
 export const ActionStatusChart = ({ statusDistribution = {} }) => {
@@ -30,7 +28,6 @@ export const ActionStatusChart = ({ statusDistribution = {} }) => {
   const completionCount = statusDistribution.COMPLETED || 0;
   const completionRate = totalActions > 0 ? Math.round((completionCount / totalActions) * 100) : 0;
 
-  // Placeholder ring data for zero actions
   const zeroChartData = [{ name: 'No Actions', value: 1, color: '#e2e8f0' }];
 
   return (
@@ -52,81 +49,50 @@ export const ActionStatusChart = ({ statusDistribution = {} }) => {
         </span>
       </div>
 
-      {/* Chart & Legend Container */}
-      <div className="my-2.5 flex items-center gap-3">
-        {/* Compact Donut Chart with Centered Total */}
-        <div className="relative w-28 h-28 shrink-0 flex items-center justify-center">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={totalActions > 0 ? chartData : zeroChartData}
-                cx="50%"
-                cy="50%"
-                innerRadius={32}
-                outerRadius={44}
-                paddingAngle={totalActions > 0 ? 3 : 0}
-                dataKey="value"
-                strokeWidth={0}
-              >
-                {(totalActions > 0 ? chartData : zeroChartData).map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-              {totalActions > 0 && (
-                <Tooltip
-                  content={({ active, payload }) => {
-                    if (active && payload && payload.length) {
-                      const data = payload[0];
-                      const pct = totalActions > 0 ? Math.round((data.value / totalActions) * 100) : 0;
-                      return (
-                        <div className="bg-slate-900 text-white text-[10px] px-2 py-1 rounded shadow-md">
-                          <p className="font-bold m-0">{data.name}</p>
-                          <p className="m-0 text-slate-300">{data.value} ({pct}%)</p>
-                        </div>
-                      );
-                    }
-                    return null;
-                  }}
-                />
-              )}
-            </PieChart>
-          </ResponsiveContainer>
+      {/* Centered Pie Chart Container (No side legend) */}
+      <div className="my-2.5 relative w-full h-44 flex items-center justify-center">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={totalActions > 0 ? chartData : zeroChartData}
+              cx="50%"
+              cy="50%"
+              innerRadius={42}
+              outerRadius={65}
+              paddingAngle={totalActions > 0 ? 3 : 0}
+              dataKey="value"
+              strokeWidth={0}
+            >
+              {(totalActions > 0 ? chartData : zeroChartData).map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={entry.color} />
+              ))}
+            </Pie>
+            {totalActions > 0 && (
+              <Tooltip
+                content={({ active, payload }) => {
+                  if (active && payload && payload.length) {
+                    const data = payload[0];
+                    const pct = totalActions > 0 ? Math.round((data.value / totalActions) * 100) : 0;
+                    return (
+                      <div className="bg-slate-900 text-white text-[11px] px-3 py-1.5 rounded-lg shadow-lg border border-slate-700">
+                        <p className="font-bold m-0">{data.name}</p>
+                        <p className="m-0 text-slate-300 font-semibold">{data.value} items ({pct}%)</p>
+                      </div>
+                    );
+                  }
+                  return null;
+                }}
+              />
+            )}
+          </PieChart>
+        </ResponsiveContainer>
 
-          {/* Center Label inside Donut */}
-          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
-            <span className="text-lg font-black text-slate-900 dark:text-white tracking-tight leading-none">
-              {totalActions}
-            </span>
-            <span className="text-[8px] uppercase font-bold text-slate-400 mt-0.5">Actions</span>
-          </div>
-        </div>
-
-        {/* Compact Status List Legend */}
-        <div className="flex-1 w-full space-y-1">
-          {STATUS_CONFIG.map((status) => {
-            const count = statusDistribution[status.key] || 0;
-            const pct = totalActions > 0 ? Math.round((count / totalActions) * 100) : 0;
-
-            return (
-              <div
-                key={status.key}
-                className="flex items-center justify-between px-2 py-1 rounded-md bg-slate-50/80 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 text-[11px]"
-              >
-                <div className="flex items-center space-x-2 min-w-0 pr-1">
-                  <span className={`w-2 h-2 rounded-full shrink-0 ${status.bgClass}`} />
-                  <span className="font-medium text-slate-700 dark:text-slate-300 truncate">
-                    {status.label}
-                  </span>
-                </div>
-                <div className="flex items-center space-x-1.5 shrink-0">
-                  <span className="font-bold text-slate-900 dark:text-slate-100">{count}</span>
-                  <span className="text-[9px] text-slate-400 w-7 text-right font-semibold">
-                    {pct}%
-                  </span>
-                </div>
-              </div>
-            );
-          })}
+        {/* Center Label inside Donut */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
+          <span className="text-xl font-black text-slate-900 dark:text-white tracking-tight leading-none">
+            {totalActions}
+          </span>
+          <span className="text-[9px] uppercase font-bold text-slate-400 mt-0.5">Total Actions</span>
         </div>
       </div>
 

@@ -1,13 +1,12 @@
-'use client';
-
 import React from 'react';
-import { usePathname } from 'next/navigation';
+import { useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { Navbar } from './Navbar.jsx';
 
 export function MainLayout({ children }) {
   const { user } = useAuth();
-  const pathname = usePathname();
+  const location = useLocation();
+  const pathname = location.pathname;
   const isAuthPage = pathname === '/login' || pathname === '/register';
   const showSidebarPadding = user && !isAuthPage;
 

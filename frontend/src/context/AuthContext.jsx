@@ -1,8 +1,6 @@
-'use client';
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authService } from '../services/api.js';
-import { useRouter, usePathname } from 'next/navigation';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Spin } from 'antd';
 
 const AuthContext = createContext({});
@@ -10,8 +8,9 @@ const AuthContext = createContext({});
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
-  const pathname = usePathname();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const pathname = location.pathname;
 
   const refreshUser = async () => {
     try {
@@ -39,33 +38,33 @@ export const AuthProvider = ({ children }) => {
   // Global Auth Guard: Protect all non-public routes
   useEffect(() => {
     if (!loading) {
-      const publicPaths = ['/login', '/register'];
+      const publicPaths = ['/login', '/register', '/'];
       const isPublicPath = publicPaths.includes(pathname);
 
       if (!user && !isPublicPath) {
-        router.push('/login');
+        navigate('/login');
       } else if (user && isPublicPath) {
-        router.push('/dashboard');
+        navigate('/dashboard');
       }
     }
-  }, [user, loading, pathname, router]);
+  }, [user, loading, pathname, navigate]);
 
   const login = async (credentials) => {
     await authService.login(credentials);
     await refreshUser();
-    router.push('/dashboard');
+    navigate('/dashboard');
   };
 
   const register = async (payload) => {
     await authService.register(payload);
     await refreshUser();
-    router.push('/dashboard');
+    navigate('/dashboard');
   };
 
   const logout = () => {
     authService.logout();
     setUser(null);
-    router.push('/login');
+    navigate('/login');
   };
 
   const isAdmin = Boolean(user && user.role === 'ADMIN');
@@ -79,7 +78,7 @@ export const AuthProvider = ({ children }) => {
   }
 
   // Prevent rendering protected content for unauthenticated users
-  const publicPaths = ['/login', '/register'];
+  const publicPaths = ['/login', '/register', '/'];
   const isPublicPath = publicPaths.includes(pathname);
   if (!user && !isPublicPath) {
     return (

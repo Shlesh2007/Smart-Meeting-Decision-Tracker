@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { useAuth } from '../../context/AuthContext.jsx';
-import { userService, teamService } from '../../services/api.js';
-import { LoadingSkeleton } from '../../components/LoadingSkeleton.jsx';
+import { useAuth } from '../context/AuthContext.jsx';
+import { userService, teamService } from '../services/api.js';
+import { LoadingSkeleton } from '../components/LoadingSkeleton.jsx';
 import {
   Card, Table, Tag, Button, Select, Modal, Form, Input, message, Tabs, Alert, Avatar, Popconfirm
 } from 'antd';
@@ -11,7 +11,7 @@ import {
 } from '@ant-design/icons';
 import { format } from 'date-fns';
 
-export default function AdminPage() {
+export default function Admin() {
   const { user, isAdmin } = useAuth();
   const [users, setUsers] = useState([]);
   const [teams, setTeams] = useState([]);
@@ -161,8 +161,6 @@ export default function AdminPage() {
 
   return (
     <div className="space-y-6">
-      
-      {/* Header */}
       <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-xs flex justify-between items-center transition-colors duration-200">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white m-0 flex items-center space-x-2">
@@ -251,7 +249,6 @@ export default function AdminPage() {
                       )}
 
                       <div className="space-y-3 pt-2">
-                        {/* Member Details Breakdown */}
                         <div>
                           <div className="flex justify-between items-center mb-2">
                             <span className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400 flex items-center">
@@ -296,7 +293,6 @@ export default function AdminPage() {
         />
       </Card>
 
-      {/* Create / Edit Team Modal */}
       <Modal
         title={editingTeam ? `Edit Team: ${editingTeam.name}` : 'Create New Team'}
         open={showTeamModal}

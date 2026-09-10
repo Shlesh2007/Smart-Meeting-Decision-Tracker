@@ -1,22 +1,22 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext.jsx';
-import { analyticsService } from '../../services/api.js';
+import { useAuth } from '../context/AuthContext.jsx';
+import { analyticsService } from '../services/api.js';
 import { Alert, Button } from 'antd';
 import { SyncOutlined, ExclamationCircleOutlined, ArrowRightOutlined } from '@ant-design/icons';
 
-import { DashboardHeader } from '../../components/Dashboard/DashboardHeader.jsx';
-import { DashboardMetrics } from '../../components/Dashboard/DashboardMetrics.jsx';
-import { ActionStatusChart } from '../../components/Dashboard/ActionStatusChart.jsx';
-import { PriorityDistribution } from '../../components/Dashboard/PriorityDistribution.jsx';
-import { MeetingActivityChart } from '../../components/Dashboard/MeetingActivityChart.jsx';
-import { UpcomingMeetings } from '../../components/Dashboard/UpcomingMeetings.jsx';
-import { RecentCompletedActions } from '../../components/Dashboard/RecentCompletedActions.jsx';
-import { NeedsAttention } from '../../components/Dashboard/NeedsAttention.jsx';
-import { QuickActions } from '../../components/Dashboard/QuickActions.jsx';
-import { DashboardSkeleton } from '../../components/Dashboard/DashboardSkeleton.jsx';
+import { DashboardHeader } from '../components/Dashboard/DashboardHeader.jsx';
+import { DashboardMetrics } from '../components/Dashboard/DashboardMetrics.jsx';
+import { ActionStatusChart } from '../components/Dashboard/ActionStatusChart.jsx';
+import { PriorityDistribution } from '../components/Dashboard/PriorityDistribution.jsx';
+import { MeetingActivityChart } from '../components/Dashboard/MeetingActivityChart.jsx';
+import { UpcomingMeetings } from '../components/Dashboard/UpcomingMeetings.jsx';
+import { RecentCompletedActions } from '../components/Dashboard/RecentCompletedActions.jsx';
+import { NeedsAttention } from '../components/Dashboard/NeedsAttention.jsx';
+import { QuickActions } from '../components/Dashboard/QuickActions.jsx';
+import { DashboardSkeleton } from '../components/Dashboard/DashboardSkeleton.jsx';
 
-export default function DashboardPage() {
+export default function Dashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [data, setData] = useState(null);
@@ -75,11 +75,8 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-4 max-w-[1600px] mx-auto pb-8">
-      
-      {/* 1. Header Greeting & Quick CTAs Hero */}
       <DashboardHeader user={user} onRefresh={fetchDashboard} loading={loading} />
 
-      {/* Overdue Action Banner */}
       {metrics.overdue_actions > 0 && (
         <Alert
           type="warning"
@@ -107,20 +104,17 @@ export default function DashboardPage() {
         />
       )}
 
-      {/* 2. ROW 1: 6-Column Compact KPI Metrics Grid */}
       <DashboardMetrics
         metrics={metrics}
         onCardClick={(path) => navigate(path)}
       />
 
-      {/* 3. ROW 2: Balanced 3-Column Equal-Height Grid (Upcoming Meetings | Action Status Donut | Priority Distribution) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch">
         <UpcomingMeetings />
         <ActionStatusChart statusDistribution={status_distribution} />
         <PriorityDistribution priorityDistribution={priority_distribution} />
       </div>
 
-      {/* 4. ROW 3: Meeting Activity Area Chart (7 cols) | Recent Completed Actions (5 cols) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
         <div className="lg:col-span-7">
           <MeetingActivityChart meetingActivity={meeting_activity} />
@@ -130,7 +124,6 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* 5. ROW 4: Needs Attention Action Table (8 cols) | Quick Actions (4 cols) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
         <div className="lg:col-span-8">
           <NeedsAttention overdueList={overdue_list} />
@@ -139,7 +132,6 @@ export default function DashboardPage() {
           <QuickActions />
         </div>
       </div>
-
     </div>
   );
 }
