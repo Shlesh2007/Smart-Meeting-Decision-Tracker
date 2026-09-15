@@ -6,8 +6,9 @@ import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Load environment variables from .env file
+# Load environment variables from .env file (check backend dir and root project dir)
 dotenv.load_dotenv(BASE_DIR / '.env')
+dotenv.load_dotenv(BASE_DIR.parent / '.env')
 
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-smart-meeting-decision-tracker-secret-key-2026')
 DEBUG = os.environ.get('DEBUG', 'True').lower() in ('true', '1', 't')
