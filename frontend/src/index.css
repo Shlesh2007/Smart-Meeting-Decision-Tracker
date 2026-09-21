@@ -188,10 +188,14 @@ a, a:hover, a:focus, a:visited {
   }
 
   .ant-btn {
-    white-space: normal !important;
     max-width: 100% !important;
+  }
+
+  .ant-tag {
+    max-width: 100% !important;
+    white-space: normal !important;
     height: auto !important;
-    padding: 6px 10px !important;
+    word-break: break-word !important;
   }
 
   .ant-table-wrapper {

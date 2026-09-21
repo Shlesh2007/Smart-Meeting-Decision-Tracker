@@ -214,22 +214,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
             >
               Save Changes
             </Button>,
-          ] : [
-            <Button 
-              key="close" 
-              id="profile_footer_close_btn"
-              name="profile_footer_close_btn"
-              type="primary" 
-              icon={<CloseOutlined />}
-              onClick={() => {
-                setIsEditing(false);
-                onClose();
-              }} 
-              className="bg-slate-900 hover:bg-slate-800 font-semibold text-white flex items-center gap-1.5"
-            >
-              Close Profile
-            </Button>,
-          ]
+          ] : null
         }
 
         width={560}

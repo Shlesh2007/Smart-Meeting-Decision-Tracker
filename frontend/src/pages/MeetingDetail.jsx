@@ -165,20 +165,21 @@ export default function MeetingDetail() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full max-w-full overflow-x-hidden">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
         <Breadcrumb items={[
           { title: <Link to="/meetings" className="no-underline">Meetings</Link> },
-          { title: <span className="truncate max-w-[180px] inline-block align-bottom">{meeting.title}</span> }
+          { title: <span className="truncate max-w-[140px] sm:max-w-[240px] inline-block align-bottom">{meeting.title}</span> }
         ]} />
         <Link to="/meetings" className="no-underline shrink-0">
           <Button icon={<ArrowLeftOutlined />}>Back to Directory</Button>
         </Link>
       </div>
 
-      <Card className="shadow-sm rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-800">        {/* Card Header: Title, Tags & Quick Actions */}
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 pb-4 border-b border-slate-100 dark:border-slate-700">
-          <div className="space-y-1.5 flex-1 min-w-0">
+      <Card className="shadow-sm rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-800 overflow-hidden w-full">
+        {/* Card Header: Title, Tags & Quick Actions */}
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 pb-4 border-b border-slate-100 dark:border-slate-700 w-full min-w-0">
+          <div className="space-y-1.5 flex-1 min-w-0 w-full">
             <div className="flex flex-wrap items-center gap-2 mb-1.5">
               <StatusBadge type="meetingType" value={meeting.meeting_type} />
               <StatusBadge type="meetingStatus" value={meeting.status} />
@@ -211,7 +212,7 @@ export default function MeetingDetail() {
             </h1>
           </div>
           
-          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 flex-wrap sm:flex-nowrap">
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap sm:flex-nowrap w-full sm:w-auto">
             <Tooltip
               title={
                 !canEditMeeting
@@ -225,7 +226,7 @@ export default function MeetingDetail() {
                 icon={<EditOutlined />}
                 onClick={() => setShowEditMeetingModal(true)}
                 disabled={!isMeetingDetailsEditable}
-                className="font-medium whitespace-nowrap text-xs sm:text-sm px-2.5 sm:px-3"
+                className="font-medium whitespace-nowrap text-xs sm:text-sm px-2.5 sm:px-3 flex-1 sm:flex-initial text-center justify-center"
               >
                 Edit Details
               </Button>
@@ -237,7 +238,7 @@ export default function MeetingDetail() {
                 onClick={handleSendReminder}
                 loading={sendingReminder}
                 disabled={isMeetingPastOrEnded}
-                className="font-medium whitespace-nowrap text-xs sm:text-sm px-2.5 sm:px-3"
+                className="font-medium whitespace-nowrap text-xs sm:text-sm px-2.5 sm:px-3 flex-1 sm:flex-initial text-center justify-center"
               >
                 Reminder
               </Button>
@@ -249,7 +250,7 @@ export default function MeetingDetail() {
                 onClick={handleSendPassword}
                 loading={sendingOtp}
                 disabled={isMeetingPastOrEnded}
-                className="font-medium whitespace-nowrap text-xs sm:text-sm px-2.5 sm:px-3"
+                className="font-medium whitespace-nowrap text-xs sm:text-sm px-2.5 sm:px-3 flex-1 sm:flex-initial text-center justify-center"
               >
                 Send OTP
               </Button>
@@ -259,7 +260,7 @@ export default function MeetingDetail() {
               type="primary"
               icon={<PlusOutlined />}
               onClick={() => setShowDiscussionModal(true)}
-              className="bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl border-none shadow-xs whitespace-nowrap text-xs sm:text-sm px-2.5 sm:px-3 shrink-0"
+              className="bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl border-none shadow-xs whitespace-nowrap text-xs sm:text-sm px-2.5 sm:px-3 flex-1 sm:flex-initial text-center justify-center"
             >
               Add Discussion
             </Button>
@@ -272,7 +273,7 @@ export default function MeetingDetail() {
           </p>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 text-sm text-slate-600 dark:text-slate-300">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 text-sm text-slate-600 dark:text-slate-300 w-full min-w-0">
           <div className="flex items-center space-x-2 min-w-0 overflow-hidden">
             <CalendarOutlined className="text-blue-600 dark:text-blue-400 text-base shrink-0" />
             <span className="truncate">Date: <strong>{format(new Date(meeting.meeting_date), 'EEE, MMM dd, yyyy')}</strong></span>
@@ -287,9 +288,9 @@ export default function MeetingDetail() {
           </div>
         </div>
 
-        <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between flex-wrap gap-2">
-          <div className="flex items-center space-x-3">
-            <span className="text-xs font-bold uppercase text-slate-400 dark:text-slate-400">
+        <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 w-full min-w-0">
+          <div className="flex items-center flex-wrap gap-2">
+            <span className="text-xs font-bold uppercase text-slate-400 dark:text-slate-400 shrink-0">
               Participants ({meeting.participants_detail?.length || (meeting.created_by_detail ? 1 : 0)}):
             </span>
             <Avatar.Group max={{ count: 6 }}>
@@ -307,14 +308,14 @@ export default function MeetingDetail() {
               ))}
             </Avatar.Group>
           </div>
-          <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold">
+          <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold shrink-0">
             Organized by: <strong className="text-slate-900 dark:text-slate-200">{meeting.created_by_detail?.full_name || 'Admin'}</strong>
           </span>
         </div>
       </Card>
 
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
+      <div className="space-y-6 w-full min-w-0">
+        <div className="flex justify-between items-center flex-wrap gap-2">
           <h2 className="text-xl font-bold text-slate-900 dark:text-white m-0 flex items-center space-x-2">
             <MessageOutlined className="text-blue-600 dark:text-blue-400" />
             <span>Discussions & Decisions ({discussions.length})</span>
@@ -336,19 +337,19 @@ export default function MeetingDetail() {
             const decisionActions = allActions.filter(a => decision && a.decision === decision.id);
 
             return (
-              <Card key={disc.id} className="shadow-sm rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-800 overflow-hidden">
-                <div className="flex justify-between items-start pb-3 border-b border-slate-100 dark:border-slate-700 flex-wrap gap-2">
-                  <div>
-                    <div className="flex items-center space-x-2 mb-1">
+              <Card key={disc.id} className="shadow-sm rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-800 overflow-hidden w-full min-w-0">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-3 border-b border-slate-100 dark:border-slate-700 gap-2.5 min-w-0">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-1.5 mb-1">
                       <Tag color="geekblue" className="font-bold">Discussion #{idx + 1}</Tag>
                       <StatusBadge type="priority" value={disc.priority} />
                     </div>
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-white m-0">{disc.title}</h3>
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white m-0 break-words">{disc.title}</h3>
                     {disc.description && (
-                      <p className="text-sm text-slate-600 dark:text-slate-300 m-0 mt-1">{disc.description}</p>
+                      <p className="text-sm text-slate-600 dark:text-slate-300 m-0 mt-1 break-words">{disc.description}</p>
                     )}
                   </div>
-                  <div className="flex items-center space-x-2 text-xs text-slate-500 font-semibold shrink-0">
+                  <div className="flex items-center space-x-2 text-xs text-slate-500 font-semibold shrink-0 self-start sm:self-auto">
                     <Avatar size="small" className="bg-blue-600 font-extrabold text-[10px] text-white flex items-center justify-center">
                       {(disc.created_by_detail?.first_name || disc.created_by_detail?.full_name || disc.created_by_detail?.username || 'P')[0].toUpperCase()}
                     </Avatar>
@@ -356,10 +357,10 @@ export default function MeetingDetail() {
                   </div>
                 </div>
 
-                <div className="mt-4 bg-slate-50/80 dark:bg-slate-900/60 p-4 rounded-xl border border-slate-200 dark:border-slate-700">
-                  <div className="flex justify-between items-center mb-2">
-                    <div className="flex items-center space-x-2">
-                      <span className="font-bold text-sm text-slate-800 uppercase tracking-wide">Decision Status:</span>
+                <div className="mt-4 bg-slate-50/80 dark:bg-slate-900/60 p-3 sm:p-4 rounded-xl border border-slate-200 dark:border-slate-700 w-full min-w-0 overflow-hidden">
+                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2.5 mb-3 w-full min-w-0">
+                    <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+                      <span className="font-bold text-xs sm:text-sm text-slate-800 dark:text-slate-200 uppercase tracking-wide shrink-0">Decision Status:</span>
                       {decision ? (
                         <StatusBadge type="decisionStatus" value={decision.status} />
                       ) : (
@@ -372,13 +373,14 @@ export default function MeetingDetail() {
                       )}
                     </div>
 
-                    <div className="flex space-x-2">
+                    <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                       {decision ? (
                         <>
                           <Button
                             size="small"
                             icon={<EditOutlined />}
                             onClick={() => setActiveDiscussionForDecision(disc)}
+                            className="flex-1 sm:flex-initial text-xs h-8 px-2.5 flex items-center justify-center"
                           >
                             Update Decision
                           </Button>
@@ -386,7 +388,7 @@ export default function MeetingDetail() {
                             size="small"
                             icon={<HistoryOutlined />}
                             onClick={() => setActiveHistoryDecisionId(decision.id)}
-                            className="text-blue-600 border-blue-200 bg-blue-50 dark:bg-slate-700/80 dark:border-slate-600 dark:text-blue-300 hover:bg-blue-100"
+                            className="text-blue-600 border-blue-200 bg-blue-50 dark:bg-slate-700/80 dark:border-slate-600 dark:text-blue-300 hover:bg-blue-100 flex-1 sm:flex-initial text-xs h-8 px-2.5 flex items-center justify-center"
                           >
                             Version History (Audit)
                           </Button>
@@ -397,7 +399,7 @@ export default function MeetingDetail() {
                           type="primary"
                           icon={<PlusOutlined />}
                           onClick={() => setActiveDiscussionForDecision(disc)}
-                          className="bg-blue-600 hover:bg-blue-700 font-medium rounded-lg border-none"
+                          className="bg-blue-600 hover:bg-blue-700 font-medium rounded-lg border-none w-full sm:w-auto text-xs h-8 px-3 flex items-center justify-center"
                         >
                           Record Decision
                         </Button>
@@ -406,14 +408,14 @@ export default function MeetingDetail() {
                   </div>
 
                   {decision && decision.status === 'DECISION_MADE' && (
-                    <div className="space-y-3 mt-3 bg-white dark:bg-slate-900 p-3.5 rounded-lg border border-slate-200 dark:border-slate-700">
-                      <div className="flex justify-between items-start flex-wrap gap-2">
-                        <div>
+                    <div className="space-y-3 mt-3 bg-white dark:bg-slate-900 p-3 sm:p-3.5 rounded-lg border border-slate-200 dark:border-slate-700 w-full min-w-0">
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2.5 min-w-0">
+                        <div className="min-w-0 flex-1">
                           <span className="text-xs font-bold text-slate-400 uppercase block">Decision Text:</span>
-                          <p className="font-semibold text-slate-900 dark:text-slate-100 text-base m-0 mt-0.5">{decision.decision}</p>
+                          <p className="font-semibold text-slate-900 dark:text-slate-100 text-sm sm:text-base m-0 mt-0.5 break-words">{decision.decision}</p>
                         </div>
                         {decision.decided_by_detail && (
-                          <div className="flex items-center space-x-1.5 text-xs text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-md border border-slate-200 dark:border-slate-700 shrink-0">
+                          <div className="flex items-center space-x-1.5 text-xs text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-md border border-slate-200 dark:border-slate-700 shrink-0 self-start sm:self-auto">
                             <Avatar size="small" className="bg-emerald-600 font-extrabold text-[10px] text-white flex items-center justify-center">
                               {(decision.decided_by_detail.first_name || decision.decided_by_detail.full_name || decision.decided_by_detail.username || 'D')[0].toUpperCase()}
                             </Avatar>
@@ -422,18 +424,17 @@ export default function MeetingDetail() {
                         )}
                       </div>
                       {decision.reason && (
-                        <div>
+                        <div className="min-w-0">
                           <span className="text-xs font-bold text-slate-400 uppercase block">Reason & Discussion Point:</span>
-                          <p className="text-sm italic text-slate-600 dark:text-slate-300 m-0">&ldquo;{decision.reason}&rdquo;</p>
+                          <p className="text-sm italic text-slate-600 dark:text-slate-300 m-0 break-words">&ldquo;{decision.reason}&rdquo;</p>
                         </div>
                       )}
                     </div>
                   )}
 
-
                   {decision && decision.status === 'DECISION_MADE' && (
-                    <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700">
-                      <div className="flex justify-between items-center mb-3">
+                    <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700 w-full min-w-0">
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-3 w-full min-w-0">
                         <span className="font-bold text-sm text-slate-800 dark:text-slate-200">
                           Follow-Up Action Items ({decisionActions.length})
                         </span>
@@ -442,7 +443,7 @@ export default function MeetingDetail() {
                           type="dashed"
                           icon={<PlusOutlined />}
                           onClick={() => setActiveDecisionForAction(decision)}
-                          className="text-blue-600 border-blue-400 dark:text-blue-400 dark:border-blue-500"
+                          className="text-blue-600 border-blue-400 dark:text-blue-400 dark:border-blue-500 text-xs self-start sm:self-auto"
                         >
                           Add Action Item
                         </Button>
@@ -451,47 +452,47 @@ export default function MeetingDetail() {
                       {decisionActions.length === 0 ? (
                         <p className="text-xs text-slate-400 italic m-0">No action items assigned to this decision yet.</p>
                       ) : (
-                        <div className="space-y-2">
+                        <div className="space-y-2 w-full min-w-0">
                           {decisionActions.map((action) => (
                             <div
                               key={action.id}
-                              className={`p-3 rounded-lg border transition-all ${
+                              className={`p-3 rounded-lg border transition-all w-full min-w-0 overflow-hidden ${
                                 action.is_overdue
                                   ? 'bg-rose-50/70 border-rose-200 dark:bg-rose-950/40 dark:border-rose-800/60'
                                   : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-500'
                               }`}
                             >
-                              <div className="flex justify-between items-start">
-                                <div className="space-y-1">
-                                  <div className="flex items-center space-x-2">
-                                    <span className="font-semibold text-slate-900 text-sm">{action.title}</span>
+                              <div className="flex justify-between items-start gap-2 w-full min-w-0">
+                                <div className="space-y-1.5 min-w-0 flex-1">
+                                  <div className="flex flex-wrap items-center gap-1.5">
+                                    <span className="font-semibold text-slate-900 dark:text-white text-sm break-words">{action.title}</span>
                                     <StatusBadge type="priority" value={action.priority} />
                                     <StatusBadge type="actionStatus" value={action.status} />
                                     {action.is_overdue && <StatusBadge type="overdue" value={true} />}
                                   </div>
 
                                   {action.description && (
-                                    <p className="text-xs text-slate-600 m-0">{action.description}</p>
+                                    <p className="text-xs text-slate-600 dark:text-slate-300 m-0 break-words">{action.description}</p>
                                   )}
 
-                                  <div className="flex items-center space-x-3 text-xs text-slate-500 pt-1">
+                                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400 pt-1">
                                     <span>Assignee: <strong>{action.assigned_to_detail?.full_name || 'Unassigned'}</strong></span>
-                                    <span>•</span>
-                                    <span>Due Date: <strong className={action.is_overdue ? 'text-rose-600' : ''}>{format(new Date(action.due_date), 'MMM dd, yyyy')}</strong></span>
+                                    <span className="hidden sm:inline">•</span>
+                                    <span>Due Date: <strong className={action.is_overdue ? 'text-rose-600 dark:text-rose-400' : ''}>{format(new Date(action.due_date), 'MMM dd, yyyy')}</strong></span>
                                   </div>
 
                                   {action.completion_notes && (
-                                    <div className="mt-2 p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60 text-xs text-emerald-900 dark:text-emerald-200">
+                                    <div className="mt-2 p-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60 text-xs text-emerald-900 dark:text-emerald-200 break-words">
                                       <strong className="font-bold block mb-0.5 text-emerald-700 dark:text-emerald-300">✅ Work Done / Outcome Delivered:</strong>
                                       <span>{action.completion_notes}</span>
                                     </div>
                                   )}
 
                                   {action.dependency_details && action.dependency_details.length > 0 && (
-                                    <div className="mt-2 pt-1 flex items-center space-x-2 text-xs">
-                                      <span className="font-bold text-slate-500">Prerequisites:</span>
+                                    <div className="mt-2 pt-1 flex flex-wrap items-center gap-1.5 text-xs">
+                                      <span className="font-bold text-slate-500 dark:text-slate-400">Prerequisites:</span>
                                       {action.dependency_details.map((dep) => (
-                                        <Tag key={dep.id} color={dep.is_completed ? 'success' : 'error'}>
+                                        <Tag key={dep.id} color={dep.is_completed ? 'success' : 'error'} className="mr-0 mb-1">
                                           {dep.is_completed ? '✓ ' : '🔒 '}{dep.title} ({dep.status})
                                         </Tag>
                                       ))}
@@ -507,6 +508,7 @@ export default function MeetingDetail() {
                                     setEditingAction(action);
                                     setActiveDecisionForAction(decision);
                                   }}
+                                  className="shrink-0"
                                 />
                               </div>
                             </div>

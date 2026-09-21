@@ -37,12 +37,8 @@ export default function Login() {
     loginForm.resetFields();
   }, [loginForm]);
 
-  const fillQuickCredentials = (username, password) => {
-    loginForm.setFieldsValue({ username, password });
-    message.info(`Auto-filled demo credentials for: ${username}`);
-  };
-
   const onFinish = async (values) => {
+
     setSubmitting(true);
     try {
       const userProfile = await login(values);
@@ -265,51 +261,8 @@ export default function Login() {
           styles={{ body: { padding: '24px 24px' } }}
           className="shadow-2xl border backdrop-blur-xl border-white/20 bg-white/95 dark:bg-slate-900/90 transition-all duration-300"
         >
-          {/* Quick Demo Credentials Autofill Shortcuts */}
-          <div className="mb-4 pt-1 pb-3 px-3 bg-slate-100 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700/60">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 flex items-center space-x-1">
-                <KeyOutlined className="text-xs" />
-                <span>Quick Demo Credentials:</span>
-              </span>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
-              <button
-                type="button"
-                onClick={() => fillQuickCredentials('Shlesh', 'Shlesh@17')}
-                className="py-1.5 px-2 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 rounded-lg text-xs font-bold text-amber-600 dark:text-amber-400 transition-colors flex items-center justify-center space-x-1 cursor-pointer"
-              >
-                <CrownOutlined className="text-amber-500" />
-                <span>Shlesh</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => fillQuickCredentials('admin', 'admin123')}
-                className="py-1.5 px-2 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 border border-slate-200 dark:border-slate-600 rounded-lg text-xs font-medium text-slate-700 dark:text-slate-200 transition-colors flex items-center justify-center space-x-1 cursor-pointer"
-              >
-                <SafetyOutlined className="text-blue-500" />
-                <span>Admin</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => fillQuickCredentials('organizer', 'password123')}
-                className="py-1.5 px-2 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 border border-slate-200 dark:border-slate-600 rounded-lg text-xs font-medium text-slate-700 dark:text-slate-200 transition-colors flex items-center justify-center space-x-1 cursor-pointer"
-              >
-                <UserOutlined className="text-indigo-500" />
-                <span>Organizer</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => fillQuickCredentials('member', 'password123')}
-                className="py-1.5 px-2 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 border border-slate-200 dark:border-slate-600 rounded-lg text-xs font-medium text-slate-700 dark:text-slate-200 transition-colors flex items-center justify-center space-x-1 cursor-pointer"
-              >
-                <TeamOutlined className="text-emerald-500" />
-                <span>Member</span>
-              </button>
-            </div>
-          </div>
-
           <Form
+
             form={loginForm}
             name="login_form"
             layout="vertical"

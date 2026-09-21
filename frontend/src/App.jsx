@@ -38,6 +38,7 @@ export default function App() {
             <AuthProvider>
               <MainLayout>
               <Routes>
+                <Route path="/" element={<Home />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/login/:panelType" element={<Login />} />
                 <Route path="/register" element={<Register />} />
@@ -50,6 +51,7 @@ export default function App() {
                 <Route path="/oauth-callback" element={<OAuthCallback />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
+
             </MainLayout>
           </AuthProvider>
         </InitialSplashScreen>
