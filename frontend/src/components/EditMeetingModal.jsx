@@ -157,7 +157,7 @@ export const EditMeetingModal = ({ open, onClose, meeting, onSuccess }) => {
             label="Meeting Date"
             rules={[{ required: true, message: 'Please select meeting date' }]}
           >
-            <DatePicker id="edit_meeting_date" name="meeting_date" className="w-full" />
+            <DatePicker id="edit_meeting_date" name="meeting_date" className="w-full" disabledDate={(current) => current && current.isBefore(dayjs().startOf('day'))} />
           </Form.Item>
 
           <Form.Item
@@ -165,7 +165,30 @@ export const EditMeetingModal = ({ open, onClose, meeting, onSuccess }) => {
             label="Start & End Time"
             rules={[{ required: true, message: 'Please select time range' }]}
           >
-            <TimePicker.RangePicker id="edit_meeting_time_range" name="time_range" className="w-full" format="HH:mm" />
+            <TimePicker.RangePicker 
+              id="edit_meeting_time_range" 
+              name="time_range" 
+              className="w-full" 
+              format="HH:mm" 
+              disabledTime={() => {
+                const selectedDate = form.getFieldValue('meeting_date');
+                if (!selectedDate || !selectedDate.isSame(dayjs(), 'day')) {
+                  return {};
+                }
+                const now = dayjs();
+                const currentHour = now.hour();
+                const currentMinute = now.minute();
+                return {
+                  disabledHours: () => Array.from({ length: currentHour }, (_, i) => i),
+                  disabledMinutes: (selectedHour) => {
+                    if (selectedHour === currentHour) {
+                      return Array.from({ length: currentMinute }, (_, i) => i);
+                    }
+                    return [];
+                  }
+                };
+              }}
+            />
           </Form.Item>
         </div>
 

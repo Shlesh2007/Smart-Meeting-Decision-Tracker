@@ -104,11 +104,21 @@ export default function CreateMeeting() {
       }
     }
 
+    const meetingDateStr = values.meeting_date.format('YYYY-MM-DD');
+    const startTimeStr = values.time_range[0].format('HH:mm:ss');
+    const meetingStartDateTime = dayjs(`${meetingDateStr} ${startTimeStr}`);
+
+    if (meetingStartDateTime.isBefore(dayjs().subtract(2, 'minute'))) {
+      message.error('Meeting start time cannot be scheduled in the past.');
+      setSubmitting(false);
+      return;
+    }
+
     const payload = {
       title: values.title,
       description: values.description,
-      meeting_date: values.meeting_date.format('YYYY-MM-DD'),
-      start_time: values.time_range[0].format('HH:mm:ss'),
+      meeting_date: meetingDateStr,
+      start_time: startTimeStr,
       end_time: values.time_range[1].format('HH:mm:ss'),
       location: computedLocation,
       meeting_type: values.meeting_type,
@@ -288,7 +298,30 @@ export default function CreateMeeting() {
                     rules={[{ required: true, message: 'Please select time range' }]}
                     className="m-0 sm:col-span-7 min-w-0"
                   >
-                    <TimePicker.RangePicker id="create_time_range" name="time_range" style={{ width: '100%' }} format="HH:mm" />
+                    <TimePicker.RangePicker 
+                      id="create_time_range" 
+                      name="time_range" 
+                      style={{ width: '100%' }} 
+                      format="HH:mm"
+                      disabledTime={() => {
+                        const selectedDate = form.getFieldValue('meeting_date');
+                        if (!selectedDate || !selectedDate.isSame(dayjs(), 'day')) {
+                          return {};
+                        }
+                        const now = dayjs();
+                        const currentHour = now.hour();
+                        const currentMinute = now.minute();
+                        return {
+                          disabledHours: () => Array.from({ length: currentHour }, (_, i) => i),
+                          disabledMinutes: (selectedHour) => {
+                            if (selectedHour === currentHour) {
+                              return Array.from({ length: currentMinute }, (_, i) => i);
+                            }
+                            return [];
+                          }
+                        };
+                      }}
+                    />
                   </Form.Item>
                 </div>
               </div>

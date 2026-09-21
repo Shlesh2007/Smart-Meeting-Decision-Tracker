@@ -139,25 +139,25 @@ export const DashboardHeader = ({
         </div>
 
         {/* Action Buttons */}
-        <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full sm:w-auto shrink-0">
-          <Link to="/meetings/new" className="no-underline flex-1 sm:flex-none">
+        <div className="flex items-center gap-1.5 sm:gap-2 w-full sm:w-auto shrink-0">
+          <Link to="/meetings/new" className="no-underline flex-1 min-w-0 sm:flex-none">
             <Button
               type="primary"
               size="middle"
               icon={<PlusOutlined />}
-              className="w-full sm:w-auto bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl border-none shadow-xs text-xs h-9 px-3.5 flex items-center justify-center"
+              className="w-full sm:w-auto bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl border-none shadow-xs text-xs h-9 px-2 sm:px-3.5 flex items-center justify-center truncate"
             >
-              Schedule Meeting
+              <span>Schedule Meeting</span>
             </Button>
           </Link>
           
-          <Link to="/my-actions" className="no-underline flex-1 sm:flex-none">
+          <Link to="/my-actions" className="no-underline flex-1 min-w-0 sm:flex-none">
             <Button
               size="middle"
               icon={<ThunderboltOutlined />}
-              className="w-full sm:w-auto bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold rounded-xl border-slate-200 dark:border-slate-700 text-xs h-9 px-3.5 flex items-center justify-center"
+              className="w-full sm:w-auto bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold rounded-xl border-slate-200 dark:border-slate-700 text-xs h-9 px-2 sm:px-3.5 flex items-center justify-center truncate"
             >
-              View My Actions
+              <span>View My Actions</span>
             </Button>
           </Link>
 
@@ -175,7 +175,7 @@ export const DashboardHeader = ({
 
       {/* Global Search & Time Period Filter Bar */}
       <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-2">
-        <div className="flex items-center justify-between gap-2 sm:gap-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
           <div className="flex-1 min-w-0">
             <AutoComplete
               popupMatchSelectWidth={false}
@@ -200,14 +200,17 @@ export const DashboardHeader = ({
             </AutoComplete>
           </div>
 
-          <div className="flex items-center space-x-1.5 shrink-0">
-            <FilterOutlined className="text-blue-500 text-xs sm:text-sm shrink-0" />
+          <div className="flex items-center space-x-1.5 shrink-0 self-end sm:self-auto w-full sm:w-auto justify-between sm:justify-start">
+            <div className="flex items-center space-x-1">
+              <FilterOutlined className="text-blue-500 text-xs shrink-0" />
+              <span className="text-xs font-semibold text-slate-500 sm:hidden">Filter:</span>
+            </div>
             <Select
               id="header_time_period"
               name="time_period"
               value={period || 'all_time'}
               onChange={onPeriodChange}
-              className="w-28 sm:w-36 font-semibold text-xs h-9 shrink-0"
+              className="w-32 sm:w-36 font-semibold text-xs h-9 shrink-0"
               size="middle"
               popupMatchSelectWidth={false}
               options={[

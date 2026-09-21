@@ -59,28 +59,28 @@ export const MetricCard = ({
         onClick ? 'cursor-pointer' : ''
       }`}
     >
-      <div className="flex items-center justify-center space-x-1 mb-0.5">
+      <div className="flex items-center justify-center space-x-1 mb-1 min-w-0">
         <div
-          className={`w-4 h-4 sm:w-5 sm:h-5 rounded-md flex items-center justify-center text-[9px] sm:text-[11px] shrink-0 transition-transform duration-200 group-hover:scale-110 ${currentTheme.iconBg}`}
+          className={`w-4 h-4 sm:w-5 sm:h-5 rounded-md flex items-center justify-center text-[10px] sm:text-xs shrink-0 transition-transform duration-200 group-hover:scale-110 ${currentTheme.iconBg}`}
         >
           {icon}
         </div>
-        <span className="text-[9px] sm:text-[10px] uppercase tracking-wider font-extrabold text-slate-500 dark:text-slate-400 truncate">
+        <span className="text-[10px] sm:text-[11px] uppercase tracking-wider font-bold text-slate-600 dark:text-slate-300 truncate">
           {title}
         </span>
       </div>
 
-      <div className="my-0.5 flex items-center justify-center">
-        <span className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight leading-none">
+      <div className="my-1 flex items-center justify-center">
+        <span className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight leading-none">
           {value}
         </span>
       </div>
 
       {(subtitle || trend) && (
-        <div className="mt-1 pt-1.5 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-center space-x-1 text-[8px] sm:text-[9px] text-slate-500 dark:text-slate-400 min-w-0">
+        <div className="mt-1 pt-1.5 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-center space-x-1 text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 min-w-0">
           {subtitle && (
             <span
-              className={`font-bold px-1.5 py-0.5 rounded-md border shrink-0 leading-none ${currentTheme.badge}`}
+              className={`font-bold px-2 py-0.5 rounded-md border shrink-0 leading-none text-[9px] sm:text-[10px] ${currentTheme.badge}`}
             >
               {subtitle}
             </span>

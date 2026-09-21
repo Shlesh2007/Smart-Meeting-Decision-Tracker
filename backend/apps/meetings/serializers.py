@@ -44,11 +44,24 @@ class MeetingSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         meeting_date = attrs.get('meeting_date', self.instance.meeting_date if self.instance else None)
-        if meeting_date and meeting_date < timezone.localdate() and not self.instance:
-            raise serializers.ValidationError({"meeting_date": "Meeting date cannot be scheduled in the past."})
-
         start_time = attrs.get('start_time', self.instance.start_time if self.instance else None)
         end_time = attrs.get('end_time', self.instance.end_time if self.instance else None)
+
+        # Validate that meeting date and start time cannot be in the past for new meetings
+        if not self.instance and meeting_date and start_time:
+            from datetime import datetime
+            combined_dt = datetime.combine(meeting_date, start_time)
+            if timezone.is_naive(combined_dt):
+                combined_dt = timezone.make_aware(combined_dt)
+
+            # Allow a 2-minute latency buffer for processing/clock drift
+            current_time = timezone.now() - timedelta(minutes=2)
+            if combined_dt < current_time:
+                if meeting_date < timezone.localdate():
+                    raise serializers.ValidationError({"meeting_date": "Meeting date cannot be scheduled in the past."})
+                else:
+                    raise serializers.ValidationError({"start_time": "Meeting start time cannot be scheduled in the past."})
+
         if start_time and end_time and start_time >= end_time:
             raise serializers.ValidationError({"end_time": "End time must be after start time."})
 
