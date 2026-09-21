@@ -37,16 +37,27 @@ export function usePalmDragScroll() {
       return null;
     };
 
+    const isExcludedTarget = (target) => {
+      if (!target) return true;
+      const tag = target.tagName || '';
+      return (
+        ['INPUT', 'SELECT', 'BUTTON', 'A', 'TEXTAREA', 'HEADER', 'NAV'].includes(tag) ||
+        target.closest('header') ||
+        target.closest('nav') ||
+        target.closest('.ant-popover') ||
+        target.closest('.ant-select') ||
+        target.closest('.ant-btn') ||
+        target.closest('.ant-dropdown') ||
+        target.closest('.ant-pagination') ||
+        target.closest('.ant-modal')
+      );
+    };
+
     const handleMouseDown = (e) => {
-      if (
-        ['INPUT', 'SELECT', 'BUTTON', 'A', 'TEXTAREA'].includes(e.target.tagName) ||
-        e.target.closest('.ant-select') ||
-        e.target.closest('.ant-btn') ||
-        e.target.closest('.ant-dropdown') ||
-        e.target.closest('.ant-pagination')
-      ) {
+      if (isExcludedTarget(e.target)) {
         return;
       }
+
 
       const container = getScrollContainer(e.target);
       if (!container) return;
@@ -126,16 +137,11 @@ export function usePalmDragScroll() {
 
     const handleMouseOver = (e) => {
       if (isDown) return;
-      if (
-        ['INPUT', 'SELECT', 'BUTTON', 'A', 'TEXTAREA'].includes(e.target.tagName) ||
-        e.target.closest('.ant-select') ||
-        e.target.closest('.ant-btn') ||
-        e.target.closest('.ant-dropdown') ||
-        e.target.closest('.ant-pagination')
-      ) {
+      if (isExcludedTarget(e.target)) {
         return;
       }
       const container = getScrollContainer(e.target);
+
       if (container && container.style.cursor !== 'grab') {
         container.style.cursor = 'grab';
       }

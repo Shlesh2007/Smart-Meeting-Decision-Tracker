@@ -35,19 +35,29 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
+  const isPublicRoute = (path) => {
+    if (!path) return true;
+    return (
+      path === '/' ||
+      path.startsWith('/login') ||
+      path.startsWith('/register') ||
+      path.startsWith('/oauth-callback') ||
+      path.endsWith('.html') ||
+      path.includes('file://')
+    );
+  };
+
   // Global Auth Guard: Protect all non-public routes
   useEffect(() => {
     if (!loading) {
-      const publicPaths = ['/login', '/register', '/'];
-      const isPublicPath = publicPaths.includes(pathname) || pathname.startsWith('/login/');
-
-      if (!user && !isPublicPath) {
+      if (!user && !isPublicRoute(pathname)) {
         navigate('/login');
-      } else if (user && isPublicPath && pathname === '/') {
+      } else if (user && isPublicRoute(pathname) && pathname === '/') {
         navigate('/dashboard');
       }
     }
   }, [user, loading, pathname, navigate]);
+
 
   const login = async (credentials) => {
     await authService.login(credentials);
@@ -108,15 +118,14 @@ export const AuthProvider = ({ children }) => {
   }
 
   // Prevent rendering protected content for unauthenticated users
-  const publicPaths = ['/login', '/register', '/'];
-  const isPublicPath = publicPaths.includes(pathname);
-  if (!user && !isPublicPath) {
+  if (!user && !isPublicRoute(pathname)) {
     return (
       <div className="min-h-screen flex flex-col justify-center items-center bg-slate-50 dark:bg-slate-900">
         <Spin size="large" tip="Redirecting to Sign In..."><div className="p-6" /></Spin>
       </div>
     );
   }
+
 
   return (
     <AuthContext.Provider

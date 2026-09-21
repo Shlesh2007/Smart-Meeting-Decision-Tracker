@@ -12,6 +12,18 @@ const getApiBaseUrl = () => {
     if (!sanitized.endsWith('/api')) sanitized += '/api';
     return sanitized;
   }
+
+  // Detect Mobile App / APK environment (WebToNative, Cordova, Capacitor, Android WebView)
+  const isMobileApp = typeof window !== 'undefined' && (
+    Boolean(window.WebToNative) ||
+    window.location.protocol === 'file:' ||
+    /wv|WebView|Android.*Version\/[0-9.]+/i.test(navigator.userAgent || '')
+  );
+
+  if (isMobileApp) {
+    return 'https://smart-meeting-decision-tracker-s63z.onrender.com/api';
+  }
+
   if (typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && !window.location.hostname.includes('127.0.0.1')) {
     return 'https://smart-meeting-decision-tracker-s63z.onrender.com/api';
   }
@@ -19,6 +31,7 @@ const getApiBaseUrl = () => {
 };
 
 const API_URL = getApiBaseUrl();
+
 
 export const api = axios.create({
   baseURL: API_URL,

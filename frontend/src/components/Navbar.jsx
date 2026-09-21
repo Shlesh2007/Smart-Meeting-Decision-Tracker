@@ -356,8 +356,9 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
       </aside>
 
       {/* Top Navigation Header Bar */}
-      <header className={`sticky top-0 z-30 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-700 shadow-xs transition-all duration-300 ${collapsed ? 'lg:pl-16' : 'lg:pl-64'}`}>
-        <div className="max-w-[1600px] mx-auto px-2.5 sm:px-6 lg:px-8 h-14 flex items-center justify-between gap-2 sm:gap-4">
+      <header className={`sticky top-0 z-30 w-full max-w-full overflow-hidden bg-white/90 dark:bg-slate-800/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-700 shadow-xs transition-all duration-300 ${collapsed ? 'lg:pl-16' : 'lg:pl-64'}`}>
+        <div className="w-full max-w-[1600px] mx-auto px-2.5 sm:px-6 lg:px-8 h-14 flex items-center justify-between gap-2 sm:gap-4 overflow-hidden">
+
           
           {/* Logo Brand & Mobile/Tablet Drawer Toggle */}
           <div className="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
