@@ -112,19 +112,59 @@ export default function AdminPage() {
     }
   };
 
+  const handleDepartmentChange = async (targetUser, newDept) => {
+    try {
+      await userService.updateUserDepartment(targetUser.id, newDept || '');
+      message.success(`Updated ${targetUser.username}'s department to ${newDept || 'General Team'}`);
+      loadData();
+    } catch (err) {
+      const errMsg = err.response?.data?.department?.[0] || err.response?.data?.detail || 'Failed to update user department.';
+      message.error(errMsg);
+    }
+  };
+
   const userColumns = [
     {
       title: 'Name & Username',
       key: 'name',
       render: (_, u) => (
-        <div>
-          <span className="font-semibold text-slate-900 dark:text-slate-100 block">{u.full_name}</span>
-          <span className="text-xs text-slate-500 dark:text-slate-400">{u.username}</span>
+        <div className="flex items-center space-x-2.5">
+          <Avatar className="bg-blue-600 font-extrabold text-xs text-white shrink-0 flex items-center justify-center">
+            {(u.first_name || u.full_name || u.username || 'U')[0].toUpperCase()}
+          </Avatar>
+          <div>
+            <span className="font-semibold text-slate-900 dark:text-slate-100 block">{u.full_name}</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400">{u.username}</span>
+          </div>
         </div>
       ),
     },
     { title: 'Email', dataIndex: 'email', key: 'email' },
-    { title: 'Department', dataIndex: 'department', key: 'department', render: (val) => val || '—' },
+    {
+      title: 'Department',
+      key: 'department',
+      render: (_, u) => (
+        <Select
+          value={u.department || undefined}
+          placeholder="Assign Department..."
+          onChange={(newDept) => handleDepartmentChange(u, newDept)}
+          disabled={u.id === user?.id}
+          className="w-44 text-xs font-medium"
+          allowClear
+          options={[
+            { label: 'Executive & Strategy', value: 'Executive & Strategy' },
+            { label: 'Engineering & Tech Lead', value: 'Engineering & Tech Lead' },
+            { label: 'Operations & Governance', value: 'Operations & Governance' },
+            { label: 'Backend Infrastructure', value: 'Backend Infrastructure' },
+            { label: 'Frontend & Mobile Guild', value: 'Frontend & Mobile Guild' },
+            { label: 'DevOps & Cloud Systems', value: 'DevOps & Cloud Systems' },
+            { label: 'QA & Security Assurance', value: 'QA & Security Assurance' },
+            { label: 'Product & Analytics', value: 'Product & Analytics' },
+            { label: 'General Team', value: 'General Team' }
+          ]}
+        />
+      )
+    },
     {
       title: 'Current Role',
       dataIndex: 'role',
@@ -171,7 +211,7 @@ export default function AdminPage() {
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 m-0">Manage system users, assign roles, and configure organization teams.</p>
         </div>
-        <Button type="primary" icon={<PlusOutlined />} onClick={openCreateTeam} className="bg-blue-600 hover:bg-blue-700 font-semibold rounded-xl border-none shadow-xs">
+        <Button type="primary" icon={<PlusOutlined />} onClick={openCreateTeam} className="bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl border-none shadow-xs">
           Create New Team
         </Button>
       </div>
@@ -207,7 +247,7 @@ export default function AdminPage() {
                 <div className="py-12 text-center text-slate-400">
                   <TeamOutlined className="text-4xl mb-2 text-slate-300" />
                   <p className="font-medium text-slate-700 dark:text-slate-300 m-0">No teams created yet.</p>
-                  <Button type="primary" icon={<PlusOutlined />} onClick={openCreateTeam} className="mt-3 bg-blue-600 hover:bg-blue-700 font-semibold rounded-xl border-none">
+                  <Button type="primary" icon={<PlusOutlined />} onClick={openCreateTeam} className="mt-3 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl border-none">
                     Create First Team
                   </Button>
                 </div>
@@ -316,16 +356,16 @@ export default function AdminPage() {
             <Input placeholder="e.g. Engineering Lead Team" />
           </Form.Item>
 
-          <Form.Item name="description" label="Team Description">
-            <Input.TextArea rows={2} placeholder="Describe the purpose of this team..." />
-          </Form.Item>
-
           <Form.Item name="member_ids" label="Assign Team Members">
             <Select
               mode="multiple"
               placeholder="Select team members to include"
               options={users.map(u => ({ label: `${u.full_name} (${u.email}) - ${u.role}`, value: u.id }))}
             />
+          </Form.Item>
+
+          <Form.Item name="description" label="Team Description">
+            <Input.TextArea rows={2} placeholder="Describe the purpose of this team..." />
           </Form.Item>
         </Form>
       </Modal>

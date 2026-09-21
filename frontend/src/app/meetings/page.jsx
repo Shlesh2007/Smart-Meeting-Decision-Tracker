@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { meetingService } from '../../services/api.js';
 import { StatusBadge } from '../../components/StatusBadge.jsx';
 import { LoadingSkeleton } from '../../components/LoadingSkeleton.jsx';
@@ -17,17 +17,30 @@ const { RangePicker } = DatePicker;
 
 export default function MeetingsPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [meetings, setMeetings] = useState([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
   // Filters
-  const [search, setSearch] = useState('');
-  const [meetingType, setMeetingType] = useState('');
-  const [status, setStatus] = useState('');
+  const [search, setSearch] = useState(searchParams.get('search') || '');
+  const [meetingType, setMeetingType] = useState(searchParams.get('meeting_type') || '');
+  const [status, setStatus] = useState(searchParams.get('status') || '');
   const [dateRange, setDateRange] = useState(null);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+      return 6;
+    }
+    return 10;
+  });
+
+  useEffect(() => {
+    if (searchParams.has('search')) setSearch(searchParams.get('search') || '');
+    if (searchParams.has('status')) setStatus(searchParams.get('status') || '');
+    if (searchParams.has('meeting_type')) setMeetingType(searchParams.get('meeting_type') || '');
+  }, [searchParams]);
 
   const fetchMeetings = useCallback(() => {
     setLoading(true);
@@ -35,6 +48,7 @@ export default function MeetingsPage() {
 
     const params = {
       page,
+      page_size: pageSize,
       search: search || undefined,
       meeting_type: meetingType || undefined,
       status: status || undefined,
@@ -52,7 +66,7 @@ export default function MeetingsPage() {
       })
       .catch(() => setError(true))
       .finally(() => setLoading(false));
-  }, [page, search, meetingType, status, dateRange]);
+  }, [page, pageSize, search, meetingType, status, dateRange]);
 
   useEffect(() => {
     fetchMeetings();
@@ -73,9 +87,16 @@ export default function MeetingsPage() {
       key: 'title',
       render: (text, record) => (
         <div className="group">
-          <span className="font-semibold text-slate-900 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 block transition-colors">
-            {text}
-          </span>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="font-semibold text-slate-900 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 block transition-colors">
+              {text}
+            </span>
+            {record.is_recurring && (
+              <Tag color="purple" className="text-[10px] py-0 px-1.5 rounded-full border-0 bg-purple-100 dark:bg-purple-900/60 text-purple-700 dark:text-purple-300 font-medium">
+                🔁 {record.recurrence_pattern === 'DAILY' ? 'Daily' : record.recurrence_pattern === 'WEEKDAYS' ? 'Weekdays' : record.recurrence_pattern === 'WEEKLY' ? 'Weekly' : 'Recurring'}
+              </Tag>
+            )}
+          </div>
           {record.description && (
             <span className="block text-xs font-normal text-slate-500 dark:text-slate-400 truncate max-w-md">
               {record.description}
@@ -110,10 +131,12 @@ export default function MeetingsPage() {
       title: 'Participants',
       key: 'participants',
       render: (_, record) => (
-        <Avatar.Group maxCount={3} maxStyle={{ color: '#f56a00', backgroundColor: '#fde3cf' }}>
+        <Avatar.Group max={{ count: 3, style: { color: '#f56a00', backgroundColor: '#fde3cf' } }}>
           {record.participants_detail?.map((p) => (
             <Tooltip key={p.id} title={p.full_name}>
-              <Avatar icon={<UserOutlined />} className="bg-blue-600" />
+              <Avatar className="bg-blue-600 font-bold text-xs text-white">
+                {(p.first_name || p.full_name || p.username || 'U')[0].toUpperCase()}
+              </Avatar>
             </Tooltip>
           ))}
         </Avatar.Group>
@@ -136,8 +159,8 @@ export default function MeetingsPage() {
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white m-0">Meetings Directory</h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 m-0">View, search, and manage team meetings across your organization.</p>
         </div>
-        <Link to="/meetings/new" className="no-underline">
-          <Button type="primary" icon={<PlusOutlined />} size="large" className="bg-blue-600 hover:bg-blue-700 font-semibold rounded-xl border-none shadow-xs">
+        <Link to="/meetings/new" className="no-underline w-full sm:w-auto">
+          <Button type="primary" icon={<PlusOutlined />} size="middle" className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 font-bold rounded-xl border-none shadow-xs text-xs h-9 px-3.5 flex items-center justify-center">
             Create Meeting
           </Button>
         </Link>
@@ -200,11 +223,36 @@ export default function MeetingsPage() {
           />
         </div>
 
-        <div className="flex justify-between items-center pt-2 text-xs text-slate-500 dark:text-slate-400">
-          <span>Found <strong>{total}</strong> meeting(s) matching filter criteria.</span>
-          <Button type="text" size="small" icon={<ReloadOutlined />} onClick={handleResetFilters} className="text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 font-medium">
-            Reset Filters
-          </Button>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pt-2 text-xs text-slate-500 dark:text-slate-400">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span>
+              {search || meetingType || status || (dateRange && dateRange[0] && dateRange[1]) ? (
+                <>Found <strong>{total}</strong> meeting(s) matching filter criteria.</>
+              ) : (
+                <>Showing <strong>{total}</strong> total meeting(s).</>
+              )}
+            </span>
+            {(search || meetingType || status || (dateRange && dateRange[0] && dateRange[1])) && (
+              <Button type="text" size="small" icon={<ReloadOutlined />} onClick={handleResetFilters} className="text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 font-medium">
+                Reset Filters
+              </Button>
+            )}
+          </div>
+
+          {total > pageSize && (
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="text-[11px] font-semibold text-slate-400">Page {page} of {Math.ceil(total / pageSize)}</span>
+              <Pagination
+                current={page}
+                total={total}
+                pageSize={pageSize}
+                onChange={(p) => setPage(p)}
+                showSizeChanger={false}
+                size="small"
+                simple
+              />
+            </div>
+          )}
         </div>
       </Card>
 
@@ -226,26 +274,37 @@ export default function MeetingsPage() {
           onAction={() => navigate('/meetings/new')}
         />
       ) : (
-        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-xs">
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-xs mb-12">
           <Table
             columns={columns}
             dataSource={meetings}
             rowKey="id"
             pagination={false}
-            scroll={{ x: 'max-content' }}
+            scroll={{ x: 700 }}
             className="w-full"
             onRow={(record) => ({
               onClick: () => navigate(`/meetings/${record.id}`),
               className: 'cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors',
             })}
           />
-          <div className="p-4 flex justify-end border-t border-slate-100 dark:border-slate-700">
+          <div className="p-3.5 sm:p-4 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50">
+            <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+              Showing {meetings.length > 0 ? (page - 1) * pageSize + 1 : 0} - {Math.min(page * pageSize, total)} of <strong>{total}</strong> meeting(s)
+            </span>
             <Pagination
               current={page}
               total={total}
-              pageSize={10}
-              onChange={(p) => setPage(p)}
-              showSizeChanger={false}
+              pageSize={pageSize}
+              onChange={(p, size) => {
+                setPage(p);
+                if (size && size !== pageSize) {
+                  setPageSize(size);
+                }
+              }}
+              showSizeChanger
+              pageSizeOptions={['6', '10', '20', '50']}
+              size="small"
+              className="text-xs font-semibold"
             />
           </div>
         </div>

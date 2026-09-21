@@ -1,0 +1,1141 @@
+[
+{
+  "model": "authentication.user",
+  "fields": {
+    "password": "pbkdf2_sha256$600000$UCZv15Z5brLF28kLMCN8Bh$skdqOT/aM1y56WibgGyvYRv1w+89XB5SzP9X13u4OsM=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "shleshdarji317",
+    "first_name": "Shlesh",
+    "last_name": "Darji",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-09-09T10:10:09.170Z",
+    "email": "shleshdarji317@gmail.com",
+    "role": "OWNER",
+    "department": "paramedical",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "authentication.user",
+  "fields": {
+    "password": "pbkdf2_sha256$600000$phcRN7j9xYPSNt8GZrX0uh$WzE86pjbfHUWqfzEbeBxVJEscWsFBUsek7qu6AOdNVQ=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "rahuldarji172007",
+    "first_name": "Rahul",
+    "last_name": "",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-09-09T12:09:40.746Z",
+    "email": "rahuldarji172007@gmail.com",
+    "role": "MEMBER",
+    "department": null,
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "authentication.user",
+  "fields": {
+    "password": "pbkdf2_sha256$600000$bmgD0gLSjKNoHKWef2geGc$0jy2nqOOvSyOv3aCbe5ua+pRI5JEqcRiaHi/f4lLmbk=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "github_user_2481",
+    "first_name": "github_user_2481",
+    "last_name": "",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-09-10T09:09:22.266Z",
+    "email": "github_user_2481@users.noreply.github.com",
+    "role": "MEMBER",
+    "department": null,
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "authentication.user",
+  "fields": {
+    "password": "pbkdf2_sha256$600000$UPwnpMj2Xd6rag4948jwRn$gM7ktJ4tvI33bUfIxoHYBhkT6FkvlWM6nk4fd2QxXS4=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "Shlesh",
+    "first_name": "Shlesh",
+    "last_name": "Darji",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-09-10T10:48:01.807Z",
+    "email": "shleshda2344rji317@gmail.com",
+    "role": "MEMBER",
+    "department": "Shlesh",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "authentication.user",
+  "fields": {
+    "password": "pbkdf2_sha256$600000$iQBNrFz4cfoDfbpOTCiJB5$9ic8rN14cbHYscuelecP6y/kK06byHchE6stuhBpVuM=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "Shlesh12",
+    "first_name": "Shlesh",
+    "last_name": "Darji",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-09-15T05:18:25.850Z",
+    "email": "shilpadarji25@gmail.com",
+    "role": "MEMBER",
+    "department": "Shlesh",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "authentication.passwordresetotp",
+  "pk": 1,
+  "fields": {
+    "email": "shleshdarji317@gmail.com",
+    "otp_code": "326335",
+    "created_at": "2026-09-09T10:10:23.817Z",
+    "expires_at": "2026-09-09T10:20:23.817Z",
+    "is_verified": false
+  }
+},
+{
+  "model": "authentication.passwordresetotp",
+  "pk": 3,
+  "fields": {
+    "email": "shleshdarji317@gmail.com",
+    "otp_code": "969855",
+    "created_at": "2026-09-09T10:45:48.158Z",
+    "expires_at": "2026-09-09T10:55:48.158Z",
+    "is_verified": false
+  }
+},
+{
+  "model": "authentication.passwordresetotp",
+  "pk": 4,
+  "fields": {
+    "email": "shleshdarji317@gmail.com",
+    "otp_code": "923818",
+    "created_at": "2026-09-09T11:00:17.002Z",
+    "expires_at": "2026-09-09T11:10:17.002Z",
+    "is_verified": false
+  }
+},
+{
+  "model": "authentication.passwordresetotp",
+  "pk": 5,
+  "fields": {
+    "email": "shleshdarji317@gmail.com",
+    "otp_code": "372466",
+    "created_at": "2026-09-09T11:00:20.020Z",
+    "expires_at": "2026-09-09T11:10:20.020Z",
+    "is_verified": false
+  }
+},
+{
+  "model": "authentication.passwordresetotp",
+  "pk": 6,
+  "fields": {
+    "email": "shleshdarji317@gmail.com",
+    "otp_code": "302880",
+    "created_at": "2026-09-09T11:02:09.633Z",
+    "expires_at": "2026-09-09T11:12:09.632Z",
+    "is_verified": false
+  }
+},
+{
+  "model": "authentication.passwordresetotp",
+  "pk": 7,
+  "fields": {
+    "email": "shleshdarji317@gmail.com",
+    "otp_code": "311672",
+    "created_at": "2026-09-09T11:02:12.903Z",
+    "expires_at": "2026-09-09T11:12:12.903Z",
+    "is_verified": false
+  }
+},
+{
+  "model": "authentication.passwordresetotp",
+  "pk": 8,
+  "fields": {
+    "email": "shleshdarji317@gmail.com",
+    "otp_code": "177758",
+    "created_at": "2026-09-09T11:04:11.291Z",
+    "expires_at": "2026-09-09T11:14:11.290Z",
+    "is_verified": false
+  }
+},
+{
+  "model": "authentication.passwordresetotp",
+  "pk": 9,
+  "fields": {
+    "email": "shleshdarji317@gmail.com",
+    "otp_code": "389045",
+    "created_at": "2026-09-09T11:13:28.218Z",
+    "expires_at": "2026-09-09T11:23:28.218Z",
+    "is_verified": false
+  }
+},
+{
+  "model": "authentication.passwordresetotp",
+  "pk": 10,
+  "fields": {
+    "email": "shleshdarji317@gmail.com",
+    "otp_code": "942490",
+    "created_at": "2026-09-09T11:28:21.848Z",
+    "expires_at": "2026-09-09T11:38:21.848Z",
+    "is_verified": false
+  }
+},
+{
+  "model": "authentication.passwordresetotp",
+  "pk": 11,
+  "fields": {
+    "email": "shleshdarji317@gmail.com",
+    "otp_code": "239465",
+    "created_at": "2026-09-09T11:48:18.171Z",
+    "expires_at": "2026-09-09T11:58:18.170Z",
+    "is_verified": false
+  }
+},
+{
+  "model": "authentication.passwordresetotp",
+  "pk": 12,
+  "fields": {
+    "email": "shleshdarji317@gmail.com",
+    "otp_code": "563672",
+    "created_at": "2026-09-09T11:48:24.787Z",
+    "expires_at": "2026-09-09T11:58:24.787Z",
+    "is_verified": false
+  }
+},
+{
+  "model": "authentication.passwordresetotp",
+  "pk": 13,
+  "fields": {
+    "email": "shleshdarji317@gmail.com",
+    "otp_code": "778459",
+    "created_at": "2026-09-09T11:52:11.388Z",
+    "expires_at": "2026-09-09T12:02:11.388Z",
+    "is_verified": false
+  }
+},
+{
+  "model": "authentication.passwordresetotp",
+  "pk": 14,
+  "fields": {
+    "email": "shleshdarji317@gmail.com",
+    "otp_code": "218546",
+    "created_at": "2026-09-09T11:52:19.025Z",
+    "expires_at": "2026-09-09T12:02:19.024Z",
+    "is_verified": false
+  }
+},
+{
+  "model": "authentication.passwordresetotp",
+  "pk": 15,
+  "fields": {
+    "email": "shleshdarji317@gmail.com",
+    "otp_code": "122311",
+    "created_at": "2026-09-09T11:52:24.712Z",
+    "expires_at": "2026-09-09T12:02:24.712Z",
+    "is_verified": false
+  }
+},
+{
+  "model": "authentication.passwordresetotp",
+  "pk": 16,
+  "fields": {
+    "email": "shleshdarji317@gmail.com",
+    "otp_code": "449758",
+    "created_at": "2026-09-09T11:52:39.055Z",
+    "expires_at": "2026-09-09T12:02:39.055Z",
+    "is_verified": false
+  }
+},
+{
+  "model": "authentication.passwordresetotp",
+  "pk": 17,
+  "fields": {
+    "email": "shleshdarji317@gmail.com",
+    "otp_code": "970025",
+    "created_at": "2026-09-09T11:55:20.455Z",
+    "expires_at": "2026-09-09T12:05:20.454Z",
+    "is_verified": false
+  }
+},
+{
+  "model": "authentication.passwordresetotp",
+  "pk": 18,
+  "fields": {
+    "email": "shleshdarji317@gmail.com",
+    "otp_code": "551060",
+    "created_at": "2026-09-09T11:55:26.513Z",
+    "expires_at": "2026-09-09T12:05:26.512Z",
+    "is_verified": false
+  }
+},
+{
+  "model": "authentication.passwordresetotp",
+  "pk": 19,
+  "fields": {
+    "email": "shleshdarji317@gmail.com",
+    "otp_code": "196958",
+    "created_at": "2026-09-09T11:57:09.280Z",
+    "expires_at": "2026-09-09T12:07:09.280Z",
+    "is_verified": false
+  }
+},
+{
+  "model": "authentication.passwordresetotp",
+  "pk": 20,
+  "fields": {
+    "email": "shleshdarji317@gmail.com",
+    "otp_code": "132817",
+    "created_at": "2026-09-09T11:57:24.296Z",
+    "expires_at": "2026-09-09T12:07:24.296Z",
+    "is_verified": false
+  }
+},
+{
+  "model": "authentication.passwordresetotp",
+  "pk": 21,
+  "fields": {
+    "email": "shleshdarji317@gmail.com",
+    "otp_code": "650242",
+    "created_at": "2026-09-09T11:57:30.487Z",
+    "expires_at": "2026-09-09T12:07:30.487Z",
+    "is_verified": false
+  }
+},
+{
+  "model": "authentication.passwordresetotp",
+  "pk": 22,
+  "fields": {
+    "email": "shleshdarji317@gmail.com",
+    "otp_code": "109849",
+    "created_at": "2026-09-09T11:59:09.519Z",
+    "expires_at": "2026-09-09T12:09:09.519Z",
+    "is_verified": false
+  }
+},
+{
+  "model": "authentication.passwordresetotp",
+  "pk": 23,
+  "fields": {
+    "email": "shleshdarji317@gmail.com",
+    "otp_code": "190045",
+    "created_at": "2026-09-09T11:59:16.779Z",
+    "expires_at": "2026-09-09T12:09:16.779Z",
+    "is_verified": false
+  }
+},
+{
+  "model": "authentication.passwordresetotp",
+  "pk": 28,
+  "fields": {
+    "email": "shleshdarji317@gmail.com",
+    "otp_code": "998087",
+    "created_at": "2026-09-10T05:15:15.679Z",
+    "expires_at": "2026-09-10T05:25:15.679Z",
+    "is_verified": false
+  }
+},
+{
+  "model": "authentication.passwordresetotp",
+  "pk": 29,
+  "fields": {
+    "email": "shleshdarji317@gmail.com",
+    "otp_code": "856065",
+    "created_at": "2026-09-10T05:15:21.018Z",
+    "expires_at": "2026-09-10T05:25:21.018Z",
+    "is_verified": false
+  }
+},
+{
+  "model": "authentication.passwordresetotp",
+  "pk": 31,
+  "fields": {
+    "email": "shleshdarji317@gmail.com",
+    "otp_code": "757163",
+    "created_at": "2026-09-10T09:00:19.058Z",
+    "expires_at": "2026-09-10T09:10:19.058Z",
+    "is_verified": true
+  }
+},
+{
+  "model": "authentication.passwordresetotp",
+  "pk": 32,
+  "fields": {
+    "email": "shleshdarji317@gmail.com",
+    "otp_code": "116130",
+    "created_at": "2026-09-10T09:31:06.502Z",
+    "expires_at": "2026-09-10T09:41:06.501Z",
+    "is_verified": false
+  }
+},
+{
+  "model": "authentication.passwordresetotp",
+  "pk": 33,
+  "fields": {
+    "email": "24002171210035@mail.ljku.edu.in",
+    "otp_code": "595511",
+    "created_at": "2026-09-10T09:31:18.717Z",
+    "expires_at": "2026-09-10T09:41:18.717Z",
+    "is_verified": false
+  }
+},
+{
+  "model": "teams.team",
+  "pk": 1,
+  "fields": {
+    "name": "Engineering & Architecture",
+    "description": "Core software development, architecture, and cloud infrastructure team.",
+    "created_by": [
+      "shleshdarji317"
+    ],
+    "created_at": "2026-09-15T05:22:52.127Z",
+    "updated_at": "2026-09-15T05:22:52.127Z",
+    "members": [
+      [
+        "shleshdarji317"
+      ],
+      [
+        "rahuldarji172007"
+      ],
+      [
+        "github_user_2481"
+      ],
+      [
+        "Shlesh"
+      ],
+      [
+        "Shlesh12"
+      ]
+    ]
+  }
+},
+{
+  "model": "teams.team",
+  "pk": 2,
+  "fields": {
+    "name": "Product & Operations",
+    "description": "Product strategy, roadmap planning, and operational alignment.",
+    "created_by": [
+      "shleshdarji317"
+    ],
+    "created_at": "2026-09-15T05:22:52.138Z",
+    "updated_at": "2026-09-15T05:22:52.138Z",
+    "members": [
+      [
+        "shleshdarji317"
+      ],
+      [
+        "rahuldarji172007"
+      ],
+      [
+        "github_user_2481"
+      ],
+      [
+        "Shlesh"
+      ],
+      [
+        "Shlesh12"
+      ]
+    ]
+  }
+},
+{
+  "model": "meetings.meeting",
+  "pk": 1,
+  "fields": {
+    "title": "Architecture",
+    "description": "nothing",
+    "meeting_date": "2026-09-10",
+    "start_time": "06:06:00",
+    "end_time": "12:13:00",
+    "location": "Virtual / Zoom",
+    "meeting_type": "CLIENT",
+    "status": "IN_PROGRESS",
+    "created_by": [
+      "shleshdarji317"
+    ],
+    "team": null,
+    "created_at": "2026-09-10T05:29:45.403Z",
+    "updated_at": "2026-09-10T05:35:29.881Z",
+    "participants": [
+      [
+        "shleshdarji317"
+      ]
+    ]
+  }
+},
+{
+  "model": "meetings.meeting",
+  "pk": 2,
+  "fields": {
+    "title": "Api",
+    "description": "nothing",
+    "meeting_date": "2026-09-11",
+    "start_time": "06:07:00",
+    "end_time": "23:12:00",
+    "location": "Virtual / Zoom",
+    "meeting_type": "CLIENT",
+    "status": "IN_PROGRESS",
+    "created_by": [
+      "Shlesh"
+    ],
+    "team": null,
+    "created_at": "2026-09-10T10:48:45.691Z",
+    "updated_at": "2026-09-15T10:40:14.205Z",
+    "participants": [
+      [
+        "rahuldarji172007"
+      ],
+      [
+        "github_user_2481"
+      ],
+      [
+        "Shlesh"
+      ]
+    ]
+  }
+},
+{
+  "model": "meetings.meeting",
+  "pk": 3,
+  "fields": {
+    "title": "Architecture settling",
+    "description": "make minimized architecture",
+    "meeting_date": "2026-09-18",
+    "start_time": "05:07:00",
+    "end_time": "11:12:00",
+    "location": "Virtual / Zoom",
+    "meeting_type": "REVIEW",
+    "status": "SCHEDULED",
+    "created_by": [
+      "shleshdarji317"
+    ],
+    "team": null,
+    "created_at": "2026-09-15T04:42:22.464Z",
+    "updated_at": "2026-09-15T10:00:58.338Z",
+    "participants": [
+      [
+        "shleshdarji317"
+      ],
+      [
+        "rahuldarji172007"
+      ],
+      [
+        "github_user_2481"
+      ]
+    ]
+  }
+},
+{
+  "model": "meetings.meeting",
+  "pk": 4,
+  "fields": {
+    "title": "Q4 Product Strategy & Architecture Alignment",
+    "description": "Quarterly review to decide on backend framework upgrades, database scaling strategies, and UX redesign timelines.",
+    "meeting_date": "2026-09-18",
+    "start_time": "10:00:00",
+    "end_time": "11:30:00",
+    "location": "Conference Room A / Zoom",
+    "meeting_type": "PLANNING",
+    "status": "IN_PROGRESS",
+    "created_by": [
+      "shleshdarji317"
+    ],
+    "team": 1,
+    "created_at": "2026-09-15T05:22:52.146Z",
+    "updated_at": "2026-09-15T10:00:14.283Z",
+    "participants": [
+      [
+        "shleshdarji317"
+      ],
+      [
+        "rahuldarji172007"
+      ],
+      [
+        "github_user_2481"
+      ],
+      [
+        "Shlesh"
+      ],
+      [
+        "Shlesh12"
+      ]
+    ]
+  }
+},
+{
+  "model": "meetings.meeting",
+  "pk": 5,
+  "fields": {
+    "title": "Sprint 42 Retrospective & Action Items",
+    "description": "Reviewing completed user stories, delivery bottlenecks, and CI/CD deployment pipeline improvements.",
+    "meeting_date": "2026-09-12",
+    "start_time": "14:00:00",
+    "end_time": "15:00:00",
+    "location": "Google Meet",
+    "meeting_type": "REVIEW",
+    "status": "COMPLETED",
+    "created_by": [
+      "shleshdarji317"
+    ],
+    "team": 1,
+    "created_at": "2026-09-15T05:22:52.154Z",
+    "updated_at": "2026-09-15T10:01:18.270Z",
+    "participants": [
+      [
+        "shleshdarji317"
+      ],
+      [
+        "rahuldarji172007"
+      ],
+      [
+        "github_user_2481"
+      ],
+      [
+        "Shlesh"
+      ],
+      [
+        "Shlesh12"
+      ]
+    ]
+  }
+},
+{
+  "model": "meetings.meeting",
+  "pk": 6,
+  "fields": {
+    "title": "Sprint Architecture & Cloud Setup",
+    "description": "Review cloud infrastructure, database provisioning, and schema migration strategies for Q3 release.",
+    "meeting_date": "2026-09-10",
+    "start_time": "10:30:00",
+    "end_time": "11:00:00",
+    "location": "Conference Room A / Zoom",
+    "meeting_type": "PLANNING",
+    "status": "IN_PROGRESS",
+    "created_by": [
+      "shleshdarji317"
+    ],
+    "team": 2,
+    "created_at": "2026-09-15T10:42:19.170Z",
+    "updated_at": "2026-09-15T10:43:07.909Z",
+    "participants": [
+      [
+        "shleshdarji317"
+      ]
+    ]
+  }
+},
+{
+  "model": "discussions.discussion",
+  "pk": 1,
+  "fields": {
+    "meeting": 4,
+    "title": "Database Migration to Cloud PostgreSQL",
+    "description": "Discussion on migrating local SQLite instances to managed cloud PostgreSQL for production concurrency.",
+    "priority": "HIGH",
+    "created_by": [
+      "shleshdarji317"
+    ],
+    "created_at": "2026-09-15T05:22:52.162Z",
+    "updated_at": "2026-09-15T05:22:52.162Z"
+  }
+},
+{
+  "model": "discussions.discussion",
+  "pk": 2,
+  "fields": {
+    "meeting": 4,
+    "title": "Adopting JWT Token Refreshing in Frontend",
+    "description": "Evaluating auto-refreshing access tokens in Axios interceptors to reduce unexpected user logouts.",
+    "priority": "MEDIUM",
+    "created_by": [
+      "shleshdarji317"
+    ],
+    "created_at": "2026-09-15T05:22:52.166Z",
+    "updated_at": "2026-09-15T05:22:52.166Z"
+  }
+},
+{
+  "model": "discussions.discussion",
+  "pk": 3,
+  "fields": {
+    "meeting": 5,
+    "title": "Automated CI/CD Test Pipeline Execution",
+    "description": "Speeding up GitHub Actions build pipeline for Django backend and Vite frontend.",
+    "priority": "HIGH",
+    "created_by": [
+      "shleshdarji317"
+    ],
+    "created_at": "2026-09-15T05:22:52.170Z",
+    "updated_at": "2026-09-15T05:22:52.171Z"
+  }
+},
+{
+  "model": "decisions.decision",
+  "pk": 1,
+  "fields": {
+    "discussion": 1,
+    "status": "DECISION_MADE",
+    "decision": "Approved migration to PostgreSQL managed database by end of month.",
+    "reason": "Ensures multi-region availability, automatic daily snapshots, and better query performance.",
+    "decided_by": [
+      "shleshdarji317"
+    ],
+    "decision_date": "2026-09-15T05:22:52.174Z",
+    "version": 1,
+    "created_at": "2026-09-15T05:22:52.174Z",
+    "updated_at": "2026-09-15T05:22:52.174Z"
+  }
+},
+{
+  "model": "decisions.decision",
+  "pk": 2,
+  "fields": {
+    "discussion": 2,
+    "status": "DEFERRED",
+    "decision": "Postponing token refresh implementation until Sprint 44.",
+    "reason": "Current 1-day token expiration is sufficient for MVP launch.",
+    "decided_by": [
+      "shleshdarji317"
+    ],
+    "decision_date": "2026-09-15T05:22:52.178Z",
+    "version": 1,
+    "created_at": "2026-09-15T05:22:52.178Z",
+    "updated_at": "2026-09-15T05:22:52.178Z"
+  }
+},
+{
+  "model": "decisions.decision",
+  "pk": 3,
+  "fields": {
+    "discussion": 3,
+    "status": "DECISION_MADE",
+    "decision": "Enable parallel test execution in pytest-xdist on GitHub Actions.",
+    "reason": "Reduces CI execution time from 6 minutes to under 90 seconds.",
+    "decided_by": [
+      "Shlesh12"
+    ],
+    "decision_date": "2026-09-15T06:14:39.974Z",
+    "version": 2,
+    "created_at": "2026-09-15T05:22:52.181Z",
+    "updated_at": "2026-09-15T06:14:39.975Z"
+  }
+},
+{
+  "model": "decisions.decisionhistory",
+  "pk": 1,
+  "fields": {
+    "decision": 3,
+    "version": 2,
+    "status": "DECISION_MADE",
+    "decision_text": "Enable parallel test execution in pytest-xdist on GitHub Actions.",
+    "reason": "Reduces CI execution time from 6 minutes to under 90 seconds.",
+    "changed_by": [
+      "Shlesh12"
+    ],
+    "changed_at": "2026-09-15T06:14:39.984Z"
+  }
+},
+{
+  "model": "actions.actionitem",
+  "pk": 1,
+  "fields": {
+    "decision": 1,
+    "title": "Provision PostgreSQL instance on cloud provider",
+    "description": "Set up production database cluster and configure SSL connection strings in backend environment variables.",
+    "assigned_to": [
+      "shleshdarji317"
+    ],
+    "priority": "HIGH",
+    "due_date": "2026-09-09",
+    "status": "COMPLETED",
+    "created_by": [
+      "shleshdarji317"
+    ],
+    "created_at": "2026-09-15T05:22:52.185Z",
+    "updated_at": "2026-09-15T09:54:04.881Z",
+    "dependencies": []
+  }
+},
+{
+  "model": "actions.actionitem",
+  "pk": 2,
+  "fields": {
+    "decision": 1,
+    "title": "Run Django schema migrations on Cloud DB",
+    "description": "Execute python manage.py migrate against the new database URL.",
+    "assigned_to": [
+      "shleshdarji317"
+    ],
+    "priority": "HIGH",
+    "due_date": "2026-09-25",
+    "status": "TODO",
+    "created_by": [
+      "shleshdarji317"
+    ],
+    "created_at": "2026-09-15T05:22:52.189Z",
+    "updated_at": "2026-09-15T09:59:36.606Z",
+    "dependencies": [
+      1
+    ]
+  }
+},
+{
+  "model": "actions.actionitem",
+  "pk": 3,
+  "fields": {
+    "decision": 3,
+    "title": "Configure pytest-xdist in GitHub Actions workflow",
+    "description": "Update .github/workflows/ci.yml to include -n auto flag.",
+    "assigned_to": [
+      "shleshdarji317"
+    ],
+    "priority": "MEDIUM",
+    "due_date": "2026-09-18",
+    "status": "COMPLETED",
+    "created_by": [
+      "shleshdarji317"
+    ],
+    "created_at": "2026-09-15T05:22:52.196Z",
+    "updated_at": "2026-09-15T05:22:52.196Z",
+    "dependencies": []
+  }
+},
+{
+  "model": "actions.actionitem",
+  "pk": 4,
+  "fields": {
+    "decision": 1,
+    "title": "Provision PostgreSQL instance on cloud provider (shleshdarji317)",
+    "description": "Set up production database cluster and configure SSL connection strings in backend environment variables.",
+    "assigned_to": [
+      "shleshdarji317"
+    ],
+    "priority": "HIGH",
+    "due_date": "2026-09-05",
+    "status": "IN_PROGRESS",
+    "created_by": [
+      "shleshdarji317"
+    ],
+    "created_at": "2026-09-15T05:26:55.411Z",
+    "updated_at": "2026-09-15T10:10:04.101Z",
+    "dependencies": []
+  }
+},
+{
+  "model": "actions.actionitem",
+  "pk": 5,
+  "fields": {
+    "decision": 1,
+    "title": "Run Django schema migrations on Cloud DB (shleshdarji317)",
+    "description": "Execute python manage.py migrate against the new database URL.",
+    "assigned_to": [
+      "shleshdarji317"
+    ],
+    "priority": "HIGH",
+    "due_date": "2026-09-25",
+    "status": "BLOCKED",
+    "created_by": [
+      "shleshdarji317"
+    ],
+    "created_at": "2026-09-15T05:26:55.416Z",
+    "updated_at": "2026-09-15T05:26:55.416Z",
+    "dependencies": [
+      4
+    ]
+  }
+},
+{
+  "model": "actions.actionitem",
+  "pk": 6,
+  "fields": {
+    "decision": 3,
+    "title": "Configure pytest-xdist in GitHub Actions workflow (shleshdarji317)",
+    "description": "Update .github/workflows/ci.yml to include -n auto flag.",
+    "assigned_to": [
+      "shleshdarji317"
+    ],
+    "priority": "MEDIUM",
+    "due_date": "2026-09-18",
+    "status": "TODO",
+    "created_by": [
+      "shleshdarji317"
+    ],
+    "created_at": "2026-09-15T05:26:55.423Z",
+    "updated_at": "2026-09-15T10:39:44.350Z",
+    "dependencies": []
+  }
+},
+{
+  "model": "actions.actionitem",
+  "pk": 7,
+  "fields": {
+    "decision": 1,
+    "title": "Provision PostgreSQL instance on cloud provider (rahuldarji172007)",
+    "description": "Set up production database cluster and configure SSL connection strings in backend environment variables.",
+    "assigned_to": [
+      "rahuldarji172007"
+    ],
+    "priority": "CRITICAL",
+    "due_date": "2026-09-22",
+    "status": "IN_PROGRESS",
+    "created_by": [
+      "shleshdarji317"
+    ],
+    "created_at": "2026-09-15T05:26:55.427Z",
+    "updated_at": "2026-09-15T10:37:57.805Z",
+    "dependencies": []
+  }
+},
+{
+  "model": "actions.actionitem",
+  "pk": 8,
+  "fields": {
+    "decision": 1,
+    "title": "Run Django schema migrations on Cloud DB (rahuldarji172007)",
+    "description": "Execute python manage.py migrate against the new database URL.",
+    "assigned_to": [
+      "rahuldarji172007"
+    ],
+    "priority": "HIGH",
+    "due_date": "2026-09-25",
+    "status": "BLOCKED",
+    "created_by": [
+      "shleshdarji317"
+    ],
+    "created_at": "2026-09-15T05:26:55.431Z",
+    "updated_at": "2026-09-15T05:26:55.431Z",
+    "dependencies": [
+      7
+    ]
+  }
+},
+{
+  "model": "actions.actionitem",
+  "pk": 9,
+  "fields": {
+    "decision": 3,
+    "title": "Configure pytest-xdist in GitHub Actions workflow (rahuldarji172007)",
+    "description": "Update .github/workflows/ci.yml to include -n auto flag.",
+    "assigned_to": [
+      "rahuldarji172007"
+    ],
+    "priority": "MEDIUM",
+    "due_date": "2026-09-18",
+    "status": "COMPLETED",
+    "created_by": [
+      "shleshdarji317"
+    ],
+    "created_at": "2026-09-15T05:26:55.439Z",
+    "updated_at": "2026-09-15T05:26:55.439Z",
+    "dependencies": []
+  }
+},
+{
+  "model": "actions.actionitem",
+  "pk": 10,
+  "fields": {
+    "decision": 1,
+    "title": "Provision PostgreSQL instance on cloud provider (github_user_2481)",
+    "description": "Set up production database cluster and configure SSL connection strings in backend environment variables.",
+    "assigned_to": [
+      "github_user_2481"
+    ],
+    "priority": "CRITICAL",
+    "due_date": "2026-09-22",
+    "status": "IN_PROGRESS",
+    "created_by": [
+      "shleshdarji317"
+    ],
+    "created_at": "2026-09-15T05:26:55.443Z",
+    "updated_at": "2026-09-15T10:38:17.550Z",
+    "dependencies": []
+  }
+},
+{
+  "model": "actions.actionitem",
+  "pk": 11,
+  "fields": {
+    "decision": 1,
+    "title": "Run Django schema migrations on Cloud DB (github_user_2481)",
+    "description": "Execute python manage.py migrate against the new database URL.",
+    "assigned_to": [
+      "github_user_2481"
+    ],
+    "priority": "HIGH",
+    "due_date": "2026-09-25",
+    "status": "BLOCKED",
+    "created_by": [
+      "shleshdarji317"
+    ],
+    "created_at": "2026-09-15T05:26:55.448Z",
+    "updated_at": "2026-09-15T05:26:55.448Z",
+    "dependencies": [
+      10
+    ]
+  }
+},
+{
+  "model": "actions.actionitem",
+  "pk": 12,
+  "fields": {
+    "decision": 3,
+    "title": "Configure pytest-xdist in GitHub Actions workflow (github_user_2481)",
+    "description": "Update .github/workflows/ci.yml to include -n auto flag.",
+    "assigned_to": [
+      "github_user_2481"
+    ],
+    "priority": "MEDIUM",
+    "due_date": "2026-09-18",
+    "status": "COMPLETED",
+    "created_by": [
+      "shleshdarji317"
+    ],
+    "created_at": "2026-09-15T05:26:55.456Z",
+    "updated_at": "2026-09-15T05:26:55.456Z",
+    "dependencies": []
+  }
+},
+{
+  "model": "actions.actionitem",
+  "pk": 13,
+  "fields": {
+    "decision": 1,
+    "title": "Provision PostgreSQL instance on cloud provider (Shlesh)",
+    "description": "Set up production database cluster and configure SSL connection strings in backend environment variables.",
+    "assigned_to": [
+      "Shlesh"
+    ],
+    "priority": "HIGH",
+    "due_date": "2026-09-22",
+    "status": "IN_PROGRESS",
+    "created_by": [
+      "shleshdarji317"
+    ],
+    "created_at": "2026-09-15T05:26:55.460Z",
+    "updated_at": "2026-09-15T05:26:55.460Z",
+    "dependencies": []
+  }
+},
+{
+  "model": "actions.actionitem",
+  "pk": 14,
+  "fields": {
+    "decision": 1,
+    "title": "Run Django schema migrations on Cloud DB (Shlesh)",
+    "description": "Execute python manage.py migrate against the new database URL.",
+    "assigned_to": [
+      "Shlesh"
+    ],
+    "priority": "HIGH",
+    "due_date": "2026-09-25",
+    "status": "BLOCKED",
+    "created_by": [
+      "shleshdarji317"
+    ],
+    "created_at": "2026-09-15T05:26:55.464Z",
+    "updated_at": "2026-09-15T05:26:55.464Z",
+    "dependencies": [
+      13
+    ]
+  }
+},
+{
+  "model": "actions.actionitem",
+  "pk": 15,
+  "fields": {
+    "decision": 3,
+    "title": "Configure pytest-xdist in GitHub Actions workflow (Shlesh)",
+    "description": "Update .github/workflows/ci.yml to include -n auto flag.",
+    "assigned_to": [
+      "Shlesh"
+    ],
+    "priority": "CRITICAL",
+    "due_date": "2026-09-18",
+    "status": "COMPLETED",
+    "created_by": [
+      "shleshdarji317"
+    ],
+    "created_at": "2026-09-15T05:26:55.472Z",
+    "updated_at": "2026-09-15T10:39:06.456Z",
+    "dependencies": []
+  }
+},
+{
+  "model": "actions.actionitem",
+  "pk": 16,
+  "fields": {
+    "decision": 1,
+    "title": "Provision PostgreSQL instance on cloud provider (Shlesh12)",
+    "description": "Set up production database cluster and configure SSL connection strings in backend environment variables.",
+    "assigned_to": [
+      "Shlesh12"
+    ],
+    "priority": "CRITICAL",
+    "due_date": "2026-09-22",
+    "status": "IN_PROGRESS",
+    "created_by": [
+      "shleshdarji317"
+    ],
+    "created_at": "2026-09-15T05:26:55.478Z",
+    "updated_at": "2026-09-15T10:39:21.808Z",
+    "dependencies": []
+  }
+},
+{
+  "model": "actions.actionitem",
+  "pk": 17,
+  "fields": {
+    "decision": 1,
+    "title": "Run Django schema migrations on Cloud DB (Shlesh12)",
+    "description": "Execute python manage.py migrate against the new database URL.",
+    "assigned_to": [
+      "Shlesh12"
+    ],
+    "priority": "HIGH",
+    "due_date": "2026-09-25",
+    "status": "BLOCKED",
+    "created_by": [
+      "shleshdarji317"
+    ],
+    "created_at": "2026-09-15T05:26:55.483Z",
+    "updated_at": "2026-09-15T05:26:55.483Z",
+    "dependencies": [
+      16
+    ]
+  }
+},
+{
+  "model": "actions.actionitem",
+  "pk": 18,
+  "fields": {
+    "decision": 3,
+    "title": "Configure pytest-xdist in GitHub Actions workflow (Shlesh12)",
+    "description": "Update .github/workflows/ci.yml to include -n auto flag.",
+    "assigned_to": [
+      "Shlesh12"
+    ],
+    "priority": "MEDIUM",
+    "due_date": "2026-09-18",
+    "status": "COMPLETED",
+    "created_by": [
+      "shleshdarji317"
+    ],
+    "created_at": "2026-09-15T05:26:55.493Z",
+    "updated_at": "2026-09-15T05:26:55.493Z",
+    "dependencies": []
+  }
+}
+]

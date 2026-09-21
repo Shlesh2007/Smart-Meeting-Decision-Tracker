@@ -1,8 +1,13 @@
 'use client';
 
-import React from 'react';
+import React, { useId } from 'react';
 
 export function Logo({ variant = 'full', height = 36, className = '' }) {
+  const rawId = useId();
+  const uid = rawId ? rawId.replace(/[^a-zA-Z0-9_-]/g, '') : 'logo';
+  const bgGradId = `logoBgGrad_${uid}`;
+  const badgeGradId = `logoBadgeGrad_${uid}`;
+
   if (variant === 'icon') {
     return (
       <svg
@@ -12,18 +17,18 @@ export function Logo({ variant = 'full', height = 36, className = '' }) {
         className={`select-none shrink-0 ${className}`}
       >
         <defs>
-          <linearGradient id="logoIconBgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <linearGradient id={bgGradId} x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#3b82f6" />
             <stop offset="50%" stopColor="#2563eb" />
             <stop offset="100%" stopColor="#1d4ed8" />
           </linearGradient>
-          <linearGradient id="logoIconBadgeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <linearGradient id={badgeGradId} x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#22c55e" />
             <stop offset="100%" stopColor="#16a34a" />
           </linearGradient>
         </defs>
 
-        <rect x="5" y="5" width="90" height="90" rx="24" fill="url(#logoIconBgGrad)" />
+        <rect x="5" y="5" width="90" height="90" rx="24" fill={`url(#${bgGradId})`} />
 
         <rect x="20" y="24" width="60" height="48" rx="8" fill="none" stroke="#ffffff" strokeWidth="4.5" />
         <line x1="20" y1="36" x2="80" y2="36" stroke="#ffffff" strokeWidth="3" />
@@ -40,7 +45,7 @@ export function Logo({ variant = 'full', height = 36, className = '' }) {
         <circle cx="50" cy="44" r="6" fill="#ffffff" />
         <path d="M 40 58 C 40 51, 60 51, 60 58" fill="#ffffff" />
 
-        <circle cx="73" cy="69" r="15" fill="url(#logoIconBadgeGrad)" stroke="#ffffff" strokeWidth="3.5" />
+        <circle cx="73" cy="69" r="15" fill={`url(#${badgeGradId})`} stroke="#ffffff" strokeWidth="3.5" />
         <path d="M 66 69 L 71 74 L 80 63" fill="none" stroke="#ffffff" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     );
@@ -55,19 +60,19 @@ export function Logo({ variant = 'full', height = 36, className = '' }) {
       className={`select-none shrink-0 ${className}`}
     >
       <defs>
-        <linearGradient id="logoFullBgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <linearGradient id={bgGradId} x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stopColor="#3b82f6" />
           <stop offset="50%" stopColor="#2563eb" />
           <stop offset="100%" stopColor="#1d4ed8" />
         </linearGradient>
-        <linearGradient id="logoFullBadgeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <linearGradient id={badgeGradId} x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stopColor="#22c55e" />
           <stop offset="100%" stopColor="#16a34a" />
         </linearGradient>
       </defs>
 
       <g transform="translate(0, 0)">
-        <rect x="5" y="5" width="80" height="80" rx="20" fill="url(#logoFullBgGrad)" />
+        <rect x="5" y="5" width="80" height="80" rx="20" fill={`url(#${bgGradId})`} />
 
         <rect x="18" y="22" width="54" height="43" rx="7" fill="none" stroke="#ffffff" strokeWidth="4" />
         <line x1="18" y1="33" x2="72" y2="33" stroke="#ffffff" strokeWidth="2.5" />
@@ -84,7 +89,7 @@ export function Logo({ variant = 'full', height = 36, className = '' }) {
         <circle cx="45" cy="40" r="5.5" fill="#ffffff" />
         <path d="M 36 53 C 36 47, 54 47, 54 53" fill="#ffffff" />
 
-        <circle cx="66" cy="62" r="13" fill="url(#logoFullBadgeGrad)" stroke="#ffffff" strokeWidth="3" />
+        <circle cx="66" cy="62" r="13" fill={`url(#${badgeGradId})`} stroke="#ffffff" strokeWidth="3" />
         <path d="M 60 62 L 64 66 L 72 57" fill="none" stroke="#ffffff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
       </g>
 
@@ -101,3 +106,4 @@ export function Logo({ variant = 'full', height = 36, className = '' }) {
     </svg>
   );
 }
+

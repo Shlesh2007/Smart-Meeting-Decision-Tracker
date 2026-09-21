@@ -68,3 +68,23 @@ class MeetingTestCase(TestCase):
         results = response.data['results'] if 'results' in response.data else response.data
         self.assertEqual(len(results), 1)
         self.assertEqual(results[0]['title'], 'Client Review')
+
+    def test_exact_phrase_search(self):
+        self.client.force_authenticate(user=self.admin)
+        Meeting.objects.create(
+            title='Security Vulnerability & Patch Assessment',
+            meeting_date=date.today(),
+            start_time=time(10, 0),
+            end_time=time(11, 0),
+            created_by=self.admin
+        )
+        
+        # Searching "Security" matches
+        res_secu = self.client.get('/api/meetings/?search=Security')
+        results_secu = res_secu.data['results'] if 'results' in res_secu.data else res_secu.data
+        self.assertEqual(len(results_secu), 1)
+
+        # Searching "secu c" (with trailing disconnected letter) should NOT match "Security Vulnerability & Patch Assessment"
+        res_mismatch = self.client.get('/api/meetings/?search=secu c')
+        results_mismatch = res_mismatch.data['results'] if 'results' in res_mismatch.data else res_mismatch.data
+        self.assertEqual(len(results_mismatch), 0)

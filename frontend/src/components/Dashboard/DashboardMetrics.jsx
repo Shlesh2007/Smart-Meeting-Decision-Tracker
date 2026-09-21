@@ -31,7 +31,7 @@ export const DashboardMetrics = ({ metrics = {}, onCardClick }) => {
       theme: 'indigo',
       icon: <ClockCircleOutlined />,
       trend: 'Upcoming schedule',
-      onClick: () => onCardClick && onCardClick('/meetings'),
+      onClick: () => onCardClick && onCardClick('/meetings?status=SCHEDULED'),
     },
     {
       key: 'open_actions',
@@ -41,7 +41,7 @@ export const DashboardMetrics = ({ metrics = {}, onCardClick }) => {
       theme: 'amber',
       icon: <ThunderboltOutlined />,
       trend: 'Pending resolution',
-      onClick: () => onCardClick && onCardClick('/my-actions'),
+      onClick: () => onCardClick && onCardClick('/my-actions?tab=OPEN'),
     },
     {
       key: 'completed_actions',
@@ -76,7 +76,7 @@ export const DashboardMetrics = ({ metrics = {}, onCardClick }) => {
   ];
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-4">
       {cards.map((card) => (
         <MetricCard
           key={card.key}

@@ -1,20 +1,22 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { analyticsService } from '../services/api.js';
 import { Alert, Button } from 'antd';
 import { SyncOutlined, ExclamationCircleOutlined, ArrowRightOutlined } from '@ant-design/icons';
 
-import { DashboardHeader } from '../components/Dashboard/DashboardHeader.jsx';
-import { DashboardMetrics } from '../components/Dashboard/DashboardMetrics.jsx';
-import { ActionStatusChart } from '../components/Dashboard/ActionStatusChart.jsx';
-import { PriorityDistribution } from '../components/Dashboard/PriorityDistribution.jsx';
-import { MeetingActivityChart } from '../components/Dashboard/MeetingActivityChart.jsx';
-import { UpcomingMeetings } from '../components/Dashboard/UpcomingMeetings.jsx';
-import { RecentCompletedActions } from '../components/Dashboard/RecentCompletedActions.jsx';
-import { NeedsAttention } from '../components/Dashboard/NeedsAttention.jsx';
-import { QuickActions } from '../components/Dashboard/QuickActions.jsx';
-import { DashboardSkeleton } from '../components/Dashboard/DashboardSkeleton.jsx';
+import {
+  DashboardHeader,
+  DashboardMetrics,
+  ActionStatusChart,
+  PriorityDistribution,
+  MeetingActivityChart,
+  UpcomingMeetings,
+  RecentCompletedActions,
+  NeedsAttention,
+  QuickActions,
+  DashboardSkeleton,
+} from '../components/Dashboard';
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -22,24 +24,34 @@ export default function Dashboard() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [period, setPeriod] = useState('all_time');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [search, setSearch] = useState('');
 
-  const fetchDashboard = () => {
+  const fetchDashboard = useCallback((selectedPeriod = 'all_time', searchQuery = '', sDate = '', eDate = '') => {
     setLoading(true);
     setError(null);
+    const params = { period: selectedPeriod, search: searchQuery || undefined };
+    if (selectedPeriod === 'custom') {
+      if (sDate) params.start_date = sDate;
+      if (eDate) params.end_date = eDate;
+    }
     analyticsService
-      .getDashboard()
+      .getDashboard(params)
       .then((res) => setData(res))
-      .catch(() =>
+      .catch((err) =>
         setError(
+          err.response?.data?.detail ||
           'Unable to load dashboard metrics. Please ensure your backend API server is running.'
         )
       )
       .finally(() => setLoading(false));
-  };
+  }, []);
 
   useEffect(() => {
-    fetchDashboard();
-  }, []);
+    fetchDashboard(period, search, startDate, endDate);
+  }, [period, search, startDate, endDate, fetchDashboard]);
 
   if (loading && !data) return <DashboardSkeleton />;
 
@@ -55,7 +67,7 @@ export default function Dashboard() {
         />
         <Button
           type="primary"
-          onClick={fetchDashboard}
+          onClick={() => fetchDashboard(period, search, startDate, endDate)}
           icon={<SyncOutlined />}
           className="bg-blue-600 font-bold rounded-lg h-9 px-5 text-xs"
         >
@@ -75,8 +87,25 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-4 max-w-[1600px] mx-auto pb-8">
-      <DashboardHeader user={user} onRefresh={fetchDashboard} loading={loading} />
+      
+      {/* 1. Header Greeting & Quick CTAs Hero with Global Search & Period Selector */}
+      <DashboardHeader
+        user={user}
+        onRefresh={() => fetchDashboard(period, search, startDate, endDate)}
+        loading={loading}
+        period={period}
+        onPeriodChange={(val) => setPeriod(val)}
+        startDate={startDate}
+        endDate={endDate}
+        onCustomDateChange={(s, e) => {
+          setStartDate(s || '');
+          setEndDate(e || '');
+        }}
+        search={search}
+        onSearchChange={(val) => setSearch(val)}
+      />
 
+      {/* Overdue Action Banner */}
       {metrics.overdue_actions > 0 && (
         <Alert
           type="warning"
@@ -104,17 +133,31 @@ export default function Dashboard() {
         />
       )}
 
+      {/* 2. ROW 1: 6-Column Compact KPI Metrics Grid */}
       <DashboardMetrics
         metrics={metrics}
-        onCardClick={(path) => navigate(path)}
+        onCardClick={(path) => {
+          if (search && search.trim()) {
+            const sep = path.includes('?') ? '&' : '?';
+            navigate(`${path}${sep}search=${encodeURIComponent(search.trim())}`);
+          } else {
+            navigate(path);
+          }
+        }}
       />
 
+      {/* 3. ROW 2: Upcoming Meetings & 2 Pie Charts (Side-by-Side on Tablet md:grid-cols-2) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch">
-        <UpcomingMeetings />
-        <ActionStatusChart statusDistribution={status_distribution} />
-        <PriorityDistribution priorityDistribution={priority_distribution} />
+        <div className="lg:col-span-1">
+          <UpcomingMeetings />
+        </div>
+        <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 items-stretch">
+          <ActionStatusChart statusDistribution={status_distribution} />
+          <PriorityDistribution priorityDistribution={priority_distribution} />
+        </div>
       </div>
 
+      {/* 4. ROW 3: Meeting Activity Area Chart (7 cols) | Recent Completed Actions (5 cols) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
         <div className="lg:col-span-7">
           <MeetingActivityChart meetingActivity={meeting_activity} />
@@ -124,6 +167,7 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* 5. ROW 4: Needs Attention Action Table (8 cols) | Quick Actions (4 cols) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
         <div className="lg:col-span-8">
           <NeedsAttention overdueList={overdue_list} />
@@ -132,6 +176,8 @@ export default function Dashboard() {
           <QuickActions />
         </div>
       </div>
+
     </div>
   );
 }
+

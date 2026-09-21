@@ -1,12 +1,55 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { Button } from 'antd';
-import { PlusOutlined, SyncOutlined, CalendarOutlined, ThunderboltOutlined } from '@ant-design/icons';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Button, Input, Select, AutoComplete, Tag, Spin, DatePicker } from 'antd';
+import { PlusOutlined, SyncOutlined, CalendarOutlined, ThunderboltOutlined, SearchOutlined, FilterOutlined } from '@ant-design/icons';
 import { format } from 'date-fns';
+import dayjs from 'dayjs';
 import { Logo } from '../Logo.jsx';
+import { meetingService, actionService } from '../../services/api.js';
 
-export const DashboardHeader = ({ user, onRefresh, loading }) => {
-  const formattedDate = format(new Date(), 'EEEE, MMM d, yyyy');
+const { RangePicker } = DatePicker;
+
+export const DashboardHeader = ({
+  user,
+  onRefresh,
+  loading,
+  period,
+  onPeriodChange,
+  search,
+  onSearchChange,
+  startDate,
+  endDate,
+  onCustomDateChange,
+}) => {
+  const navigate = useNavigate();
+
+  const [searching, setSearching] = useState(false);
+  const [searchResults, setSearchResults] = useState({ meetings: [], actions: [] });
+
+  useEffect(() => {
+    if (!search || search.trim().length === 0) {
+      setSearchResults({ meetings: [], actions: [] });
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setSearching(true);
+      Promise.all([
+        meetingService.getMeetings({ search: search.trim() }),
+        actionService.getActions({ search: search.trim() })
+      ])
+        .then(([mRes, aRes]) => {
+          setSearchResults({
+            meetings: (mRes.results || mRes || []).slice(0, 5),
+            actions: (aRes.results || aRes || []).slice(0, 5)
+          });
+        })
+        .catch(() => setSearchResults({ meetings: [], actions: [] }))
+        .finally(() => setSearching(false));
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [search]);
 
   const hour = new Date().getHours();
   let greetingTime = 'Good morning';
@@ -15,56 +58,194 @@ export const DashboardHeader = ({ user, onRefresh, loading }) => {
 
   const userName = user?.first_name || user?.username || 'User';
 
+  const renderCategoryHeader = (title, count) => (
+    <div className="flex items-center justify-between text-xs font-bold text-slate-500 py-1 border-b border-slate-100">
+      <span>{title}</span>
+      <span className="text-[10px] bg-slate-100 px-1.5 py-0.5 rounded-full text-slate-600 font-semibold">{count}</span>
+    </div>
+  );
+
+  const handleSelectOption = (val, option) => {
+    if (option && option.targetUrl) {
+      navigate(option.targetUrl);
+    }
+  };
+
+  const options = [];
+  if (search && search.trim().length > 0) {
+    if (searchResults.meetings.length > 0) {
+      options.push({
+        label: renderCategoryHeader('📅 Meetings', searchResults.meetings.length),
+        options: searchResults.meetings.map((m) => ({
+          key: `m_${m.id}`,
+          value: m.title,
+          targetUrl: `/meetings/${m.id}`,
+          label: (
+            <div
+              key={`meeting_${m.id}`}
+              className="flex items-center justify-between py-1 cursor-pointer hover:text-blue-600"
+            >
+              <div className="flex items-center space-x-2 truncate max-w-[200px] sm:max-w-[240px]">
+                <CalendarOutlined className="text-blue-500 text-xs shrink-0" />
+                <span className="font-semibold text-xs text-slate-800 dark:text-slate-200 truncate">{m.title}</span>
+              </div>
+              <Tag color="blue" className="text-[9px] m-0 shrink-0 font-bold">{m.meeting_date}</Tag>
+            </div>
+          )
+        }))
+      });
+    }
+
+    if (searchResults.actions.length > 0) {
+      options.push({
+        label: renderCategoryHeader('⚡ Action Items', searchResults.actions.length),
+        options: searchResults.actions.map((a) => ({
+          key: `a_${a.id}`,
+          value: a.title,
+          targetUrl: a.meeting_id ? `/meetings/${a.meeting_id}` : '/my-actions',
+          label: (
+            <div
+              key={`action_${a.id}`}
+              className="flex items-center justify-between py-1 cursor-pointer hover:text-blue-600"
+            >
+              <div className="flex items-center space-x-2 truncate max-w-[200px] sm:max-w-[240px]">
+                <ThunderboltOutlined className="text-amber-500 text-xs shrink-0" />
+                <span className="font-semibold text-xs text-slate-800 dark:text-slate-200 truncate">{a.title}</span>
+              </div>
+              <Tag color={a.status === 'COMPLETED' ? 'success' : a.status === 'BLOCKED' ? 'error' : 'warning'} className="text-[9px] m-0 shrink-0 font-bold">
+                {a.status}
+              </Tag>
+            </div>
+          )
+        }))
+      });
+    }
+  }
+
   return (
-    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 sm:p-4 shadow-xs transition-all flex flex-col md:flex-row md:items-center justify-between gap-3">
+    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xs transition-all space-y-3">
       
-      {/* Greeting & Date Info */}
-      <div className="flex items-center space-x-3">
-        <Logo variant="icon" height={40} className="shrink-0" />
-        <div className="space-y-0.5">
-          <div className="flex items-center space-x-2.5 flex-wrap">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+        {/* Greeting & Date Info */}
+        <div className="flex items-center space-x-3">
+          <div className="space-y-0.5">
             <h1 className="text-base sm:text-lg font-extrabold text-slate-900 dark:text-white m-0 tracking-tight leading-snug">
               {greetingTime}, {userName}! 👋
             </h1>
-            <span className="inline-flex items-center space-x-1 text-[11px] font-semibold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 rounded-md border border-slate-200/80 dark:border-slate-700/80">
-              <CalendarOutlined className="text-blue-500 text-[10px]" />
-              <span>{formattedDate}</span>
-            </span>
+            <p className="text-xs text-slate-500 dark:text-slate-400 m-0">
+              Here&apos;s your meeting & action item overview.
+            </p>
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400 m-0">
-            Here&apos;s what&apos;s happening with your meetings and action items today.
-          </p>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full sm:w-auto shrink-0">
+          <Link to="/meetings/new" className="no-underline flex-1 sm:flex-none">
+            <Button
+              type="primary"
+              size="middle"
+              icon={<PlusOutlined />}
+              className="w-full sm:w-auto bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl border-none shadow-xs text-xs h-9 px-3.5 flex items-center justify-center"
+            >
+              Schedule Meeting
+            </Button>
+          </Link>
+          
+          <Link to="/my-actions" className="no-underline flex-1 sm:flex-none">
+            <Button
+              size="middle"
+              icon={<ThunderboltOutlined />}
+              className="w-full sm:w-auto bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold rounded-xl border-slate-200 dark:border-slate-700 text-xs h-9 px-3.5 flex items-center justify-center"
+            >
+              View My Actions
+            </Button>
+          </Link>
+
+          {onRefresh && (
+            <Button
+              size="middle"
+              icon={<SyncOutlined spin={loading} />}
+              onClick={onRefresh}
+              title="Refresh Dashboard"
+              className="bg-white dark:bg-slate-800 hover:bg-slate-50 text-slate-600 dark:text-slate-300 rounded-xl border-slate-200 dark:border-slate-700 h-9 w-9 flex items-center justify-center p-0 shrink-0"
+            />
+          )}
         </div>
       </div>
 
-      {/* Action Buttons */}
-      <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap shrink-0">
-        <Link to="/meetings/new" className="no-underline">
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg border-none shadow-xs text-xs h-8.5 px-3.5 flex items-center"
-          >
-            Schedule Meeting
-          </Button>
-        </Link>
-        
-        <Link to="/my-actions" className="no-underline">
-          <Button
-            icon={<ThunderboltOutlined />}
-            className="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold rounded-lg border-slate-200 dark:border-slate-700 text-xs h-8.5 px-3.5 flex items-center"
-          >
-            View My Actions
-          </Button>
-        </Link>
+      {/* Global Search & Time Period Filter Bar */}
+      <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-2">
+        <div className="flex items-center justify-between gap-2 sm:gap-3">
+          <div className="flex-1 min-w-0">
+            <AutoComplete
+              popupMatchSelectWidth={false}
+              styles={{ popup: { root: { minWidth: 280 } } }}
+              options={options}
+              value={search}
+              onChange={(val) => onSearchChange(val)}
+              onSelect={handleSelectOption}
+              filterOption={false}
+              className="w-full"
+            >
+              <Input
+                size="middle"
+                prefix={<SearchOutlined className="text-slate-400 text-xs" />}
+                suffix={searching ? <Spin size="small" /> : null}
+                placeholder="Search meetings & actions..."
+                allowClear
+                className="rounded-xl text-xs h-9"
+              />
+            </AutoComplete>
+          </div>
 
-        {onRefresh && (
-          <Button
-            icon={<SyncOutlined spin={loading} />}
-            onClick={onRefresh}
-            title="Refresh Dashboard"
-            className="bg-white dark:bg-slate-800 hover:bg-slate-50 text-slate-600 dark:text-slate-300 rounded-lg border-slate-200 dark:border-slate-700 h-8.5 w-8.5 flex items-center justify-center p-0"
-          />
+          <div className="flex items-center space-x-1.5 shrink-0">
+            <FilterOutlined className="text-blue-500 text-xs sm:text-sm shrink-0" />
+            <Select
+              value={period || 'all_time'}
+              onChange={onPeriodChange}
+              className="w-28 sm:w-36 font-semibold text-xs h-9 shrink-0"
+              size="middle"
+              popupMatchSelectWidth={false}
+              options={[
+                { label: 'All Time', value: 'all_time' },
+                { label: 'Yesterday', value: 'yesterday' },
+                { label: 'Last 7 Days', value: 'last_7_days' },
+                { label: '30 Days', value: 'last_30_days' },
+                { label: 'Last Week', value: 'last_week' },
+                { label: 'Last Month', value: 'last_month' },
+                { label: 'Last Year', value: 'last_year' },
+                { label: 'Custom Range', value: 'custom' },
+              ]}
+            />
+          </div>
+        </div>
+
+        {period === 'custom' && (
+          <div className="animate-fadeIn pt-1 flex justify-end">
+            <RangePicker
+              size="middle"
+              format="YYYY-MM-DD"
+              placeholder={['From Date', 'To Date']}
+              placement="bottomRight"
+              value={
+                startDate && endDate
+                  ? [dayjs(startDate), dayjs(endDate)]
+                  : startDate
+                  ? [dayjs(startDate), null]
+                  : endDate
+                  ? [null, dayjs(endDate)]
+                  : null
+              }
+              onChange={(dates, dateStrings) => {
+                if (dates && dates[0] && dates[1]) {
+                  onCustomDateChange && onCustomDateChange(dateStrings[0], dateStrings[1]);
+                } else {
+                  onCustomDateChange && onCustomDateChange('', '');
+                }
+              }}
+              className="w-full sm:w-auto rounded-xl h-9 text-xs font-medium"
+            />
+          </div>
         )}
       </div>
 

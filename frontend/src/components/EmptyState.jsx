@@ -32,7 +32,7 @@ export const EmptyState = ({
               type="primary"
               onClick={onAction}
               icon={<PlusOutlined />}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg border-none shadow-xs px-5 py-2 text-xs sm:text-sm h-auto"
+              className="bg-slate-900 hover:bg-slate-800 text-white font-medium rounded-lg border-none shadow-xs px-5 py-2 text-xs sm:text-sm h-auto"
             >
               {actionText}
             </Button>

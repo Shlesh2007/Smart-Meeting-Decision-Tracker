@@ -1,3 +1,5 @@
+import uuid
+from datetime import timedelta
 from rest_framework import serializers
 from .models import Meeting
 from apps.authentication.serializers import UserSerializer
@@ -8,7 +10,7 @@ User = get_user_model()
 
 class MeetingSerializer(serializers.ModelSerializer):
     created_by_detail = UserSerializer(source='created_by', read_only=True)
-    participants_detail = UserSerializer(source='participants', many=True, read_only=True)
+    participants_detail = serializers.SerializerMethodField()
     team_detail = TeamSerializer(source='team', read_only=True)
     participant_ids = serializers.PrimaryKeyRelatedField(
         queryset=User.objects.all(),
@@ -25,14 +27,25 @@ class MeetingSerializer(serializers.ModelSerializer):
             'id', 'title', 'description', 'meeting_date', 'start_time', 'end_time',
             'location', 'meeting_type', 'status', 'created_by', 'created_by_detail',
             'participants', 'participants_detail', 'participant_ids', 'team', 'team_detail',
+            'is_recurring', 'recurrence_pattern', 'recurrence_end_date', 'recurrence_group_id',
             'discussions_count', 'created_at', 'updated_at'
         )
-        read_only_fields = ('id', 'created_by', 'created_at', 'updated_at')
+        read_only_fields = ('id', 'created_by', 'created_at', 'updated_at', 'recurrence_group_id')
+
+    def get_participants_detail(self, obj):
+        parts = list(obj.participants.all())
+        if not parts and obj.created_by:
+            parts = [obj.created_by]
+        return UserSerializer(parts, many=True).data
 
     def get_discussions_count(self, obj):
         return obj.discussions.count()
 
     def validate(self, attrs):
+        meeting_date = attrs.get('meeting_date', self.instance.meeting_date if self.instance else None)
+        if meeting_date and meeting_date < timezone.localdate() and not self.instance:
+            raise serializers.ValidationError({"meeting_date": "Meeting date cannot be scheduled in the past."})
+
         start_time = attrs.get('start_time', self.instance.start_time if self.instance else None)
         end_time = attrs.get('end_time', self.instance.end_time if self.instance else None)
         if start_time and end_time and start_time >= end_time:
@@ -55,18 +68,69 @@ class MeetingSerializer(serializers.ModelSerializer):
         team = validated_data.get('team')
         user = self.context['request'].user
         validated_data['created_by'] = user
+
+        is_recurring = validated_data.get('is_recurring', False)
+        recurrence_pattern = validated_data.get('recurrence_pattern')
+        recurrence_end_date = validated_data.get('recurrence_end_date')
+
+        recurrence_group_id = None
+        if is_recurring and recurrence_pattern:
+            recurrence_group_id = str(uuid.uuid4())
+            validated_data['recurrence_group_id'] = recurrence_group_id
+
         meeting = Meeting.objects.create(**validated_data)
         
-        if participants:
-            meeting.participants.set(participants)
-            if team:
-                for member in team.members.all():
-                    meeting.participants.add(member)
-        elif team:
-            meeting.participants.set(team.members.all())
-        
-        # Always ensure creator/organizer is included as a participant
-        meeting.participants.add(user)
+        # Calculate full participant set
+        all_participants = set(participants)
+        if team:
+            all_participants.update(team.members.all())
+        all_participants.add(user)
+        meeting.participants.set(all_participants)
+
+        # Generate recurring series instances if enabled
+        if is_recurring and recurrence_pattern:
+            start_date = meeting.meeting_date
+            max_end = start_date + timedelta(days=30)
+            target_end_date = recurrence_end_date if recurrence_end_date else (start_date + timedelta(days=14))
+            if target_end_date > max_end:
+                target_end_date = max_end
+
+            current_date = start_date + timedelta(days=1)
+            generated_count = 0
+            max_generation = 30
+
+            while current_date <= target_end_date and generated_count < max_generation:
+                should_create = False
+                if recurrence_pattern == Meeting.RecurrencePattern.DAILY:
+                    should_create = True
+                elif recurrence_pattern == Meeting.RecurrencePattern.WEEKDAYS:
+                    if current_date.weekday() < 5:
+                        should_create = True
+                elif recurrence_pattern == Meeting.RecurrencePattern.WEEKLY:
+                    if current_date.weekday() == start_date.weekday():
+                        should_create = True
+
+                if should_create:
+                    sub_meeting = Meeting.objects.create(
+                        title=meeting.title,
+                        description=meeting.description,
+                        meeting_date=current_date,
+                        start_time=meeting.start_time,
+                        end_time=meeting.end_time,
+                        location=meeting.location,
+                        meeting_type=meeting.meeting_type,
+                        status=Meeting.Status.SCHEDULED,
+                        created_by=user,
+                        team=team,
+                        is_recurring=True,
+                        recurrence_pattern=recurrence_pattern,
+                        recurrence_end_date=target_end_date,
+                        recurrence_group_id=recurrence_group_id,
+                    )
+                    sub_meeting.participants.set(all_participants)
+                    generated_count += 1
+
+                current_date += timedelta(days=1)
             
         return meeting
 

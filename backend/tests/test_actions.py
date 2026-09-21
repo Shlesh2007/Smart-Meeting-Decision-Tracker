@@ -98,3 +98,56 @@ class ActionItemBusinessRulesTestCase(TestCase):
         res_ok = self.client.put(f'/api/actions/{action2.id}/', payload, format='json')
         self.assertEqual(res_ok.status_code, status.HTTP_200_OK)
         self.assertEqual(res_ok.data['status'], 'COMPLETED')
+
+    def test_auto_unblock_dependent_action(self):
+        # Action A (Prerequisite)
+        action_a = ActionItem.objects.create(
+            decision=self.decision,
+            title='Setup Server Environment',
+            due_date=date.today() + timedelta(days=1),
+            status='IN_PROGRESS',
+            created_by=self.user,
+            assigned_to=self.user
+        )
+
+        # Action B (Dependent) -> Created as BLOCKED when depending on Action A
+        payload_b = {
+            'decision': self.decision.id,
+            'title': 'Deploy Backend Application',
+            'due_date': str(date.today() + timedelta(days=3)),
+            'status': 'TODO',
+            'dependency_ids': [action_a.id]
+        }
+        res_b = self.client.post('/api/actions/', payload_b, format='json')
+        self.assertEqual(res_b.status_code, status.HTTP_201_CREATED)
+        action_b_id = res_b.data['id']
+        self.assertEqual(res_b.data['status'], 'BLOCKED')
+
+        # Now complete Action A via API PATCH
+        res_complete_a = self.client.patch(f'/api/actions/{action_a.id}/', {'status': 'COMPLETED'}, format='json')
+        self.assertEqual(res_complete_a.status_code, status.HTTP_200_OK)
+
+        # Fetch Action B -> should automatically be transferred to 'TODO'!
+        res_get_b = self.client.get(f'/api/actions/{action_b_id}/')
+        self.assertEqual(res_get_b.status_code, status.HTTP_200_OK)
+        self.assertEqual(res_get_b.data['status'], 'TODO')
+
+    def test_manual_status_blocked_persists(self):
+        action = ActionItem.objects.create(
+            decision=self.decision,
+            title='Manual Blocked Test',
+            due_date=date.today() + timedelta(days=2),
+            status='TODO',
+            created_by=self.user,
+            assigned_to=self.user
+        )
+        # Update status to BLOCKED via PATCH
+        res_patch = self.client.patch(f'/api/actions/{action.id}/', {'status': 'BLOCKED'}, format='json')
+        self.assertEqual(res_patch.status_code, status.HTTP_200_OK)
+        self.assertEqual(res_patch.data['status'], 'BLOCKED')
+
+        # Fetch action item again -> status should remain BLOCKED
+        res_get = self.client.get(f'/api/actions/{action.id}/')
+        self.assertEqual(res_get.status_code, status.HTTP_200_OK)
+        self.assertEqual(res_get.data['status'], 'BLOCKED')
+

@@ -36,14 +36,14 @@ export const ProfileModal = ({ open, onClose, user }) => {
   const [form] = Form.useForm();
 
   useEffect(() => {
-    if (user && open) {
+    if (user && open && isEditing) {
       form.setFieldsValue({
         first_name: user.first_name || '',
         last_name: user.last_name || '',
         department: user.department || '',
       });
     }
-  }, [user, open, form]);
+  }, [user, open, isEditing, form]);
 
   if (!user) return null;
 
@@ -188,7 +188,10 @@ export const ProfileModal = ({ open, onClose, user }) => {
           isEditing ? [
             <Button 
               key="cancel" 
-              onClick={() => setIsEditing(false)}
+              onClick={() => {
+                form.resetFields();
+                setIsEditing(false);
+              }}
               disabled={loading}
             >
               Cancel
@@ -198,12 +201,12 @@ export const ProfileModal = ({ open, onClose, user }) => {
               type="primary" 
               loading={loading}
               onClick={() => form.submit()}
-              className="bg-blue-600 hover:bg-blue-700 font-semibold"
+              className="bg-slate-900 hover:bg-slate-800 font-semibold text-white"
             >
               Save Changes
             </Button>,
           ] : [
-            <Button key="close" type="primary" onClick={onClose} className="bg-blue-600 hover:bg-blue-700 font-semibold">
+            <Button key="close" type="primary" onClick={onClose} className="bg-slate-900 hover:bg-slate-800 font-semibold text-white">
               Close Profile
             </Button>,
           ]
@@ -212,14 +215,16 @@ export const ProfileModal = ({ open, onClose, user }) => {
       >
         <div className="py-3 space-y-5">
           {/* Profile Card Banner */}
-          <div className="bg-slate-50 dark:bg-slate-800/80 p-4 rounded-xl border border-slate-200 dark:border-slate-700/70 flex items-center space-x-4 shadow-xs">
-            <Avatar size={64} icon={<UserOutlined />} className="bg-blue-600 shadow-md ring-2 ring-blue-500/20" />
+          <div className="bg-slate-50 dark:bg-slate-800/80 p-3.5 sm:p-4 rounded-xl border border-slate-200 dark:border-slate-700/70 flex items-center space-x-3 sm:space-x-4 shadow-xs">
+            <Avatar size={56} className="bg-blue-600 font-extrabold text-xl sm:text-2xl shadow-md ring-2 ring-blue-500/20 text-white shrink-0 flex items-center justify-center">
+              {(user?.first_name || user?.full_name || user?.username || 'U')[0].toUpperCase()}
+            </Avatar>
             <div className="flex-1 min-w-0">
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white m-0 truncate">
+              <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white m-0 truncate">
                 {user.full_name || user.username}
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 m-0 truncate">{user.email}</p>
-              <div className="mt-2 flex items-center space-x-2 flex-wrap gap-y-1">
+              <div className="mt-1.5 flex items-center space-x-2 flex-wrap gap-y-1">
                 <Tag color={user.role === 'ADMIN' ? 'volcano' : 'blue'} className="font-bold uppercase tracking-wider text-[10px]">
                   {user.role}
                 </Tag>
@@ -241,14 +246,14 @@ export const ProfileModal = ({ open, onClose, user }) => {
                 </Descriptions.Item>
 
                 <Descriptions.Item label={<span className="font-semibold text-slate-600 dark:text-slate-400 flex items-center"><MailOutlined className="mr-2 text-blue-500" />Email Address</span>}>
-                  <div className="flex items-center justify-between w-full">
-                    <span className="font-medium text-slate-900 dark:text-slate-200">{user.email}</span>
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1 w-full min-w-0">
+                    <span className="font-medium text-slate-900 dark:text-slate-200 break-all text-xs sm:text-sm">{user.email}</span>
                     <Button 
                       type="link" 
                       size="small"
                       icon={<SafetyCertificateOutlined className="text-blue-600" />}
                       onClick={() => setShowEmailModal(true)}
-                      className="text-xs font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 p-0 ml-2"
+                      className="text-xs font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 p-0 shrink-0 whitespace-nowrap mt-1 sm:mt-0"
                     >
                       Change Email
                     </Button>
@@ -271,12 +276,12 @@ export const ProfileModal = ({ open, onClose, user }) => {
               </Descriptions>
 
               {/* Danger Zone: Account Deletion */}
-              <div className="bg-red-50/70 dark:bg-red-950/20 p-3.5 rounded-xl border border-red-200 dark:border-red-900/40 flex items-center justify-between">
-                <div className="flex items-center space-x-2.5">
-                  <WarningOutlined className="text-red-600 dark:text-red-400 text-lg" />
-                  <div>
-                    <span className="text-xs font-bold text-red-900 dark:text-red-300 block">Danger Zone</span>
-                    <span className="text-[11px] text-red-700 dark:text-red-400">Permanently remove your account, profile details, and access.</span>
+              <div className="bg-red-50/70 dark:bg-red-950/20 p-3 rounded-xl border border-red-200 dark:border-red-900/40 flex items-center justify-between gap-2.5">
+                <div className="flex items-start space-x-2 min-w-0 flex-1">
+                  <WarningOutlined className="text-red-600 dark:text-red-400 text-base mt-0.5 shrink-0" />
+                  <div className="min-w-0">
+                    <span className="text-xs font-bold text-red-900 dark:text-red-300 block leading-tight">Danger Zone</span>
+                    <span className="text-[10.5px] text-red-700 dark:text-red-400 block leading-snug truncate sm:whitespace-normal">Permanently remove account & data.</span>
                   </div>
                 </div>
                 <Button
@@ -285,7 +290,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
                   type="primary"
                   icon={<DeleteOutlined />}
                   onClick={() => setShowDeleteModal(true)}
-                  className="text-xs font-semibold shrink-0 ml-2"
+                  className="text-xs font-semibold shrink-0 px-2.5 py-0.5 h-7.5 flex items-center justify-center rounded-lg"
                 >
                   Delete Account
                 </Button>
@@ -297,6 +302,11 @@ export const ProfileModal = ({ open, onClose, user }) => {
               form={form}
               layout="vertical"
               onFinish={handleSaveProfile}
+              initialValues={{
+                first_name: user?.first_name || '',
+                last_name: user?.last_name || '',
+                department: user?.department || '',
+              }}
               className="space-y-3 pt-1"
             >
               <div className="grid grid-cols-2 gap-3">
@@ -317,12 +327,12 @@ export const ProfileModal = ({ open, onClose, user }) => {
                 </Form.Item>
               </div>
 
-              <Form.Item
-                label={<span className="font-semibold text-slate-700 dark:text-slate-300">Department / Team</span>}
-                name="department"
-              >
-                <Input prefix={<TeamOutlined className="text-slate-400" />} placeholder="Engineering, Product, Operations..." size="large" className="rounded-lg" />
-              </Form.Item>
+              {/* Read-only Department display in edit mode */}
+              <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 space-y-1">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Assigned Department (Admin Assigned)</span>
+                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 m-0">{user.department || 'General Team'}</p>
+              </div>
+
 
               {/* Read-only Email display */}
               <div className="p-3.5 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 space-y-1">
@@ -359,7 +369,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
         onCancel={resetEmailFlow}
         footer={null}
         width={460}
-        destroyOnClose
+        destroyOnHidden
       >
         <div className="py-3 space-y-4">
           {emailError && (
@@ -406,7 +416,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
                   icon={<MailOutlined />}
                   loading={emailLoading}
                   onClick={handleRequestEmailOTP}
-                  className="bg-blue-600 hover:bg-blue-700 font-semibold"
+                  className="bg-slate-900 hover:bg-slate-800 font-semibold text-white"
                 >
                   Send Verification Code
                 </Button>
@@ -468,7 +478,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
                     icon={<CheckOutlined />}
                     loading={emailLoading}
                     onClick={handleVerifyEmailOTP}
-                    className="bg-blue-600 hover:bg-blue-700 font-semibold"
+                    className="bg-slate-900 hover:bg-slate-800 font-semibold text-white"
                   >
                     Verify & Change Email
                   </Button>
@@ -496,7 +506,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
         }}
         footer={null}
         width={480}
-        destroyOnClose
+        destroyOnHidden
       >
         <div className="py-3 space-y-4">
           <Alert

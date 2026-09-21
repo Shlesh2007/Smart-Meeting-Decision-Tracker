@@ -141,6 +141,10 @@ export const userService = {
   updateUserRole: async (userId, role) => {
     const res = await api.patch(`/auth/users/${userId}/`, { role });
     return res.data;
+  },
+  updateUserDepartment: async (userId, department) => {
+    const res = await api.patch(`/auth/users/${userId}/`, { department });
+    return res.data;
   }
 };
 
@@ -248,8 +252,9 @@ export const actionService = {
 
 // Analytics Service
 export const analyticsService = {
-  getDashboard: async () => {
-    const res = await api.get('/analytics/dashboard/');
+  getDashboard: async (params) => {
+    const res = await api.get('/analytics/dashboard/', { params });
     return res.data;
   }
 };
+

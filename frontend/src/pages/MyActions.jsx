@@ -1,11 +1,12 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext.jsx';
 import { actionService } from '../services/api.js';
 import { StatusBadge } from '../components/StatusBadge.jsx';
 import { LoadingSkeleton } from '../components/LoadingSkeleton.jsx';
 import { EmptyState } from '../components/EmptyState.jsx';
 import {
-  Tabs, Card, Table, Select, Button, Tag, message, Alert, Input
+  Tabs, Card, Table, Select, Button, Tag, message, Alert, Input, Modal, Tooltip
 } from 'antd';
 import {
   CheckSquareOutlined, SearchOutlined, LockOutlined, ReloadOutlined
@@ -13,14 +14,26 @@ import {
 import { format } from 'date-fns';
 
 export default function MyActions() {
+  const { user } = useAuth();
   const [searchParams] = useSearchParams();
-  const initialTab = searchParams.get('tab') || 'ALL';
 
   const [actions, setActions] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState(initialTab);
-  const [search, setSearch] = useState('');
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'ALL');
+  const [search, setSearch] = useState(searchParams.get('search') || '');
   const [updatingId, setUpdatingId] = useState(null);
+
+  useEffect(() => {
+    if (searchParams.has('search')) {
+      setSearch(searchParams.get('search') || '');
+    }
+    if (searchParams.has('tab')) {
+      setActiveTab(searchParams.get('tab') || 'ALL');
+    }
+  }, [searchParams]);
+
+  const [completingItem, setCompletingItem] = useState(null);
+  const [completionNotesInput, setCompletionNotesInput] = useState('');
 
   const fetchMyActions = useCallback(() => {
     setLoading(true);
@@ -37,6 +50,11 @@ export default function MyActions() {
   }, [fetchMyActions]);
 
   const handleStatusChange = async (actionItem, newStatus) => {
+    if (newStatus === 'COMPLETED') {
+      setCompletingItem(actionItem);
+      setCompletionNotesInput(actionItem.completion_notes || '');
+      return;
+    }
     setUpdatingId(actionItem.id);
     try {
       await actionService.updateActionStatus(actionItem.id, newStatus);
@@ -58,27 +76,72 @@ export default function MyActions() {
     }
   };
 
+  const handleConfirmCompletion = async () => {
+    if (!completingItem) return;
+    setUpdatingId(completingItem.id);
+    try {
+      await actionService.updateActionStatus(completingItem.id, 'COMPLETED', {
+        completion_notes: completionNotesInput
+      });
+      message.success('Action item marked as Completed!');
+      setCompletingItem(null);
+      setCompletionNotesInput('');
+      fetchMyActions();
+    } catch (err) {
+      const errMsg = err.response?.data?.status?.[0] || err.response?.data?.detail || 'Failed to complete action.';
+      message.error(errMsg);
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
   const filteredActions = actions.filter((item) => {
-    const matchesSearch = item.title.toLowerCase().includes(search.toLowerCase()) ||
-      (item.description && item.description.toLowerCase().includes(search.toLowerCase()));
+    const query = search.trim().toLowerCase();
+    const matchesSearch = !query ||
+      item.title.toLowerCase().includes(query) ||
+      (item.description && item.description.toLowerCase().includes(query)) ||
+      (item.completion_notes && item.completion_notes.toLowerCase().includes(query));
 
     if (!matchesSearch) return false;
 
+    if (activeTab === 'OPEN') return ['TODO', 'IN_PROGRESS', 'BLOCKED'].includes(item.status);
     if (activeTab === 'OVERDUE') return item.is_overdue;
+    if (activeTab === 'CRITICAL') return item.priority === 'CRITICAL' && item.status !== 'COMPLETED' && item.status !== 'CANCELLED';
     if (activeTab === 'ALL') return true;
     return item.status === activeTab;
   });
 
   const columns = [
     {
-      title: 'Action Item',
-      dataIndex: 'title',
+      title: 'Action Item & Delivered Outcome',
       key: 'title',
-      render: (text, record) => (
-        <div>
-          <span className="font-semibold text-slate-900 dark:text-slate-100 block">{text}</span>
+      render: (_, record) => (
+        <div className="space-y-1">
+          <span className="font-bold text-slate-900 dark:text-slate-100 block">{record.title}</span>
           {record.description && (
-            <span className="text-xs text-slate-500 dark:text-slate-400 line-clamp-1">{record.description}</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400 block line-clamp-1">{record.description}</span>
+          )}
+          {record.completion_notes && (
+            <div className="mt-1 p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60 text-xs text-emerald-900 dark:text-emerald-200">
+              <strong className="font-bold block text-emerald-700 dark:text-emerald-300">✅ Work Done / Delivered Outcome:</strong>
+              <span>{record.completion_notes}</span>
+            </div>
+          )}
+        </div>
+      ),
+    },
+    {
+      title: 'Assignee',
+      key: 'assigned_to_detail',
+      render: (_, record) => (
+        <div className="text-xs space-y-1">
+          <span className="font-semibold text-slate-800 dark:text-slate-200 block">
+            {record.assigned_to_detail?.full_name || record.assigned_to_detail?.username || '—'}
+          </span>
+          {record.assigned_to === user?.id ? (
+            <Tag color="blue" className="text-[10px] m-0 font-bold">Assigned to You</Tag>
+          ) : (
+            <Tag color="purple" className="text-[10px] m-0 font-bold">Created by You</Tag>
           )}
         </div>
       ),
@@ -90,7 +153,7 @@ export default function MyActions() {
       render: (val) => <StatusBadge type="priority" value={val} />,
     },
     {
-      title: 'Due Date',
+      title: 'Deadline',
       key: 'due_date',
       render: (_, record) => (
         <div className="text-xs">
@@ -140,21 +203,43 @@ export default function MyActions() {
     {
       title: 'Update Status',
       key: 'action',
-      render: (_, record) => (
-        <Select
-          value={record.status}
-          loading={updatingId === record.id}
-          onChange={(val) => handleStatusChange(record, val)}
-          className="w-36"
-          options={[
-            { label: 'Todo', value: 'TODO' },
-            { label: 'In Progress', value: 'IN_PROGRESS' },
-            { label: 'Blocked', value: 'BLOCKED' },
-            { label: 'Completed', value: 'COMPLETED' },
-            { label: 'Cancelled', value: 'CANCELLED' }
-          ]}
-        />
-      ),
+      render: (_, record) => {
+        const hasIncompleteDeps = record.dependency_details?.some(d => !d.is_completed);
+        const isTerminal = record.status === 'COMPLETED' || record.status === 'CANCELLED';
+        const isMember = user?.role === 'MEMBER';
+        const isDisabled = isTerminal && isMember;
+
+        const selectNode = (
+          <Select
+            value={record.status}
+            loading={updatingId === record.id}
+            onChange={(val) => handleStatusChange(record, val)}
+            disabled={isDisabled}
+            className="w-36 font-medium text-xs"
+            options={[
+              { label: 'Todo', value: 'TODO' },
+              { label: 'In Progress', value: 'IN_PROGRESS' },
+              { label: 'Blocked', value: 'BLOCKED' },
+              {
+                label: hasIncompleteDeps ? '🔒 Completed (Locked)' : 'Completed',
+                value: 'COMPLETED',
+                disabled: hasIncompleteDeps
+              },
+              { label: 'Cancelled', value: 'CANCELLED' }
+            ]}
+          />
+        );
+
+        if (isDisabled) {
+          return (
+            <Tooltip title="Completed or Cancelled action items are locked for MEMBER role. Contact a Manager or Admin to modify.">
+              <span>{selectNode}</span>
+            </Tooltip>
+          );
+        }
+
+        return selectNode;
+      },
     },
   ];
 
@@ -170,7 +255,7 @@ export default function MyActions() {
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 m-0">Track and update all follow-up action items assigned to you.</p>
         </div>
-        <Button icon={<ReloadOutlined />} onClick={fetchMyActions} className="rounded-xl w-full sm:w-auto">Refresh Board</Button>
+        <Button icon={<ReloadOutlined />} onClick={fetchMyActions} size="middle" className="h-9 px-3.5 text-xs font-bold rounded-xl w-full sm:w-auto">Refresh Board</Button>
       </div>
 
       {overdueCount > 0 && (
@@ -183,37 +268,41 @@ export default function MyActions() {
       )}
 
       <Card className="shadow-xs rounded-xl dark:bg-slate-800 dark:border-slate-700">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
-          <Tabs
-            activeKey={activeTab}
-            onChange={setActiveTab}
-            className="w-full md:w-auto"
-            items={[
-              { key: 'ALL', label: `All (${actions.length})` },
-              { key: 'TODO', label: `Todo (${actions.filter(a => a.status === 'TODO').length})` },
-              { key: 'IN_PROGRESS', label: `In Progress (${actions.filter(a => a.status === 'IN_PROGRESS').length})` },
-              { key: 'BLOCKED', label: `Blocked (${actions.filter(a => a.status === 'BLOCKED').length})` },
-              { key: 'COMPLETED', label: `Completed (${actions.filter(a => a.status === 'COMPLETED').length})` },
-              {
-                key: 'OVERDUE',
-                label: (
-                  <span className={overdueCount > 0 ? 'text-rose-600 font-bold' : ''}>
-                    Overdue ({overdueCount})
-                  </span>
-                )
-              },
-            ]}
-          />
-
-          <Input
-            prefix={<SearchOutlined className="text-slate-400" />}
-            placeholder="Search action items..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full md:w-64"
-            allowClear
-          />
-        </div>
+        <Tabs
+          activeKey={activeTab}
+          onChange={setActiveTab}
+          className="w-full mb-4"
+          tabBarExtraContent={
+            <Input
+              prefix={<SearchOutlined className="text-slate-400" />}
+              placeholder="Search action items..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-48 sm:w-64 mb-1.5"
+              allowClear
+            />
+          }
+          items={[
+            { key: 'ALL', label: `All (${actions.length})` },
+            { key: 'OPEN', label: `Open (${actions.filter(a => ['TODO', 'IN_PROGRESS', 'BLOCKED'].includes(a.status)).length})` },
+            { key: 'TODO', label: `Todo (${actions.filter(a => a.status === 'TODO').length})` },
+            { key: 'IN_PROGRESS', label: `In Progress (${actions.filter(a => a.status === 'IN_PROGRESS').length})` },
+            { key: 'BLOCKED', label: `Blocked (${actions.filter(a => a.status === 'BLOCKED').length})` },
+            { key: 'COMPLETED', label: `Completed (${actions.filter(a => a.status === 'COMPLETED').length})` },
+            {
+              key: 'OVERDUE',
+              label: (
+                <span className={overdueCount > 0 ? 'text-rose-600 font-bold' : ''}>
+                  Overdue ({overdueCount})
+                </span>
+              )
+            },
+            {
+              key: 'CRITICAL',
+              label: `Critical (${actions.filter(a => a.priority === 'CRITICAL' && a.status !== 'COMPLETED' && a.status !== 'CANCELLED').length})`
+            },
+          ]}
+        />
 
         {loading ? (
           <LoadingSkeleton type="table" />
@@ -233,6 +322,28 @@ export default function MyActions() {
           />
         )}
       </Card>
+
+      {/* Action Completion Notes Modal */}
+      <Modal
+        title="Complete Action Item & Record Outcome"
+        open={Boolean(completingItem)}
+        onCancel={() => setCompletingItem(null)}
+        onOk={handleConfirmCompletion}
+        okText="Mark Completed"
+        okButtonProps={{ className: 'bg-emerald-600 hover:bg-emerald-700 font-bold' }}
+      >
+        <div className="space-y-3 py-2">
+          <p className="text-xs text-slate-600 dark:text-slate-400 m-0">
+            Please enter the work outcome, results achieved, or links to completed deliverables so team members can see what work was done:
+          </p>
+          <Input.TextArea
+            rows={3}
+            value={completionNotesInput}
+            onChange={(e) => setCompletionNotesInput(e.target.value)}
+            placeholder="e.g. Completed API endpoint deployment, tested in staging. PR #104 merged."
+          />
+        </div>
+      </Modal>
     </div>
   );
 }

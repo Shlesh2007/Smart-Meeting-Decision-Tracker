@@ -25,9 +25,14 @@ export default function LoginPage() {
   const [otpCode, setOtpCode] = useState('');
   const [otpLoading, setOtpLoading] = useState(false);
   
+  const [loginForm] = Form.useForm();
   const [requestOtpForm] = Form.useForm();
   const [verifyOtpForm] = Form.useForm();
   const [newPasswordForm] = Form.useForm();
+
+  React.useEffect(() => {
+    loginForm.resetFields();
+  }, [loginForm]);
 
   const onFinish = async (values) => {
     setSubmitting(true);
@@ -178,24 +183,40 @@ export default function LoginPage() {
   };
 
   return (
-    <div style={{ minHeight: 'calc(100vh - 4rem)', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', width: '100%', padding: '16px 12px', boxSizing: 'border-box' }}>
-      <div style={{ width: '100%', textAlign: 'center', marginBottom: '24px' }}>
-        <Logo variant="icon" height={56} className="mx-auto mb-3" />
-        <h1 style={{ fontSize: '1.4rem', fontWeight: 800, margin: 0 }} className="text-slate-900 dark:text-white tracking-tight">
+    <div className="min-h-screen relative flex flex-col justify-center items-center w-full px-4 py-8 overflow-hidden select-none bg-slate-900/95">
+      {/* High Quality Enterprise Background Image Overlay */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-25 dark:opacity-20 scale-105 pointer-events-none"
+        style={{
+          backgroundImage: `url('https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1920&q=80')`
+        }}
+      />
+
+      {/* Radial Gradient Overlay & Ambient Glowing Blobs */}
+      <div className="absolute inset-0 bg-gradient-to-b from-slate-900/60 via-slate-900/80 to-slate-950 pointer-events-none" />
+      <div className="absolute top-1/4 -left-20 w-96 h-96 bg-blue-600/25 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-indigo-600/25 rounded-full blur-3xl pointer-events-none" />
+
+      {/* Header & Brand Logo */}
+      <div className="relative z-10 w-full text-center mb-6">
+        <Logo variant="icon" height={56} className="mx-auto mb-3 drop-shadow-md" />
+        <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight m-0">
           Sign In to Your Account
         </h1>
-        <p style={{ fontSize: '0.85rem', color: '#64748b', maxWidth: '280px', margin: '6px auto 0', lineHeight: 1.4 }} className="dark:text-slate-400">
+        <p className="text-xs sm:text-sm text-slate-300 max-w-xs mx-auto mt-1.5 leading-relaxed">
           Manage meetings, record decisions & track follow-up dependencies
         </p>
       </div>
 
-      <div style={{ width: '100%', maxWidth: '440px', marginLeft: 'auto', marginRight: 'auto', boxSizing: 'border-box' }}>
+      {/* Glassmorphic Form Card */}
+      <div className="relative z-10 w-full max-w-md">
         <Card
-          style={{ width: '100%', borderRadius: '16px', boxSizing: 'border-box' }}
-          styles={{ body: { padding: '24px 20px' } }}
-          className="shadow-xs border border-slate-200/80 dark:border-slate-700/80 dark:bg-slate-800"
+          style={{ width: '100%', borderRadius: '20px', boxSizing: 'border-box' }}
+          styles={{ body: { padding: '28px 24px' } }}
+          className="shadow-2xl border border-white/20 bg-white/95 dark:bg-slate-900/90 backdrop-blur-xl"
         >
           <Form
+            form={loginForm}
             name="login_form"
             layout="vertical"
             onFinish={onFinish}
@@ -210,6 +231,7 @@ export default function LoginPage() {
               <Input
                 prefix={<UserOutlined className="text-gray-400" />}
                 placeholder="e.g. admin or john_doe"
+                autoComplete="off"
                 onPressEnter={(e) => {
                   e.preventDefault();
                   passwordInputRef.current?.focus();
@@ -227,6 +249,7 @@ export default function LoginPage() {
                 ref={passwordInputRef}
                 prefix={<LockOutlined className="text-gray-400" />}
                 placeholder="••••••••"
+                autoComplete="new-password"
               />
             </Form.Item>
 
@@ -290,7 +313,7 @@ export default function LoginPage() {
         open={isForgotModalOpen}
         onCancel={closeResetModal}
         footer={null}
-        destroyOnClose
+        destroyOnHidden
         width={500}
       >
         <div className="py-2">

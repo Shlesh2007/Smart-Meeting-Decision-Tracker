@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Badge, Tag, Popover, Button, Empty } from 'antd';
+import { Calendar, Badge, Tag, Popover, Button, Empty, ConfigProvider, Select } from 'antd';
 import {
   ClockCircleOutlined,
   EnvironmentOutlined,
@@ -166,17 +166,102 @@ export function MeetingCalendar({ meetings = [], loading = false }) {
     );
   };
 
+  const cellRender = (current, info) => {
+    if (info.type === 'date') {
+      return dateCellRender(current);
+    }
+    return info.originNode;
+  };
+
   const handleSelectDate = (date) => {
     // Optional click handler on calendar cell
   };
 
   return (
     <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-4 shadow-xs">
-      <Calendar
-        dateCellRender={dateCellRender}
-        onSelect={handleSelectDate}
-        className="meeting-calendar-custom"
-      />
+      {/* Status Color Legend */}
+      <div className="flex flex-wrap items-center gap-3 px-3.5 py-2 mb-4 bg-slate-50 dark:bg-slate-800/80 rounded-xl border border-slate-200/80 dark:border-slate-700 text-xs">
+        <span className="font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-[10px]">
+          Status Legend:
+        </span>
+        <div className="flex items-center space-x-1.5">
+          <span className="w-2.5 h-2.5 rounded-full bg-blue-500 shrink-0" />
+          <span className="font-semibold text-slate-700 dark:text-slate-300 text-xs">Scheduled</span>
+        </div>
+        <div className="flex items-center space-x-1.5">
+          <span className="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0" />
+          <span className="font-semibold text-slate-700 dark:text-slate-300 text-xs">In Progress</span>
+        </div>
+        <div className="flex items-center space-x-1.5">
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0" />
+          <span className="font-semibold text-slate-700 dark:text-slate-300 text-xs">Completed</span>
+        </div>
+        <div className="flex items-center space-x-1.5">
+          <span className="w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0" />
+          <span className="font-semibold text-slate-700 dark:text-slate-300 text-xs">Cancelled</span>
+        </div>
+      </div>
+
+      <ConfigProvider
+        theme={{
+          components: {
+            Calendar: {
+              algorithm: true,
+            },
+          },
+        }}
+      >
+        <div className="w-full overflow-x-auto min-w-0">
+          <Calendar
+            headerRender={({ value, onChange }) => {
+              const year = value.year();
+              const month = value.month();
+
+              const yearOptions = [];
+              for (let i = year - 5; i <= year + 5; i += 1) {
+                yearOptions.push({ label: `${i}`, value: i });
+              }
+
+              const monthOptions = Array.from({ length: 12 }, (_, i) => ({
+                label: dayjs().month(i).format('MMM'),
+                value: i,
+              }));
+
+              return (
+                <div className="flex items-center justify-between gap-3 p-3 mb-4 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200/80 dark:border-slate-700">
+                  <Button
+                    size="small"
+                    onClick={() => onChange(dayjs())}
+                    className="font-semibold text-xs rounded-lg"
+                  >
+                    Today
+                  </Button>
+
+                  <div className="flex items-center space-x-2">
+                    <Select
+                      size="small"
+                      value={year}
+                      onChange={(newYear) => onChange(value.clone().year(newYear))}
+                      options={yearOptions}
+                      className="w-24"
+                    />
+                    <Select
+                      size="small"
+                      value={month}
+                      onChange={(newMonth) => onChange(value.clone().month(newMonth))}
+                      options={monthOptions}
+                      className="w-24"
+                    />
+                  </div>
+                </div>
+              );
+            }}
+            cellRender={cellRender}
+            onSelect={handleSelectDate}
+            className="meeting-calendar-custom"
+          />
+        </div>
+      </ConfigProvider>
     </div>
   );
 }

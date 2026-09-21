@@ -27,7 +27,7 @@ export default function Home() {
 
   return (
     <div className="min-h-[70vh] flex flex-col justify-center items-center">
-      <Spin size="large" tip="Loading Smart Meeting Tracker..." />
+      <Spin size="large" tip="Loading Smart Meeting Tracker..."><div className="p-6" /></Spin>
     </div>
   );
 }

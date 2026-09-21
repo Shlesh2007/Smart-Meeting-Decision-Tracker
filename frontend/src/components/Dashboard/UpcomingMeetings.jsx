@@ -73,7 +73,7 @@ export const UpcomingMeetings = ({ meetings: initialMeetings }) => {
 
           <div className="min-w-0 space-y-0.5">
             <div className="flex items-center space-x-1.5 flex-wrap">
-              <h4 className="font-bold text-xs text-slate-900 dark:text-slate-100 m-0 truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+              <h4 className="font-bold text-xs text-slate-900 dark:text-slate-100 m-0 truncate max-w-[120px] sm:max-w-[160px] md:max-w-[130px] lg:max-w-[160px] group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                 {m.title}
               </h4>
               {m.meeting_type && (
@@ -104,7 +104,7 @@ export const UpcomingMeetings = ({ meetings: initialMeetings }) => {
             <Button
               type="primary"
               size="small"
-              className="bg-blue-600 hover:bg-blue-700 font-semibold rounded-md text-[10px] border-none px-2 py-0.5 h-6 flex items-center gap-1"
+              className="bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-md text-[10px] border-none px-2 py-0.5 h-6 flex items-center gap-1"
             >
               <span>View</span>
               <ArrowRightOutlined className="text-[8px]" />
@@ -153,7 +153,7 @@ export const UpcomingMeetings = ({ meetings: initialMeetings }) => {
               </p>
             </div>
             <Link to="/meetings/new" className="no-underline inline-block pt-1">
-              <Button type="primary" size="small" icon={<PlusOutlined />} className="bg-blue-600 text-[10px] font-bold rounded-lg border-none h-6 px-2.5">
+              <Button type="primary" size="small" icon={<PlusOutlined />} className="bg-slate-900 hover:bg-slate-800 text-white text-[10px] font-bold rounded-lg border-none h-6 px-2.5">
                 Schedule Meeting
               </Button>
             </Link>

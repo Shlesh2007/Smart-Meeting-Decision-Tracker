@@ -38,7 +38,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <div style={{ minHeight: 'calc(100vh - 4rem)', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', width: '100%', padding: '16px 12px', boxSizing: 'border-box' }}>
+    <div className="min-h-screen flex flex-col justify-center items-center w-full px-3 py-6 box-border">
       <div style={{ width: '100%', textAlign: 'center', marginBottom: '24px' }}>
         <Logo variant="icon" height={56} className="mx-auto mb-3" />
         <h1 style={{ fontSize: '1.4rem', fontWeight: 800, margin: 0 }} className="text-slate-900 dark:text-white tracking-tight">
@@ -146,7 +146,7 @@ export default function RegisterPage() {
           </div>
 
           <Form.Item className="mt-4 mb-2">
-            <Button type="primary" htmlType="submit" loading={submitting} block size="large" className="font-semibold bg-blue-600 hover:bg-blue-700 rounded-xl border-none">
+            <Button type="primary" htmlType="submit" loading={submitting} block size="large" className="font-semibold bg-slate-900 hover:bg-slate-800 text-white rounded-xl border-none">
               Complete Registration
             </Button>
           </Form.Item>

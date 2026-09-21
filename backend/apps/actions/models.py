@@ -23,6 +23,7 @@ class ActionItem(models.Model):
     )
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
+    completion_notes = models.TextField(blank=True, null=True)
     assigned_to = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -70,3 +71,19 @@ class ActionItem(models.Model):
         if not self.due_date:
             return False
         return (self.due_date < timezone.localdate()) and (self.status.upper() not in [self.Status.COMPLETED, self.Status.CANCELLED])
+
+    def unblock_dependents(self):
+        """
+        When this action item status changes (e.g. marked COMPLETED), re-evaluate all dependent actions:
+        - Any BLOCKED dependent action whose prerequisite dependencies are now ALL COMPLETED automatically transitions to TODO.
+        - Any TODO dependent action with incomplete prerequisite dependencies automatically transitions to BLOCKED.
+        """
+        for dep_action in self.dependent_actions.all():
+            dep_incomplete = dep_action.dependencies.exclude(status=self.Status.COMPLETED).exists()
+            if not dep_incomplete and dep_action.status == self.Status.BLOCKED:
+                dep_action.status = self.Status.TODO
+                dep_action.save(update_fields=['status', 'updated_at'])
+            elif dep_incomplete and dep_action.status == self.Status.TODO:
+                dep_action.status = self.Status.BLOCKED
+                dep_action.save(update_fields=['status', 'updated_at'])
+

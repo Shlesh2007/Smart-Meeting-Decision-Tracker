@@ -1,10 +1,8 @@
-'use client';
-
 import React, { useEffect, useState } from 'react';
-import { Modal, Timeline, Tag, Spin, Typography } from 'antd';
+import { Modal, Timeline, Tag, Spin, Typography, Avatar } from 'antd';
 import { decisionService } from '../services/api.js';
 import { StatusBadge } from './StatusBadge.jsx';
-import { HistoryOutlined, UserOutlined, CalendarOutlined } from '@ant-design/icons';
+import { HistoryOutlined, CalendarOutlined } from '@ant-design/icons';
 import { format } from 'date-fns';
 
 const { Text, Paragraph } = Typography;
@@ -38,7 +36,7 @@ export const DecisionHistoryModal = ({ open, onClose, decisionId }) => {
     >
       {loading ? (
         <div className="py-12 text-center">
-          <Spin size="large" tip="Loading audit log history..." />
+          <Spin size="large" tip="Loading audit log history..."><div className="p-6" /></Spin>
         </div>
       ) : history.length === 0 ? (
         <p className="text-slate-500 py-6 text-center">No history records found for this decision.</p>
@@ -68,7 +66,7 @@ export const DecisionHistoryModal = ({ open, onClose, decisionId }) => {
 
                   {record.reason && (
                     <div className="mb-2">
-                      <Text strong className="text-xs uppercase text-slate-500 block mb-1">Reason / Reason</Text>
+                      <Text strong className="text-xs uppercase text-slate-500 block mb-1">Reason / Discussion Point</Text>
                       <Text type="secondary" className="text-sm italic block bg-slate-100 p-2 rounded">
                         "{record.reason}"
                       </Text>
@@ -76,9 +74,11 @@ export const DecisionHistoryModal = ({ open, onClose, decisionId }) => {
                   )}
 
                   <div className="flex justify-between items-center text-xs text-slate-400 mt-3 pt-2 border-t border-slate-200">
-                    <span className="flex items-center space-x-1">
-                      <UserOutlined />
-                      <span>Changed by: {record.changed_by_detail?.full_name || 'System User'}</span>
+                    <span className="flex items-center space-x-1.5 font-medium text-slate-700">
+                      <Avatar size="small" className="bg-blue-600 font-extrabold text-[10px] text-white shrink-0 flex items-center justify-center">
+                        {(record.changed_by_detail?.first_name || record.changed_by_detail?.full_name || record.changed_by_detail?.username || 'U')[0].toUpperCase()}
+                      </Avatar>
+                      <span>Changed by: {record.changed_by_detail?.full_name || record.changed_by_detail?.first_name || record.changed_by_detail?.username || 'System User'}</span>
                     </span>
                     <span className="flex items-center space-x-1">
                       <CalendarOutlined />
@@ -94,3 +94,4 @@ export const DecisionHistoryModal = ({ open, onClose, decisionId }) => {
     </Modal>
   );
 };
+

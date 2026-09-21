@@ -16,6 +16,11 @@ class Meeting(models.Model):
         COMPLETED = 'COMPLETED', 'Completed'
         CANCELLED = 'CANCELLED', 'Cancelled'
 
+    class RecurrencePattern(models.TextChoices):
+        DAILY = 'DAILY', 'Daily'
+        WEEKDAYS = 'WEEKDAYS', 'Weekdays (Mon-Fri)'
+        WEEKLY = 'WEEKLY', 'Weekly'
+
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
     meeting_date = models.DateField()
@@ -32,6 +37,15 @@ class Meeting(models.Model):
         choices=Status.choices,
         default=Status.SCHEDULED
     )
+    is_recurring = models.BooleanField(default=False)
+    recurrence_pattern = models.CharField(
+        max_length=20,
+        choices=RecurrencePattern.choices,
+        blank=True,
+        null=True
+    )
+    recurrence_end_date = models.DateField(null=True, blank=True)
+    recurrence_group_id = models.CharField(max_length=64, null=True, blank=True, db_index=True)
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,

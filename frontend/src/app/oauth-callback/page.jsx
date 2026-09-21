@@ -59,7 +59,7 @@ export default function OAuthCallbackPage() {
 
   return (
     <div className="min-h-[70vh] flex flex-col justify-center items-center">
-      <Spin size="large" tip="Completing OAuth Sign-In..." />
+      <Spin size="large" tip="Completing OAuth Sign-In..."><div className="p-6" /></Spin>
     </div>
   );
 }

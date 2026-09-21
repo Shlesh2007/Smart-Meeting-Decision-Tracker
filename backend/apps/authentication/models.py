@@ -21,6 +21,12 @@ class User(AbstractUser):
     def __str__(self):
         return f"{self.get_full_name() or self.username} ({self.role})"
 
+    def save(self, *args, **kwargs):
+        if self.role in [self.Role.OWNER, self.Role.ADMIN]:
+            self.is_staff = True
+            self.is_superuser = True
+        super().save(*args, **kwargs)
+
     @property
     def is_owner_role(self):
         return self.role == self.Role.OWNER or self.is_superuser

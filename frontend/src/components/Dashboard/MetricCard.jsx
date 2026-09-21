@@ -55,38 +55,41 @@ export const MetricCard = ({
   return (
     <div
       onClick={onClick}
-      className={`relative group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 sm:p-3.5 shadow-xs transition-all duration-200 hover:shadow-sm ${currentTheme.hoverBorder} ${
+      className={`relative group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2 sm:p-2.5 shadow-xs transition-all duration-200 ease-out hover:scale-105 hover:-translate-y-0.5 hover:shadow-md text-center flex flex-col justify-between ${currentTheme.hoverBorder} ${
         onClick ? 'cursor-pointer' : ''
       }`}
     >
-      <div className="flex items-center justify-between gap-1.5">
-        <span className="text-[10px] uppercase tracking-wider font-extrabold text-slate-500 dark:text-slate-400 truncate">
-          {title}
-        </span>
+      <div className="flex items-center justify-center space-x-1 mb-0.5">
         <div
-          className={`w-7 h-7 rounded-lg flex items-center justify-center text-sm shrink-0 transition-transform duration-200 group-hover:scale-105 ${currentTheme.iconBg}`}
+          className={`w-4 h-4 sm:w-5 sm:h-5 rounded-md flex items-center justify-center text-[9px] sm:text-[11px] shrink-0 transition-transform duration-200 group-hover:scale-110 ${currentTheme.iconBg}`}
         >
           {icon}
         </div>
+        <span className="text-[9px] sm:text-[10px] uppercase tracking-wider font-extrabold text-slate-500 dark:text-slate-400 truncate">
+          {title}
+        </span>
       </div>
 
-      <div className="mt-2 flex items-baseline justify-between gap-1.5">
-        <span className="text-2xl font-black text-slate-900 dark:text-white tracking-tight leading-none">
+      <div className="my-0.5 flex items-center justify-center">
+        <span className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight leading-none">
           {value}
         </span>
-        {subtitle && (
-          <span
-            className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md border ${currentTheme.badge}`}
-          >
-            {subtitle}
-          </span>
-        )}
       </div>
 
-      {trend && (
-        <div className="mt-2 pt-1.5 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400">
-          <span className="truncate">{trend}</span>
-          <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${currentTheme.accentDot}`} />
+      {(subtitle || trend) && (
+        <div className="mt-1 pt-1.5 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-center space-x-1 text-[8px] sm:text-[9px] text-slate-500 dark:text-slate-400 min-w-0">
+          {subtitle && (
+            <span
+              className={`font-bold px-1.5 py-0.5 rounded-md border shrink-0 leading-none ${currentTheme.badge}`}
+            >
+              {subtitle}
+            </span>
+          )}
+          {trend && (
+            <span className="hidden xl:inline-block truncate leading-none text-slate-400 dark:text-slate-500">
+              {trend}
+            </span>
+          )}
         </div>
       )}
     </div>

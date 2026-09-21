@@ -34,8 +34,53 @@ export const ThemeProvider = ({ children }) => {
         theme={{
           algorithm: antdTheme.defaultAlgorithm,
           token: {
+            fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
             colorPrimary: '#2563eb',
-            borderRadius: 8,
+            colorInfo: '#2563eb',
+            borderRadius: 12,
+            controlHeight: 40,
+            marginLG: 14,
+            marginMD: 10,
+            paddingLG: 20,
+            paddingMD: 16,
+          },
+          components: {
+            Button: {
+              colorPrimary: '#0f172a',
+              colorPrimaryHover: '#1e293b',
+              colorPrimaryActive: '#020617',
+              algorithm: true,
+            },
+            Form: {
+              algorithm: true,
+              itemMarginBottom: 16,
+              verticalLabelPadding: '0 0 6px',
+              verticalLabelMargin: '0 0 6px',
+              labelFontSize: 13,
+              labelColor: '#334155',
+              labelRequiredMarkColor: '#ef4444',
+            },
+            Space: {
+              algorithm: true,
+            },
+            Card: {
+              paddingLG: 20,
+            },
+            Modal: {
+              paddingContentHorizontalLG: 20,
+            },
+            Table: {
+              cellPaddingBlock: 12,
+              cellPaddingInline: 14,
+            },
+            Checkbox: {
+              colorPrimary: '#0f172a',
+              colorPrimaryHover: '#1e293b',
+              colorBorder: '#475569',
+            },
+            Calendar: {
+              algorithm: true,
+            },
           },
         }}
       >

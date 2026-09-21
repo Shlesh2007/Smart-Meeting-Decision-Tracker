@@ -59,7 +59,7 @@ export const QuickActions = () => {
                   Add Action Item
                 </h4>
                 <p className="text-[9px] text-slate-500 dark:text-slate-400 m-0">
-                  Log task & assign owner
+                  Log task & assign user
                 </p>
               </div>
             </div>

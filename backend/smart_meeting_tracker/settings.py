@@ -124,10 +124,10 @@ REST_FRAMEWORK = {
     ),
     'DEFAULT_FILTER_BACKENDS': (
         'django_filters.rest_framework.DjangoFilterBackend',
-        'rest_framework.filters.SearchFilter',
+        'smart_meeting_tracker.filters.ExactPhraseSearchFilter',
         'rest_framework.filters.OrderingFilter',
     ),
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'DEFAULT_PAGINATION_CLASS': 'smart_meeting_tracker.pagination.CustomPageNumberPagination',
     'PAGE_SIZE': 10,
 }
 

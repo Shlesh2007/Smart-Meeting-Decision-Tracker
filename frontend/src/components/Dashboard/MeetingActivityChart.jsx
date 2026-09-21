@@ -3,33 +3,69 @@
 import React, { useState } from 'react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { BarChartOutlined } from '@ant-design/icons';
-import { format, subDays, isAfter } from 'date-fns';
+import { format, subDays } from 'date-fns';
+import { useScrollAnimation } from '../../hooks/useScrollAnimation.js';
 
 export const MeetingActivityChart = ({ meetingActivity = [] }) => {
   const [filterDays, setFilterDays] = useState(30);
+  const [containerRef, isInView] = useScrollAnimation();
 
-  const filteredData = React.useMemo(() => {
-    if (!meetingActivity || meetingActivity.length === 0) return [];
-    if (filterDays === 0) return meetingActivity;
+  const chartFormattedData = React.useMemo(() => {
+    if (!meetingActivity) return [];
 
-    const cutoffDate = subDays(new Date(), filterDays);
-    return meetingActivity.filter((item) => {
-      if (!item.meeting_date) return false;
-      const d = new Date(item.meeting_date);
-      return isAfter(d, cutoffDate);
+    // Map existing activity counts by YYYY-MM-DD
+    const activityMap = {};
+    meetingActivity.forEach((item) => {
+      if (item.meeting_date) {
+        const dateKey = String(item.meeting_date).split('T')[0];
+        activityMap[dateKey] = (activityMap[dateKey] || 0) + (item.count || 1);
+      }
+    });
+
+    const today = new Date();
+
+    if (filterDays === 7 || filterDays === 14 || filterDays === 30) {
+      const startDate = subDays(today, filterDays - 1);
+      const result = [];
+      let curr = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+      const end = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+      while (curr <= end) {
+        const key = format(curr, 'yyyy-MM-dd');
+        result.push({
+          date: format(curr, 'MMM dd'),
+          count: activityMap[key] || 0,
+          fullDate: key,
+        });
+        curr.setDate(curr.getDate() + 1);
+      }
+      return result;
+    }
+
+    // 'All': Return all recorded activity dates sorted chronologically
+    const keys = Object.keys(activityMap).sort();
+    if (keys.length === 0) return [];
+
+    return keys.map((key) => {
+      const parts = key.split('-');
+      const d = parts.length === 3 ? new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2])) : new Date(key);
+      return {
+        date: format(d, 'MMM dd'),
+        count: activityMap[key],
+        fullDate: key,
+      };
     });
   }, [meetingActivity, filterDays]);
-
-  const chartFormattedData = filteredData.map((item) => ({
-    date: item.meeting_date ? format(new Date(item.meeting_date), 'MMM dd') : 'N/A',
-    count: item.count || 0,
-    fullDate: item.meeting_date,
-  }));
 
   const totalMeetingsInPeriod = chartFormattedData.reduce((acc, curr) => acc + curr.count, 0);
 
   return (
-    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 sm:p-4 shadow-xs transition-all h-full flex flex-col justify-between">
+    <div
+      ref={containerRef}
+      className={`bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 sm:p-4 shadow-xs transition-all duration-700 transform h-full flex flex-col justify-between ${
+        isInView ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-6 scale-95'
+      }`}
+    >
       {/* Top Header & Range Filters */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-slate-100 dark:border-slate-800">
         <div className="flex items-center space-x-2">
@@ -71,7 +107,7 @@ export const MeetingActivityChart = ({ meetingActivity = [] }) => {
       <div className="my-2 h-40 w-full flex items-center justify-center">
         {chartFormattedData.length > 0 ? (
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={chartFormattedData} margin={{ top: 8, right: 8, left: -22, bottom: 0 }}>
+            <AreaChart key={isInView ? 'area-active' : 'area-idle'} data={chartFormattedData} margin={{ top: 8, right: 8, left: -22, bottom: 0 }}>
               <defs>
                 <linearGradient id="meetingGradient" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#2563eb" stopOpacity={0.35} />
@@ -112,6 +148,9 @@ export const MeetingActivityChart = ({ meetingActivity = [] }) => {
                 strokeWidth={2.5}
                 fillOpacity={1}
                 fill="url(#meetingGradient)"
+                isAnimationActive={isInView}
+                animationBegin={0}
+                animationDuration={850}
               />
             </AreaChart>
           </ResponsiveContainer>

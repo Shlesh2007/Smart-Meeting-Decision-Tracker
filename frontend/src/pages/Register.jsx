@@ -79,21 +79,21 @@ export default function Register() {
   };
 
   return (
-    <div style={{ minHeight: 'calc(100vh - 4rem)', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', width: '100%', padding: '24px 12px', boxSizing: 'border-box' }}>
-      <div style={{ width: '100%', textAlign: 'center', marginBottom: '24px' }}>
-        <Logo variant="icon" height={56} className="mx-auto mb-3" />
-        <h1 style={{ fontSize: '1.5rem', fontWeight: 800, margin: 0 }} className="text-slate-900 dark:text-white tracking-tight">
+    <div className="min-h-screen flex flex-col justify-center items-center w-full px-2 sm:px-4 py-4 sm:py-8 box-border">
+      <div style={{ width: '100%', textAlign: 'center', marginBottom: '16px' }}>
+        <Logo variant="icon" height={48} className="mx-auto mb-2" />
+        <h1 style={{ fontSize: '1.35rem', fontWeight: 800, margin: 0 }} className="text-slate-900 dark:text-white tracking-tight">
           Create Your Account
         </h1>
-        <p style={{ fontSize: '0.85rem', color: '#64748b', maxWidth: '320px', margin: '6px auto 0', lineHeight: 1.4 }} className="dark:text-slate-400">
+        <p style={{ fontSize: '0.8rem', color: '#64748b', maxWidth: '300px', margin: '4px auto 0', lineHeight: 1.35 }} className="dark:text-slate-400">
           Sign up with email verification to participate in team meetings and decision tracking
         </p>
       </div>
 
-      <div style={{ width: '100%', maxWidth: '520px', marginLeft: 'auto', marginRight: 'auto', boxSizing: 'border-box' }}>
+      <div style={{ width: '100%', maxWidth: '480px', marginLeft: 'auto', marginRight: 'auto', boxSizing: 'border-box' }}>
         <Card
           style={{ width: '100%', borderRadius: '16px', boxSizing: 'border-box' }}
-          styles={{ body: { padding: '24px 20px' } }}
+          styles={{ body: { padding: '16px 14px' } }}
           className="shadow-xs border border-slate-200/80 dark:border-slate-700/80 dark:bg-slate-800"
         >
           <Form
@@ -184,7 +184,7 @@ export default function Register() {
                 block
                 size="large"
                 icon={<SendOutlined />}
-                className="font-semibold bg-blue-600 hover:bg-blue-700 rounded-xl border-none"
+                className="font-semibold bg-slate-900 hover:bg-slate-800 text-white rounded-xl border-none"
               >
                 Send Email Verification Code
               </Button>
@@ -212,7 +212,7 @@ export default function Register() {
         onCancel={() => setShowOtpModal(false)}
         footer={null}
         centered
-        destroyOnClose
+        destroyOnHidden
       >
         <div className="py-2 space-y-4">
           <div className="bg-blue-50 dark:bg-slate-800 p-3.5 rounded-xl border border-blue-100 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 space-y-1">

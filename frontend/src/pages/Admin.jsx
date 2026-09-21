@@ -127,6 +127,17 @@ export default function Admin() {
     }
   };
 
+  const handleDepartmentChange = async (targetUser, newDept) => {
+    try {
+      await userService.updateUserDepartment(targetUser.id, newDept || '');
+      message.success(`Updated ${targetUser.username}'s department to ${newDept || 'General Team'}`);
+      loadData();
+    } catch (err) {
+      const errMsg = err.response?.data?.department?.[0] || err.response?.data?.detail || 'Failed to update user department.';
+      message.error(errMsg);
+    }
+  };
+
   // Role options available based on caller role
   const allowedRoleOptions = isOwner ? [
     { label: 'Member', value: 'MEMBER' },
@@ -152,7 +163,37 @@ export default function Admin() {
       ),
     },
     { title: 'Email', dataIndex: 'email', key: 'email' },
-    { title: 'Department', dataIndex: 'department', key: 'department', render: (val) => val || '—' },
+    {
+      title: 'Department',
+      key: 'department',
+      render: (_, u) => {
+        const isTargetOwner = u.role === 'OWNER';
+        const isSelf = u.id === user?.id;
+        const isDisabled = isSelf || (isTargetOwner && !isOwner) || (!isOwner && u.role === 'ADMIN');
+
+        return (
+          <Select
+            value={u.department || undefined}
+            placeholder="Assign Department..."
+            onChange={(newDept) => handleDepartmentChange(u, newDept)}
+            disabled={isDisabled}
+            className="w-44 text-xs font-medium"
+            allowClear
+            options={[
+              { label: 'Executive & Strategy', value: 'Executive & Strategy' },
+              { label: 'Engineering & Tech Lead', value: 'Engineering & Tech Lead' },
+              { label: 'Operations & Governance', value: 'Operations & Governance' },
+              { label: 'Backend Infrastructure', value: 'Backend Infrastructure' },
+              { label: 'Frontend & Mobile Guild', value: 'Frontend & Mobile Guild' },
+              { label: 'DevOps & Cloud Systems', value: 'DevOps & Cloud Systems' },
+              { label: 'QA & Security Assurance', value: 'QA & Security Assurance' },
+              { label: 'Product & Analytics', value: 'Product & Analytics' },
+              { label: 'General Team', value: 'General Team' }
+            ]}
+          />
+        );
+      }
+    },
     {
       title: 'Current Role',
       dataIndex: 'role',
@@ -206,7 +247,7 @@ export default function Admin() {
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 m-0">Manage organization users, role hierarchy (Owner, Admin, Manager, Member), and teams.</p>
         </div>
-        <Button type="primary" icon={<PlusOutlined />} onClick={openCreateTeam} className="bg-blue-600 hover:bg-blue-700 font-semibold rounded-xl border-none shadow-xs">
+        <Button type="primary" icon={<PlusOutlined />} onClick={openCreateTeam} className="bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl border-none shadow-xs">
           Create New Team
         </Button>
       </div>
@@ -242,7 +283,7 @@ export default function Admin() {
                 <div className="py-12 text-center text-slate-400">
                   <TeamOutlined className="text-4xl mb-2 text-slate-300" />
                   <p className="font-medium text-slate-700 dark:text-slate-300 m-0">No teams created yet.</p>
-                  <Button type="primary" icon={<PlusOutlined />} onClick={openCreateTeam} className="mt-3 bg-blue-600 hover:bg-blue-700 font-semibold rounded-xl border-none">
+                  <Button type="primary" icon={<PlusOutlined />} onClick={openCreateTeam} className="mt-3 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl border-none">
                     Create First Team
                   </Button>
                 </div>
@@ -347,16 +388,16 @@ export default function Admin() {
             <Input placeholder="e.g. Engineering Lead Team" />
           </Form.Item>
 
-          <Form.Item name="description" label="Team Description">
-            <Input.TextArea rows={2} placeholder="Describe the purpose of this team..." />
-          </Form.Item>
-
           <Form.Item name="member_ids" label="Assign Team Members">
             <Select
               mode="multiple"
               placeholder="Select team members to include"
               options={users.map(u => ({ label: `${u.full_name} (${u.email}) - ${u.role}`, value: u.id }))}
             />
+          </Form.Item>
+
+          <Form.Item name="description" label="Team Description">
+            <Input.TextArea rows={2} placeholder="Describe the purpose of this team..." />
           </Form.Item>
         </Form>
       </Modal>

@@ -11,6 +11,7 @@ from .serializers import ActionItemSerializer
 class ActionItemFilter(django_filters.FilterSet):
     overdue = django_filters.BooleanFilter(method='filter_overdue')
     decision = django_filters.NumberFilter(field_name='decision')
+    meeting = django_filters.NumberFilter(field_name='decision__discussion__meeting')
     assigned_to = django_filters.NumberFilter(field_name='assigned_to')
     priority = django_filters.CharFilter(field_name='priority')
     status = django_filters.CharFilter(field_name='status')
@@ -19,7 +20,7 @@ class ActionItemFilter(django_filters.FilterSet):
 
     class Meta:
         model = ActionItem
-        fields = ['decision', 'assigned_to', 'priority', 'status', 'overdue', 'due_date_lte', 'due_date_gte']
+        fields = ['decision', 'meeting', 'assigned_to', 'priority', 'status', 'overdue', 'due_date_lte', 'due_date_gte']
 
     def filter_overdue(self, queryset, name, value):
         if value:
@@ -29,11 +30,13 @@ class ActionItemFilter(django_filters.FilterSet):
             )
         return queryset
 
+from smart_meeting_tracker.filters import ExactPhraseSearchFilter
+
 class ActionItemViewSet(viewsets.ModelViewSet):
     queryset = ActionItem.objects.all().select_related('assigned_to', 'created_by', 'decision').prefetch_related('dependencies')
     serializer_class = ActionItemSerializer
     permission_classes = (permissions.IsAuthenticated,)
-    filter_backends = (DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter)
+    filter_backends = (DjangoFilterBackend, ExactPhraseSearchFilter, filters.OrderingFilter)
     filterset_class = ActionItemFilter
     search_fields = ('title', 'description')
     ordering_fields = ('due_date', 'priority', 'status', 'created_at')
@@ -45,21 +48,20 @@ class ActionItemViewSet(viewsets.ModelViewSet):
 
         # OWNER and ADMIN view all org action items
         if user.is_admin_role:
-            return ActionItem.objects.all().select_related('assigned_to', 'created_by', 'decision').prefetch_related('dependencies')
-
-        # MANAGER views items created by them, assigned to them, or belonging to their team meetings
-        if user.is_manager_role:
-            return ActionItem.objects.filter(
+            qs = ActionItem.objects.all()
+        elif user.is_manager_role:
+            qs = ActionItem.objects.filter(
                 Q(created_by=user) |
                 Q(assigned_to=user) |
                 Q(decision__discussion__meeting__created_by=user) |
                 Q(decision__discussion__meeting__team__members=user)
-            ).distinct().select_related('assigned_to', 'created_by', 'decision').prefetch_related('dependencies')
+            ).distinct()
+        else:
+            qs = ActionItem.objects.filter(
+                Q(assigned_to=user) | Q(created_by=user)
+            ).distinct()
 
-        # MEMBER views items assigned to them or created by them
-        return ActionItem.objects.filter(
-            Q(assigned_to=user) | Q(created_by=user)
-        ).distinct().select_related('assigned_to', 'created_by', 'decision').prefetch_related('dependencies')
+        return qs.select_related('assigned_to', 'created_by', 'decision').prefetch_related('dependencies')
 
     def perform_create(self, serializer):
         user = self.request.user
@@ -89,7 +91,11 @@ class ActionItemViewSet(viewsets.ModelViewSet):
         if action_item.assigned_to != user:
             raise permissions.PermissionDenied("MEMBER cannot modify action items assigned to another user.")
 
-        # 2. MEMBER can ONLY update status field!
+        # 2. MEMBER cannot modify COMPLETED or CANCELLED action items
+        if action_item.status in [ActionItem.Status.COMPLETED, ActionItem.Status.CANCELLED]:
+            raise permissions.PermissionDenied("Completed or Cancelled action items are locked and cannot be modified by MEMBER role.")
+
+        # 3. MEMBER can ONLY update status field!
         sensitive_fields = ['title', 'description', 'due_date', 'priority', 'assigned_to', 'decision']
         validated_data = serializer.validated_data
         for field in sensitive_fields:
@@ -107,9 +113,11 @@ class ActionItemViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def my_actions(self, request):
         """
-        Dedicated endpoint for logged in user's assigned actions
+        Dedicated endpoint for logged in user's assigned or created actions
         """
-        queryset = self.get_queryset().filter(assigned_to=request.user)
+        queryset = self.get_queryset().filter(
+            Q(assigned_to=request.user) | Q(created_by=request.user)
+        ).distinct()
         filtered_qs = self.filter_queryset(queryset)
         page = self.paginate_queryset(filtered_qs)
         if page is not None:

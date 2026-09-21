@@ -1,5 +1,3 @@
-'use client';
-
 import React, { useState } from 'react';
 import { Modal, Form, Input, Select, message } from 'antd';
 import { discussionService } from '../services/api.js';
@@ -36,7 +34,7 @@ export const DiscussionModal = ({ open, onClose, meetingId, onSuccess }) => {
       onOk={() => form.submit()}
       confirmLoading={submitting}
       okText="Add Discussion"
-      okButtonProps={{ className: 'bg-blue-600 hover:bg-blue-700 font-semibold' }}
+      okButtonProps={{ className: 'bg-slate-900 hover:bg-slate-800 font-semibold text-white' }}
     >
       <Form form={form} layout="vertical" onFinish={handleSubmit} initialValues={{ priority: 'MEDIUM' }}>
         <Form.Item

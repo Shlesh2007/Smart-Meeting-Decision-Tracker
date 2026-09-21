@@ -51,7 +51,25 @@ class DecisionHistoryTestCase(TestCase):
         h1 = DecisionHistory.objects.get(decision_id=decision_id, version=1)
         self.assertEqual(h1.decision_text, 'Use REST API with Caching')
 
-        # 2. Update Decision (Version 2)
+        # 2. Attempt Unchanged Update (Should be rejected with 400 Bad Request)
+        unchanged_payload = {
+            'discussion': self.discussion.id,
+            'status': 'DECISION_MADE',
+            'decision': 'Use REST API with Caching',
+            'reason': 'Fastest to implement'
+        }
+        res_unchanged = self.client.put(f'/api/decisions/{decision_id}/', unchanged_payload, format='json')
+        self.assertEqual(res_unchanged.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('No changes detected', str(res_unchanged.data))
+
+        # 3. Update Decision with Actual Changes by Colleague (Version 2)
+        colleague = User.objects.create_user(
+            username='colleague_user',
+            email='colleague@example.com',
+            password='password123'
+        )
+        self.client.force_authenticate(user=colleague)
+
         update_payload = {
             'discussion': self.discussion.id,
             'status': 'DECISION_MADE',
@@ -62,8 +80,13 @@ class DecisionHistoryTestCase(TestCase):
         self.assertEqual(res2.status_code, status.HTTP_200_OK)
         self.assertEqual(res2.data['version'], 2)
 
-        # Verify history snapshot 2 preserved previous version!
+        # 4. Verify Original Author (decided_by) is PRESERVED as tech_lead (self.user)
+        self.assertEqual(res2.data['decided_by'], self.user.id)
+
+        # 5. Verify history snapshot 2 preserved previous version and recorded changed_by as colleague!
         histories = DecisionHistory.objects.filter(decision_id=decision_id).order_by('version')
         self.assertEqual(histories.count(), 2)
         self.assertEqual(histories[0].decision_text, 'Use REST API with Caching')
+        self.assertEqual(histories[0].changed_by, self.user)
         self.assertEqual(histories[1].decision_text, 'Migrate Search to Dedicated Microservice')
+        self.assertEqual(histories[1].changed_by, colleague)

@@ -1,6 +1,7 @@
 import React from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { BarChartOutlined } from '@ant-design/icons';
+import { useScrollAnimation } from '../../hooks/useScrollAnimation.js';
 
 const PRIORITIES = [
   { key: 'CRITICAL', label: 'Critical Priority', color: '#ef4444' },
@@ -10,6 +11,8 @@ const PRIORITIES = [
 ];
 
 export const PriorityDistribution = ({ priorityDistribution = {} }) => {
+  const [containerRef, isInView] = useScrollAnimation();
+
   const total = PRIORITIES.reduce(
     (sum, p) => sum + (priorityDistribution[p.key] || 0),
     0
@@ -26,7 +29,12 @@ export const PriorityDistribution = ({ priorityDistribution = {} }) => {
   const zeroChartData = [{ name: 'No Priority Data', value: 1, color: '#e2e8f0' }];
 
   return (
-    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 sm:p-4 shadow-xs transition-all h-full flex flex-col justify-between">
+    <div
+      ref={containerRef}
+      className={`bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 sm:p-4 shadow-xs transition-all duration-700 transform h-full flex flex-col justify-between ${
+        isInView ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-6 scale-95'
+      }`}
+    >
       {/* Header */}
       <div className="flex items-center justify-between pb-2.5 border-b border-slate-100 dark:border-slate-800">
         <div className="flex items-center space-x-2">
@@ -47,7 +55,7 @@ export const PriorityDistribution = ({ priorityDistribution = {} }) => {
       {/* Centered Pie Chart Container (No side legend / progress bars) */}
       <div className="my-2.5 relative w-full h-44 flex items-center justify-center">
         <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
+          <PieChart key={isInView ? 'prio-active' : 'prio-idle'}>
             <Pie
               data={total > 0 ? chartData : zeroChartData}
               cx="50%"
@@ -57,6 +65,9 @@ export const PriorityDistribution = ({ priorityDistribution = {} }) => {
               paddingAngle={total > 0 ? 3 : 0}
               dataKey="value"
               strokeWidth={0}
+              isAnimationActive={isInView}
+              animationBegin={0}
+              animationDuration={850}
             >
               {(total > 0 ? chartData : zeroChartData).map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={entry.color} />

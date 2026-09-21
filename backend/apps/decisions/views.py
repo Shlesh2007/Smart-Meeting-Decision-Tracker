@@ -31,13 +31,13 @@ class DecisionViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         new_version = instance.version + 1
         
+        # Preserve original author (decided_by) while incrementing version
         updated_decision = serializer.save(
-            decided_by=user,
             version=new_version,
             decision_date=timezone.now()
         )
         
-        # Save New Version Snapshot to History
+        # Save New Version Snapshot to History with changed_by tracking
         DecisionHistory.objects.create(
             decision=updated_decision,
             version=new_version,

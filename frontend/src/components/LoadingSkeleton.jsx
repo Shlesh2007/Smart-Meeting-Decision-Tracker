@@ -9,7 +9,8 @@ export const LoadingSkeleton = ({ tip = 'Loading workspace data...' }) => {
 
   return (
     <div className="min-h-[50vh] flex flex-col justify-center items-center py-16 space-y-4">
-      <Spin indicator={antIcon} size="large" tip={<span className="text-sm font-semibold text-slate-600 mt-3 block">{tip}</span>} />
+      <Spin indicator={antIcon} size="large" />
+      <span className="text-sm font-semibold text-slate-600 dark:text-slate-300 block">{tip}</span>
     </div>
   );
 };

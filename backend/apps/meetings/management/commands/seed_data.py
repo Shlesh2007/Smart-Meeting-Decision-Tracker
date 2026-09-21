@@ -54,40 +54,50 @@ class Command(BaseCommand):
         for u in all_users:
             team_product.members.add(u)
 
-        # 3. Create Meetings
-        meeting_1, _ = Meeting.objects.get_or_create(
-            title='Q4 Product Strategy & Architecture Alignment',
-            defaults={
-                'description': 'Quarterly review to decide on backend framework upgrades, database scaling strategies, and UX redesign timelines.',
-                'meeting_date': timezone.now().date(),
-                'start_time': datetime.time(10, 0),
-                'end_time': datetime.time(11, 30),
-                'location': 'Conference Room A / Zoom',
-                'meeting_type': Meeting.MeetingType.PLANNING,
-                'status': Meeting.Status.IN_PROGRESS,
-                'created_by': user,
-                'team': team_eng
-            }
-        )
-        for u in all_users:
-            meeting_1.participants.add(u)
+        # 3. Create Meetings across past 30 days & upcoming dates
+        today = timezone.now().date()
+        sample_meetings = [
+            (-28, "Q3 Product Architecture Sync", Meeting.MeetingType.PLANNING, Meeting.Status.COMPLETED, 3),
+            (-25, "Client Onboarding & Portal Demo", Meeting.MeetingType.CLIENT, Meeting.Status.COMPLETED, 2),
+            (-22, "UI/UX Accessibility Design Review", Meeting.MeetingType.INTERNAL, Meeting.Status.COMPLETED, 4),
+            (-19, "Backend API & Security Vulnerability Audit", Meeting.MeetingType.REVIEW, Meeting.Status.COMPLETED, 1),
+            (-16, "DevOps & CI/CD Pipeline Optimization", Meeting.MeetingType.PROJECT, Meeting.Status.COMPLETED, 3),
+            (-13, "Weekly Cross-Team Standup & Sync", Meeting.MeetingType.INTERNAL, Meeting.Status.COMPLETED, 2),
+            (-10, "PostgreSQL Database Clustering & Failover", Meeting.MeetingType.PROJECT, Meeting.Status.COMPLETED, 5),
+            (-7,  "Customer Feedback & Support Triage", Meeting.MeetingType.CLIENT, Meeting.Status.COMPLETED, 2),
+            (-4,  "Sprint Planning & Backlog Refinement", Meeting.MeetingType.PLANNING, Meeting.Status.COMPLETED, 4),
+            (-2,  "Mobile Responsive Layout Audit", Meeting.MeetingType.REVIEW, Meeting.Status.COMPLETED, 2),
+            (0,   "Q4 Product Strategy & Architecture Alignment", Meeting.MeetingType.PLANNING, Meeting.Status.IN_PROGRESS, 1),
+            (3,   "Q4 Infrastructure Scaling & Capacity", Meeting.MeetingType.PROJECT, Meeting.Status.SCHEDULED, 2),
+            (6,   "Enterprise SSO & OAuth Integration", Meeting.MeetingType.PLANNING, Meeting.Status.SCHEDULED, 3),
+            (9,   "Monthly Retrospective & Team Demo", Meeting.MeetingType.REVIEW, Meeting.Status.SCHEDULED, 1),
+        ]
 
-        meeting_2, _ = Meeting.objects.get_or_create(
-            title='Sprint 42 Retrospective & Action Items',
-            defaults={
-                'description': 'Reviewing completed user stories, delivery bottlenecks, and CI/CD deployment pipeline improvements.',
-                'meeting_date': timezone.now().date() - datetime.timedelta(days=2),
-                'start_time': datetime.time(14, 0),
-                'end_time': datetime.time(15, 0),
-                'location': 'Google Meet',
-                'meeting_type': Meeting.MeetingType.REVIEW,
-                'status': Meeting.Status.COMPLETED,
-                'created_by': user,
-                'team': team_eng
-            }
-        )
-        for u in all_users:
-            meeting_2.participants.add(u)
+        created_meetings = []
+        for offset_days, base_title, meeting_type, status, count in sample_meetings:
+            target_date = today + datetime.timedelta(days=offset_days)
+            for i in range(count):
+                title = f"{base_title} #{i+1}" if count > 1 else base_title
+                m, _ = Meeting.objects.get_or_create(
+                    title=title,
+                    meeting_date=target_date,
+                    defaults={
+                        'description': f'Discussion and action item tracking session for {title}.',
+                        'start_time': datetime.time(9 + (i * 2) % 8, 0),
+                        'end_time': datetime.time(10 + (i * 2) % 8, 0),
+                        'location': 'Conference Room A / Zoom',
+                        'meeting_type': meeting_type,
+                        'status': status,
+                        'created_by': user,
+                        'team': team_eng if i % 2 == 0 else team_product
+                    }
+                )
+                if all_users:
+                    m.participants.set(all_users)
+                created_meetings.append(m)
+
+        meeting_1 = created_meetings[10] if len(created_meetings) > 10 else created_meetings[0]
+        meeting_2 = created_meetings[9] if len(created_meetings) > 9 else created_meetings[0]
 
         # 4. Create Discussions
         disc_1, _ = Discussion.objects.get_or_create(
@@ -194,4 +204,4 @@ class Command(BaseCommand):
             )
 
         self.stdout.write(self.style.SUCCESS('\nSample data seeded successfully!'))
-        self.stdout.write(self.style.SUCCESS(f'Created/verified 2 Teams, 2 Meetings, 3 Discussions, 3 Decisions, and 3 Action Items.'))
+        self.stdout.write(self.style.SUCCESS(f'Created/verified Teams, Meetings, Discussions, Decisions, Action Items, and Participants.'))

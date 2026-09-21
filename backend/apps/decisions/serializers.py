@@ -32,7 +32,24 @@ class DecisionSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         status = attrs.get('status', self.instance.status if self.instance else Decision.Status.NO_DECISION)
         decision_text = attrs.get('decision', self.instance.decision if self.instance else '')
-        
+        reason_text = attrs.get('reason', self.instance.reason if self.instance else '')
+
         if status == Decision.Status.DECISION_MADE and not decision_text:
             raise serializers.ValidationError({"decision": "Decision details text is required when status is 'Decision Made'."})
+
+        # Reject update if no changes were made to status, decision, or reason
+        if self.instance:
+            curr_status = self.instance.status
+            curr_decision = (self.instance.decision or '').strip()
+            curr_reason = (self.instance.reason or '').strip()
+
+            new_status = status
+            new_decision = (decision_text or '').strip()
+            new_reason = (reason_text or '').strip()
+
+            if curr_status == new_status and curr_decision == new_decision and curr_reason == new_reason:
+                raise serializers.ValidationError({
+                    "non_field_errors": ["No changes detected. Decision status, text details, and reason are identical to the current version."]
+                })
+
         return attrs

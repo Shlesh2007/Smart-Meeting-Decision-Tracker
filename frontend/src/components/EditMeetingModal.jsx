@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Modal, Form, Input, Select, DatePicker, TimePicker, message } from 'antd';
+import { Modal, Form, Input, Select, DatePicker, TimePicker, message, Popover, Tag } from 'antd';
+import { TeamOutlined, UserOutlined, RightOutlined } from '@ant-design/icons';
 import { meetingService, userService, teamService } from '../services/api.js';
 import dayjs from 'dayjs';
 
@@ -27,6 +28,35 @@ export const EditMeetingModal = ({ open, onClose, meeting, onSuccess }) => {
         });
     }
   }, [open]);
+
+  const selectedTeamId = Form.useWatch('team', form);
+
+  // Compute selected team object & member IDs to exclude them from individual invite list
+  const selectedTeamObj = teams.find(t => t.id === selectedTeamId);
+  const teamMemberIds = new Set(
+    selectedTeamObj
+      ? (selectedTeamObj.members || (selectedTeamObj.members_detail ? selectedTeamObj.members_detail.map(m => m.id) : []))
+      : []
+  );
+
+  const availableIndividualUsers = users.filter(u => !teamMemberIds.has(u.id));
+
+  // Auto-clean individual participant selections if a user is already in the selected team
+  useEffect(() => {
+    if (selectedTeamId && teams.length > 0) {
+      const selectedTeam = teams.find(t => t.id === selectedTeamId);
+      if (selectedTeam) {
+        const tMemberIds = new Set(
+          selectedTeam.members || (selectedTeam.members_detail ? selectedTeam.members_detail.map(m => m.id) : [])
+        );
+        const currentIndividualIds = form.getFieldValue('participant_ids') || [];
+        const cleanedIds = currentIndividualIds.filter(id => !tMemberIds.has(id));
+        if (cleanedIds.length !== currentIndividualIds.length) {
+          form.setFieldsValue({ participant_ids: cleanedIds });
+        }
+      }
+    }
+  }, [selectedTeamId, teams, form]);
 
   useEffect(() => {
     if (meeting && open) {
@@ -100,7 +130,8 @@ export const EditMeetingModal = ({ open, onClose, meeting, onSuccess }) => {
       confirmLoading={submitting}
       okText="Update Meeting"
       width={650}
-      destroyOnClose
+      style={{ maxWidth: '95vw' }}
+      destroyOnHidden
     >
       <Form
         form={form}
@@ -150,10 +181,20 @@ export const EditMeetingModal = ({ open, onClose, meeting, onSuccess }) => {
             ]} />
           </Form.Item>
 
-          <Form.Item name="location" label="Location / Link">
-            <Input placeholder="Virtual / Zoom / Conf Room A" />
+          <Form.Item name="location" label="Location / Link" rules={[{ required: true }]}>
+            <Select
+              mode="combobox"
+              placeholder="Select or enter location / link"
+              options={[
+                { label: '🏢 Conference Room A', value: 'Conference Room A' },
+                { label: '🏢 Conference Room B', value: 'Conference Room B' },
+                { label: '📹 Google Meet (Public)', value: 'Google Meet: https://meet.google.com (Public)' },
+                { label: '🔒 Google Meet (Protected)', value: 'Google Meet: https://meet.google.com (Protected)' }
+              ]}
+            />
           </Form.Item>
         </div>
+
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Form.Item
@@ -163,19 +204,64 @@ export const EditMeetingModal = ({ open, onClose, meeting, onSuccess }) => {
             <Select
               placeholder="Select team"
               allowClear
-              options={teams.map(t => ({ label: `${t.name} (${t.members_detail?.length || 0} members)`, value: t.id }))}
-            />
+              optionLabelProp="label"
+            >
+              {teams.map((t) => (
+                <Select.Option key={t.id} value={t.id} label={t.name}>
+                  <Popover
+                    placement="right"
+                    mouseEnterDelay={0.15}
+                    title={
+                      <div className="flex items-center space-x-1.5 text-xs font-bold text-slate-800 dark:text-slate-200 border-b border-slate-100 dark:border-slate-700 pb-1">
+                        <TeamOutlined className="text-blue-500" />
+                        <span>{t.name} Members ({t.members_detail?.length || 0})</span>
+                      </div>
+                    }
+                    content={
+                      <div className="max-h-48 overflow-y-auto space-y-1.5 min-w-[220px] py-1">
+                        {t.members_detail && t.members_detail.length > 0 ? (
+                          t.members_detail.map((m) => (
+                            <div key={m.id} className="flex items-center space-x-2 text-xs py-0.5">
+                              <UserOutlined className="text-slate-400 text-[10px] shrink-0" />
+                              <div className="flex-1 min-w-0">
+                                <span className="font-semibold text-slate-800 dark:text-slate-200 block truncate">{m.full_name || m.username}</span>
+                                <span className="text-[10px] text-slate-400 block truncate">{m.email}</span>
+                              </div>
+                              <Tag color="blue" className="text-[9px] m-0 font-bold uppercase shrink-0">{m.role}</Tag>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="text-slate-400 text-xs italic m-0">No members assigned</p>
+                        )}
+                      </div>
+                    }
+                  >
+                    <div className="flex items-center justify-between w-full py-0.5">
+                      <span className="font-medium text-xs text-slate-800 dark:text-slate-200">{t.name}</span>
+                      <span className="text-[10px] text-blue-600 dark:text-blue-400 font-semibold bg-blue-50 dark:bg-slate-800 px-2 py-0.5 rounded-full flex items-center space-x-1 ml-2 shrink-0">
+                        <span>{t.members_detail?.length || 0} members</span>
+                        <RightOutlined className="text-[8px]" />
+                      </span>
+                    </div>
+                  </Popover>
+                </Select.Option>
+              ))}
+            </Select>
           </Form.Item>
 
           <Form.Item
             name="participant_ids"
             label="Invite Individual Participants"
-            rules={[{ required: true, message: 'At least 1 participant (or host) is required.' }]}
+            help={
+              selectedTeamObj
+                ? `Members of "${selectedTeamObj.name}" are automatically included and hidden from this list.`
+                : undefined
+            }
           >
             <Select
               mode="multiple"
-              placeholder="Select participants"
-              options={users.map(u => ({ label: `${u.full_name} (${u.role})`, value: u.id }))}
+              placeholder={selectedTeamObj ? "Select additional non-team participants" : "Select participants"}
+              options={availableIndividualUsers.map(u => ({ label: `${u.full_name} (${u.role})`, value: u.id }))}
             />
           </Form.Item>
         </div>

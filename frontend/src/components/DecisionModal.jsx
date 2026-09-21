@@ -1,5 +1,3 @@
-'use client';
-
 import React, { useEffect, useState } from 'react';
 import { Modal, Form, Input, Select, message, Alert } from 'antd';
 import { decisionService } from '../services/api.js';
@@ -67,8 +65,9 @@ export const DecisionModal = ({
       onOk={() => form.submit()}
       confirmLoading={submitting}
       okText={existingDecision ? 'Save & Snapshot New Version' : 'Save Decision'}
-      okButtonProps={{ className: 'bg-blue-600 hover:bg-blue-700 font-semibold' }}
+      okButtonProps={{ className: 'bg-slate-900 hover:bg-slate-800 font-semibold text-white' }}
       width={550}
+      style={{ maxWidth: '95vw' }}
     >
       {existingDecision && (
         <Alert
