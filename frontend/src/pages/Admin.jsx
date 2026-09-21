@@ -152,20 +152,28 @@ export default function Admin() {
     {
       title: 'Name & Username',
       key: 'name',
+      width: 170,
       render: (_, u) => (
         <div>
-          <span className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+          <span className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-1.5 text-xs sm:text-sm">
             {u.full_name}
             {u.role === 'OWNER' && <CrownOutlined className="text-amber-500 text-xs" />}
           </span>
-          <span className="text-xs text-slate-500 dark:text-slate-400">{u.username}</span>
+          <span className="text-xs text-slate-500 dark:text-slate-400 block">{u.username}</span>
         </div>
       ),
     },
-    { title: 'Email', dataIndex: 'email', key: 'email' },
+    {
+      title: 'Email',
+      dataIndex: 'email',
+      key: 'email',
+      width: 200,
+      render: (email) => <span className="text-xs sm:text-sm break-all">{email}</span>
+    },
     {
       title: 'Department',
       key: 'department',
+      width: 180,
       render: (_, u) => {
         const isTargetOwner = u.role === 'OWNER';
         const isSelf = u.id === user?.id;
@@ -173,11 +181,13 @@ export default function Admin() {
 
         return (
           <Select
+            id={`user_dept_${u.id}`}
+            name={`user_dept_${u.id}`}
             value={u.department || undefined}
             placeholder="Assign Department..."
             onChange={(newDept) => handleDepartmentChange(u, newDept)}
             disabled={isDisabled}
-            className="w-44 text-xs font-medium"
+            className="w-40 sm:w-44 text-xs font-medium"
             allowClear
             options={[
               { label: 'Executive & Strategy', value: 'Executive & Strategy' },
@@ -198,17 +208,20 @@ export default function Admin() {
       title: 'Current Role',
       dataIndex: 'role',
       key: 'role',
+      width: 120,
       render: (role) => getRoleTag(role),
     },
     {
       title: 'Joined Date',
       dataIndex: 'date_joined',
       key: 'date_joined',
+      width: 130,
       render: (dateStr) => dateStr ? format(new Date(dateStr), 'MMM dd, yyyy') : '—',
     },
     {
       title: 'Manage Role',
       key: 'action',
+      width: 140,
       render: (_, u) => {
         const isTargetOwner = u.role === 'OWNER';
         const isSelf = u.id === user?.id;
@@ -226,6 +239,8 @@ export default function Admin() {
 
         return (
           <Select
+            id={`user_role_${u.id}`}
+            name={`user_role_${u.id}`}
             value={u.role}
             onChange={(newRole) => handleRoleChange(u, newRole)}
             disabled={isDisabled}
@@ -238,27 +253,32 @@ export default function Admin() {
   ];
 
   return (
-    <div className="space-y-6">
-      <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-xs flex justify-between items-center transition-colors duration-200">
+    <div className="space-y-4 sm:space-y-6 w-full max-w-full overflow-x-hidden">
+      <div className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-xs flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 transition-colors duration-200">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white m-0 flex items-center space-x-2">
+          <h1 className="text-lg sm:text-2xl font-bold text-slate-900 dark:text-white m-0 flex items-center space-x-2">
             <SafetyOutlined className="text-blue-600 dark:text-blue-400" />
             <span>Admin & Role Management Portal</span>
           </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 m-0">Manage organization users, role hierarchy (Owner, Admin, Manager, Member), and teams.</p>
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 m-0 mt-1">Manage organization users, role hierarchy (Owner, Admin, Manager, Member), and teams.</p>
         </div>
-        <Button type="primary" icon={<PlusOutlined />} onClick={openCreateTeam} className="bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl border-none shadow-xs">
+        <Button
+          type="primary"
+          icon={<PlusOutlined />}
+          onClick={openCreateTeam}
+          className="bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl border-none shadow-xs w-full sm:w-auto shrink-0"
+        >
           Create New Team
         </Button>
       </div>
 
-      <Card className="shadow-xs rounded-2xl dark:bg-slate-800 dark:border-slate-700/80">
+      <Card className="shadow-xs rounded-2xl dark:bg-slate-800 dark:border-slate-700/80" styles={{ body: { padding: '12px 16px' } }}>
         <Tabs
           items={[
             {
               key: 'users',
               label: (
-                <span className="font-semibold flex items-center space-x-2">
+                <span className="font-semibold flex items-center space-x-2 text-xs sm:text-sm">
                   <UserOutlined />
                   <span>Users Directory ({users.length})</span>
                 </span>
@@ -266,7 +286,7 @@ export default function Admin() {
               children: loading ? (
                 <LoadingSkeleton type="table" />
               ) : (
-                <Table columns={userColumns} dataSource={users} rowKey="id" pagination={{ pageSize: 8 }} scroll={{ x: 'max-content' }} />
+                <Table columns={userColumns} dataSource={users} rowKey="id" pagination={{ pageSize: 8 }} scroll={{ x: 850 }} />
               ),
             },
             {
@@ -385,11 +405,13 @@ export default function Admin() {
             label="Team Name"
             rules={[{ required: true, message: 'Please enter team name' }]}
           >
-            <Input placeholder="e.g. Engineering Lead Team" />
+            <Input id="admin_team_name" name="name" placeholder="e.g. Engineering Lead Team" />
           </Form.Item>
 
           <Form.Item name="member_ids" label="Assign Team Members">
             <Select
+              id="admin_team_member_ids"
+              name="member_ids"
               mode="multiple"
               placeholder="Select team members to include"
               options={users.map(u => ({ label: `${u.full_name} (${u.email}) - ${u.role}`, value: u.id }))}
@@ -397,7 +419,7 @@ export default function Admin() {
           </Form.Item>
 
           <Form.Item name="description" label="Team Description">
-            <Input.TextArea rows={2} placeholder="Describe the purpose of this team..." />
+            <Input.TextArea id="admin_team_description" name="description" rows={2} placeholder="Describe the purpose of this team..." />
           </Form.Item>
         </Form>
       </Modal>

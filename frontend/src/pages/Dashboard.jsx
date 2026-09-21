@@ -86,7 +86,7 @@ export default function Dashboard() {
   } = data;
 
   return (
-    <div className="space-y-4 max-w-[1600px] mx-auto pb-8">
+    <div className="space-y-4 w-full max-w-full overflow-x-hidden max-w-[1600px] mx-auto pb-8">
       
       {/* 1. Header Greeting & Quick CTAs Hero with Global Search & Period Selector */}
       <DashboardHeader

@@ -95,14 +95,15 @@ export function Logo({ variant = 'full', height = 36, className = '' }) {
 
       <g transform="translate(100, 0)">
         <text x="0" y="46" fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" fontWeight="800" fontSize="36" letterSpacing="-0.5">
-          <tspan fill="#0f172a">Smart </tspan>
+          <tspan className="fill-slate-900 dark:fill-white" fill="currentColor">Smart </tspan>
           <tspan fill="#2563eb">Meeting</tspan>
         </text>
 
-        <text x="2" y="68" fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" fontWeight="700" fontSize="14" fill="#64748b" letterSpacing="4">
+        <text x="2" y="68" fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" fontWeight="700" fontSize="14" className="fill-slate-500 dark:fill-slate-400" fill="#64748b" letterSpacing="4">
           DECISION TRACKER
         </text>
       </g>
+
     </svg>
   );
 }

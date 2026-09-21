@@ -188,6 +188,8 @@ export const DashboardHeader = ({
               className="w-full"
             >
               <Input
+                id="header_global_search"
+                name="header_search"
                 size="middle"
                 prefix={<SearchOutlined className="text-slate-400 text-xs" />}
                 suffix={searching ? <Spin size="small" /> : null}
@@ -201,6 +203,8 @@ export const DashboardHeader = ({
           <div className="flex items-center space-x-1.5 shrink-0">
             <FilterOutlined className="text-blue-500 text-xs sm:text-sm shrink-0" />
             <Select
+              id="header_time_period"
+              name="time_period"
               value={period || 'all_time'}
               onChange={onPeriodChange}
               className="w-28 sm:w-36 font-semibold text-xs h-9 shrink-0"

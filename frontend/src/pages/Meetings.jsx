@@ -153,7 +153,7 @@ export default function Meetings() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full max-w-full overflow-x-hidden">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-xs transition-colors duration-200">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white m-0">
@@ -196,6 +196,8 @@ export default function Meetings() {
       <Card className="shadow-xs rounded-2xl dark:bg-slate-800 dark:border-slate-700/80">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
           <Input
+            id="meetings_search"
+            name="search"
             prefix={<SearchOutlined className="text-slate-400" />}
             placeholder="Search meeting title or location..."
             value={search}
@@ -204,6 +206,8 @@ export default function Meetings() {
           />
 
           <Select
+            id="meetings_filter_type"
+            name="meeting_type"
             placeholder="Filter by Meeting Type"
             value={meetingType || undefined}
             onChange={(val) => { setMeetingType(val); setPage(1); }}
@@ -219,6 +223,8 @@ export default function Meetings() {
           />
 
           <Select
+            id="meetings_filter_status"
+            name="status"
             placeholder="Filter by Status"
             value={status || undefined}
             onChange={(val) => { setStatus(val); setPage(1); }}
@@ -232,6 +238,8 @@ export default function Meetings() {
           />
 
           <RangePicker
+            id="meetings_date_range"
+            name="date_range"
             format="YYYY-MM-DD"
             placeholder={['Start Date', 'End Date']}
             value={

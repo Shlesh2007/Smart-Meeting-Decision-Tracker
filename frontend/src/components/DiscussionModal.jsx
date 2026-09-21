@@ -42,11 +42,11 @@ export const DiscussionModal = ({ open, onClose, meetingId, onSuccess }) => {
           label="Discussion Title / Topic"
           rules={[{ required: true, message: 'Please enter a discussion title' }]}
         >
-          <Input placeholder="e.g. API Response time is too high" />
+          <Input id="discussion_title" name="title" placeholder="e.g. API Response time is too high" />
         </Form.Item>
 
         <Form.Item name="description" label="Detailed Notes / Context">
-          <Input.TextArea rows={3} placeholder="Describe the discussion background..." />
+          <Input.TextArea id="discussion_description" name="description" rows={3} placeholder="Describe the discussion background..." />
         </Form.Item>
 
         <Form.Item
@@ -54,7 +54,7 @@ export const DiscussionModal = ({ open, onClose, meetingId, onSuccess }) => {
           label="Priority Level"
           rules={[{ required: true, message: 'Please select priority' }]}
         >
-          <Select options={[
+          <Select id="discussion_priority" name="priority" options={[
             { label: 'Low', value: 'LOW' },
             { label: 'Medium', value: 'MEDIUM' },
             { label: 'High', value: 'HIGH' },

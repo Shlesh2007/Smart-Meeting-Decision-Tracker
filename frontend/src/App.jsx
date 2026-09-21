@@ -26,17 +26,20 @@ function ScrollToTop() {
   return null;
 }
 
+import { App as AntdApp } from 'antd';
+
 export default function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <ScrollToTop />
       <ThemeProvider>
-        <InitialSplashScreen>
-          <AuthProvider>
-            <MainLayout>
+        <AntdApp>
+          <InitialSplashScreen>
+            <AuthProvider>
+              <MainLayout>
               <Routes>
-                <Route path="/" element={<Home />} />
                 <Route path="/login" element={<Login />} />
+                <Route path="/login/:panelType" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/meetings" element={<Meetings />} />
@@ -50,6 +53,7 @@ export default function App() {
             </MainLayout>
           </AuthProvider>
         </InitialSplashScreen>
+        </AntdApp>
       </ThemeProvider>
     </BrowserRouter>
   );

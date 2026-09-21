@@ -13,7 +13,7 @@ const getApiBaseUrl = () => {
     return sanitized;
   }
   if (typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && !window.location.hostname.includes('127.0.0.1')) {
-    return 'https://smart-meeting-tracker-backend.onrender.com/api';
+    return 'https://smart-meeting-decision-tracker-s63z.onrender.com/api';
   }
   return 'http://localhost:8080/api';
 };
@@ -45,6 +45,31 @@ api.interceptors.request.use(
   },
   (error) => Promise.reject(error)
 );
+
+// Response Interceptor: Automatically retry against live Render production backend if local server is down (ERR_NETWORK / ERR_CONNECTION_REFUSED)
+const PROD_API_URL = 'https://smart-meeting-decision-tracker-s63z.onrender.com/api';
+
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const config = error.config;
+    // Check if network connection was refused on localhost and request has not retried fallback yet
+    if (
+      config &&
+      !config._fallbackRetried &&
+      (error.code === 'ERR_NETWORK' || error.message?.includes('Network Error') || !error.response) &&
+      config.baseURL &&
+      config.baseURL.includes('localhost')
+    ) {
+      config._fallbackRetried = true;
+      config.baseURL = PROD_API_URL;
+      console.warn(`⚠️ Local backend connection refused. Retrying request against production Render API (${PROD_API_URL})...`);
+      return api(config);
+    }
+    return Promise.reject(error);
+  }
+);
+
 
 // Auth Service
 export const authService = {

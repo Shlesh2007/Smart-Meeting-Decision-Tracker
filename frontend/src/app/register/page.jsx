@@ -2,12 +2,13 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { Logo } from '../../components/Logo.jsx';
-import { Form, Input, Button, Card, Select, message, Typography } from 'antd';
+import { Form, Input, Button, Card, Select, App, Typography } from 'antd';
 import { UserOutlined, MailOutlined, LockOutlined, ThunderboltOutlined } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
 
 export default function RegisterPage() {
+  const { message } = App.useApp();
   const { register } = useAuth();
   const [submitting, setSubmitting] = useState(false);
 
@@ -68,7 +69,7 @@ export default function RegisterPage() {
               label="First Name"
               rules={[{ required: true, message: 'First name is required' }]}
             >
-              <Input placeholder="John" />
+              <Input id="reg_app_first_name" name="first_name" placeholder="John" />
             </Form.Item>
 
             <Form.Item
@@ -76,7 +77,7 @@ export default function RegisterPage() {
               label="Last Name"
               rules={[{ required: true, message: 'Last name is required' }]}
             >
-              <Input placeholder="Doe" />
+              <Input id="reg_app_last_name" name="last_name" placeholder="Doe" />
             </Form.Item>
           </div>
 
@@ -85,7 +86,7 @@ export default function RegisterPage() {
             label="Username"
             rules={[{ required: true, message: 'Username is required' }]}
           >
-            <Input prefix={<UserOutlined className="text-gray-400" />} placeholder="john_doe" />
+            <Input id="reg_app_username" name="username" prefix={<UserOutlined className="text-gray-400" />} placeholder="john_doe" />
           </Form.Item>
 
           <Form.Item
@@ -96,7 +97,7 @@ export default function RegisterPage() {
               { type: 'email', message: 'Enter a valid email' }
             ]}
           >
-            <Input prefix={<MailOutlined className="text-gray-400" />} placeholder="john@example.com" />
+            <Input id="reg_app_email" name="email" prefix={<MailOutlined className="text-gray-400" />} placeholder="john@example.com" />
           </Form.Item>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4">
@@ -105,14 +106,14 @@ export default function RegisterPage() {
               label="Account Role"
               rules={[{ required: true, message: 'Role is required' }]}
             >
-              <Select className="w-full" options={[
+              <Select id="reg_app_role" name="role" className="w-full" options={[
                 { label: 'Member (Participate & Update actions)', value: 'MEMBER' },
                 { label: 'Admin (Manage users & meetings)', value: 'ADMIN' }
               ]} />
             </Form.Item>
 
             <Form.Item name="department" label="Department / Team">
-              <Input placeholder="Engineering / Product" />
+              <Input id="reg_app_department" name="department" placeholder="Engineering / Product" />
             </Form.Item>
           </div>
 
@@ -122,7 +123,7 @@ export default function RegisterPage() {
               label="Password"
               rules={[{ required: true, min: 6, message: 'Password must be at least 6 characters' }]}
             >
-              <Input.Password prefix={<LockOutlined className="text-gray-400" />} placeholder="••••••••" />
+              <Input.Password id="reg_app_password" name="password" prefix={<LockOutlined className="text-gray-400" />} placeholder="••••••••" />
             </Form.Item>
 
             <Form.Item
@@ -141,7 +142,7 @@ export default function RegisterPage() {
                 }),
               ]}
             >
-              <Input.Password prefix={<LockOutlined className="text-gray-400" />} placeholder="••••••••" />
+              <Input.Password id="reg_app_password_confirm" name="password_confirm" prefix={<LockOutlined className="text-gray-400" />} placeholder="••••••••" />
             </Form.Item>
           </div>
 

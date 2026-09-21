@@ -39,11 +39,11 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     if (!loading) {
       const publicPaths = ['/login', '/register', '/'];
-      const isPublicPath = publicPaths.includes(pathname);
+      const isPublicPath = publicPaths.includes(pathname) || pathname.startsWith('/login/');
 
       if (!user && !isPublicPath) {
         navigate('/login');
-      } else if (user && isPublicPath) {
+      } else if (user && isPublicPath && pathname === '/') {
         navigate('/dashboard');
       }
     }
@@ -51,8 +51,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (credentials) => {
     await authService.login(credentials);
-    await refreshUser();
-    navigate('/dashboard');
+    return await refreshUser();
   };
 
   const register = async (payload) => {

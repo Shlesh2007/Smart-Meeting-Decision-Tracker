@@ -145,6 +145,8 @@ export default function AdminPage() {
       key: 'department',
       render: (_, u) => (
         <Select
+          id={`admin_app_user_dept_${u.id}`}
+          name={`admin_app_user_dept_${u.id}`}
           value={u.department || undefined}
           placeholder="Assign Department..."
           onChange={(newDept) => handleDepartmentChange(u, newDept)}
@@ -186,6 +188,8 @@ export default function AdminPage() {
       key: 'action',
       render: (_, u) => (
         <Select
+          id={`admin_app_user_role_${u.id}`}
+          name={`admin_app_user_role_${u.id}`}
           value={u.role}
           onChange={(newRole) => handleRoleChange(u, newRole)}
           disabled={u.id === user?.id}
@@ -200,16 +204,16 @@ export default function AdminPage() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 w-full max-w-full overflow-x-hidden">
       
       {/* Header */}
       <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-xs flex justify-between items-center transition-colors duration-200">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white m-0 flex items-center space-x-2">
             <SafetyOutlined className="text-blue-600 dark:text-blue-400" />
-            <span>Admin Management Portal</span>
+            <span>Admin & Role Management Portal</span>
           </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 m-0">Manage system users, assign roles, and configure organization teams.</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400 m-0">Manage organization users, role hierarchy (Owner, Admin, Manager, Member), and teams.</p>
         </div>
         <Button type="primary" icon={<PlusOutlined />} onClick={openCreateTeam} className="bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl border-none shadow-xs">
           Create New Team
@@ -311,9 +315,7 @@ export default function AdminPage() {
                                       <span className="text-slate-400">{m.email}</span>
                                     </div>
                                   </div>
-                                  <Tag color={m.role === 'ADMIN' ? 'volcano' : 'blue'} className="m-0 text-[10px]">
-                                    {m.role}
-                                  </Tag>
+                                  <Tag color={m.role === 'ADMIN' ? 'volcano' : 'blue'} className="font-bold">{m.role}</Tag>
                                 </div>
                               ))}
                             </div>
@@ -353,11 +355,13 @@ export default function AdminPage() {
             label="Team Name"
             rules={[{ required: true, message: 'Please enter team name' }]}
           >
-            <Input placeholder="e.g. Engineering Lead Team" />
+            <Input id="admin_app_team_name" name="name" placeholder="e.g. Engineering Lead Team" />
           </Form.Item>
 
           <Form.Item name="member_ids" label="Assign Team Members">
             <Select
+              id="admin_app_team_member_ids"
+              name="member_ids"
               mode="multiple"
               placeholder="Select team members to include"
               options={users.map(u => ({ label: `${u.full_name} (${u.email}) - ${u.role}`, value: u.id }))}
@@ -365,7 +369,7 @@ export default function AdminPage() {
           </Form.Item>
 
           <Form.Item name="description" label="Team Description">
-            <Input.TextArea rows={2} placeholder="Describe the purpose of this team..." />
+            <Input.TextArea id="admin_app_team_description" name="description" rows={2} placeholder="Describe the purpose of this team..." />
           </Form.Item>
         </Form>
       </Modal>

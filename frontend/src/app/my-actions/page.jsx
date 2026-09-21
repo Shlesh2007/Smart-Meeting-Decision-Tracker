@@ -211,6 +211,8 @@ export default function MyActionsPage() {
 
         const selectNode = (
           <Select
+            id={`action_app_status_select_${record.id}`}
+            name={`action_app_status_select_${record.id}`}
             value={record.status}
             loading={updatingId === record.id}
             onChange={(val) => handleStatusChange(record, val)}
@@ -246,7 +248,7 @@ export default function MyActionsPage() {
   const overdueCount = actions.filter(a => a.is_overdue).length;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full max-w-full overflow-x-hidden">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-xs transition-colors duration-200">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white m-0 flex items-center space-x-2">
@@ -267,21 +269,24 @@ export default function MyActionsPage() {
         />
       )}
 
-      <Card className="shadow-xs rounded-xl dark:bg-slate-800 dark:border-slate-700">
+      <Card className="shadow-xs rounded-xl dark:bg-slate-800 dark:border-slate-700" styles={{ body: { padding: '16px' } }}>
+        <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 mb-4">
+          <Input
+            id="my_actions_app_search"
+            name="search"
+            prefix={<SearchOutlined className="text-slate-400" />}
+            placeholder="Search action items..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full sm:w-72"
+            allowClear
+          />
+        </div>
+
         <Tabs
           activeKey={activeTab}
           onChange={setActiveTab}
           className="w-full mb-4"
-          tabBarExtraContent={
-            <Input
-              prefix={<SearchOutlined className="text-slate-400" />}
-              placeholder="Search action items..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-48 sm:w-64 mb-1.5"
-              allowClear
-            />
-          }
           items={[
             { key: 'ALL', label: `All (${actions.length})` },
             { key: 'OPEN', label: `Open (${actions.filter(a => ['TODO', 'IN_PROGRESS', 'BLOCKED'].includes(a.status)).length})` },
@@ -337,6 +342,8 @@ export default function MyActionsPage() {
             Please enter the work outcome, results achieved, or links to completed deliverables so team members can see what work was done:
           </p>
           <Input.TextArea
+            id="completion_notes_app_input"
+            name="completion_notes"
             rows={3}
             value={completionNotesInput}
             onChange={(e) => setCompletionNotesInput(e.target.value)}

@@ -117,23 +117,38 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
 
   const notificationPopoverContent = (
     <div className="w-full sm:w-80 max-w-sm">
-      <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+      <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
         <div className="flex items-center space-x-2">
           <BellOutlined className="text-blue-600 font-bold" />
-          <h4 className="font-extrabold text-xs text-slate-900 m-0">Notifications</h4>
+          <h4 className="font-extrabold text-xs text-slate-900 dark:text-white m-0">Notifications</h4>
           {hasUnread && notifications.length > 0 && (
             <Badge count={notifications.length} className="ml-1" size="small" />
           )}
         </div>
-        {hasUnread && notifications.length > 0 && (
+        <div className="flex items-center space-x-2">
+          {hasUnread && notifications.length > 0 && (
+            <button
+              type="button"
+              id="notification_mark_read_btn"
+              name="notification_mark_read_btn"
+              onClick={markAllAsRead}
+              className="text-[10px] text-blue-600 hover:underline font-bold bg-transparent border-0 cursor-pointer"
+            >
+              Mark all read
+            </button>
+          )}
           <button
             type="button"
-            onClick={markAllAsRead}
-            className="text-[10px] text-blue-600 hover:underline font-bold bg-transparent border-0 cursor-pointer"
+            id="notification_close_btn"
+            name="notification_close_btn"
+            onClick={() => setPopoverOpen(false)}
+            className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors bg-transparent border-0 cursor-pointer"
+            aria-label="Close Notifications"
+            title="Close Notifications"
           >
-            Mark all read
+            <CloseOutlined className="text-xs" />
           </button>
-        )}
+        </div>
       </div>
 
       <div className="my-2 max-h-64 overflow-y-auto space-y-2 pr-1">
@@ -144,7 +159,7 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
             <div className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto text-sm">
               <CheckOutlined />
             </div>
-            <p className="font-bold text-xs text-slate-800 m-0">All Caught Up!</p>
+            <p className="font-bold text-xs text-slate-800 dark:text-slate-200 m-0">All Caught Up!</p>
             <p className="text-[10px] text-slate-400 m-0">No new unread notifications at this time.</p>
           </div>
         ) : (
@@ -156,14 +171,14 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
                 setPopoverOpen(false);
                 navigate(n.link);
               }}
-              className="p-2.5 rounded-lg bg-slate-50 border border-slate-100 hover:border-blue-300 transition-all cursor-pointer flex items-start space-x-2.5 group"
+              className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-500 transition-all cursor-pointer flex items-start space-x-2.5 group"
             >
               <div className="mt-0.5 shrink-0 text-sm">{n.icon}</div>
               <div className="min-w-0 flex-1 space-y-0.5">
-                <p className="font-bold text-xs text-slate-900 m-0 leading-tight group-hover:text-blue-600 transition-colors">
+                <p className="font-bold text-xs text-slate-900 dark:text-white m-0 leading-tight group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                   {n.title}
                 </p>
-                <p className="text-[10px] text-slate-500 m-0 truncate">
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 m-0 truncate">
                   {n.subtitle}
                 </p>
               </div>
@@ -172,21 +187,32 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
         )}
       </div>
 
-      <div className="pt-2 border-t border-slate-100 text-[10px] text-slate-400 flex justify-between items-center">
-        <span>SmartMeeting Alerts</span>
+      <div className="pt-2 border-t border-slate-100 dark:border-slate-800 text-[10px] text-slate-400 flex justify-between items-center">
         <button
           type="button"
+          id="notification_footer_close_btn"
+          name="notification_footer_close_btn"
+          onClick={() => setPopoverOpen(false)}
+          className="text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white font-semibold bg-transparent border-0 cursor-pointer flex items-center gap-1 text-[11px]"
+        >
+          <CloseOutlined className="text-[10px]" /> Close
+        </button>
+        <button
+          type="button"
+          id="notification_view_actions_btn"
+          name="notification_view_actions_btn"
           onClick={() => {
             setPopoverOpen(false);
             navigate('/my-actions');
           }}
-          className="no-underline text-blue-600 font-bold hover:underline bg-transparent border-0 cursor-pointer text-[10px]"
+          className="no-underline text-blue-600 dark:text-blue-400 font-bold hover:underline bg-transparent border-0 cursor-pointer text-[10px]"
         >
           View Actions →
         </button>
       </div>
     </div>
   );
+
 
   const userMenuItems = [
     {
@@ -343,11 +369,15 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
               title="Open Navigation Menu"
             />
             <div className={`items-center shrink-0 ${collapsed ? 'flex' : 'flex lg:hidden'}`}>
-              <Link to="/dashboard" className="no-underline flex items-center">
-                <Logo variant="icon" height={28} className="sm:hidden" />
-                <Logo variant="full" height={30} className="hidden sm:block" />
+              <Link to="/dashboard" className="no-underline flex items-center space-x-2">
+                <Logo variant="icon" height={28} />
+                <span className="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white tracking-tight flex items-center">
+                  Smart<span className="text-blue-600 dark:text-blue-400">Meeting</span>
+                  <span className="hidden sm:inline-block ml-1 text-[10px] sm:text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Tracker</span>
+                </span>
               </Link>
             </div>
+
           </div>
 
           {/* Right Controls: Date Badge, Notifications & Profile */}

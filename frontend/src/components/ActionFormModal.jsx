@@ -227,6 +227,8 @@ export const ActionFormModal = ({
               className="!mb-0"
             >
               <Select
+                id="action_meeting_id"
+                name="meeting_id"
                 showSearch
                 placeholder="Select meeting"
                 optionFilterProp="children"
@@ -243,6 +245,8 @@ export const ActionFormModal = ({
                 className="!mb-0"
               >
                 <Select
+                  id="action_decision_id"
+                  name="decision"
                   placeholder="Select decision topic"
                   options={decisionsList.map(d => ({ label: d.title, value: d.id }))}
                   className="w-full"
@@ -258,7 +262,7 @@ export const ActionFormModal = ({
           rules={[{ required: true, message: 'Please enter action title' }]}
           className="!mb-0"
         >
-          <Input placeholder="e.g. Create proof of concept for Elasticsearch" className="w-full" />
+          <Input id="action_title" name="title" placeholder="e.g. Create proof of concept for Elasticsearch" className="w-full" />
         </Form.Item>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -269,6 +273,8 @@ export const ActionFormModal = ({
             className="!mb-0"
           >
             <Select
+              id="action_assigned_to"
+              name="assigned_to"
               showSearch
               placeholder={currentMeetingId && meetingParticipants.length > 0 ? "Select meeting participant" : "Select team member"}
               optionFilterProp="children"
@@ -283,13 +289,15 @@ export const ActionFormModal = ({
             rules={[{ required: true, message: 'Please set due date' }]}
             className="!mb-0"
           >
-            <DatePicker className="w-full" />
+            <DatePicker id="action_due_date" name="due_date" className="w-full" />
           </Form.Item>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Form.Item name="priority" label="Priority" className="!mb-0">
             <Select
+              id="action_priority"
+              name="priority"
               options={[
                 { label: 'Low', value: 'LOW' },
                 { label: 'Medium', value: 'MEDIUM' },
@@ -302,6 +310,8 @@ export const ActionFormModal = ({
 
           <Form.Item name="status" label="Initial Status" className="!mb-0">
             <Select
+              id="action_status"
+              name="status"
               options={[
                 { label: 'Todo', value: 'TODO' },
                 { label: 'In Progress', value: 'IN_PROGRESS' },
@@ -325,6 +335,8 @@ export const ActionFormModal = ({
           className="!mb-0"
         >
           <Select
+            id="action_dependency_ids"
+            name="dependency_ids"
             mode="multiple"
             placeholder={
               currentMeetingId
@@ -340,7 +352,7 @@ export const ActionFormModal = ({
         </Form.Item>
 
         <Form.Item name="description" label="Detailed Instructions" className="!mb-0">
-          <Input.TextArea rows={2} placeholder="Describe specific execution steps..." className="w-full" />
+          <Input.TextArea id="action_description" name="description" rows={2} placeholder="Describe specific execution steps..." className="w-full" />
         </Form.Item>
 
         <Form.Item noStyle shouldUpdate={(prevValues, currentValues) => prevValues.status !== currentValues.status}>
@@ -351,7 +363,7 @@ export const ActionFormModal = ({
                 label="Completion Notes / Work Outcome (Delivered Results)"
                 className="!mb-0"
               >
-                <Input.TextArea rows={2} placeholder="Explain what work was completed, results achieved, or links to deliverables..." className="w-full" />
+                <Input.TextArea id="action_completion_notes" name="completion_notes" rows={2} placeholder="Explain what work was completed, results achieved, or links to deliverables..." className="w-full" />
               </Form.Item>
             ) : null
           }

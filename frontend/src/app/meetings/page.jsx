@@ -151,7 +151,7 @@ export default function MeetingsPage() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full max-w-full overflow-x-hidden">
       
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-xs transition-colors duration-200">
@@ -171,6 +171,8 @@ export default function MeetingsPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-3">
           
           <Input
+            id="meetings_app_search"
+            name="search"
             prefix={<SearchOutlined className="text-slate-400" />}
             placeholder="Search meeting title or location..."
             value={search}
@@ -179,6 +181,8 @@ export default function MeetingsPage() {
           />
 
           <Select
+            id="meetings_app_filter_type"
+            name="meeting_type"
             placeholder="Filter by Meeting Type"
             value={meetingType || undefined}
             onChange={(val) => { setMeetingType(val); setPage(1); }}
@@ -194,6 +198,8 @@ export default function MeetingsPage() {
           />
 
           <Select
+            id="meetings_app_filter_status"
+            name="status"
             placeholder="Filter by Status"
             value={status || undefined}
             onChange={(val) => { setStatus(val); setPage(1); }}
@@ -207,6 +213,8 @@ export default function MeetingsPage() {
           />
 
           <RangePicker
+            id="meetings_app_date_range"
+            name="date_range"
             value={
               dateRange && dateRange[0] && dateRange[1]
                 ? [dayjs(dateRange[0]), dayjs(dateRange[1])]

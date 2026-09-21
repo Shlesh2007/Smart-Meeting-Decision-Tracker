@@ -1,20 +1,22 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Modal, Avatar, Tag, Descriptions, Button, Form, Input, message, Alert } from 'antd';
+import { Modal, Avatar, Tag, Descriptions, Button, Form, Input, Alert, App } from 'antd';
 import { 
   UserOutlined, MailOutlined, IdcardOutlined, CalendarOutlined, 
   TeamOutlined, EditOutlined, SafetyCertificateOutlined, 
   LockOutlined, CheckOutlined, ArrowLeftOutlined, KeyOutlined,
-  DeleteOutlined, WarningOutlined, ExclamationCircleOutlined
+  DeleteOutlined, WarningOutlined, ExclamationCircleOutlined, CloseOutlined
 } from '@ant-design/icons';
 import { format } from 'date-fns';
 import { useAuth } from '../context/AuthContext.jsx';
 import { authService } from '../services/api.js';
 
 export const ProfileModal = ({ open, onClose, user }) => {
+  const { message } = App.useApp();
   const { logout, refreshUser } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
+
   const [loading, setLoading] = useState(false);
 
   // Email Change Flow State
@@ -170,6 +172,8 @@ export const ProfileModal = ({ open, onClose, user }) => {
             {!isEditing && (
               <Button
                 type="text"
+                id="profile_header_edit_btn"
+                name="profile_header_edit_btn"
                 icon={<EditOutlined className="text-blue-600 dark:text-blue-400" />}
                 onClick={() => setIsEditing(true)}
                 className="text-blue-600 dark:text-blue-400 font-semibold hover:bg-blue-50 dark:hover:bg-slate-800"
@@ -188,6 +192,9 @@ export const ProfileModal = ({ open, onClose, user }) => {
           isEditing ? [
             <Button 
               key="cancel" 
+              id="profile_footer_cancel_btn"
+              name="profile_footer_cancel_btn"
+              icon={<CloseOutlined />}
               onClick={() => {
                 form.resetFields();
                 setIsEditing(false);
@@ -198,6 +205,8 @@ export const ProfileModal = ({ open, onClose, user }) => {
             </Button>,
             <Button 
               key="save" 
+              id="profile_footer_save_btn"
+              name="profile_footer_save_btn"
               type="primary" 
               loading={loading}
               onClick={() => form.submit()}
@@ -206,11 +215,23 @@ export const ProfileModal = ({ open, onClose, user }) => {
               Save Changes
             </Button>,
           ] : [
-            <Button key="close" type="primary" onClick={onClose} className="bg-slate-900 hover:bg-slate-800 font-semibold text-white">
+            <Button 
+              key="close" 
+              id="profile_footer_close_btn"
+              name="profile_footer_close_btn"
+              type="primary" 
+              icon={<CloseOutlined />}
+              onClick={() => {
+                setIsEditing(false);
+                onClose();
+              }} 
+              className="bg-slate-900 hover:bg-slate-800 font-semibold text-white flex items-center gap-1.5"
+            >
               Close Profile
             </Button>,
           ]
         }
+
         width={560}
       >
         <div className="py-3 space-y-5">
@@ -315,7 +336,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
                   name="first_name"
                   rules={[{ required: true, message: 'First name is required' }]}
                 >
-                  <Input prefix={<UserOutlined className="text-slate-400" />} placeholder="John" size="large" className="rounded-lg" />
+                  <Input id="profile_first_name" name="first_name" prefix={<UserOutlined className="text-slate-400" />} placeholder="John" size="large" className="rounded-lg" />
                 </Form.Item>
 
                 <Form.Item
@@ -323,7 +344,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
                   name="last_name"
                   rules={[{ required: true, message: 'Last name is required' }]}
                 >
-                  <Input prefix={<UserOutlined className="text-slate-400" />} placeholder="Doe" size="large" className="rounded-lg" />
+                  <Input id="profile_last_name" name="last_name" prefix={<UserOutlined className="text-slate-400" />} placeholder="Doe" size="large" className="rounded-lg" />
                 </Form.Item>
               </div>
 
@@ -392,10 +413,12 @@ export const ProfileModal = ({ open, onClose, user }) => {
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+                <label htmlFor="profile_new_email" className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
                   Enter New Email Address
                 </label>
                 <Input
+                  id="profile_new_email"
+                  name="new_email"
                   prefix={<MailOutlined className="text-slate-400" />}
                   placeholder="e.g. new.email@company.com"
                   size="large"
@@ -410,8 +433,10 @@ export const ProfileModal = ({ open, onClose, user }) => {
               </div>
 
               <div className="flex justify-end space-x-2 pt-2">
-                <Button onClick={resetEmailFlow}>Cancel</Button>
+                <Button id="email_step1_cancel_btn" name="email_step1_cancel_btn" icon={<CloseOutlined />} onClick={resetEmailFlow}>Cancel</Button>
                 <Button
+                  id="email_step1_send_btn"
+                  name="email_step1_send_btn"
                   type="primary"
                   icon={<MailOutlined />}
                   loading={emailLoading}
@@ -436,10 +461,12 @@ export const ProfileModal = ({ open, onClose, user }) => {
               </div>
 
               <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+                <label htmlFor="profile_email_otp" className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
                   Enter 6-Digit Verification Code
                 </label>
                 <Input
+                  id="profile_email_otp"
+                  name="email_otp"
                   prefix={<KeyOutlined className="text-blue-500" />}
                   placeholder="123456"
                   maxLength={6}
@@ -453,6 +480,8 @@ export const ProfileModal = ({ open, onClose, user }) => {
                   <span>Code valid for 10 minutes.</span>
                   <button
                     type="button"
+                    id="profile_resend_otp_btn"
+                    name="profile_resend_otp_btn"
                     onClick={handleRequestEmailOTP}
                     disabled={emailLoading}
                     className="text-blue-600 dark:text-blue-400 font-semibold hover:underline bg-transparent border-0 p-0 cursor-pointer"
@@ -465,6 +494,8 @@ export const ProfileModal = ({ open, onClose, user }) => {
               <div className="flex justify-between items-center pt-2">
                 <Button
                   type="text"
+                  id="email_step2_change_email_btn"
+                  name="email_step2_change_email_btn"
                   icon={<ArrowLeftOutlined />}
                   onClick={() => setEmailStep(1)}
                   className="text-xs font-medium text-slate-500 hover:text-slate-800"
@@ -472,8 +503,10 @@ export const ProfileModal = ({ open, onClose, user }) => {
                   Change Email
                 </Button>
                 <div className="space-x-2">
-                  <Button onClick={resetEmailFlow}>Cancel</Button>
+                  <Button id="email_step2_cancel_btn" name="email_step2_cancel_btn" icon={<CloseOutlined />} onClick={resetEmailFlow}>Cancel</Button>
                   <Button
+                    id="email_step2_verify_btn"
+                    name="email_step2_verify_btn"
                     type="primary"
                     icon={<CheckOutlined />}
                     loading={emailLoading}
@@ -522,10 +555,12 @@ export const ProfileModal = ({ open, onClose, user }) => {
           )}
 
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+            <label htmlFor="delete_password" className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
               Confirm Account Deletion
             </label>
             <Input.Password
+              id="delete_password"
+              name="delete_password"
               prefix={<LockOutlined className="text-slate-400" />}
               placeholder="Enter your password to confirm"
               size="large"
@@ -537,6 +572,8 @@ export const ProfileModal = ({ open, onClose, user }) => {
               Or type <strong className="text-red-600 dark:text-red-400">DELETE</strong> below if signed in with Google/GitHub:
             </p>
             <Input
+              id="delete_confirmation_text"
+              name="delete_confirmation_text"
               placeholder="Type DELETE to confirm"
               size="large"
               value={deleteConfirmationText}
@@ -547,6 +584,9 @@ export const ProfileModal = ({ open, onClose, user }) => {
 
           <div className="flex justify-end space-x-2 pt-3 border-t border-slate-100 dark:border-slate-800">
             <Button 
+              id="delete_modal_cancel_btn"
+              name="delete_modal_cancel_btn"
+              icon={<CloseOutlined />}
               onClick={() => {
                 setShowDeleteModal(false);
                 setDeletePassword('');
@@ -557,6 +597,8 @@ export const ProfileModal = ({ open, onClose, user }) => {
               Cancel
             </Button>
             <Button
+              id="delete_modal_confirm_btn"
+              name="delete_modal_confirm_btn"
               type="primary"
               danger
               icon={<DeleteOutlined />}
@@ -569,6 +611,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
           </div>
         </div>
       </Modal>
+
     </>
   );
 };

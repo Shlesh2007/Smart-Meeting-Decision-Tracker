@@ -1,26 +1,29 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { Link, useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { authService } from '../../services/api.js';
 import { Logo } from '../../components/Logo.jsx';
-import { Form, Input, Button, Card, message, Typography, Modal, Divider, Steps } from 'antd';
+import { Form, Input, Button, Card, Typography, Modal, Divider, Steps, Alert, Tag, App } from 'antd';
 import {
   UserOutlined, LockOutlined, ThunderboltOutlined, InfoCircleOutlined,
-  GoogleOutlined, GithubOutlined, MailOutlined, SafetyCertificateOutlined, CheckCircleOutlined
+  GoogleOutlined, GithubOutlined, MailOutlined, SafetyCertificateOutlined,
+  CheckCircleOutlined, SafetyOutlined, TeamOutlined, CrownOutlined, KeyOutlined
 } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
 
 export default function LoginPage() {
+  const { message } = App.useApp();
   const { login, refreshUser } = useAuth();
   const navigate = useNavigate();
+
   const [submitting, setSubmitting] = useState(false);
   const [oauthLoading, setOauthLoading] = useState(null);
-  const passwordInputRef = React.useRef(null);
+  const passwordInputRef = useRef(null);
 
   // OTP Password Reset Wizard States
   const [isForgotModalOpen, setIsForgotModalOpen] = useState(false);
-  const [resetStep, setResetStep] = useState(0); // 0: Request OTP, 1: Verify OTP, 2: New Password, 3: Success
+  const [resetStep, setResetStep] = useState(0);
   const [resetEmail, setResetEmail] = useState('');
   const [otpCode, setOtpCode] = useState('');
   const [otpLoading, setOtpLoading] = useState(false);
@@ -30,15 +33,26 @@ export default function LoginPage() {
   const [verifyOtpForm] = Form.useForm();
   const [newPasswordForm] = Form.useForm();
 
-  React.useEffect(() => {
+  useEffect(() => {
     loginForm.resetFields();
   }, [loginForm]);
+
+  const fillQuickCredentials = (username, password) => {
+    loginForm.setFieldsValue({ username, password });
+    message.info(`Auto-filled demo credentials for: ${username}`);
+  };
 
   const onFinish = async (values) => {
     setSubmitting(true);
     try {
-      await login(values);
-      message.success('Logged in successfully!');
+      const userProfile = await login(values);
+      message.success(`Welcome back, ${userProfile?.full_name || values.username}!`);
+      
+      if (userProfile?.role === 'ADMIN' || userProfile?.role === 'OWNER') {
+        navigate('/admin');
+      } else {
+        navigate('/dashboard');
+      }
     } catch (err) {
       const msg = err.response?.data?.detail || 'Invalid username or password.';
       message.error(msg);
@@ -47,10 +61,9 @@ export default function LoginPage() {
     }
   };
 
-  const processedOAuthRef = React.useRef(false);
+  const processedOAuthRef = useRef(false);
 
-  // Auto-handle OAuth Callbacks on Page Load
-  React.useEffect(() => {
+  useEffect(() => {
     if (typeof window === 'undefined') return;
     if (processedOAuthRef.current) return;
 
@@ -60,15 +73,18 @@ export default function LoginPage() {
 
     if (code) {
       processedOAuthRef.current = true;
-      // Strip single-use code from URL immediately to prevent duplicate code submissions on re-renders
       window.history.replaceState({}, document.title, window.location.pathname);
 
       setOauthLoading('github');
       authService.loginWithGithub({ code })
         .then(async (data) => {
-          await refreshUser();
+          const profile = await refreshUser();
           message.success(data.message || 'Logged in with GitHub successfully!');
-          navigate('/dashboard');
+          if (profile?.role === 'ADMIN' || profile?.role === 'OWNER') {
+            navigate('/admin');
+          } else {
+            navigate('/dashboard');
+          }
         })
         .catch((err) => {
           const errMsg = err.response?.data?.error || 'GitHub authentication failed.';
@@ -77,7 +93,6 @@ export default function LoginPage() {
         });
     } else if (hash && hash.includes('access_token')) {
       processedOAuthRef.current = true;
-      // Strip access_token hash from URL immediately to prevent duplicate submissions
       window.history.replaceState({}, document.title, window.location.pathname);
 
       const hashParams = new URLSearchParams(hash.replace('#', '?'));
@@ -86,9 +101,13 @@ export default function LoginPage() {
         setOauthLoading('google');
         authService.loginWithGoogle({ credential: token })
           .then(async (data) => {
-            await refreshUser();
+            const profile = await refreshUser();
             message.success(data.message || 'Logged in with Google successfully!');
-            navigate('/dashboard');
+            if (profile?.role === 'ADMIN' || profile?.role === 'OWNER') {
+              navigate('/admin');
+            } else {
+              navigate('/dashboard');
+            }
           })
           .catch((err) => {
             const errMsg = err.response?.data?.error || 'Google authentication failed.';
@@ -99,25 +118,58 @@ export default function LoginPage() {
     }
   }, [navigate, refreshUser]);
 
-  // Direct Google OAuth Login Handler - Launches Real Google Consent Screen
   const handleGoogleOAuth = () => {
     setOauthLoading('google');
-    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '1051715789667-m86kur6hnaciip8cp4ghoq08eeso6et3.apps.googleusercontent.com';
-    const redirectUri = encodeURIComponent(`${window.location.origin}/login`);
+    const clientId = (typeof import.meta !== 'undefined' && (import.meta.env?.VITE_GOOGLE_CLIENT_ID || import.meta.env?.NEXT_PUBLIC_GOOGLE_CLIENT_ID)) || '1051715789667-m86kur6hnaciip8cp4ghoq08eeso6et3.apps.googleusercontent.com';
+    const envRedirect = (typeof import.meta !== 'undefined' && (import.meta.env?.VITE_GOOGLE_REDIRECT_URI || import.meta.env?.NEXT_PUBLIC_GOOGLE_REDIRECT_URI)) || '';
+    const rawRedirect = envRedirect || `${window.location.origin}/login`;
+    const redirectUri = encodeURIComponent(rawRedirect);
+    console.log(`🔑 Initiating Google OAuth with redirect_uri: ${rawRedirect}`);
     const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&scope=email%20profile&prompt=select_account`;
-    window.location.href = googleAuthUrl;
+
+    const isWebView = typeof window !== 'undefined' && (
+      window.WebToNative ||
+      /wv|WebView|Version\/[0-9.]+/i.test(navigator.userAgent)
+    );
+
+    if (isWebView && window.WebToNative?.openInBrowser) {
+      window.WebToNative.openInBrowser(googleAuthUrl);
+      setTimeout(() => setOauthLoading(null), 3000);
+    } else if (isWebView) {
+      window.open(googleAuthUrl, '_system');
+      setTimeout(() => setOauthLoading(null), 3000);
+    } else {
+      window.location.href = googleAuthUrl;
+    }
   };
 
-  // Direct GitHub OAuth Login Handler - Launches Real GitHub Authorization
   const handleGithubOAuth = () => {
     setOauthLoading('github');
-    const clientId = process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID || 'Ov23li85R8iyZCz0Yn3h';
-    const redirectUri = encodeURIComponent(`${window.location.origin}/login`);
+    const clientId = (typeof import.meta !== 'undefined' && (import.meta.env?.VITE_GITHUB_CLIENT_ID || import.meta.env?.NEXT_PUBLIC_GITHUB_CLIENT_ID)) || 'Ov23li85R8iyZCz0Yn3h';
+    const envRedirect = (typeof import.meta !== 'undefined' && (import.meta.env?.VITE_GITHUB_REDIRECT_URI || import.meta.env?.NEXT_PUBLIC_GITHUB_REDIRECT_URI)) || '';
+    const rawRedirect = envRedirect || `${window.location.origin}/login`;
+    const redirectUri = encodeURIComponent(rawRedirect);
+    console.log(`🔑 Initiating GitHub OAuth with redirect_uri: ${rawRedirect}`);
     const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=user:email&prompt=consent`;
-    window.location.href = githubAuthUrl;
+
+    const isWebView = typeof window !== 'undefined' && (
+      window.WebToNative ||
+      /wv|WebView|Version\/[0-9.]+/i.test(navigator.userAgent)
+    );
+
+    if (isWebView && window.WebToNative?.openInBrowser) {
+      window.WebToNative.openInBrowser(githubAuthUrl);
+      setTimeout(() => setOauthLoading(null), 3000);
+    } else if (isWebView) {
+      window.open(githubAuthUrl, '_system');
+      setTimeout(() => setOauthLoading(null), 3000);
+    } else {
+      window.location.href = googleAuthUrl;
+    }
   };
 
-  // Step 1: Request OTP
+
+
   const handleRequestOTP = async (values) => {
     setOtpLoading(true);
     try {
@@ -129,7 +181,7 @@ export default function LoginPage() {
       console.error('Request OTP Error:', err);
       const msg = err.response?.data?.error 
         || err.response?.data?.detail 
-        || (err.message === 'Network Error' ? 'Network Error: Unable to connect to backend server. Please check NEXT_PUBLIC_API_URL on Vercel.' : err.message) 
+        || (err.message === 'Network Error' ? 'Network Error: Unable to connect to backend server.' : err.message) 
         || 'Failed to send OTP code.';
       message.error(msg);
     } finally {
@@ -137,7 +189,6 @@ export default function LoginPage() {
     }
   };
 
-  // Step 2: Verify OTP Code
   const handleVerifyOTP = async (values) => {
     setOtpLoading(true);
     try {
@@ -153,7 +204,6 @@ export default function LoginPage() {
     }
   };
 
-  // Step 3: Set New Password
   const handleConfirmNewPassword = async (values) => {
     if (values.new_password !== values.confirm_password) {
       message.error('Passwords do not match.');
@@ -197,14 +247,14 @@ export default function LoginPage() {
       <div className="absolute top-1/4 -left-20 w-96 h-96 bg-blue-600/25 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-indigo-600/25 rounded-full blur-3xl pointer-events-none" />
 
-      {/* Header & Brand Logo */}
-      <div className="relative z-10 w-full text-center mb-6">
-        <Logo variant="icon" height={56} className="mx-auto mb-3 drop-shadow-md" />
+      {/* Brand Logo & Title Header */}
+      <div className="relative z-10 w-full text-center mb-6 max-w-md">
+        <Logo variant="icon" height={52} className="mx-auto mb-3 drop-shadow-md" />
         <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight m-0">
           Sign In to Your Account
         </h1>
         <p className="text-xs sm:text-sm text-slate-300 max-w-xs mx-auto mt-1.5 leading-relaxed">
-          Manage meetings, record decisions & track follow-up dependencies
+          Access your team meetings, action items, and decision logs
         </p>
       </div>
 
@@ -212,10 +262,55 @@ export default function LoginPage() {
       <div className="relative z-10 w-full max-w-md">
         <Card
           style={{ width: '100%', borderRadius: '20px', boxSizing: 'border-box' }}
-          styles={{ body: { padding: '28px 24px' } }}
-          className="shadow-2xl border border-white/20 bg-white/95 dark:bg-slate-900/90 backdrop-blur-xl"
+          styles={{ body: { padding: '24px 24px' } }}
+          className="shadow-2xl border backdrop-blur-xl border-white/20 bg-white/95 dark:bg-slate-900/90 transition-all duration-300"
         >
+          {/* Quick Demo Credentials Autofill Shortcuts */}
+          <div className="mb-4 pt-1 pb-3 px-3 bg-slate-100 dark:bg-slate-800/80 rounded-xl border border-slate-200 dark:border-slate-700/60">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 flex items-center space-x-1">
+                <KeyOutlined className="text-xs" />
+                <span>Quick Demo Credentials:</span>
+              </span>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+              <button
+                type="button"
+                onClick={() => fillQuickCredentials('Shlesh', 'Shlesh@17')}
+                className="py-1.5 px-2 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 rounded-lg text-xs font-bold text-amber-600 dark:text-amber-400 transition-colors flex items-center justify-center space-x-1 cursor-pointer"
+              >
+                <CrownOutlined className="text-amber-500" />
+                <span>Shlesh</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => fillQuickCredentials('admin', 'admin123')}
+                className="py-1.5 px-2 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 border border-slate-200 dark:border-slate-600 rounded-lg text-xs font-medium text-slate-700 dark:text-slate-200 transition-colors flex items-center justify-center space-x-1 cursor-pointer"
+              >
+                <SafetyOutlined className="text-blue-500" />
+                <span>Admin</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => fillQuickCredentials('organizer', 'password123')}
+                className="py-1.5 px-2 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 border border-slate-200 dark:border-slate-600 rounded-lg text-xs font-medium text-slate-700 dark:text-slate-200 transition-colors flex items-center justify-center space-x-1 cursor-pointer"
+              >
+                <UserOutlined className="text-indigo-500" />
+                <span>Organizer</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => fillQuickCredentials('member', 'password123')}
+                className="py-1.5 px-2 bg-white dark:bg-slate-700 hover:bg-slate-50 dark:hover:bg-slate-600 border border-slate-200 dark:border-slate-600 rounded-lg text-xs font-medium text-slate-700 dark:text-slate-200 transition-colors flex items-center justify-center space-x-1 cursor-pointer"
+              >
+                <TeamOutlined className="text-emerald-500" />
+                <span>Member</span>
+              </button>
+            </div>
+          </div>
+
           <Form
+
             form={loginForm}
             name="login_form"
             layout="vertical"
@@ -229,9 +324,11 @@ export default function LoginPage() {
               rules={[{ required: true, message: 'Please enter your username!' }]}
             >
               <Input
+                id="login_app_username"
+                name="username"
                 prefix={<UserOutlined className="text-gray-400" />}
-                placeholder="e.g. admin or john_doe"
-                autoComplete="off"
+                placeholder="Username or email"
+                autoComplete="username"
                 onPressEnter={(e) => {
                   e.preventDefault();
                   passwordInputRef.current?.focus();
@@ -246,10 +343,12 @@ export default function LoginPage() {
               className="mb-1"
             >
               <Input.Password
+                id="login_app_password"
+                name="password"
                 ref={passwordInputRef}
                 prefix={<LockOutlined className="text-gray-400" />}
                 placeholder="••••••••"
-                autoComplete="new-password"
+                autoComplete="current-password"
               />
             </Form.Item>
 
@@ -267,13 +366,18 @@ export default function LoginPage() {
             </div>
 
             <Form.Item className="mt-4 mb-2">
-              <Button type="primary" htmlType="submit" loading={submitting} block className="font-semibold bg-blue-600 hover:bg-blue-700 rounded-xl border-none">
+              <Button
+                type="primary"
+                htmlType="submit"
+                loading={submitting}
+                block
+                className="font-semibold rounded-xl border-none bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/30"
+              >
                 Sign In
               </Button>
             </Form.Item>
           </Form>
 
-          {/* OAuth 2.0 Buttons */}
           <Divider style={{ margin: '16px 0', fontSize: '12px', color: '#94a3b8' }}>
             <span style={{ whiteSpace: 'nowrap' }}>Or continue with</span>
           </Divider>
@@ -298,7 +402,8 @@ export default function LoginPage() {
               GitHub
             </Button>
           </div>
-          <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700 text-center text-sm text-slate-600 dark:text-slate-400">
+
+          <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700/80 text-center text-sm text-slate-600 dark:text-slate-400">
             Don't have an account?{' '}
             <Link to="/register" className="font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-500 no-underline">
               Register now
@@ -307,7 +412,6 @@ export default function LoginPage() {
         </Card>
       </div>
 
-      {/* 3-Step OTP Password Reset Modal */}
       <Modal
         title="Reset Password via OTP"
         open={isForgotModalOpen}
@@ -328,7 +432,6 @@ export default function LoginPage() {
             ]}
           />
 
-          {/* STEP 0: Request OTP */}
           {resetStep === 0 && (
             <Form form={requestOtpForm} layout="vertical" onFinish={handleRequestOTP}>
               <p className="text-sm text-gray-600 mb-4">
@@ -339,18 +442,17 @@ export default function LoginPage() {
                 label="Username or Email Address"
                 rules={[{ required: true, message: 'Please enter your username or email!' }]}
               >
-                <Input prefix={<MailOutlined className="text-gray-400" />} placeholder="e.g. user@example.com or john_doe" />
+                <Input id="reset_app_account" name="account" prefix={<MailOutlined className="text-gray-400" />} placeholder="e.g. user@example.com or john_doe" />
               </Form.Item>
               <div className="flex justify-end space-x-2 mt-6">
                 <Button onClick={closeResetModal}>Cancel</Button>
-                <Button type="primary" htmlType="submit" loading={otpLoading} className="bg-blue-600 hover:bg-blue-700 font-semibold rounded-xl border-none">
+                <Button type="primary" htmlType="submit" loading={otpLoading} className="bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl border-none">
                   Send OTP Code
                 </Button>
               </div>
             </Form>
           )}
 
-          {/* STEP 1: Verify OTP */}
           {resetStep === 1 && (
             <Form form={verifyOtpForm} layout="vertical" onFinish={handleVerifyOTP}>
               <div className="bg-blue-50 dark:bg-slate-800 p-3 rounded-lg border border-blue-100 dark:border-slate-700 mb-4">
@@ -368,6 +470,8 @@ export default function LoginPage() {
                 ]}
               >
                 <Input
+                  id="reset_app_otp_code"
+                  name="otp_code"
                   prefix={<SafetyCertificateOutlined className="text-gray-400" />}
                   placeholder="123456"
                   maxLength={6}
@@ -381,7 +485,7 @@ export default function LoginPage() {
                 </Button>
                 <div className="space-x-2">
                   <Button onClick={closeResetModal}>Cancel</Button>
-                  <Button type="primary" htmlType="submit" loading={otpLoading} className="bg-blue-600 hover:bg-blue-700 font-semibold rounded-xl border-none">
+                  <Button type="primary" htmlType="submit" loading={otpLoading} className="bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl border-none">
                     Verify Code
                   </Button>
                 </div>
@@ -389,7 +493,6 @@ export default function LoginPage() {
             </Form>
           )}
 
-          {/* STEP 2: Set New Password */}
           {resetStep === 2 && (
             <Form form={newPasswordForm} layout="vertical" onFinish={handleConfirmNewPassword}>
               <p className="text-sm text-gray-600 dark:text-slate-300 mb-4">
@@ -404,7 +507,7 @@ export default function LoginPage() {
                   { min: 6, message: 'Password must be at least 6 characters.' }
                 ]}
               >
-                <Input.Password prefix={<LockOutlined className="text-gray-400" />} placeholder="••••••••" />
+                <Input.Password id="reset_app_new_password" name="new_password" prefix={<LockOutlined className="text-gray-400" />} placeholder="••••••••" />
               </Form.Item>
 
               <Form.Item
@@ -412,19 +515,18 @@ export default function LoginPage() {
                 label="Confirm New Password"
                 rules={[{ required: true, message: 'Please confirm your new password!' }]}
               >
-                <Input.Password prefix={<LockOutlined className="text-gray-400" />} placeholder="••••••••" />
+                <Input.Password id="reset_app_confirm_password" name="confirm_password" prefix={<LockOutlined className="text-gray-400" />} placeholder="••••••••" />
               </Form.Item>
 
               <div className="flex justify-end space-x-2 mt-6">
                 <Button onClick={closeResetModal}>Cancel</Button>
-                <Button type="primary" htmlType="submit" loading={otpLoading} className="bg-blue-600 hover:bg-blue-700 font-semibold rounded-xl border-none">
+                <Button type="primary" htmlType="submit" loading={otpLoading} className="bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl border-none">
                   Update Password
                 </Button>
               </div>
             </Form>
           )}
 
-          {/* STEP 3: Success Screen */}
           {resetStep === 3 && (
             <div className="py-6 text-center space-y-3">
               <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto text-2xl">
@@ -435,18 +537,14 @@ export default function LoginPage() {
                 Your password has been updated successfully. You can now sign in with your new password.
               </p>
               <div className="pt-3">
-                <Button type="primary" onClick={closeResetModal} className="bg-blue-600 hover:bg-blue-700 font-semibold rounded-xl border-none px-6">
+                <Button type="primary" onClick={closeResetModal} className="bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl border-none px-6">
                   Sign In Now
                 </Button>
               </div>
-            </div>
+            </div >
           )}
         </div>
       </Modal>
     </div>
   );
 }
-
-
-
-

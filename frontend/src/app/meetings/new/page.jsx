@@ -2,13 +2,15 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { meetingService, userService, teamService } from '../../services/api.js';
 import {
-  Form, Input, Select, DatePicker, TimePicker, Button, Card, message, Checkbox, Radio, ConfigProvider, Popover, Tag
+  Form, Input, Select, DatePicker, TimePicker, Button, Card, Checkbox, Radio, ConfigProvider, Popover, Tag, App
 } from 'antd';
 import { ArrowLeftOutlined, VideoCameraOutlined, EnvironmentOutlined, LockOutlined, MailOutlined, SyncOutlined, TeamOutlined, UserOutlined, RightOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 
 export default function CreateMeetingPage() {
+  const { message } = App.useApp();
   const navigate = useNavigate();
+
   const [form] = Form.useForm();
   const [users, setUsers] = useState([]);
   const [teams, setTeams] = useState([]);
@@ -182,12 +184,12 @@ export default function CreateMeetingPage() {
                 rules={[{ required: true, message: 'Please enter meeting title' }]}
                 className="m-0"
               >
-                <Input placeholder="e.g. Q3 Architecture & API Response Time Review" />
+                <Input id="create_app_meeting_title" name="title" placeholder="e.g. Q3 Architecture & API Response Time Review" />
               </Form.Item>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Form.Item name="meeting_type" label="Meeting Type" rules={[{ required: true }]} className="m-0">
-                  <Select options={[
+                  <Select id="create_app_meeting_type" name="meeting_type" options={[
                     { label: 'Internal', value: 'INTERNAL' },
                     { label: 'Client', value: 'CLIENT' },
                     { label: 'Project', value: 'PROJECT' },
@@ -198,7 +200,7 @@ export default function CreateMeetingPage() {
                 </Form.Item>
 
                 <Form.Item name="location_type" label="Location / Link" rules={[{ required: true }]} className="m-0">
-                  <Select options={[
+                  <Select id="create_app_location_type" name="location_type" options={[
                     { label: '🏢 Conference Room', value: 'CONFERENCE_ROOM' },
                     { label: '📹 Google Meet', value: 'GOOGLE_MEET' }
                   ]} />
@@ -212,7 +214,7 @@ export default function CreateMeetingPage() {
                   rules={[{ required: true, message: 'Please specify conference room' }]}
                   className="m-0"
                 >
-                  <Input prefix={<EnvironmentOutlined className="text-blue-500" />} placeholder="e.g. Conference Room A - Floor 3" />
+                  <Input id="create_app_conference_room" name="conference_room" prefix={<EnvironmentOutlined className="text-blue-500" />} placeholder="e.g. Conference Room A - Floor 3" />
                 </Form.Item>
               ) : (
                 <div className="space-y-3 bg-slate-50 dark:bg-slate-900/50 p-3.5 rounded-xl border border-slate-200 dark:border-slate-700">
@@ -229,11 +231,15 @@ export default function CreateMeetingPage() {
                     className="m-0"
                   >
                     <Input
+                      id="create_app_google_meet_link"
+                      name="google_meet_link"
                       prefix={<VideoCameraOutlined className="text-blue-500 mr-1" />}
                       placeholder="https://meet.google.com/abc-defg-hij"
                       addonAfter={
                         <Form.Item name="access_type" noStyle initialValue="PUBLIC">
                           <Select
+                            id="create_app_access_type"
+                            name="access_type"
                             className="w-40 font-semibold text-xs"
                             options={[
                               { label: 'Public (no pass)', value: 'PUBLIC' },
@@ -252,14 +258,14 @@ export default function CreateMeetingPage() {
                       rules={[{ required: true, message: 'Please enter meeting password' }]}
                       className="m-0 pt-1"
                     >
-                      <Input.Password prefix={<LockOutlined className="text-amber-500" />} placeholder="Enter password" />
+                      <Input.Password id="create_app_google_meet_password" name="google_meet_password" prefix={<LockOutlined className="text-amber-500" />} placeholder="Enter password" />
                     </Form.Item>
                   )}
                 </div>
               )}
 
               <Form.Item name="description" label="Meeting Agenda & Description" className="m-0">
-                <Input.TextArea rows={3} placeholder="Outline key topics to discuss..." />
+                <Input.TextArea id="create_app_meeting_description" name="description" rows={3} placeholder="Outline key topics to discuss..." />
               </Form.Item>
             </div>
 
@@ -273,7 +279,7 @@ export default function CreateMeetingPage() {
                     rules={[{ required: true, message: 'Please select meeting date' }]}
                     className="m-0 sm:col-span-5 min-w-0"
                   >
-                    <DatePicker style={{ width: '100%' }} disabledDate={(current) => current && current.isBefore(dayjs().startOf('day'))} />
+                    <DatePicker id="create_app_meeting_date" name="meeting_date" style={{ width: '100%' }} disabledDate={(current) => current && current.isBefore(dayjs().startOf('day'))} />
                   </Form.Item>
 
                   <Form.Item
@@ -282,7 +288,7 @@ export default function CreateMeetingPage() {
                     rules={[{ required: true, message: 'Please select time range' }]}
                     className="m-0 sm:col-span-7 min-w-0"
                   >
-                    <TimePicker.RangePicker style={{ width: '100%' }} format="HH:mm" />
+                    <TimePicker.RangePicker id="create_app_time_range" name="time_range" style={{ width: '100%' }} format="HH:mm" />
                   </Form.Item>
                 </div>
               </div>
@@ -294,6 +300,8 @@ export default function CreateMeetingPage() {
                 className="m-0"
               >
                 <Select
+                  id="create_app_meeting_team"
+                  name="team"
                   placeholder="Select team"
                   allowClear
                   optionLabelProp="label"
@@ -352,6 +360,8 @@ export default function CreateMeetingPage() {
                 className="m-0"
               >
                 <Select
+                  id="create_app_participant_ids"
+                  name="participant_ids"
                   mode="multiple"
                   placeholder={selectedTeamObj ? "Select additional non-team participants" : "Select team members"}
                   options={availableIndividualUsers.map(u => ({ label: `${u.full_name} • ${u.email} (${u.role})`, value: u.id }))}
@@ -384,6 +394,8 @@ export default function CreateMeetingPage() {
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <Form.Item name="recurrence_pattern" label="Repeat Frequency (How Often)" className="m-0">
                           <Select
+                            id="create_app_recurrence_pattern"
+                            name="recurrence_pattern"
                             options={[
                               { label: '🔁 Daily (Every day)', value: 'DAILY' },
                               { label: '💼 Weekdays (Mon - Fri)', value: 'WEEKDAYS' },
@@ -394,6 +406,8 @@ export default function CreateMeetingPage() {
 
                         <Form.Item name="recurrence_duration" label="Repeat Duration (How Long)" className="m-0">
                           <Select
+                            id="create_app_recurrence_duration"
+                            name="recurrence_duration"
                             options={[
                               { label: 'For 7 Days (1 Week)', value: '7_DAYS' },
                               { label: 'For 14 Days (2 Weeks)', value: '14_DAYS' },
@@ -412,6 +426,8 @@ export default function CreateMeetingPage() {
                           className="m-0"
                         >
                           <DatePicker
+                            id="create_app_recurrence_end_date"
+                            name="recurrence_end_date"
                             style={{ width: '100%' }}
                             disabledDate={(current) => current && current <= dayjs().endOf('day')}
                           />

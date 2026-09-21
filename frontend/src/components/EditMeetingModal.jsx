@@ -144,11 +144,11 @@ export const EditMeetingModal = ({ open, onClose, meeting, onSuccess }) => {
           label="Meeting Title"
           rules={[{ required: true, message: 'Please enter meeting title' }]}
         >
-          <Input placeholder="e.g. Q3 Architecture & API Response Time Review" />
+          <Input id="edit_meeting_title" name="title" placeholder="e.g. Q3 Architecture & API Response Time Review" />
         </Form.Item>
 
         <Form.Item name="description" label="Meeting Agenda & Description">
-          <Input.TextArea rows={3} placeholder="Outline key topics to discuss..." />
+          <Input.TextArea id="edit_meeting_description" name="description" rows={3} placeholder="Outline key topics to discuss..." />
         </Form.Item>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -157,7 +157,7 @@ export const EditMeetingModal = ({ open, onClose, meeting, onSuccess }) => {
             label="Meeting Date"
             rules={[{ required: true, message: 'Please select meeting date' }]}
           >
-            <DatePicker className="w-full" />
+            <DatePicker id="edit_meeting_date" name="meeting_date" className="w-full" />
           </Form.Item>
 
           <Form.Item
@@ -165,13 +165,13 @@ export const EditMeetingModal = ({ open, onClose, meeting, onSuccess }) => {
             label="Start & End Time"
             rules={[{ required: true, message: 'Please select time range' }]}
           >
-            <TimePicker.RangePicker className="w-full" format="HH:mm" />
+            <TimePicker.RangePicker id="edit_meeting_time_range" name="time_range" className="w-full" format="HH:mm" />
           </Form.Item>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Form.Item name="meeting_type" label="Meeting Type" rules={[{ required: true }]}>
-            <Select options={[
+            <Select id="edit_meeting_type" name="meeting_type" options={[
               { label: 'Internal', value: 'INTERNAL' },
               { label: 'Client', value: 'CLIENT' },
               { label: 'Project', value: 'PROJECT' },
@@ -183,6 +183,8 @@ export const EditMeetingModal = ({ open, onClose, meeting, onSuccess }) => {
 
           <Form.Item name="location" label="Location / Link" rules={[{ required: true }]}>
             <Select
+              id="edit_meeting_location"
+              name="location"
               mode="combobox"
               placeholder="Select or enter location / link"
               options={[
@@ -202,6 +204,8 @@ export const EditMeetingModal = ({ open, onClose, meeting, onSuccess }) => {
             label="Assign to Team (Optional)"
           >
             <Select
+              id="edit_meeting_team"
+              name="team"
               placeholder="Select team"
               allowClear
               optionLabelProp="label"
@@ -259,6 +263,8 @@ export const EditMeetingModal = ({ open, onClose, meeting, onSuccess }) => {
             }
           >
             <Select
+              id="edit_meeting_participant_ids"
+              name="participant_ids"
               mode="multiple"
               placeholder={selectedTeamObj ? "Select additional non-team participants" : "Select participants"}
               options={availableIndividualUsers.map(u => ({ label: `${u.full_name} (${u.role})`, value: u.id }))}

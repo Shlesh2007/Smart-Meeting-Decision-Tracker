@@ -189,6 +189,8 @@ export default function MeetingDetail() {
               )}
               <Tooltip title={!canEditMeeting ? 'Only the meeting organizer or an administrator can change meeting status.' : isStatusLocked ? 'Completed or Cancelled meetings are locked. Only Admins can modify status.' : ''}>
                 <Select
+                  id="meeting_detail_status"
+                  name="status"
                   value={meeting.status}
                   onChange={handleStatusChange}
                   loading={updatingStatus}
