@@ -1,5 +1,6 @@
 import uuid
 from datetime import timedelta
+from django.utils import timezone
 from rest_framework import serializers
 from .models import Meeting
 from apps.authentication.serializers import UserSerializer
