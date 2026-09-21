@@ -10,7 +10,12 @@ from datetime import timedelta
 import random
 import requests
 import logging
-from .serializers import UserSerializer, RegisterSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView
+from .serializers import UserSerializer, RegisterSerializer, CustomTokenObtainPairSerializer
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
+
 from .models import PasswordResetOTP
 from .permissions import IsAdminUserRole, CanManageUsersPermission, IsOwnerUserRole, IsManagerUserRole
 from smart_meeting_tracker.email_utils import send_brevo_transactional_email

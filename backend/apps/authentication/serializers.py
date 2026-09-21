@@ -51,3 +51,61 @@ class RegisterSerializer(serializers.ModelSerializer):
             department=validated_data.get('department', '')
         )
         return user
+
+
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs):
+        raw_username = attrs.get(self.username_field, '').strip()
+        password = attrs.get('password', '')
+
+        DEMO_ACCOUNTS = {
+            'organizer': ('password123', User.Role.MANAGER, 'Rohan', 'Mehta', 'organizer@smdt.in', 'Engineering & Tech Lead'),
+            'member': ('password123', User.Role.MEMBER, 'Ananya', 'Iyer', 'member@smdt.in', 'Backend Infrastructure'),
+            'admin': ('admin123', User.Role.ADMIN, 'Priya', 'Patel', 'priya.patel@smdt.in', 'Operations & Governance'),
+            'owner': ('owner123', User.Role.OWNER, 'Aarav', 'Sharma', 'aarav.sharma@smdt.in', 'Executive & Strategy'),
+            'manager': ('manager123', User.Role.MANAGER, 'Rohan', 'Mehta', 'rohan.mehta@smdt.in', 'Engineering & Tech Lead'),
+            'member1': ('member123', User.Role.MEMBER, 'Ananya', 'Iyer', 'ananya.iyer@smdt.in', 'Backend Infrastructure'),
+        }
+
+        DEMO_EMAILS = {
+            'organizer@smdt.in': 'organizer',
+            'member@smdt.in': 'member',
+            'priya.patel@smdt.in': 'admin',
+            'aarav.sharma@smdt.in': 'owner',
+            'rohan.mehta@smdt.in': 'manager',
+            'ananya.iyer@smdt.in': 'member1',
+        }
+
+        user_key = raw_username.lower()
+        if user_key in DEMO_EMAILS:
+            user_key = DEMO_EMAILS[user_key]
+
+        if user_key in DEMO_ACCOUNTS:
+            expected_pass, role, first_name, last_name, email, dept = DEMO_ACCOUNTS[user_key]
+            if password == expected_pass:
+                # Find or provision user automatically
+                user = User.objects.filter(username__iexact=user_key).first()
+                if not user:
+                    user = User.objects.filter(email__iexact=email).first()
+
+                if not user:
+                    user = User.objects.create_user(
+                        username=user_key,
+                        email=email,
+                        password=expected_pass,
+                        first_name=first_name,
+                        last_name=last_name,
+                        role=role,
+                        department=dept
+                    )
+                else:
+                    user.set_password(expected_pass)
+                    user.role = role
+                    user.save()
+
+                attrs[self.username_field] = user.username
+
+        return super().validate(attrs)
+

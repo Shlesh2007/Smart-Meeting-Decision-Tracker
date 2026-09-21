@@ -5,3 +5,6 @@ set -o errexit
 pip install -r requirements.txt
 python manage.py collectstatic --noinput
 python manage.py migrate
+python manage.py seed_data --force
+python seed_user_shlesh.py
+python seed_meeting_activity.py

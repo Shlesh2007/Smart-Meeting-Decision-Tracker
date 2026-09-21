@@ -15,7 +15,19 @@ User = get_user_model()
 class Command(BaseCommand):
     help = 'Wipes existing meeting/action tracker data and seeds rich demo data with Indian names and a fully populated 30-day activity graph.'
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--force',
+            action='store_true',
+            help='Force re-seeding even if data already exists in the database',
+        )
+
     def handle(self, *args, **options):
+        force = options.get('force', False)
+        if not force and Meeting.objects.exists() and User.objects.count() > 3:
+            self.stdout.write(self.style.SUCCESS('Database already contains populated data. Skipping seed.'))
+            return
+
         self.stdout.write(self.style.WARNING('Wiping existing database records...'))
 
         # Clear existing objects in order
@@ -35,6 +47,15 @@ class Command(BaseCommand):
         # 1. Indian Users Creation
         users_data = [
             {
+                'username': 'Shlesh',
+                'email': 'shlesh.darji@smdt.in',
+                'first_name': 'Shlesh',
+                'last_name': 'Darji',
+                'role': User.Role.OWNER,
+                'department': 'Executive & Engineering Strategy',
+                'password': 'Shlesh@17'
+            },
+            {
                 'username': 'owner',
                 'email': 'aarav.sharma@smdt.in',
                 'first_name': 'Aarav',
@@ -51,6 +72,24 @@ class Command(BaseCommand):
                 'role': User.Role.ADMIN,
                 'department': 'Operations & Governance',
                 'password': 'admin123'
+            },
+            {
+                'username': 'organizer',
+                'email': 'organizer@smdt.in',
+                'first_name': 'Rohan',
+                'last_name': 'Mehta',
+                'role': User.Role.MANAGER,
+                'department': 'Engineering & Tech Lead',
+                'password': 'password123'
+            },
+            {
+                'username': 'member',
+                'email': 'member@smdt.in',
+                'first_name': 'Ananya',
+                'last_name': 'Iyer',
+                'role': User.Role.MEMBER,
+                'department': 'Backend Infrastructure',
+                'password': 'password123'
             },
             {
                 'username': 'manager',
@@ -110,6 +149,7 @@ class Command(BaseCommand):
             uObj.save()
             created_users[udata['username']] = uObj
 
+        shlesh = created_users['Shlesh']
         aarav = created_users['owner']
         priya = created_users['admin']
         rohan = created_users['manager']
@@ -118,7 +158,7 @@ class Command(BaseCommand):
         rajesh = created_users['member3']
         neha = created_users['member4']
 
-        all_user_list = [aarav, priya, rohan, ananya, vikram, rajesh, neha]
+        all_user_list = [shlesh, aarav, priya, rohan, ananya, vikram, rajesh, neha]
 
         # 2. Teams
         tech_team = Team.objects.create(
