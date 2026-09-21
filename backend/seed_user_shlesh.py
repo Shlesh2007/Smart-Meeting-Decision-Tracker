@@ -150,8 +150,9 @@ def seed_shlesh_user_and_data():
                 meeting=meeting,
                 title=disc_data["title"],
                 defaults={
-                    'agenda_item': disc_data["agenda"],
-                    'discussion_notes': disc_data["notes"]
+                    'description': f"Agenda: {disc_data.get('agenda', '')}\nNotes: {disc_data.get('notes', '')}".strip(),
+                    'created_by': user,
+                    'priority': Discussion.Priority.MEDIUM
                 }
             )
             decision, _ = Decision.objects.get_or_create(
@@ -170,11 +171,13 @@ def seed_shlesh_user_and_data():
                     defaults={
                         'description': f'Action item generated from meeting decision: {act_data["title"]}',
                         'assigned_to': user,
+                        'created_by': user,
                         'priority': act_data["priority"],
                         'due_date': act_data["due"],
                         'status': act_data["status"]
                     }
                 )
+
 
     print("🎉 All sample data (Teams, Meetings, Decisions, Action Items) seeded successfully for Shlesh!")
 
