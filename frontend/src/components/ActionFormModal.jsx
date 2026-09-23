@@ -325,6 +325,7 @@ export const ActionFormModal = ({
               <Select
                 id="status"
                 name="status"
+                disabled={existingAction?.status === 'COMPLETED' || existingAction?.status === 'CANCELLED'}
                 options={[
                   { label: 'Todo', value: 'TODO' },
                   { label: 'In Progress', value: 'IN_PROGRESS' },

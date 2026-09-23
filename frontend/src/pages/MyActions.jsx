@@ -208,8 +208,7 @@ export default function MyActions() {
       render: (_, record) => {
         const hasIncompleteDeps = record.dependency_details?.some(d => !d.is_completed);
         const isTerminal = record.status === 'COMPLETED' || record.status === 'CANCELLED';
-        const isMember = user?.role === 'MEMBER';
-        const isDisabled = isTerminal && isMember;
+        const isDisabled = isTerminal;
 
         const selectNode = (
           <Select
@@ -236,7 +235,7 @@ export default function MyActions() {
 
         if (isDisabled) {
           return (
-            <Tooltip title="Completed or Cancelled action items are locked for MEMBER role. Contact a Manager or Admin to modify.">
+            <Tooltip title="Completed or Cancelled action items are locked and cannot be changed back to another status.">
               <span>{selectNode}</span>
             </Tooltip>
           );

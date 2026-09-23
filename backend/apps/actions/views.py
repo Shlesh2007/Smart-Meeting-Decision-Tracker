@@ -75,6 +75,12 @@ class ActionItemViewSet(viewsets.ModelViewSet):
         action_item = self.get_object()
         user = self.request.user
 
+        # Prevent changing status if action item is already COMPLETED or CANCELLED
+        new_status = serializer.validated_data.get('status')
+        if action_item.status in [ActionItem.Status.COMPLETED, ActionItem.Status.CANCELLED]:
+            if new_status and new_status != action_item.status:
+                raise permissions.PermissionDenied("Completed or Cancelled action items are locked and cannot be changed back to another status.")
+
         # OWNER and ADMIN can update any field
         if user.is_admin_role:
             serializer.save()

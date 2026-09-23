@@ -48,6 +48,12 @@ class ActionItemSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         target_status = attrs.get('status', self.instance.status if self.instance else ActionItem.Status.TODO)
         
+        if self.instance and self.instance.status in [ActionItem.Status.COMPLETED, ActionItem.Status.CANCELLED]:
+            if 'status' in attrs and attrs['status'] != self.instance.status:
+                raise serializers.ValidationError({
+                    "status": "Completed or Cancelled action items are locked and cannot be changed back to another status."
+                })
+
         # Determine current or proposed dependencies
         if 'dependencies' in attrs:
             proposed_deps = attrs['dependencies']
