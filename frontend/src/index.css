@@ -124,12 +124,53 @@ html, body, #root, header {
 }
 
 /* Ant Design Tabs & Calendar Mobile Responsiveness Overrides */
-.ant-tabs-nav {
+.ant-tabs {
+  width: 100% !important;
   max-width: 100% !important;
+  min-width: 0 !important;
+}
+
+.ant-tabs-nav {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
 }
 
 .ant-tabs-nav-wrap {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
   overflow-x: auto !important;
+  overflow-y: hidden !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+.ant-tabs-nav-list {
+  width: auto !important;
+  max-width: max-content !important;
+  min-width: 0 !important;
+  display: flex !important;
+  flex-shrink: 0 !important;
+  transform: none !important;
+}
+
+.ant-tabs-nav-wrap::before,
+.ant-tabs-nav-wrap::after,
+.ant-tabs-nav-wrap-ping-left::before,
+.ant-tabs-nav-wrap-ping-left::after,
+.ant-tabs-nav-wrap-ping-right::before,
+.ant-tabs-nav-wrap-ping-right::after {
+  display: none !important;
+  box-shadow: none !important;
+  opacity: 0 !important;
+}
+
+.ant-tabs-content-holder,
+.ant-tabs-content,
+.ant-tabs-tabpane {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
 }
 
 .meeting-calendar-custom {

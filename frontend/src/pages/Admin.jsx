@@ -432,7 +432,7 @@ export default function Admin() {
         </Button>
       </div>
 
-      <Card className="shadow-xs rounded-2xl dark:bg-slate-800 dark:border-slate-700/80" styles={{ body: { padding: '12px 16px' } }}>
+      <Card className="shadow-xs rounded-2xl dark:bg-slate-800 dark:border-slate-700/80 w-full max-w-full overflow-hidden" styles={{ body: { padding: '12px 16px', overflowX: 'hidden' } }}>
         <Tabs
           items={[
             {

@@ -368,7 +368,7 @@ export default function AdminPage() {
         </Button>
       </div>
 
-      <Card className="shadow-xs rounded-2xl dark:bg-slate-800 dark:border-slate-700/80">
+      <Card className="shadow-xs rounded-2xl dark:bg-slate-800 dark:border-slate-700/80 w-full max-w-full overflow-hidden" styles={{ body: { padding: '12px 16px', overflowX: 'hidden' } }}>
         <Tabs
           items={[
             {
@@ -382,7 +382,9 @@ export default function AdminPage() {
               children: loading ? (
                 <LoadingSkeleton type="table" />
               ) : (
-                <Table columns={userColumns} dataSource={users} rowKey="id" pagination={{ pageSize: 8 }} scroll={{ x: 'max-content' }} />
+                <div className="overflow-x-auto w-full">
+                  <Table columns={userColumns} dataSource={users} rowKey="id" pagination={{ pageSize: 8 }} scroll={{ x: 750 }} />
+                </div>
               ),
             },
             {
@@ -404,7 +406,9 @@ export default function AdminPage() {
                   <p className="font-medium text-slate-700 dark:text-slate-300 m-0">No department change requests submitted yet.</p>
                 </div>
               ) : (
-                <Table columns={deptColumns} dataSource={deptRequests} rowKey="id" pagination={{ pageSize: 8 }} scroll={{ x: 850 }} />
+                <div className="overflow-x-auto w-full">
+                  <Table columns={deptColumns} dataSource={deptRequests} rowKey="id" pagination={{ pageSize: 8 }} scroll={{ x: 750 }} />
+                </div>
               ),
             },
             {

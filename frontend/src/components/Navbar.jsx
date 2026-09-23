@@ -274,14 +274,23 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
       key: 'profile_info',
       label: (
         <div onClick={() => setShowProfileModal(true)} className="py-1.5 px-0.5 cursor-pointer">
-          <p className="font-bold text-slate-900 m-0">{user.full_name}</p>
-          <p className="text-xs text-slate-500 m-0">{user.email}</p>
+          <p className="font-bold text-slate-900 dark:text-white m-0">{user.full_name || user.username}</p>
+          <p className="text-xs text-slate-500 dark:text-slate-400 m-0">{user.email}</p>
           <span className="text-[11px] text-blue-600 font-semibold block mt-1.5 hover:underline">
             View Profile Details <RightOutlined className="text-[9px]" />
           </span>
         </div>
       ),
     },
+    ...(isAdmin ? [
+      { type: 'divider' },
+      {
+        key: 'admin_portal',
+        icon: <TeamOutlined className="text-blue-600" />,
+        label: <span className="font-bold text-slate-800 dark:text-slate-200">Admin Management Portal</span>,
+        onClick: () => navigate('/admin'),
+      },
+    ] : []),
     { type: 'divider' },
     {
       key: 'logout',

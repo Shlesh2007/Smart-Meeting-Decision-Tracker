@@ -141,7 +141,7 @@ export const UpcomingMeetings = ({ meetings: initialMeetings }) => {
       </div>
 
       {/* Content / Empty State */}
-      <div className="my-2.5 space-y-2 max-h-[220px] overflow-y-auto pr-0.5 flex-1 flex flex-col justify-center">
+      <div className="my-2.5 space-y-2 max-h-[220px] overflow-y-auto pr-0.5 flex-1 flex flex-col justify-start">
         {loading ? (
           <p className="text-center text-slate-400 py-4 text-xs font-semibold">Loading meetings...</p>
         ) : meetings.length === 0 ? (
