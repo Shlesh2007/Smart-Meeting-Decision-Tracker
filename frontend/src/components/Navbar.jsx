@@ -243,16 +243,7 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
         )}
       </div>
 
-      <div className="pt-2 border-t border-slate-100 dark:border-slate-800 text-[10px] text-slate-400 flex justify-between items-center">
-        <button
-          type="button"
-          id="notification_footer_close_btn"
-          name="notification_footer_close_btn"
-          onClick={() => setPopoverOpen(false)}
-          className="text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white font-semibold bg-transparent border-0 cursor-pointer flex items-center gap-1 text-[11px]"
-        >
-          <CloseOutlined className="text-[10px]" /> Close
-        </button>
+      <div className="pt-2 border-t border-slate-100 dark:border-slate-800 text-[10px] text-slate-400 flex justify-end items-center">
         <button
           type="button"
           id="notification_view_actions_btn"
