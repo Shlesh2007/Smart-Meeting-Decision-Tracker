@@ -8,7 +8,7 @@ import {
 } from 'antd';
 import {
   TeamOutlined, UserOutlined, PlusOutlined, SafetyOutlined, LockOutlined,
-  EditOutlined, DeleteOutlined, UsergroupAddOutlined, CrownOutlined, CheckOutlined, CloseOutlined, SolutionOutlined
+  EditOutlined, DeleteOutlined, UsergroupAddOutlined, CrownOutlined, CheckOutlined, CloseOutlined, SolutionOutlined, EyeOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 
@@ -193,18 +193,21 @@ export default function Admin() {
     {
       title: 'Name & Username',
       key: 'name',
-      width: 180,
+      width: 195,
       render: (_, u) => (
         <div 
           onClick={() => setSelectedUserModal(u)}
-          className="cursor-pointer group"
-          title="Click to view full detailed profile"
+          className="cursor-pointer group flex items-center justify-between p-1 -m-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors"
+          title="Tap/click to view detailed member profile"
         >
-          <span className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-1.5 text-xs sm:text-sm group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-            {u.full_name || u.username}
-            {u.role === 'OWNER' && <CrownOutlined className="text-amber-500 text-xs" />}
-          </span>
-          <span className="text-xs text-slate-500 dark:text-slate-400 block group-hover:underline">{u.username}</span>
+          <div className="min-w-0 flex-1">
+            <span className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-1.5 text-xs sm:text-sm group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate">
+              {u.full_name || u.username}
+              {u.role === 'OWNER' && <CrownOutlined className="text-amber-500 text-xs shrink-0" />}
+            </span>
+            <span className="text-xs text-slate-500 dark:text-slate-400 block truncate">{u.username}</span>
+          </div>
+          <EyeOutlined className="text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400 text-xs ml-2 shrink-0" />
         </div>
       ),
     },

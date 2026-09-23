@@ -2,7 +2,7 @@
 
 import React, { useId } from 'react';
 
-export function Logo({ variant = 'full', height = 36, className = '' }) {
+export function Logo({ variant = 'full', height = 36, className = '', isDark = false }) {
   const rawId = useId();
   const uid = rawId ? rawId.replace(/[^a-zA-Z0-9_-]/g, '') : 'logo';
   const bgGradId = `logoBgGrad_${uid}`;
@@ -95,11 +95,11 @@ export function Logo({ variant = 'full', height = 36, className = '' }) {
 
       <g transform="translate(100, 0)">
         <text x="0" y="46" fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" fontWeight="800" fontSize="36" letterSpacing="-0.5">
-          <tspan className="fill-slate-900 dark:fill-white" fill="currentColor">Smart </tspan>
+          <tspan className={isDark ? "fill-white" : "fill-slate-900 dark:fill-white"} fill={isDark ? "#ffffff" : "currentColor"}>Smart </tspan>
           <tspan fill="#2563eb">Meeting</tspan>
         </text>
 
-        <text x="2" y="68" fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" fontWeight="700" fontSize="14" className="fill-slate-500 dark:fill-slate-400" fill="#64748b" letterSpacing="4">
+        <text x="2" y="68" fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" fontWeight="700" fontSize="14" className={isDark ? "fill-slate-300" : "fill-slate-500 dark:fill-slate-400"} fill={isDark ? "#94a3b8" : "#64748b"} letterSpacing="4">
           DECISION TRACKER
         </text>
       </g>

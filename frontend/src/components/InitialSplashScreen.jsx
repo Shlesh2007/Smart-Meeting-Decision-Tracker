@@ -76,7 +76,7 @@ export function InitialSplashScreen({ children }) {
           {/* Application Logo Container with Subtle Scale & Fade */}
           <div className="relative flex items-center justify-center transition-all duration-500 transform">
             <div className="bg-[#0D1530] border border-slate-800/90 p-4 sm:p-5 rounded-2xl shadow-2xl backdrop-blur-md">
-              <Logo variant="full" height={52} />
+              <Logo variant="full" height={52} isDark={true} />
             </div>
           </div>
 

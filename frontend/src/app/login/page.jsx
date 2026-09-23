@@ -253,7 +253,7 @@ export default function LoginPage() {
 
       {/* Brand Logo & Title Header */}
       <div className="relative z-10 w-full text-center mb-6 max-w-md flex flex-col items-center">
-        <Logo variant="full" height={44} className="mx-auto mb-3 drop-shadow-md" />
+        <Logo variant="full" height={44} isDark={true} className="mx-auto mb-3 drop-shadow-md" />
         <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight m-0">
           Sign In to Your Account
         </h1>

@@ -9,10 +9,12 @@ import {
   DeleteOutlined, WarningOutlined, ExclamationCircleOutlined, CloseOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { authService, departmentRequestService } from '../services/api.js';
 
 export const ProfileModal = ({ open, onClose, user }) => {
+  const navigate = useNavigate();
   const { message } = App.useApp();
   const { logout, refreshUser } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
@@ -299,7 +301,23 @@ export const ProfileModal = ({ open, onClose, user }) => {
                 </Descriptions.Item>
 
                 <Descriptions.Item label={<span className="font-semibold text-slate-600 dark:text-slate-400 flex items-center text-xs"><IdcardOutlined className="mr-1.5 text-blue-500" />Account Role</span>}>
-                  <span className="font-bold text-slate-900 dark:text-slate-200 text-xs sm:text-sm">{user.role}</span>
+                  <div className="flex items-center justify-between gap-1 w-full min-w-0">
+                    <span className="font-bold text-slate-900 dark:text-slate-200 text-xs sm:text-sm">{user.role}</span>
+                    {(user.role === 'ADMIN' || user.role === 'OWNER') && (
+                      <Button
+                        type="primary"
+                        size="small"
+                        icon={<TeamOutlined />}
+                        onClick={() => {
+                          onClose();
+                          navigate('/admin');
+                        }}
+                        className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-[11px] rounded-lg border-none shrink-0"
+                      >
+                        Admin Portal →
+                      </Button>
+                    )}
+                  </div>
                 </Descriptions.Item>
 
                 <Descriptions.Item label={<span className="font-semibold text-slate-600 dark:text-slate-400 flex items-center text-xs"><TeamOutlined className="mr-1.5 text-blue-500" />Department</span>}>
