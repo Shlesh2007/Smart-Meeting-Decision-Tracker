@@ -76,18 +76,8 @@ export function InitialSplashScreen({ children }) {
           {/* Application Logo Container with Subtle Scale & Fade */}
           <div className="relative flex items-center justify-center transition-all duration-500 transform">
             <div className="bg-[#0D1530] border border-slate-800/90 p-4 sm:p-5 rounded-2xl shadow-2xl backdrop-blur-md">
-              <Logo variant="icon" height={54} />
+              <Logo variant="full" height={52} />
             </div>
-          </div>
-
-          {/* Consistent Branding: Smart Meeting DECISION TRACKER */}
-          <div className="space-y-1">
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white m-0 font-sans">
-              Smart Meeting
-            </h1>
-            <p className="text-[10px] sm:text-xs font-bold tracking-[0.25em] text-blue-400/90 uppercase m-0">
-              DECISION TRACKER
-            </p>
           </div>
 
           {/* User-Friendly Loading Stage Header */}

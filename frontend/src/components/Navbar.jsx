@@ -417,12 +417,8 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
           {/* Logo Brand Header */}
           <div className="flex items-center space-x-2 shrink-0">
             <div className={`items-center shrink-0 ${collapsed ? 'flex' : 'flex lg:hidden'}`}>
-              <Link to="/dashboard" className="no-underline flex items-center space-x-2">
-                <Logo variant="icon" height={24} />
-                <span className="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white tracking-tight flex items-center">
-                  Smart<span className="text-blue-600 dark:text-blue-400">Meeting</span>
-                  <span className="hidden sm:inline-block ml-1.5 text-[10px] font-semibold uppercase text-slate-400 dark:text-slate-400">Tracker</span>
-                </span>
+              <Link to="/dashboard" className="no-underline flex items-center">
+                <Logo variant="full" height={28} />
               </Link>
             </div>
           </div>

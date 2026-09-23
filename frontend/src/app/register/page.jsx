@@ -40,8 +40,8 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen flex flex-col justify-center items-center w-full px-3 py-6 box-border">
-      <div style={{ width: '100%', textAlign: 'center', marginBottom: '24px' }}>
-        <Logo variant="icon" height={56} className="mx-auto mb-3" />
+      <div style={{ width: '100%', textAlign: 'center', marginBottom: '24px' }} className="flex flex-col items-center">
+        <Logo variant="full" height={44} className="mx-auto mb-3" />
         <h1 style={{ fontSize: '1.4rem', fontWeight: 800, margin: 0 }} className="text-slate-900 dark:text-white tracking-tight">
           Create Your Account
         </h1>

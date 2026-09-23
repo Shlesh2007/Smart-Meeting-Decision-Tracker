@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { userService, teamService, departmentRequestService } from '../services/api.js';
 import { LoadingSkeleton } from '../components/LoadingSkeleton.jsx';
+import { ParticipantProfileModal } from '../components/ParticipantProfileModal.jsx';
 import {
   Card, Table, Tag, Button, Select, Modal, Form, Input, message, Tabs, Alert, Avatar, Popconfirm, Tooltip
 } from 'antd';
@@ -34,6 +35,7 @@ export default function Admin() {
   const [actionLoadingId, setActionLoadingId] = useState(null);
   const [showTeamModal, setShowTeamModal] = useState(false);
   const [editingTeam, setEditingTeam] = useState(null);
+  const [selectedUserModal, setSelectedUserModal] = useState(null);
   const [teamForm] = Form.useForm();
 
   const loadData = useCallback(() => {
@@ -191,14 +193,18 @@ export default function Admin() {
     {
       title: 'Name & Username',
       key: 'name',
-      width: 170,
+      width: 180,
       render: (_, u) => (
-        <div>
-          <span className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-1.5 text-xs sm:text-sm">
-            {u.full_name}
+        <div 
+          onClick={() => setSelectedUserModal(u)}
+          className="cursor-pointer group"
+          title="Click to view full detailed profile"
+        >
+          <span className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-1.5 text-xs sm:text-sm group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+            {u.full_name || u.username}
             {u.role === 'OWNER' && <CrownOutlined className="text-amber-500 text-xs" />}
           </span>
-          <span className="text-xs text-slate-500 dark:text-slate-400 block">{u.username}</span>
+          <span className="text-xs text-slate-500 dark:text-slate-400 block group-hover:underline">{u.username}</span>
         </div>
       ),
     },
@@ -601,6 +607,13 @@ export default function Admin() {
           </Form.Item>
         </Form>
       </Modal>
+
+      {/* Participant / Member Profile Details Modal */}
+      <ParticipantProfileModal
+        open={Boolean(selectedUserModal)}
+        onClose={() => setSelectedUserModal(null)}
+        user={selectedUserModal}
+      />
     </div>
   );
 }

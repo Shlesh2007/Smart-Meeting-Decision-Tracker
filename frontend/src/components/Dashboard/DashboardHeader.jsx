@@ -124,9 +124,9 @@ export const DashboardHeader = ({
   return (
     <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xs transition-all space-y-3">
       
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+      <div className="flex flex-row items-start sm:items-center justify-between gap-3">
         {/* Greeting & Date Info */}
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-3 flex-1 min-w-0">
           <div className="space-y-0.5">
             <h1 className="text-base sm:text-lg font-extrabold text-slate-900 dark:text-white m-0 tracking-tight leading-snug">
               {greetingTime}, {userName}! 👋
@@ -139,25 +139,24 @@ export const DashboardHeader = ({
           </div>
         </div>
 
-
         {/* Action Buttons */}
-        <div className="flex items-center gap-1.5 sm:gap-2 w-full sm:w-auto shrink-0">
-          <Link to="/meetings/new" className="no-underline flex-1 min-w-0 sm:flex-none">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          <Link to="/meetings/new" className="hidden sm:inline-flex no-underline">
             <Button
               type="primary"
               size="middle"
               icon={<PlusOutlined />}
-              className="w-full sm:w-auto bg-slate-900 hover:bg-slate-800 text-white font-bold !rounded-full border-none shadow-xs text-xs h-9 px-3 sm:px-4 flex items-center justify-center truncate"
+              className="bg-slate-900 hover:bg-slate-800 text-white font-bold !rounded-full border-none shadow-xs text-xs h-9 px-3 sm:px-4 flex items-center justify-center truncate"
             >
               <span>Schedule Meeting</span>
             </Button>
           </Link>
           
-          <Link to="/my-actions" className="no-underline flex-1 min-w-0 sm:flex-none">
+          <Link to="/my-actions" className="hidden sm:inline-flex no-underline">
             <Button
               size="middle"
               icon={<ThunderboltOutlined />}
-              className="w-full sm:w-auto bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold !rounded-full border-slate-200 dark:border-slate-700 text-xs h-9 px-3 sm:px-4 flex items-center justify-center truncate"
+              className="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold !rounded-full border-slate-200 dark:border-slate-700 text-xs h-9 px-3 sm:px-4 flex items-center justify-center truncate"
             >
               <span>View My Actions</span>
             </Button>

@@ -134,11 +134,9 @@ export default function MeetingsPage() {
       render: (_, record) => (
         <Avatar.Group max={{ count: 3, style: { color: '#f56a00', backgroundColor: '#fde3cf' } }}>
           {record.participants_detail?.map((p) => (
-            <Tooltip key={p.id} title={p.full_name}>
-              <Avatar className="bg-blue-600 font-bold text-xs text-white">
-                {(p.first_name || p.full_name || p.username || 'U')[0].toUpperCase()}
-              </Avatar>
-            </Tooltip>
+            <Avatar key={p.id} className="bg-blue-600 font-bold text-xs text-white">
+              {(p.first_name || p.full_name || p.username || 'U')[0].toUpperCase()}
+            </Avatar>
           ))}
         </Avatar.Group>
       ),
