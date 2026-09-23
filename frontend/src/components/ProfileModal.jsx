@@ -673,9 +673,9 @@ export const ProfileModal = ({ open, onClose, user }) => {
         destroyOnHidden
         closable={false}
       >
-        <div className="pt-0 pb-3 space-y-4">
-          <div className="bg-slate-50 dark:bg-slate-800 p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 space-y-1">
-            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Current Department</span>
+        <div className="pt-0 pb-1 space-y-2.5">
+          <div className="bg-slate-50 dark:bg-slate-800 p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 space-y-0.5">
+            <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Current Department</span>
             <span className="font-bold text-slate-900 dark:text-white text-sm">{user.department || 'General Team'}</span>
           </div>
 
@@ -685,12 +685,12 @@ export const ProfileModal = ({ open, onClose, user }) => {
               showIcon
               message="Active Pending Request"
               description={`You have a pending request to change your department to "${pendingReq.requested_department}". Submitting a new request will update your pending request.`}
-              className="rounded-xl text-xs"
+              className="rounded-lg text-xs py-2 px-3"
             />
           )}
 
           <div>
-            <label htmlFor="profile_requested_dept" className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+            <label htmlFor="profile_requested_dept" className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
               Target Department
             </label>
             <Input
@@ -701,16 +701,16 @@ export const ProfileModal = ({ open, onClose, user }) => {
               size="large"
               value={requestedDept}
               onChange={(e) => setRequestedDept(e.target.value)}
-              className="rounded-lg mb-3"
+              className="rounded-lg mb-2"
             />
 
-            <label htmlFor="profile_dept_reason" className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+            <label htmlFor="profile_dept_reason" className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
               Reason / Justification for Request
             </label>
             <Input.TextArea
               id="profile_dept_reason"
               name="dept_reason"
-              rows={3}
+              rows={2}
               placeholder="e.g. Transferred to DevOps squad to manage Kubernetes clusters and deployment pipelines."
               value={deptReason}
               onChange={(e) => setDeptReason(e.target.value)}
@@ -718,7 +718,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
             />
           </div>
 
-          <div className="flex justify-end space-x-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+          <div className="flex justify-end space-x-2 pt-2 border-t border-slate-100 dark:border-slate-800">
             <Button icon={<CloseOutlined />} onClick={() => setShowDeptModal(false)}>Cancel</Button>
             <Button
               type="primary"

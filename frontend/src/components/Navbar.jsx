@@ -451,14 +451,10 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
               }}
               overlayClassName="notification-popover"
             >
-              <div className="relative cursor-pointer w-7.5 h-7.5 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg text-slate-700 dark:text-slate-200 bg-slate-100/70 dark:bg-slate-700/50 hover:bg-blue-50 dark:hover:bg-slate-700 hover:text-blue-600 dark:hover:text-blue-400 transition-all border border-slate-200/60 dark:border-slate-700/60 shrink-0">
-                <BellOutlined className="text-sm" />
-                {hasUnread && (
-                  <>
-                    <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-rose-500 animate-ping" />
-                    <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-white dark:ring-slate-800" />
-                  </>
-                )}
+              <div className="cursor-pointer w-8 h-8 flex items-center justify-center rounded-lg text-slate-700 dark:text-slate-200 bg-slate-100/70 dark:bg-slate-700/50 hover:bg-blue-50 dark:hover:bg-slate-700 hover:text-blue-600 dark:hover:text-blue-400 transition-all border border-slate-200/60 dark:border-slate-700/60 shrink-0">
+                <Badge dot={hasUnread} offset={[-1, 1]} className="flex items-center justify-center">
+                  <BellOutlined className="text-base text-slate-700 dark:text-slate-200" />
+                </Badge>
               </div>
             </Popover>
 

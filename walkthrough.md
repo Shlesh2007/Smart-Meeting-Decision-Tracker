@@ -1,23 +1,18 @@
-# Walkthrough - Reduced Navbar Header Height
+# Walkthrough - Notification Bell Red Dot Alignment Fix
 
-Reduced the height of the top navigation header bar and desktop sidebar header to create a sleek, compact layout that saves screen space across all devices.
+Fixed the notification bell icon unread indicator dot alignment in [Navbar.jsx](file:///d:/SMDT/frontend/src/components/Navbar.jsx).
 
-## Changes Made
+## Root Cause & Fix
 
-### Frontend
+### Root Cause
+Previously, a custom absolute red dot span (`absolute top-1 right-1`) was rendered inside a reduced-size container (`w-7.5 h-7.5`), causing the red dot to sit directly in the center over the bell icon symbol itself, obscuring the bell icon.
 
-#### [Navbar.jsx](file:///d:/SMDT/frontend/src/components/Navbar.jsx)
-
-- Reduced top navigation header height from `h-14` (56px) to `h-11` (44px).
-- Reduced brand logo height from `28px` to `24px` in top bar and from `42px` to `32px` in the desktop left sidebar header.
-- Scaled control elements in top bar:
-  - Live Date Badge: Reduced padding to `py-0.5 px-2` with `text-[10px] sm:text-xs`.
-  - Notification Bell Button: Reduced size to `w-8 h-8` (32px).
-  - User Profile Avatar: Reduced size to `w-7 h-7` (28px).
+### Changes Made in [Navbar.jsx](file:///d:/SMDT/frontend/src/components/Navbar.jsx)
+- Wrapped the `<BellOutlined className="text-base" />` icon inside Ant Design's `<Badge dot={hasUnread} offset={[-1, 1]}>`.
+- Ant Design automatically positions the unread red dot at the top-right corner of the bell icon, leaving the entire bell icon symbol 100% visible and un-obscured.
 
 ## Verification Checklist
 
-- [x] Top navigation header is now compact (`h-11` / 44px).
-- [x] Desktop left sidebar header matches the new header height (`h-11`).
-- [x] Logo, notification popover, date badge, and profile dropdown fit cleanly with proportional padding.
-- [x] Responsive viewports across mobile, tablet, and desktop function as expected.
+- [x] Bell icon is clearly visible.
+- [x] Unread notification red dot sits cleanly at the top-right corner of the bell icon.
+- [x] Clicking notification popover toggles notifications as expected.
