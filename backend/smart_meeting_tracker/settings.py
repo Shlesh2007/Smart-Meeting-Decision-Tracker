@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     'apps.decisions',
     'apps.actions',
     'apps.analytics',
+    'apps.notifications',
 ]
 
 MIDDLEWARE = [
@@ -71,8 +72,20 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'smart_meeting_tracker.wsgi.application'
 
-# Database Configuration (Render Cloud PostgreSQL in production when DATABASE_URL is set, SQLite for local dev)
+# Database Configuration — Prioritizes PostgreSQL from DATABASE_URL or DB_* environment variables
 DATABASE_URL = os.environ.get('DATABASE_URL', '').strip()
+
+DB_ENGINE = os.environ.get('DB_ENGINE', '').strip().lower()
+DB_NAME = os.environ.get('DB_NAME', '').strip()
+DB_USER = os.environ.get('DB_USER', '').strip()
+DB_PASSWORD = os.environ.get('DB_PASSWORD', '').strip()
+DB_HOST = os.environ.get('DB_HOST', 'localhost').strip()
+DB_PORT = os.environ.get('DB_PORT', '5432').strip()
+
+if not DATABASE_URL and (DB_ENGINE == 'postgresql' or DB_NAME):
+    from urllib.parse import quote_plus
+    encoded_pass = quote_plus(DB_PASSWORD)
+    DATABASE_URL = f"postgresql://{DB_USER}:{encoded_pass}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
 def is_valid_database_url(url):
     if not url:
@@ -81,8 +94,8 @@ def is_valid_database_url(url):
         return False
     try:
         host = url.split('@')[-1].split('/')[0].split(':')[0]
-        # Internal Render hostnames like 'dpg-dagfuvf40ujc73f1nh1g-a' (no dot) are internal to Render cloud network only
-        if host and '.' not in host and host != 'localhost':
+        # Allow localhost, 127.0.0.1, or valid hostname IPs
+        if host and '.' not in host and host not in ('localhost', '127.0.0.1'):
             return False
     except Exception:
         pass
@@ -95,6 +108,18 @@ if is_valid_database_url(DATABASE_URL):
             conn_max_age=600,
             conn_health_checks=True,
         )
+    }
+elif DB_NAME and DB_USER:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': DB_NAME,
+            'USER': DB_USER,
+            'PASSWORD': DB_PASSWORD,
+            'HOST': DB_HOST,
+            'PORT': DB_PORT,
+            'CONN_MAX_AGE': 600,
+        }
     }
 else:
     DATABASES = {
@@ -182,6 +207,7 @@ DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', f'SmartMeeting Tracker
 
 # OAuth 2.0 Credentials
 GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID', 'mock-google-client-id.apps.googleusercontent.com')
+GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET', '')
 GITHUB_CLIENT_ID = os.environ.get('GITHUB_CLIENT_ID', 'mock-github-client-id')
 GITHUB_CLIENT_SECRET = os.environ.get('GITHUB_CLIENT_SECRET', 'mock-github-client-secret')
 

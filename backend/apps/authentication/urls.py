@@ -4,11 +4,13 @@ from .views import (
     RegisterView, RequestRegisterOTPView, ConfirmRegisterView, UserProfileView, UserViewSet,
     RequestPasswordResetOTPView, VerifyPasswordResetOTPView, ConfirmPasswordResetView,
     RequestEmailChangeOTPView, VerifyEmailChangeOTPView, DeleteAccountView,
-    GoogleOAuthView, GitHubOAuthView
+    GoogleOAuthView, GitHubOAuthView, DepartmentChangeRequestViewSet
 )
 
 router = DefaultRouter()
 router.register('users', UserViewSet, basename='user')
+router.register('department-requests', DepartmentChangeRequestViewSet, basename='department-request')
+
 
 urlpatterns = [
     path('register/', RegisterView.as_view(), name='auth_register'),

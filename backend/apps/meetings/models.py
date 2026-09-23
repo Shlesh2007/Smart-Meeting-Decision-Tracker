@@ -71,3 +71,33 @@ class Meeting(models.Model):
 
     def __str__(self):
         return f"{self.title} ({self.meeting_date})"
+
+    def get_calculated_status(self, save_if_changed=False):
+        if self.status == self.Status.CANCELLED:
+            return self.Status.CANCELLED
+
+        from django.utils import timezone
+        from datetime import datetime
+
+        now = timezone.localtime()
+        tz = timezone.get_current_timezone()
+
+        naive_start = datetime.combine(self.meeting_date, self.start_time)
+        naive_end = datetime.combine(self.meeting_date, self.end_time)
+
+        start_dt = timezone.make_aware(naive_start, tz)
+        end_dt = timezone.make_aware(naive_end, tz)
+
+        if now < start_dt:
+            calc_status = self.Status.SCHEDULED
+        elif start_dt <= now < end_dt:
+            calc_status = self.Status.IN_PROGRESS
+        else:
+            calc_status = self.Status.COMPLETED
+
+        if save_if_changed and self.pk and self.status != calc_status:
+            self.status = calc_status
+            Meeting.objects.filter(pk=self.pk).update(status=calc_status)
+
+        return calc_status
+

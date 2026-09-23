@@ -2,30 +2,32 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from 'antd';
 import { CheckCircleOutlined } from '@ant-design/icons';
-import { format, parseISO } from 'date-fns';
+import dayjs from 'dayjs';
 import { actionService } from '../../services/api.js';
 import { StatusBadge } from '../StatusBadge.jsx';
 
+import { useAuth } from '../../context/AuthContext.jsx';
+
 export const RecentCompletedActions = () => {
+  const { user, isAdmin, isOwner } = useAuth();
   const [completedActions, setCompletedActions] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     setLoading(true);
-    actionService
-      .getMyActions({ status: 'COMPLETED' })
+    const fetcher = (isAdmin || isOwner)
+      ? actionService.getActions({ status: 'COMPLETED' })
+      : actionService.getMyActions({ status: 'COMPLETED' });
+
+    fetcher
       .then((res) => {
         const list = res.results || res || [];
         setCompletedActions(list.slice(0, 4));
       })
-      .catch(() => {
-        actionService
-          .getActions({ status: 'COMPLETED' })
-          .then((res) => setCompletedActions((res.results || res || []).slice(0, 4)))
-          .catch(() => setCompletedActions([]));
-      })
+      .catch(() => setCompletedActions([]))
       .finally(() => setLoading(false));
-  }, []);
+  }, [isAdmin, isOwner]);
+
 
   return (
     <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 sm:p-4 shadow-xs transition-all h-full flex flex-col justify-between">
@@ -66,9 +68,9 @@ export const RecentCompletedActions = () => {
         ) : (
           completedActions.map((item) => {
             const dateStr = item.updated_at
-              ? format(parseISO(item.updated_at), 'MMM d')
+              ? dayjs(item.updated_at).format('MMM D')
               : item.due_date
-              ? format(parseISO(item.due_date), 'MMM d')
+              ? dayjs(item.due_date).format('MMM D')
               : 'Done';
 
             return (

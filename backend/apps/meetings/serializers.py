@@ -21,6 +21,7 @@ class MeetingSerializer(serializers.ModelSerializer):
         required=False
     )
     discussions_count = serializers.SerializerMethodField()
+    update_series = serializers.BooleanField(write_only=True, required=False, default=False)
 
     class Meta:
         model = Meeting
@@ -29,9 +30,14 @@ class MeetingSerializer(serializers.ModelSerializer):
             'location', 'meeting_type', 'status', 'created_by', 'created_by_detail',
             'participants', 'participants_detail', 'participant_ids', 'team', 'team_detail',
             'is_recurring', 'recurrence_pattern', 'recurrence_end_date', 'recurrence_group_id',
-            'discussions_count', 'created_at', 'updated_at'
+            'discussions_count', 'update_series', 'created_at', 'updated_at'
         )
-        read_only_fields = ('id', 'created_by', 'created_at', 'updated_at', 'recurrence_group_id')
+        read_only_fields = ('id', 'status', 'created_by', 'created_at', 'updated_at', 'recurrence_group_id')
+
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        ret['status'] = instance.get_calculated_status(save_if_changed=True)
+        return ret
 
     def get_participants_detail(self, obj):
         parts = list(obj.participants.all())
@@ -41,6 +47,7 @@ class MeetingSerializer(serializers.ModelSerializer):
 
     def get_discussions_count(self, obj):
         return obj.discussions.count()
+
 
     def validate(self, attrs):
         meeting_date = attrs.get('meeting_date', self.instance.meeting_date if self.instance else None)
@@ -74,6 +81,14 @@ class MeetingSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError({
                     "status": f"Meeting is already marked as {self.instance.status}. Status cannot be reverted."
                 })
+
+        # Ensure meeting has either an assigned team or at least one individual participant
+        team = attrs.get('team', self.instance.team if self.instance else None)
+        participants = attrs.get('participants', list(self.instance.participants.all()) if (self.instance and self.instance.pk) else None)
+        if not team and (participants is None or len(participants) == 0):
+            raise serializers.ValidationError({
+                "participant_ids": "Please select a team or invite at least one individual participant."
+            })
 
         return attrs
 
@@ -149,6 +164,7 @@ class MeetingSerializer(serializers.ModelSerializer):
         return meeting
 
     def update(self, instance, validated_data):
+        update_series = validated_data.pop('update_series', False)
         participants = validated_data.pop('participants', None)
         instance = super().update(instance, validated_data)
         if participants is not None:
@@ -156,4 +172,28 @@ class MeetingSerializer(serializers.ModelSerializer):
             # Always ensure organizer/creator is included as a participant
             if instance.created_by:
                 instance.participants.add(instance.created_by)
+
+        if update_series and instance.recurrence_group_id:
+            future_meetings = Meeting.objects.filter(
+                recurrence_group_id=instance.recurrence_group_id,
+                meeting_date__gte=instance.meeting_date
+            ).exclude(id=instance.id)
+
+            for m in future_meetings:
+                m.title = instance.title
+                m.description = instance.description
+                m.start_time = instance.start_time
+                m.end_time = instance.end_time
+                m.location = instance.location
+                m.meeting_type = instance.meeting_type
+                m.team = instance.team
+                m.is_recurring = instance.is_recurring
+                m.recurrence_pattern = instance.recurrence_pattern
+                m.recurrence_end_date = instance.recurrence_end_date
+                m.save()
+                if participants is not None:
+                    m.participants.set(participants)
+                    if instance.created_by:
+                        m.participants.add(instance.created_by)
+
         return instance

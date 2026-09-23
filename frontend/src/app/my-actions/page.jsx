@@ -6,15 +6,15 @@ import { StatusBadge } from '../../components/StatusBadge.jsx';
 import { LoadingSkeleton } from '../../components/LoadingSkeleton.jsx';
 import { EmptyState } from '../../components/EmptyState.jsx';
 import {
-  Tabs, Card, Table, Select, Button, Tag, message, Alert, Input, Modal, Tooltip
+  Card, Table, Select, Button, Tag, message, Alert, Input, Modal, Tooltip, Dropdown, Badge
 } from 'antd';
 import {
-  CheckSquareOutlined, SearchOutlined, LockOutlined, ReloadOutlined
+  CheckSquareOutlined, SearchOutlined, LockOutlined, ReloadOutlined, EllipsisOutlined
 } from '@ant-design/icons';
-import { format } from 'date-fns';
+import dayjs from 'dayjs';
 
 export default function MyActionsPage() {
-  const { user } = useAuth();
+  const { user, isAdmin, isOwner } = useAuth();
   const [searchParams] = useSearchParams();
 
   const [actions, setActions] = useState([]);
@@ -37,17 +37,19 @@ export default function MyActionsPage() {
 
   const fetchMyActions = useCallback(() => {
     setLoading(true);
-    actionService.getMyActions()
+    const fetcher = (isAdmin || isOwner) ? actionService.getActions() : actionService.getMyActions();
+    fetcher
       .then((res) => {
         setActions(res.results || res);
       })
       .catch(() => message.error('Failed to load action items.'))
       .finally(() => setLoading(false));
-  }, []);
+  }, [isAdmin, isOwner]);
 
   useEffect(() => {
     fetchMyActions();
   }, [fetchMyActions]);
+
 
   const handleStatusChange = async (actionItem, newStatus) => {
     if (newStatus === 'COMPLETED') {
@@ -95,7 +97,7 @@ export default function MyActionsPage() {
     }
   };
 
-  const filteredActions = actions.filter((item) => {
+  const filteredActions = (Array.isArray(actions) ? actions : []).filter((item) => {
     const query = search.trim().toLowerCase();
     const matchesSearch = !query ||
       item.title.toLowerCase().includes(query) ||
@@ -158,7 +160,7 @@ export default function MyActionsPage() {
       render: (_, record) => (
         <div className="text-xs">
           <span className={`font-semibold ${record.is_overdue ? 'text-rose-600' : 'text-slate-700'}`}>
-            {format(new Date(record.due_date), 'MMM dd, yyyy')}
+            {dayjs(record.due_date).format('MMM DD, YYYY')}
           </span>
           {record.is_overdue && (
             <span className="block text-[10px] text-rose-500 font-bold uppercase">Overdue</span>
@@ -245,7 +247,8 @@ export default function MyActionsPage() {
     },
   ];
 
-  const overdueCount = actions.filter(a => a.is_overdue).length;
+  const actionsList = Array.isArray(actions) ? actions : [];
+  const overdueCount = actionsList.filter(a => a.is_overdue).length;
 
   return (
     <div className="space-y-6 w-full max-w-full overflow-x-hidden">
@@ -270,7 +273,7 @@ export default function MyActionsPage() {
       )}
 
       <Card className="shadow-xs rounded-xl dark:bg-slate-800 dark:border-slate-700" styles={{ body: { padding: '16px' } }}>
-        <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 mb-4">
+        <div className="flex items-center gap-2 mb-4">
           <Input
             id="my_actions_app_search"
             name="search"
@@ -278,43 +281,80 @@ export default function MyActionsPage() {
             placeholder="Search action items..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full sm:w-72"
+            className="flex-1 min-w-0"
             allowClear
           />
-        </div>
 
-        <Tabs
-          activeKey={activeTab}
-          onChange={setActiveTab}
-          className="w-full mb-4"
-          items={[
-            { key: 'ALL', label: `All (${actions.length})` },
-            { key: 'OPEN', label: `Open (${actions.filter(a => ['TODO', 'IN_PROGRESS', 'BLOCKED'].includes(a.status)).length})` },
-            { key: 'TODO', label: `Todo (${actions.filter(a => a.status === 'TODO').length})` },
-            { key: 'IN_PROGRESS', label: `In Progress (${actions.filter(a => a.status === 'IN_PROGRESS').length})` },
-            { key: 'BLOCKED', label: `Blocked (${actions.filter(a => a.status === 'BLOCKED').length})` },
-            { key: 'COMPLETED', label: `Completed (${actions.filter(a => a.status === 'COMPLETED').length})` },
-            {
-              key: 'OVERDUE',
-              label: (
-                <span className={overdueCount > 0 ? 'text-rose-600 font-bold' : ''}>
-                  Overdue ({overdueCount})
-                </span>
-              )
-            },
-            {
-              key: 'CRITICAL',
-              label: `Critical (${actions.filter(a => a.priority === 'CRITICAL' && a.status !== 'COMPLETED' && a.status !== 'CANCELLED').length})`
-            },
-          ]}
-        />
+          {activeTab !== 'ALL' && (
+            <Tag
+              color={activeTab === 'OVERDUE' ? 'error' : activeTab === 'CRITICAL' ? 'red' : 'blue'}
+              closable
+              onClose={() => setActiveTab('ALL')}
+              className="text-xs font-bold shrink-0 m-0 py-1 px-2 flex items-center gap-1 cursor-pointer"
+            >
+              Filter: {activeTab.replace('_', ' ')}
+            </Tag>
+          )}
+
+          <Dropdown
+            menu={{
+              items: [
+                { key: 'ALL', label: `All (${actionsList.length})` },
+                { type: 'divider' },
+                { key: 'OPEN', label: `Open (${actionsList.filter(a => ['TODO', 'IN_PROGRESS', 'BLOCKED'].includes(a.status)).length})` },
+                { key: 'TODO', label: `Todo (${actionsList.filter(a => a.status === 'TODO').length})` },
+                { key: 'IN_PROGRESS', label: `In Progress (${actionsList.filter(a => a.status === 'IN_PROGRESS').length})` },
+                { key: 'BLOCKED', label: `Blocked (${actionsList.filter(a => a.status === 'BLOCKED').length})` },
+                { key: 'COMPLETED', label: `Completed (${actionsList.filter(a => a.status === 'COMPLETED').length})` },
+                { type: 'divider' },
+                {
+                  key: 'OVERDUE',
+                  label: (
+                    <span className={overdueCount > 0 ? 'text-rose-600 font-bold' : ''}>
+                      Overdue ({overdueCount})
+                    </span>
+                  )
+                },
+                {
+                  key: 'CRITICAL',
+                  label: `Critical (${actionsList.filter(a => a.priority === 'CRITICAL' && a.status !== 'COMPLETED' && a.status !== 'CANCELLED').length})`
+                },
+              ],
+              selectedKeys: [activeTab],
+              onClick: ({ key }) => setActiveTab(key),
+            }}
+            trigger={['click']}
+            placement="bottomRight"
+          >
+            <Button
+              id="my_actions_app_filter_3dot_btn"
+              name="filter_3dot_btn"
+              className="shrink-0 flex items-center justify-center w-8 h-8 rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-800 hover:border-blue-500 relative"
+              icon={<EllipsisOutlined className="text-base text-slate-700 dark:text-slate-200" />}
+            >
+              {activeTab !== 'ALL' && (
+                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-blue-500 rounded-full" />
+              )}
+            </Button>
+          </Dropdown>
+        </div>
 
         {loading ? (
           <LoadingSkeleton type="table" />
         ) : filteredActions.length === 0 ? (
           <EmptyState
-            title="No Action Items Found"
-            description="No actions match the selected status tab or search query."
+            title={
+              activeTab !== 'ALL'
+                ? `No ${activeTab.replace('_', ' ')} Action Items`
+                : 'No Action Items Found'
+            }
+            description={
+              activeTab !== 'ALL'
+                ? `No action items matched the '${activeTab.replace('_', ' ')}' filter tab. Click below to view all action items.`
+                : 'No action items match the selected filter or search query.'
+            }
+            actionText={activeTab !== 'ALL' ? 'Show All Action Items' : undefined}
+            onAction={activeTab !== 'ALL' ? () => setActiveTab('ALL') : undefined}
           />
         ) : (
           <Table

@@ -88,3 +88,80 @@ class MeetingTestCase(TestCase):
         res_mismatch = self.client.get('/api/meetings/?search=secu c')
         results_mismatch = res_mismatch.data['results'] if 'results' in res_mismatch.data else res_mismatch.data
         self.assertEqual(len(results_mismatch), 0)
+
+    def test_automatic_status_lifecycle_calculation(self):
+        from datetime import timedelta
+        from django.utils import timezone
+        today = timezone.localdate()
+        now = timezone.localtime()
+
+        future_meeting = Meeting.objects.create(
+            title='Tomorrow Meeting',
+            meeting_date=today + timedelta(days=1),
+            start_time=time(12, 0),
+            end_time=time(13, 0),
+            created_by=self.admin
+        )
+        self.assertEqual(future_meeting.get_calculated_status(), Meeting.Status.SCHEDULED)
+
+        past_meeting = Meeting.objects.create(
+            title='Yesterday Meeting',
+            meeting_date=today - timedelta(days=1),
+            start_time=time(12, 0),
+            end_time=time(13, 0),
+            created_by=self.admin
+        )
+        self.assertEqual(past_meeting.get_calculated_status(), Meeting.Status.COMPLETED)
+
+        start_time_active = (now - timedelta(minutes=10)).time()
+        end_time_active = (now + timedelta(minutes=50)).time()
+        active_meeting = Meeting.objects.create(
+            title='Active Meeting',
+            meeting_date=today,
+            start_time=start_time_active,
+            end_time=end_time_active,
+            created_by=self.admin
+        )
+        self.assertEqual(active_meeting.get_calculated_status(), Meeting.Status.IN_PROGRESS)
+
+    def test_cancellation_permissions_and_persistence(self):
+        from datetime import timedelta
+        from django.utils import timezone
+        today = timezone.localdate()
+
+        creator = self.member
+        other_user = User.objects.create_user(username='other_member', email='other@example.com', password='password123', role='MEMBER')
+
+        meeting = Meeting.objects.create(
+            title='Team Sync',
+            meeting_date=today + timedelta(days=1),
+            start_time=time(12, 0),
+            end_time=time(13, 0),
+            created_by=creator
+        )
+
+        # 1. Unauthenticated cancellation attempt -> 401
+        self.client.logout()
+        res_unauth = self.client.post(f'/api/meetings/{meeting.id}/cancel/')
+        self.assertEqual(res_unauth.status_code, status.HTTP_401_UNAUTHORIZED)
+
+        # 2. Non-creator cancellation attempt -> 403 Forbidden
+        self.client.force_authenticate(user=other_user)
+        res_forbidden = self.client.post(f'/api/meetings/{meeting.id}/cancel/')
+        self.assertEqual(res_forbidden.status_code, status.HTTP_403_FORBIDDEN)
+
+        # 3. Creator cancellation attempt -> 200 OK
+        self.client.force_authenticate(user=creator)
+        res_cancel = self.client.post(f'/api/meetings/{meeting.id}/cancel/')
+        self.assertEqual(res_cancel.status_code, status.HTTP_200_OK)
+        self.assertEqual(res_cancel.data['status'], 'CANCELLED')
+
+        # 4. Persistence check: GET request returns CANCELLED
+        res_get = self.client.get(f'/api/meetings/{meeting.id}/')
+        self.assertEqual(res_get.status_code, status.HTTP_200_OK)
+        self.assertEqual(res_get.data['status'], 'CANCELLED')
+
+        # 5. Cancelling an already cancelled meeting -> 400 Bad Request
+        res_re_cancel = self.client.post(f'/api/meetings/{meeting.id}/cancel/')
+        self.assertEqual(res_re_cancel.status_code, status.HTTP_400_BAD_REQUEST)
+

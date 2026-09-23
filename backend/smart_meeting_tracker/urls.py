@@ -36,4 +36,5 @@ urlpatterns = [
     path('api/decisions/', include('apps.decisions.urls')),
     path('api/actions/', include('apps.actions.urls')),
     path('api/analytics/', include('apps.analytics.urls')),
+    path('api/notifications/', include('apps.notifications.urls')),
 ]

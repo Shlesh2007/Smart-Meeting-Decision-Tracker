@@ -111,7 +111,7 @@ export default function Register() {
                 label="First Name"
                 rules={[{ required: true, message: 'First name is required' }]}
               >
-                <Input id="reg_first_name" name="first_name" placeholder="John" />
+                <Input id="first_name" name="first_name" placeholder="John" />
               </Form.Item>
 
               <Form.Item
@@ -119,7 +119,7 @@ export default function Register() {
                 label="Last Name"
                 rules={[{ required: true, message: 'Last name is required' }]}
               >
-                <Input id="reg_last_name" name="last_name" placeholder="Doe" />
+                <Input id="last_name" name="last_name" placeholder="Doe" />
               </Form.Item>
             </div>
 
@@ -129,11 +129,11 @@ export default function Register() {
                 label="Username"
                 rules={[{ required: true, message: 'Username is required' }]}
               >
-                <Input id="reg_username" name="username" prefix={<UserOutlined className="text-slate-400" />} placeholder="john_doe" />
+                <Input id="username" name="username" prefix={<UserOutlined className="text-slate-400" />} placeholder="john_doe" />
               </Form.Item>
 
               <Form.Item name="department" label="Department / Team">
-                <Input id="reg_department" name="department" placeholder="Engineering / Product" />
+                <Input id="department" name="department" placeholder="Engineering / Product" />
               </Form.Item>
             </div>
 
@@ -146,7 +146,7 @@ export default function Register() {
               ]}
               help="A 6-digit verification code will be sent to this email address."
             >
-              <Input id="reg_email" name="email" prefix={<MailOutlined className="text-slate-400" />} placeholder="john@example.com" />
+              <Input id="email" name="email" prefix={<MailOutlined className="text-slate-400" />} placeholder="john@example.com" />
             </Form.Item>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4">
@@ -155,7 +155,7 @@ export default function Register() {
                 label="Password"
                 rules={[{ required: true, min: 6, message: 'Password must be at least 6 characters' }]}
               >
-                <Input.Password id="reg_password" name="password" prefix={<LockOutlined className="text-slate-400" />} placeholder="••••••••" />
+                <Input.Password id="password" name="password" prefix={<LockOutlined className="text-slate-400" />} placeholder="••••••••" />
               </Form.Item>
 
               <Form.Item
@@ -174,7 +174,7 @@ export default function Register() {
                   }),
                 ]}
               >
-                <Input.Password id="reg_password_confirm" name="password_confirm" prefix={<LockOutlined className="text-slate-400" />} placeholder="••••••••" />
+                <Input.Password id="password_confirm" name="password_confirm" prefix={<LockOutlined className="text-slate-400" />} placeholder="••••••••" />
               </Form.Item>
             </div>
 
@@ -227,11 +227,11 @@ export default function Register() {
           </div>
 
           <div>
-            <label htmlFor="reg_otp_code" className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase">
+            <label htmlFor="otp_code" className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase">
               6-Digit OTP Code
             </label>
             <Input
-              id="reg_otp_code"
+              id="otp_code"
               name="otp_code"
               size="large"
               placeholder="e.g. 849201"

@@ -93,9 +93,17 @@ export default function LoginPage() {
 
       const hashParams = new URLSearchParams(hash.replace('#', '?'));
       const token = hashParams.get('access_token') || hashParams.get('id_token');
+      const expiresIn = hashParams.get('expires_in');
+      const refreshToken = hashParams.get('refresh_token');
+
       if (token) {
         setOauthLoading('google');
-        authService.loginWithGoogle({ credential: token })
+        authService.loginWithGoogle({
+          credential: token,
+          access_token: token,
+          expires_in: expiresIn,
+          refresh_token: refreshToken
+        })
           .then(async (data) => {
             const profile = await refreshUser();
             message.success(data.message || 'Logged in with Google successfully!');
@@ -121,7 +129,7 @@ export default function LoginPage() {
     const rawRedirect = envRedirect || `${window.location.origin}/login`;
     const redirectUri = encodeURIComponent(rawRedirect);
     console.log(`🔑 Initiating Google OAuth with redirect_uri: ${rawRedirect}`);
-    const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&scope=email%20profile&prompt=select_account`;
+    const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&scope=email%20profile%20https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fmeetings.space.readonly&prompt=select_account`;
 
     const isWebView = typeof window !== 'undefined' && (
       window.WebToNative ||
@@ -277,7 +285,7 @@ export default function LoginPage() {
               rules={[{ required: true, message: 'Please enter your username!' }]}
             >
               <Input
-                id="login_app_username"
+                id="username"
                 name="username"
                 prefix={<UserOutlined className="text-gray-400" />}
                 placeholder="Username or email"
@@ -296,7 +304,7 @@ export default function LoginPage() {
               className="mb-1"
             >
               <Input.Password
-                id="login_app_password"
+                id="password"
                 name="password"
                 ref={passwordInputRef}
                 prefix={<LockOutlined className="text-gray-400" />}

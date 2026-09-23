@@ -533,6 +533,22 @@ class GoogleOAuthView(APIView):
                     role=User.Role.MEMBER
                 )
 
+            # Store / update Google OAuth tokens on User instance
+            access_token = request.data.get('access_token') or credential
+            refresh_token = request.data.get('refresh_token') or request.data.get('google_refresh_token')
+            expires_in = request.data.get('expires_in')
+
+            if access_token:
+                user.google_access_token = access_token
+            if refresh_token:
+                user.google_refresh_token = refresh_token
+            if expires_in:
+                try:
+                    user.google_token_expires_at = timezone.now() + timedelta(seconds=int(expires_in))
+                except (ValueError, TypeError):
+                    pass
+            user.save()
+
             refresh = RefreshToken.for_user(user)
             return Response({
                 'user': UserSerializer(user, context={'request': request}).data,
@@ -923,5 +939,72 @@ class DeleteAccountView(APIView):
         return Response({
             'message': 'Your account has been deleted successfully.'
         }, status=status.HTTP_200_OK)
+
+
+from rest_framework.decorators import action
+from .models import DepartmentChangeRequest
+from .serializers import DepartmentChangeRequestSerializer
+
+class DepartmentChangeRequestViewSet(viewsets.ModelViewSet):
+    serializer_class = DepartmentChangeRequestSerializer
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get_queryset(self):
+        user = self.request.user
+        if not user.is_authenticated:
+            return DepartmentChangeRequest.objects.none()
+
+        if user.is_admin_role or user.is_manager_role:
+            return DepartmentChangeRequest.objects.all().select_related('user', 'reviewed_by')
+        return DepartmentChangeRequest.objects.filter(user=user).select_related('user', 'reviewed_by')
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user, status=DepartmentChangeRequest.Status.PENDING)
+
+    @action(detail=True, methods=['post'])
+    def approve(self, request, pk=None):
+        user = request.user
+        if not (user.is_admin_role or user.is_manager_role):
+            return Response({'error': 'Only Admins and Managers can approve department change requests.'}, status=status.HTTP_403_FORBIDDEN)
+
+        req_obj = self.get_object()
+        if req_obj.status != DepartmentChangeRequest.Status.PENDING:
+            return Response({'error': f'Request is already {req_obj.status}.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        req_obj.status = DepartmentChangeRequest.Status.APPROVED
+        req_obj.reviewed_by = user
+        req_obj.review_notes = request.data.get('review_notes', '')
+        req_obj.save()
+
+        # Update member's department
+        target_user = req_obj.user
+        target_user.department = req_obj.requested_department
+        target_user.save()
+
+        return Response({
+            'message': f'Department request approved! Updated {target_user.username}\'s department to "{req_obj.requested_department}".',
+            'data': DepartmentChangeRequestSerializer(req_obj, context={'request': request}).data
+        })
+
+    @action(detail=True, methods=['post'])
+    def reject(self, request, pk=None):
+        user = request.user
+        if not (user.is_admin_role or user.is_manager_role):
+            return Response({'error': 'Only Admins and Managers can reject department change requests.'}, status=status.HTTP_403_FORBIDDEN)
+
+        req_obj = self.get_object()
+        if req_obj.status != DepartmentChangeRequest.Status.PENDING:
+            return Response({'error': f'Request is already {req_obj.status}.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        req_obj.status = DepartmentChangeRequest.Status.REJECTED
+        req_obj.reviewed_by = user
+        req_obj.review_notes = request.data.get('review_notes', '')
+        req_obj.save()
+
+        return Response({
+            'message': 'Department change request rejected.',
+            'data': DepartmentChangeRequestSerializer(req_obj, context={'request': request}).data
+        })
+
 
 

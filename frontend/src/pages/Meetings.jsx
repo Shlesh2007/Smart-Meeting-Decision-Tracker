@@ -5,13 +5,13 @@ import { StatusBadge } from '../components/StatusBadge.jsx';
 import { LoadingSkeleton } from '../components/LoadingSkeleton.jsx';
 import { EmptyState } from '../components/EmptyState.jsx';
 import { MeetingCalendar } from '../components/MeetingCalendar.jsx';
+import { ParticipantProfileModal } from '../components/ParticipantProfileModal.jsx';
 import {
   Input, Select, DatePicker, Button, Table, Card, Tag, Avatar, Tooltip, Pagination, Segmented
 } from 'antd';
 import {
   SearchOutlined, PlusOutlined, UserOutlined, ReloadOutlined, CalendarOutlined, UnorderedListOutlined
 } from '@ant-design/icons';
-import { format } from 'date-fns';
 import dayjs from 'dayjs';
 
 const { RangePicker } = DatePicker;
@@ -20,6 +20,7 @@ export default function Meetings() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [viewMode, setViewMode] = useState('table');
+  const [selectedParticipantUser, setSelectedParticipantUser] = useState(null);
 
   const [meetings, setMeetings] = useState([]);
   const [total, setTotal] = useState(0);
@@ -112,7 +113,7 @@ export default function Meetings() {
       key: 'date',
       render: (_, record) => (
         <div className="text-xs">
-          <p className="font-medium text-slate-900 dark:text-slate-100 m-0">{format(new Date(record.meeting_date), 'PPP')}</p>
+          <p className="font-medium text-slate-900 dark:text-slate-100 m-0">{dayjs(record.meeting_date).format('MMM D, YYYY')}</p>
           <p className="text-slate-500 dark:text-slate-400 m-0">{record.start_time} - {record.end_time}</p>
         </div>
       ),
@@ -121,12 +122,14 @@ export default function Meetings() {
       title: 'Type',
       dataIndex: 'meeting_type',
       key: 'meeting_type',
+      width: 120,
       render: (val) => <StatusBadge type="meetingType" value={val} />,
     },
     {
       title: 'Status',
       dataIndex: 'status',
       key: 'status',
+      width: 140,
       render: (val) => <StatusBadge type="meetingStatus" value={val} />,
     },
     {
@@ -135,8 +138,14 @@ export default function Meetings() {
       render: (_, record) => (
         <Avatar.Group max={{ count: 3, style: { color: '#f56a00', backgroundColor: '#fde3cf' } }}>
           {record.participants_detail?.map((p) => (
-            <Tooltip key={p.id} title={p.full_name}>
-              <Avatar className="bg-blue-600 font-extrabold text-xs text-white">
+            <Tooltip key={p.id} title={`${p.full_name || p.username} • Click to view profile`}>
+              <Avatar
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedParticipantUser(p);
+                }}
+                className="bg-blue-600 font-extrabold text-xs text-white cursor-pointer hover:opacity-85 hover:scale-110 transition-all"
+              >
                 {(p.first_name || p.full_name || p.username || 'U')[0].toUpperCase()}
               </Avatar>
             </Tooltip>
@@ -182,11 +191,11 @@ export default function Meetings() {
                 icon: <CalendarOutlined />,
               },
             ]}
-            className="p-1 rounded-xl bg-slate-100 dark:bg-slate-700 font-bold w-fit shrink-0"
+            className="p-1 rounded-full bg-slate-100 dark:bg-slate-700 font-bold w-fit shrink-0 [&_.ant-segmented-item]:!rounded-full [&_.ant-segmented-thumb]:!rounded-full"
           />
 
           <Link to="/meetings/new" className="no-underline w-full sm:w-auto">
-            <Button type="primary" icon={<PlusOutlined />} size="middle" className="w-full sm:w-auto bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl border-none shadow-xs text-xs h-9 px-3.5 flex items-center justify-center">
+            <Button type="primary" icon={<PlusOutlined />} size="middle" className="w-full sm:w-auto bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-full border-none shadow-xs text-xs h-9 px-4 flex items-center justify-center">
               Create Meeting
             </Button>
           </Link>
@@ -304,10 +313,10 @@ export default function Meetings() {
       ) : meetings.length === 0 ? (
         <EmptyState
           title="No Meetings Found"
-          description="Try adjusting your search filters or schedule a new meeting."
+          description={search || meetingType || status || (dateRange && dateRange[0] && dateRange[1]) ? "No meetings matched your current filter criteria." : "Try adjusting your search filters or schedule a new meeting."}
           icon={<CalendarOutlined />}
-          actionText="Create Meeting"
-          onAction={() => navigate('/meetings/new')}
+          actionText={search || meetingType || status || (dateRange && dateRange[0] && dateRange[1]) ? "Reset Filters" : "Create Meeting"}
+          onAction={search || meetingType || status || (dateRange && dateRange[0] && dateRange[1]) ? handleResetFilters : () => navigate('/meetings/new')}
         />
       ) : (
         <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-xs mb-12">
@@ -323,28 +332,14 @@ export default function Meetings() {
               className: 'cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors',
             })}
           />
-          <div className="p-3.5 sm:p-4 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-slate-100 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50">
-            <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-              Showing {meetings.length > 0 ? (page - 1) * pageSize + 1 : 0} - {Math.min(page * pageSize, total)} of <strong>{total}</strong> meeting(s)
-            </span>
-            <Pagination
-              current={page}
-              total={total}
-              pageSize={pageSize}
-              onChange={(p, size) => {
-                setPage(p);
-                if (size && size !== pageSize) {
-                  setPageSize(size);
-                }
-              }}
-              showSizeChanger
-              pageSizeOptions={['6', '10', '20', '50']}
-              size="small"
-              className="text-xs font-semibold"
-            />
-          </div>
         </div>
       )}
+
+      <ParticipantProfileModal
+        open={Boolean(selectedParticipantUser)}
+        onClose={() => setSelectedParticipantUser(null)}
+        user={selectedParticipantUser}
+      />
     </div>
   );
 }

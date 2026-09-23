@@ -39,8 +39,16 @@ export default function OAuthCallback() {
 
       const hashParams = new URLSearchParams(hash.replace('#', '?'));
       const token = hashParams.get('access_token') || hashParams.get('id_token');
+      const expiresIn = hashParams.get('expires_in');
+      const refreshToken = hashParams.get('refresh_token');
+
       if (token) {
-        authService.loginWithGoogle({ credential: token })
+        authService.loginWithGoogle({
+          credential: token,
+          access_token: token,
+          expires_in: expiresIn,
+          refresh_token: refreshToken
+        })
           .then(async (data) => {
             await refreshUser();
             message.success(data.message || 'Logged in with Google successfully!');

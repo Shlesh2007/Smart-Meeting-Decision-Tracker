@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { BarChartOutlined } from '@ant-design/icons';
-import { format, subDays } from 'date-fns';
+import dayjs from 'dayjs';
 import { useScrollAnimation } from '../../hooks/useScrollAnimation.js';
 
 export const MeetingActivityChart = ({ meetingActivity = [] }) => {
@@ -22,22 +22,21 @@ export const MeetingActivityChart = ({ meetingActivity = [] }) => {
       }
     });
 
-    const today = new Date();
+    const today = dayjs().startOf('day');
 
     if (filterDays === 7 || filterDays === 14 || filterDays === 30) {
-      const startDate = subDays(today, filterDays - 1);
+      const startDate = today.subtract(filterDays - 1, 'day');
       const result = [];
-      let curr = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
-      const end = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      let curr = startDate;
 
-      while (curr <= end) {
-        const key = format(curr, 'yyyy-MM-dd');
+      while (curr.isBefore(today) || curr.isSame(today, 'day')) {
+        const key = curr.format('YYYY-MM-DD');
         result.push({
-          date: format(curr, 'MMM dd'),
+          date: curr.format('MMM DD'),
           count: activityMap[key] || 0,
           fullDate: key,
         });
-        curr.setDate(curr.getDate() + 1);
+        curr = curr.add(1, 'day');
       }
       return result;
     }
@@ -50,7 +49,7 @@ export const MeetingActivityChart = ({ meetingActivity = [] }) => {
       const parts = key.split('-');
       const d = parts.length === 3 ? new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2])) : new Date(key);
       return {
-        date: format(d, 'MMM dd'),
+        date: d.toLocaleDateString('en-US', { month: 'short', day: '2-digit' }),
         count: activityMap[key],
         fullDate: key,
       };

@@ -8,9 +8,9 @@ import {
   LockOutlined, CheckOutlined, ArrowLeftOutlined, KeyOutlined,
   DeleteOutlined, WarningOutlined, ExclamationCircleOutlined, CloseOutlined
 } from '@ant-design/icons';
-import { format } from 'date-fns';
+import dayjs from 'dayjs';
 import { useAuth } from '../context/AuthContext.jsx';
-import { authService } from '../services/api.js';
+import { authService, departmentRequestService } from '../services/api.js';
 
 export const ProfileModal = ({ open, onClose, user }) => {
   const { message } = App.useApp();
@@ -18,6 +18,37 @@ export const ProfileModal = ({ open, onClose, user }) => {
   const [isEditing, setIsEditing] = useState(false);
 
   const [loading, setLoading] = useState(false);
+
+  // Department Request Flow State
+  const [showDeptModal, setShowDeptModal] = useState(false);
+  const [requestedDept, setRequestedDept] = useState('');
+  const [deptReason, setDeptReason] = useState('');
+  const [deptLoading, setDeptLoading] = useState(false);
+  const [pendingReq, setPendingReq] = useState(null);
+
+  useEffect(() => {
+    if (user && open) {
+      departmentRequestService.getRequests()
+        .then((data) => {
+          const list = data.results || data || [];
+          const activePending = list.find(r => r.status === 'PENDING');
+          setPendingReq(activePending || null);
+        })
+        .catch(() => setPendingReq(null));
+    }
+  }, [user, open]);
+
+  useEffect(() => {
+    if (showDeptModal) {
+      if (pendingReq) {
+        setRequestedDept(pendingReq.requested_department || '');
+        setDeptReason(pendingReq.reason || '');
+      } else {
+        setRequestedDept('');
+        setDeptReason('');
+      }
+    }
+  }, [showDeptModal, pendingReq]);
 
   // Email Change Flow State
   const [showEmailModal, setShowEmailModal] = useState(false);
@@ -36,6 +67,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
   const [deleteError, setDeleteError] = useState('');
 
   const [form] = Form.useForm();
+
 
   useEffect(() => {
     if (user && open && isEditing) {
@@ -219,23 +251,23 @@ export const ProfileModal = ({ open, onClose, user }) => {
 
         width={560}
       >
-        <div className="py-3 space-y-5">
+        <div className="py-1 space-y-2.5">
           {/* Profile Card Banner */}
-          <div className="bg-slate-50 dark:bg-slate-800/80 p-3.5 sm:p-4 rounded-xl border border-slate-200 dark:border-slate-700/70 flex items-center space-x-3 sm:space-x-4 shadow-xs">
-            <Avatar size={56} className="bg-blue-600 font-extrabold text-xl sm:text-2xl shadow-md ring-2 ring-blue-500/20 text-white shrink-0 flex items-center justify-center">
+          <div className="bg-slate-50 dark:bg-slate-800/80 p-2.5 sm:p-3 rounded-xl border border-slate-200 dark:border-slate-700/70 flex items-center space-x-3 shadow-xs">
+            <Avatar size={44} className="bg-blue-600 font-extrabold text-lg shadow-md ring-2 ring-blue-500/20 text-white shrink-0 flex items-center justify-center">
               {(user?.first_name || user?.full_name || user?.username || 'U')[0].toUpperCase()}
             </Avatar>
             <div className="flex-1 min-w-0">
-              <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white m-0 truncate">
+              <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white m-0 truncate leading-tight">
                 {user.full_name || user.username}
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400 m-0 truncate">{user.email}</p>
-              <div className="mt-1.5 flex items-center space-x-2 flex-wrap gap-y-1">
-                <Tag color={user.role === 'ADMIN' ? 'volcano' : 'blue'} className="font-bold uppercase tracking-wider text-[10px]">
+              <p className="text-xs text-slate-500 dark:text-slate-400 m-0 truncate leading-tight mt-0.5">{user.email}</p>
+              <div className="mt-1 flex items-center space-x-1.5 flex-wrap">
+                <Tag color={user.role === 'ADMIN' ? 'volcano' : 'blue'} className="font-bold uppercase tracking-wider text-[9.5px] py-0 px-1.5">
                   {user.role}
                 </Tag>
                 {user.department && (
-                  <Tag color="geekblue" className="font-medium text-[11px]">
+                  <Tag color="geekblue" className="font-medium text-[10px] py-0 px-1.5">
                     {user.department}
                   </Tag>
                 )}
@@ -245,13 +277,13 @@ export const ProfileModal = ({ open, onClose, user }) => {
 
           {!isEditing ? (
             /* View Mode Details */
-            <div className="space-y-4">
-              <Descriptions column={1} bordered size="small" className="bg-white dark:bg-slate-900 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800">
-                <Descriptions.Item label={<span className="font-semibold text-slate-600 dark:text-slate-400 flex items-center"><UserOutlined className="mr-2 text-blue-500" />Username</span>}>
-                  <span className="font-semibold text-slate-900 dark:text-slate-200">{user.username}</span>
+            <div className="space-y-2.5">
+              <Descriptions column={1} bordered size="small" className="bg-white dark:bg-slate-900 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 [&_.ant-descriptions-item-cell]:!py-1.5 [&_.ant-descriptions-item-cell]:!px-3">
+                <Descriptions.Item label={<span className="font-semibold text-slate-600 dark:text-slate-400 flex items-center text-xs"><UserOutlined className="mr-1.5 text-blue-500" />Username</span>}>
+                  <span className="font-semibold text-slate-900 dark:text-slate-200 text-xs sm:text-sm">{user.username}</span>
                 </Descriptions.Item>
 
-                <Descriptions.Item label={<span className="font-semibold text-slate-600 dark:text-slate-400 flex items-center"><MailOutlined className="mr-2 text-blue-500" />Email Address</span>}>
+                <Descriptions.Item label={<span className="font-semibold text-slate-600 dark:text-slate-400 flex items-center text-xs"><MailOutlined className="mr-1.5 text-blue-500" />Email Address</span>}>
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1 w-full min-w-0">
                     <span className="font-medium text-slate-900 dark:text-slate-200 break-all text-xs sm:text-sm">{user.email}</span>
                     <Button 
@@ -259,35 +291,62 @@ export const ProfileModal = ({ open, onClose, user }) => {
                       size="small"
                       icon={<SafetyCertificateOutlined className="text-blue-600" />}
                       onClick={() => setShowEmailModal(true)}
-                      className="text-xs font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 p-0 shrink-0 whitespace-nowrap mt-1 sm:mt-0"
+                      className="text-xs font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 p-0 shrink-0 whitespace-nowrap mt-0.5 sm:mt-0"
                     >
                       Change Email
                     </Button>
                   </div>
                 </Descriptions.Item>
 
-                <Descriptions.Item label={<span className="font-semibold text-slate-600 dark:text-slate-400 flex items-center"><IdcardOutlined className="mr-2 text-blue-500" />Account Role</span>}>
-                  <span className="font-bold text-slate-900 dark:text-slate-200">{user.role}</span>
+                <Descriptions.Item label={<span className="font-semibold text-slate-600 dark:text-slate-400 flex items-center text-xs"><IdcardOutlined className="mr-1.5 text-blue-500" />Account Role</span>}>
+                  <span className="font-bold text-slate-900 dark:text-slate-200 text-xs sm:text-sm">{user.role}</span>
                 </Descriptions.Item>
 
-                <Descriptions.Item label={<span className="font-semibold text-slate-600 dark:text-slate-400 flex items-center"><TeamOutlined className="mr-2 text-blue-500" />Department</span>}>
-                  <span className="font-medium text-slate-900 dark:text-slate-200">{user.department || 'General Team'}</span>
+                <Descriptions.Item label={<span className="font-semibold text-slate-600 dark:text-slate-400 flex items-center text-xs"><TeamOutlined className="mr-1.5 text-blue-500" />Department</span>}>
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1 w-full min-w-0">
+                    <div>
+                      <span className="font-medium text-slate-900 dark:text-slate-200 text-xs sm:text-sm">{user.department || 'General Team'}</span>
+                      {pendingReq && (
+                        <span className="block text-[10px] text-amber-600 dark:text-amber-400 font-bold mt-0.5">
+                          ⏳ Pending Request: {pendingReq.requested_department}
+                        </span>
+                      )}
+                    </div>
+                    <Button
+                      type="link"
+                      size="small"
+                      icon={<TeamOutlined className="text-blue-600" />}
+                      onClick={() => {
+                        if (pendingReq) {
+                          setRequestedDept(pendingReq.requested_department || '');
+                          setDeptReason(pendingReq.reason || '');
+                        } else {
+                          setRequestedDept('');
+                          setDeptReason('');
+                        }
+                        setShowDeptModal(true);
+                      }}
+                      className="text-xs font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 p-0 shrink-0 whitespace-nowrap mt-0.5 sm:mt-0"
+                    >
+                      {pendingReq ? 'View Request' : 'Request Change'}
+                    </Button>
+                  </div>
                 </Descriptions.Item>
 
-                <Descriptions.Item label={<span className="font-semibold text-slate-600 dark:text-slate-400 flex items-center"><CalendarOutlined className="mr-2 text-blue-500" />Member Since</span>}>
-                  <span className="font-medium text-slate-900 dark:text-slate-200">
-                    {user.date_joined ? format(new Date(user.date_joined), 'MMMM dd, yyyy') : 'N/A'}
+                <Descriptions.Item label={<span className="font-semibold text-slate-600 dark:text-slate-400 flex items-center text-xs"><CalendarOutlined className="mr-1.5 text-blue-500" />Member Since</span>}>
+                  <span className="font-medium text-slate-900 dark:text-slate-200 text-xs sm:text-sm">
+                    {user.date_joined ? dayjs(user.date_joined).format('MMMM DD, YYYY') : 'N/A'}
                   </span>
                 </Descriptions.Item>
               </Descriptions>
 
               {/* Danger Zone: Account Deletion */}
-              <div className="bg-red-50/70 dark:bg-red-950/20 p-3 rounded-xl border border-red-200 dark:border-red-900/40 flex items-center justify-between gap-2.5">
-                <div className="flex items-start space-x-2 min-w-0 flex-1">
-                  <WarningOutlined className="text-red-600 dark:text-red-400 text-base mt-0.5 shrink-0" />
+              <div className="bg-red-50/70 dark:bg-red-950/20 p-2 sm:p-2.5 rounded-xl border border-red-200 dark:border-red-900/40 flex items-center justify-between gap-2">
+                <div className="flex items-center space-x-2 min-w-0 flex-1">
+                  <WarningOutlined className="text-red-600 dark:text-red-400 text-sm shrink-0" />
                   <div className="min-w-0">
                     <span className="text-xs font-bold text-red-900 dark:text-red-300 block leading-tight">Danger Zone</span>
-                    <span className="text-[10.5px] text-red-700 dark:text-red-400 block leading-snug truncate sm:whitespace-normal">Permanently remove account & data.</span>
+                    <span className="text-[10px] text-red-700 dark:text-red-400 block leading-tight truncate">Permanently remove account & data.</span>
                   </div>
                 </div>
                 <Button
@@ -296,7 +355,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
                   type="primary"
                   icon={<DeleteOutlined />}
                   onClick={() => setShowDeleteModal(true)}
-                  className="text-xs font-semibold shrink-0 px-2.5 py-0.5 h-7.5 flex items-center justify-center rounded-lg"
+                  className="text-xs font-semibold shrink-0 px-2 py-0.5 h-7 flex items-center justify-center rounded-lg"
                 >
                   Delete Account
                 </Button>
@@ -321,7 +380,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
                   name="first_name"
                   rules={[{ required: true, message: 'First name is required' }]}
                 >
-                  <Input id="profile_first_name" name="first_name" prefix={<UserOutlined className="text-slate-400" />} placeholder="John" size="large" className="rounded-lg" />
+                  <Input id="first_name" name="first_name" prefix={<UserOutlined className="text-slate-400" />} placeholder="John" size="large" className="rounded-lg" />
                 </Form.Item>
 
                 <Form.Item
@@ -329,7 +388,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
                   name="last_name"
                   rules={[{ required: true, message: 'Last name is required' }]}
                 >
-                  <Input id="profile_last_name" name="last_name" prefix={<UserOutlined className="text-slate-400" />} placeholder="Doe" size="large" className="rounded-lg" />
+                  <Input id="last_name" name="last_name" prefix={<UserOutlined className="text-slate-400" />} placeholder="Doe" size="large" className="rounded-lg" />
                 </Form.Item>
               </div>
 
@@ -376,6 +435,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
         footer={null}
         width={460}
         destroyOnHidden
+        closable={false}
       >
         <div className="py-3 space-y-4">
           {emailError && (
@@ -417,7 +477,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
                 </p>
               </div>
 
-              <div className="flex justify-end space-x-2 pt-2">
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
                 <Button id="email_step1_cancel_btn" name="email_step1_cancel_btn" icon={<CloseOutlined />} onClick={resetEmailFlow}>Cancel</Button>
                 <Button
                   id="email_step1_send_btn"
@@ -426,7 +486,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
                   icon={<MailOutlined />}
                   loading={emailLoading}
                   onClick={handleRequestEmailOTP}
-                  className="bg-slate-900 hover:bg-slate-800 font-semibold text-white"
+                  className="bg-slate-900 hover:bg-slate-800 font-semibold text-white text-xs"
                 >
                   Send Verification Code
                 </Button>
@@ -476,18 +536,18 @@ export const ProfileModal = ({ open, onClose, user }) => {
                 </p>
               </div>
 
-              <div className="flex justify-between items-center pt-2">
+              <div className="flex flex-col xs:flex-row items-stretch xs:items-center justify-between gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
                 <Button
                   type="text"
                   id="email_step2_change_email_btn"
                   name="email_step2_change_email_btn"
                   icon={<ArrowLeftOutlined />}
                   onClick={() => setEmailStep(1)}
-                  className="text-xs font-medium text-slate-500 hover:text-slate-800"
+                  className="text-xs font-medium text-slate-500 hover:text-slate-800 p-0 justify-start"
                 >
                   Change Email
                 </Button>
-                <div className="space-x-2">
+                <div className="flex items-center justify-end gap-2 shrink-0">
                   <Button id="email_step2_cancel_btn" name="email_step2_cancel_btn" icon={<CloseOutlined />} onClick={resetEmailFlow}>Cancel</Button>
                   <Button
                     id="email_step2_verify_btn"
@@ -496,7 +556,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
                     icon={<CheckOutlined />}
                     loading={emailLoading}
                     onClick={handleVerifyEmailOTP}
-                    className="bg-slate-900 hover:bg-slate-800 font-semibold text-white"
+                    className="bg-slate-900 hover:bg-slate-800 font-semibold text-white text-xs"
                   >
                     Verify & Change Email
                   </Button>
@@ -525,6 +585,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
         footer={null}
         width={480}
         destroyOnHidden
+        closable={false}
       >
         <div className="py-3 space-y-4">
           <Alert
@@ -597,6 +658,104 @@ export const ProfileModal = ({ open, onClose, user }) => {
         </div>
       </Modal>
 
+      {/* Department Request Modal */}
+      <Modal
+        title={
+          <div className="flex items-center space-x-2 text-slate-900 dark:text-white">
+            <TeamOutlined className="text-blue-600 dark:text-blue-400 text-lg" />
+            <span className="font-bold">Request Department Change</span>
+          </div>
+        }
+        open={showDeptModal}
+        onCancel={() => setShowDeptModal(false)}
+        footer={null}
+        width={480}
+        destroyOnHidden
+        closable={false}
+      >
+        <div className="pt-0 pb-3 space-y-4">
+          <div className="bg-slate-50 dark:bg-slate-800 p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 space-y-1">
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Current Department</span>
+            <span className="font-bold text-slate-900 dark:text-white text-sm">{user.department || 'General Team'}</span>
+          </div>
+
+          {pendingReq && (
+            <Alert
+              type="warning"
+              showIcon
+              message="Active Pending Request"
+              description={`You have a pending request to change your department to "${pendingReq.requested_department}". Submitting a new request will update your pending request.`}
+              className="rounded-xl text-xs"
+            />
+          )}
+
+          <div>
+            <label htmlFor="profile_requested_dept" className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+              Target Department
+            </label>
+            <Input
+              id="profile_requested_dept"
+              name="requested_department"
+              prefix={<TeamOutlined className="text-slate-400" />}
+              placeholder="e.g. DevOps & Cloud Systems, Engineering, Marketing..."
+              size="large"
+              value={requestedDept}
+              onChange={(e) => setRequestedDept(e.target.value)}
+              className="rounded-lg mb-3"
+            />
+
+            <label htmlFor="profile_dept_reason" className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+              Reason / Justification for Request
+            </label>
+            <Input.TextArea
+              id="profile_dept_reason"
+              name="dept_reason"
+              rows={3}
+              placeholder="e.g. Transferred to DevOps squad to manage Kubernetes clusters and deployment pipelines."
+              value={deptReason}
+              onChange={(e) => setDeptReason(e.target.value)}
+              className="rounded-lg"
+            />
+          </div>
+
+          <div className="flex justify-end space-x-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+            <Button icon={<CloseOutlined />} onClick={() => setShowDeptModal(false)}>Cancel</Button>
+            <Button
+              type="primary"
+              icon={<CheckOutlined />}
+              loading={deptLoading}
+              onClick={async () => {
+                if (!requestedDept.trim()) {
+                  message.error('Please enter a requested department name.');
+                  return;
+                }
+                setDeptLoading(true);
+                try {
+                  const res = await departmentRequestService.createRequest({
+                    requested_department: requestedDept.trim(),
+                    reason: deptReason.trim(),
+                  });
+                  message.success('Department change request submitted to Admin/Manager!');
+                  setPendingReq(res);
+                  setShowDeptModal(false);
+                  setRequestedDept('');
+                  setDeptReason('');
+                } catch (err) {
+                  const msg = err.response?.data?.error || err.response?.data?.detail || 'Failed to submit department request.';
+                  message.error(msg);
+                } finally {
+                  setDeptLoading(false);
+                }
+              }}
+              className="bg-slate-900 hover:bg-slate-800 font-semibold text-white"
+            >
+              Submit Request
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
     </>
   );
 };
+

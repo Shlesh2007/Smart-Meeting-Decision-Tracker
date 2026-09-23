@@ -93,9 +93,17 @@ export default function Login() {
 
       const hashParams = new URLSearchParams(hash.replace('#', '?'));
       const token = hashParams.get('access_token') || hashParams.get('id_token');
+      const expiresIn = hashParams.get('expires_in');
+      const refreshToken = hashParams.get('refresh_token');
+
       if (token) {
         setOauthLoading('google');
-        authService.loginWithGoogle({ credential: token })
+        authService.loginWithGoogle({
+          credential: token,
+          access_token: token,
+          expires_in: expiresIn,
+          refresh_token: refreshToken
+        })
           .then(async (data) => {
             const profile = await refreshUser();
             message.success(data.message || 'Logged in with Google successfully!');
@@ -121,7 +129,7 @@ export default function Login() {
     const rawRedirect = envRedirect || `${window.location.origin}/login`;
     const redirectUri = encodeURIComponent(rawRedirect);
     console.log(`🔑 Initiating Google OAuth with redirect_uri: ${rawRedirect}`);
-    const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&scope=email%20profile&prompt=select_account`;
+    const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&scope=email%20profile%20https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fmeetings.space.readonly&prompt=select_account`;
 
     const isWebView = typeof window !== 'undefined' && (
       window.WebToNative ||
@@ -276,7 +284,7 @@ export default function Login() {
               rules={[{ required: true, message: 'Please enter your username!' }]}
             >
               <Input
-                id="login_username"
+                id="username"
                 name="username"
                 prefix={<UserOutlined className="text-gray-400" />}
                 placeholder="Username or email"
@@ -295,7 +303,7 @@ export default function Login() {
               className="mb-1"
             >
               <Input.Password
-                id="login_password"
+                id="password"
                 name="password"
                 ref={passwordInputRef}
                 prefix={<LockOutlined className="text-gray-400" />}
@@ -394,7 +402,7 @@ export default function Login() {
                 label="Username or Email Address"
                 rules={[{ required: true, message: 'Please enter your username or email!' }]}
               >
-                <Input id="reset_account" name="account" prefix={<MailOutlined className="text-gray-400" />} placeholder="e.g. user@example.com or john_doe" />
+                <Input id="account" name="account" prefix={<MailOutlined className="text-gray-400" />} placeholder="e.g. user@example.com or john_doe" />
               </Form.Item>
               <div className="flex justify-end space-x-2 mt-6">
                 <Button onClick={closeResetModal}>Cancel</Button>
@@ -422,7 +430,7 @@ export default function Login() {
                 ]}
               >
                 <Input
-                  id="reset_otp_code"
+                  id="otp_code"
                   name="otp_code"
                   prefix={<SafetyCertificateOutlined className="text-gray-400" />}
                   placeholder="123456"
@@ -459,7 +467,7 @@ export default function Login() {
                   { min: 6, message: 'Password must be at least 6 characters.' }
                 ]}
               >
-                <Input.Password id="reset_new_password" name="new_password" prefix={<LockOutlined className="text-gray-400" />} placeholder="••••••••" />
+                <Input.Password id="new_password" name="new_password" prefix={<LockOutlined className="text-gray-400" />} placeholder="••••••••" />
               </Form.Item>
 
               <Form.Item
@@ -467,7 +475,7 @@ export default function Login() {
                 label="Confirm New Password"
                 rules={[{ required: true, message: 'Please confirm your new password!' }]}
               >
-                <Input.Password id="reset_confirm_password" name="confirm_password" prefix={<LockOutlined className="text-gray-400" />} placeholder="••••••••" />
+                <Input.Password id="confirm_password" name="confirm_password" prefix={<LockOutlined className="text-gray-400" />} placeholder="••••••••" />
               </Form.Item>
 
               <div className="flex justify-end space-x-2 mt-6">

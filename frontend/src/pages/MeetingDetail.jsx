@@ -9,15 +9,16 @@ import { DecisionModal } from '../components/DecisionModal.jsx';
 import { ActionFormModal } from '../components/ActionFormModal.jsx';
 import { DecisionHistoryModal } from '../components/DecisionHistoryModal.jsx';
 import { EditMeetingModal } from '../components/EditMeetingModal.jsx';
+import { ParticipantProfileModal } from '../components/ParticipantProfileModal.jsx';
 import {
-  Button, Card, Tag, Avatar, Tooltip, Alert, message, Breadcrumb, Select
+  Button, Card, Tag, Avatar, Tooltip, Alert, message, Breadcrumb, Popconfirm
 } from 'antd';
 import {
   CalendarOutlined, ClockCircleOutlined, EnvironmentOutlined, UserOutlined,
   PlusOutlined, HistoryOutlined, ArrowLeftOutlined, EditOutlined, MessageOutlined, FileTextOutlined,
-  MailOutlined, SafetyCertificateOutlined
+  MailOutlined, SafetyCertificateOutlined, StopOutlined
 } from '@ant-design/icons';
-import { format } from 'date-fns';
+import dayjs from 'dayjs';
 
 export default function MeetingDetail() {
   const params = useParams();
@@ -30,7 +31,8 @@ export default function MeetingDetail() {
   const [loading, setLoading] = useState(true);
   const [sendingReminder, setSendingReminder] = useState(false);
   const [sendingOtp, setSendingOtp] = useState(false);
-  const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [selectedParticipantUser, setSelectedParticipantUser] = useState(null);
 
   const [showDiscussionModal, setShowDiscussionModal] = useState(false);
   const [showEditMeetingModal, setShowEditMeetingModal] = useState(false);
@@ -79,17 +81,17 @@ export default function MeetingDetail() {
     if (meetingId) loadData();
   }, [meetingId, loadData]);
 
-  const handleStatusChange = async (newStatus) => {
-    setUpdatingStatus(true);
+  const handleCancelMeeting = async () => {
+    setCancelling(true);
     try {
-      await meetingService.updateMeeting(meetingId, { status: newStatus });
-      message.success(`Meeting status changed to ${newStatus}`);
+      await meetingService.cancelMeeting(meetingId);
+      message.success('Meeting cancelled successfully.');
       loadData();
     } catch (err) {
-      const msg = err.response?.data?.detail || err.response?.data?.status?.[0] || 'Only the meeting organizer or an administrator can update the meeting status.';
+      const msg = err.response?.data?.detail || err.response?.data?.error || 'Only the meeting creator can cancel this meeting.';
       message.error(msg);
     } finally {
-      setUpdatingStatus(false);
+      setCancelling(false);
     }
   };
 
@@ -101,8 +103,20 @@ export default function MeetingDetail() {
     )
   );
 
-  const isStatusLocked = Boolean(
-    meeting && (meeting.status === 'COMPLETED' || meeting.status === 'CANCELLED') && !isAdmin
+  const isCreator = Boolean(
+    meeting && user && (meeting.created_by === user.id || meeting.created_by_detail?.id === user.id)
+  );
+
+  const canCancelMeeting = Boolean(
+    meeting && isCreator && meeting.status !== 'CANCELLED' && meeting.status !== 'COMPLETED'
+  );
+
+  const canEditMeeting = Boolean(
+    meeting && (isAdmin || isCreator)
+  );
+
+  const isMeetingDetailsEditable = Boolean(
+    meeting && canEditMeeting && (isAdmin || meeting.status === 'SCHEDULED')
   );
 
   const handleSendReminder = async () => {
@@ -131,7 +145,6 @@ export default function MeetingDetail() {
     }
   };
 
-
   if (loading) return <LoadingSkeleton type="detail" />;
 
   if (!meeting) {
@@ -156,14 +169,6 @@ export default function MeetingDetail() {
     );
   }
 
-  const canEditMeeting = Boolean(
-    meeting && (isAdmin || meeting.created_by === user?.id || meeting.created_by_detail?.id === user?.id)
-  );
-
-  const isMeetingDetailsEditable = Boolean(
-    meeting && canEditMeeting && (isAdmin || meeting.status === 'SCHEDULED')
-  );
-
   return (
     <div className="space-y-6 w-full max-w-full overflow-x-hidden">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
@@ -177,94 +182,99 @@ export default function MeetingDetail() {
       </div>
 
       <Card className="shadow-sm rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-800 overflow-hidden w-full">
-        {/* Card Header: Title, Tags & Quick Actions */}
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 pb-4 border-b border-slate-100 dark:border-slate-700 w-full min-w-0">
-          <div className="space-y-1.5 flex-1 min-w-0 w-full">
-            <div className="flex flex-wrap items-center gap-2 mb-1.5">
+        {/* Card Header: Tags & Quick Actions (Top Row), Title below */}
+        <div className="space-y-3 pb-4 border-b border-slate-100 dark:border-slate-700 w-full min-w-0">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 w-full">
+            <div className="flex flex-wrap items-center gap-2">
               <StatusBadge type="meetingType" value={meeting.meeting_type} />
               <StatusBadge type="meetingStatus" value={meeting.status} />
               {meeting.is_recurring && (
-                <Tag color="purple" className="font-semibold text-xs px-2 py-0.5 rounded-full border-0 bg-purple-100 dark:bg-purple-900/60 text-purple-700 dark:text-purple-300">
+                <Tag color="purple" className="m-0 font-semibold text-xs px-2.5 py-0.5 rounded-full border-0 bg-purple-100 dark:bg-purple-900/60 text-purple-700 dark:text-purple-300 inline-flex items-center">
                   🔁 Recurring: {meeting.recurrence_pattern === 'DAILY' ? 'Daily' : meeting.recurrence_pattern === 'WEEKDAYS' ? 'Weekdays' : meeting.recurrence_pattern === 'WEEKLY' ? 'Weekly' : 'Series'}
                 </Tag>
               )}
-              <Tooltip title={!canEditMeeting ? 'Only the meeting organizer or an administrator can change meeting status.' : isStatusLocked ? 'Completed or Cancelled meetings are locked. Only Admins can modify status.' : ''}>
-                <Select
-                  id="meeting_detail_status"
-                  name="status"
-                  value={meeting.status}
-                  onChange={handleStatusChange}
-                  loading={updatingStatus}
-                  disabled={isStatusLocked || !canEditMeeting}
-                  size="small"
-                  className="w-36 font-semibold"
-                  options={[
-                    { label: '🕒 Scheduled', value: 'SCHEDULED' },
-                    { label: '🔄 In Progress', value: 'IN_PROGRESS' },
-                    { label: '✅ Completed', value: 'COMPLETED' },
-                    { label: '🚫 Cancelled', value: 'CANCELLED' }
-                  ]}
-                />
-              </Tooltip>
             </div>
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-900 dark:text-white m-0 tracking-tight break-words">
-              {meeting.title}
-            </h1>
+
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap sm:flex-nowrap w-full sm:w-auto shrink-0">
+              <Tooltip
+                title={
+                  !canEditMeeting
+                    ? 'Only the meeting organizer or an administrator can edit details.'
+                    : meeting.status !== 'SCHEDULED' && !isAdmin
+                    ? 'Meeting details cannot be edited while the meeting is In Progress, Completed, or Cancelled.'
+                    : ''
+                }
+              >
+                <Button
+                  icon={<EditOutlined />}
+                  onClick={() => setShowEditMeetingModal(true)}
+                  disabled={!isMeetingDetailsEditable}
+                  className="font-medium whitespace-nowrap text-xs sm:text-sm px-2.5 sm:px-3 flex-1 sm:flex-initial text-center justify-center"
+                >
+                  Edit Details
+                </Button>
+              </Tooltip>
+
+              {canCancelMeeting && (
+                <Popconfirm
+                  title="Cancel Meeting"
+                  description="Are you sure you want to cancel this meeting? This action cannot be undone."
+                  onConfirm={handleCancelMeeting}
+                  okText="Yes, Cancel"
+                  cancelText="No"
+                  okButtonProps={{ danger: true }}
+                >
+                  <Button
+                    danger
+                    type="primary"
+                    icon={<StopOutlined />}
+                    loading={cancelling}
+                    className="font-medium whitespace-nowrap text-xs sm:text-sm px-2.5 sm:px-3 flex-1 sm:flex-initial text-center justify-center rounded-xl"
+                  >
+                    Cancel Meeting
+                  </Button>
+                </Popconfirm>
+              )}
+
+              <Tooltip title={isMeetingPastOrEnded ? 'Reminders can only be sent for upcoming active meetings' : 'Send email reminder to all invited participants'}>
+                <Button
+                  icon={<MailOutlined />}
+                  onClick={handleSendReminder}
+                  loading={sendingReminder}
+                  disabled={isMeetingPastOrEnded}
+                  className="font-medium whitespace-nowrap text-xs sm:text-sm px-2.5 sm:px-3 flex-1 sm:flex-initial text-center justify-center"
+                >
+                  Reminder
+                </Button>
+              </Tooltip>
+
+              <Tooltip title={isMeetingPastOrEnded ? 'OTP can only be sent for upcoming active meetings' : 'Dispatches 6-digit participant entry check-in OTP via email to invited attendees'}>
+                <Button
+                  icon={<SafetyCertificateOutlined className={isMeetingPastOrEnded ? '' : 'text-blue-600 dark:text-blue-400'} />}
+                  onClick={handleSendPassword}
+                  loading={sendingOtp}
+                  disabled={isMeetingPastOrEnded}
+                  className="font-medium whitespace-nowrap text-xs sm:text-sm px-2.5 sm:px-3 flex-1 sm:flex-initial text-center justify-center"
+                >
+                  Send Entry OTP
+                </Button>
+              </Tooltip>
+
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={() => setShowDiscussionModal(true)}
+                className="bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl border-none shadow-xs whitespace-nowrap text-xs sm:text-sm px-2.5 sm:px-3 flex-1 sm:flex-initial text-center justify-center"
+              >
+                Add Discussion
+              </Button>
+            </div>
           </div>
-          
-          <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap sm:flex-nowrap w-full sm:w-auto">
-            <Tooltip
-              title={
-                !canEditMeeting
-                  ? 'Only the meeting organizer or an administrator can edit details.'
-                  : meeting.status !== 'SCHEDULED' && !isAdmin
-                  ? 'Meeting details cannot be edited while the meeting is In Progress, Completed, or Cancelled.'
-                  : ''
-              }
-            >
-              <Button
-                icon={<EditOutlined />}
-                onClick={() => setShowEditMeetingModal(true)}
-                disabled={!isMeetingDetailsEditable}
-                className="font-medium whitespace-nowrap text-xs sm:text-sm px-2.5 sm:px-3 flex-1 sm:flex-initial text-center justify-center"
-              >
-                Edit Details
-              </Button>
-            </Tooltip>
 
-            <Tooltip title={isMeetingPastOrEnded ? 'Reminders can only be sent for upcoming active meetings' : ''}>
-              <Button
-                icon={<MailOutlined />}
-                onClick={handleSendReminder}
-                loading={sendingReminder}
-                disabled={isMeetingPastOrEnded}
-                className="font-medium whitespace-nowrap text-xs sm:text-sm px-2.5 sm:px-3 flex-1 sm:flex-initial text-center justify-center"
-              >
-                Reminder
-              </Button>
-            </Tooltip>
 
-            <Tooltip title={isMeetingPastOrEnded ? 'Password can only be sent for upcoming active meetings' : ''}>
-              <Button
-                icon={<SafetyCertificateOutlined className={isMeetingPastOrEnded ? '' : 'text-blue-600 dark:text-blue-400'} />}
-                onClick={handleSendPassword}
-                loading={sendingOtp}
-                disabled={isMeetingPastOrEnded}
-                className="font-medium whitespace-nowrap text-xs sm:text-sm px-2.5 sm:px-3 flex-1 sm:flex-initial text-center justify-center"
-              >
-                Send OTP
-              </Button>
-            </Tooltip>
-
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={() => setShowDiscussionModal(true)}
-              className="bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl border-none shadow-xs whitespace-nowrap text-xs sm:text-sm px-2.5 sm:px-3 flex-1 sm:flex-initial text-center justify-center"
-            >
-              Add Discussion
-            </Button>
-          </div>
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-900 dark:text-white m-0 tracking-tight break-words">
+            {meeting.title}
+          </h1>
         </div>
 
         {meeting.description && (
@@ -276,7 +286,7 @@ export default function MeetingDetail() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 text-sm text-slate-600 dark:text-slate-300 w-full min-w-0">
           <div className="flex items-center space-x-2 min-w-0 overflow-hidden">
             <CalendarOutlined className="text-blue-600 dark:text-blue-400 text-base shrink-0" />
-            <span className="truncate">Date: <strong>{format(new Date(meeting.meeting_date), 'EEE, MMM dd, yyyy')}</strong></span>
+            <span className="truncate">Date: <strong>{dayjs(meeting.meeting_date).format('ddd, MMM DD, YYYY')}</strong></span>
           </div>
           <div className="flex items-center space-x-2 min-w-0 overflow-hidden">
             <ClockCircleOutlined className="text-blue-600 dark:text-blue-400 text-base shrink-0" />
@@ -300,8 +310,11 @@ export default function MeetingDetail() {
                 ? [meeting.created_by_detail]
                 : []
               ).map((p) => (
-                <Tooltip key={p.id} title={`${p.full_name} (${p.role})`}>
-                  <Avatar className="bg-blue-600 font-extrabold text-xs text-white shrink-0 flex items-center justify-center">
+                <Tooltip key={p.id} title={`${p.full_name || p.username} (${p.role || 'Member'}) • Click to view profile`}>
+                  <Avatar
+                    onClick={() => setSelectedParticipantUser(p)}
+                    className="bg-blue-600 font-extrabold text-xs text-white shrink-0 flex items-center justify-center cursor-pointer hover:opacity-85 hover:scale-110 transition-all shadow-xs"
+                  >
                     {(p.first_name || p.full_name || p.username || 'P')[0].toUpperCase()}
                   </Avatar>
                 </Tooltip>
@@ -309,7 +322,13 @@ export default function MeetingDetail() {
             </Avatar.Group>
           </div>
           <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold shrink-0">
-            Organized by: <strong className="text-slate-900 dark:text-slate-200">{meeting.created_by_detail?.full_name || 'Admin'}</strong>
+            Organized by:{' '}
+            <strong
+              onClick={() => meeting.created_by_detail && setSelectedParticipantUser(meeting.created_by_detail)}
+              className={`text-slate-900 dark:text-slate-200 ${meeting.created_by_detail ? 'cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 hover:underline' : ''}`}
+            >
+              {meeting.created_by_detail?.full_name || 'Admin'}
+            </strong>
           </span>
         </div>
       </Card>
@@ -478,7 +497,7 @@ export default function MeetingDetail() {
                                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400 pt-1">
                                     <span>Assignee: <strong>{action.assigned_to_detail?.full_name || 'Unassigned'}</strong></span>
                                     <span className="hidden sm:inline">•</span>
-                                    <span>Due Date: <strong className={action.is_overdue ? 'text-rose-600 dark:text-rose-400' : ''}>{format(new Date(action.due_date), 'MMM dd, yyyy')}</strong></span>
+                                    <span>Due Date: <strong className={action.is_overdue ? 'text-rose-600 dark:text-rose-400' : ''}>{action.due_date ? new Date(action.due_date).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }) : 'N/A'}</strong></span>
                                   </div>
 
                                   {action.completion_notes && (
@@ -564,6 +583,12 @@ export default function MeetingDetail() {
         onClose={() => setShowEditMeetingModal(false)}
         meeting={meeting}
         onSuccess={loadData}
+      />
+
+      <ParticipantProfileModal
+        open={Boolean(selectedParticipantUser)}
+        onClose={() => setSelectedParticipantUser(null)}
+        user={selectedParticipantUser}
       />
     </div>
   );

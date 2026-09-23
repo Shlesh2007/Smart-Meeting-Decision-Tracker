@@ -86,9 +86,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             expected_pass, role, first_name, last_name, email, dept = DEMO_ACCOUNTS[user_key]
             if password == expected_pass:
                 # Find or provision user automatically
-                user = User.objects.filter(username__iexact=user_key).first()
-                if not user:
-                    user = User.objects.filter(email__iexact=email).first()
+                user = User.objects.filter(username__iexact=user_key).first() or User.objects.filter(email__iexact=email).first()
 
                 if not user:
                     user = User.objects.create_user(
@@ -106,6 +104,28 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
                     user.save()
 
                 attrs[self.username_field] = user.username
+        else:
+            # Support login by email address OR case-insensitive username
+            user = User.objects.filter(email__iexact=raw_username).first() or User.objects.filter(username__iexact=raw_username).first()
+            if user:
+                attrs[self.username_field] = user.username
 
         return super().validate(attrs)
+
+
+from .models import DepartmentChangeRequest
+
+class DepartmentChangeRequestSerializer(serializers.ModelSerializer):
+    user_detail = UserSerializer(source='user', read_only=True)
+    reviewed_by_detail = UserSerializer(source='reviewed_by', read_only=True)
+
+    class Meta:
+        model = DepartmentChangeRequest
+        fields = (
+            'id', 'user', 'user_detail', 'requested_department', 'reason',
+            'status', 'reviewed_by', 'reviewed_by_detail', 'review_notes',
+            'created_at', 'updated_at'
+        )
+        read_only_fields = ('id', 'user', 'user_detail', 'status', 'reviewed_by', 'reviewed_by_detail', 'created_at', 'updated_at')
+
 

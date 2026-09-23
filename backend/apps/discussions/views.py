@@ -6,7 +6,7 @@ from .serializers import DiscussionSerializer
 from smart_meeting_tracker.filters import ExactPhraseSearchFilter
 
 class DiscussionViewSet(viewsets.ModelViewSet):
-    queryset = Discussion.objects.all().select_related('created_by', 'meeting')
+    queryset = Discussion.objects.all().select_related('created_by', 'meeting', 'decision')
     serializer_class = DiscussionSerializer
     permission_classes = (permissions.IsAuthenticated,)
     filter_backends = (DjangoFilterBackend, ExactPhraseSearchFilter)

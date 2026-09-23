@@ -9,18 +9,21 @@ import {
   ExclamationCircleOutlined,
   CheckCircleOutlined,
 } from '@ant-design/icons';
-import { format, parseISO } from 'date-fns';
+import dayjs from 'dayjs';
 import { actionService } from '../../services/api.js';
 
+import { useAuth } from '../../context/AuthContext.jsx';
+
 export const NeedsAttention = ({ overdueList = [] }) => {
+  const { user, isAdmin, isOwner } = useAuth();
   const [activeTab, setActiveTab] = useState('ALL');
   const [actions, setActions] = useState([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     setLoading(true);
-    actionService
-      .getMyActions()
+    const fetcher = (isAdmin || isOwner) ? actionService.getActions() : actionService.getMyActions();
+    fetcher
       .then((res) => {
         const list = res.results || res || [];
         const activeList = list.filter((a) => a.status !== 'COMPLETED' && a.status !== 'CANCELLED');
@@ -30,7 +33,8 @@ export const NeedsAttention = ({ overdueList = [] }) => {
         setActions(overdueList);
       })
       .finally(() => setLoading(false));
-  }, [overdueList]);
+  }, [overdueList, isAdmin, isOwner]);
+
 
   const filteredActions = React.useMemo(() => {
     const today = new Date().toISOString().split('T')[0];
@@ -57,7 +61,7 @@ export const NeedsAttention = ({ overdueList = [] }) => {
     const today = new Date().toISOString().split('T')[0];
     const isOverdue = item.due_date && item.due_date < today;
     const dueDateStr = item.due_date
-      ? format(parseISO(item.due_date), 'MMM d')
+      ? dayjs(item.due_date).format('MMM D')
       : 'No deadline';
     const assigneeName =
       item.assigned_to_detail?.full_name || item.assigned_to_name || item.assigned_to || 'Unassigned';

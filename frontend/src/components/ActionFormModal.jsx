@@ -110,10 +110,14 @@ export const ActionFormModal = ({
 
     if (!finalDecisionId && (values.meeting_id || selectedMeetingId)) {
       const mId = values.meeting_id || selectedMeetingId;
-      if (decisionsList.length > 0) {
-        finalDecisionId = decisionsList[0].id;
-      } else {
-        try {
+      try {
+        const discRes = await discussionService.getDiscussions(mId);
+        const discussions = discRes.results || discRes || [];
+        const existingDiscWithDecision = discussions.find(d => d.decision && d.decision.id);
+        
+        if (existingDiscWithDecision) {
+          finalDecisionId = existingDiscWithDecision.decision.id;
+        } else {
           const newDisc = await discussionService.createDiscussion({
             meeting: mId,
             title: 'General Action Items',
@@ -125,11 +129,11 @@ export const ActionFormModal = ({
             decision: 'Action items recorded'
           });
           finalDecisionId = newDec.id;
-        } catch (e) {
-          message.error('Failed to attach action item to meeting.');
-          setSubmitting(false);
-          return;
         }
+      } catch (e) {
+        message.error('Failed to attach action item to meeting.');
+        setSubmitting(false);
+        return;
       }
     }
 
@@ -147,9 +151,12 @@ export const ActionFormModal = ({
       assigned_to: values.assigned_to,
       priority: values.priority,
       due_date: values.due_date ? values.due_date.format('YYYY-MM-DD') : '',
-      status: values.status,
       dependency_ids: values.dependency_ids || []
     };
+
+    if (existingAction) {
+      payload.status = values.status;
+    }
 
     try {
       if (existingAction) {
@@ -227,7 +234,7 @@ export const ActionFormModal = ({
               className="!mb-0"
             >
               <Select
-                id="action_meeting_id"
+                id="meeting_id"
                 name="meeting_id"
                 showSearch
                 placeholder="Select meeting"
@@ -245,7 +252,7 @@ export const ActionFormModal = ({
                 className="!mb-0"
               >
                 <Select
-                  id="action_decision_id"
+                  id="decision"
                   name="decision"
                   placeholder="Select decision topic"
                   options={decisionsList.map(d => ({ label: d.title, value: d.id }))}
@@ -262,7 +269,7 @@ export const ActionFormModal = ({
           rules={[{ required: true, message: 'Please enter action title' }]}
           className="!mb-0"
         >
-          <Input id="action_title" name="title" placeholder="e.g. Create proof of concept for Elasticsearch" className="w-full" />
+          <Input id="title" name="title" placeholder="e.g. Create proof of concept for Elasticsearch" className="w-full" />
         </Form.Item>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -273,7 +280,7 @@ export const ActionFormModal = ({
             className="!mb-0"
           >
             <Select
-              id="action_assigned_to"
+              id="assigned_to"
               name="assigned_to"
               showSearch
               placeholder={currentMeetingId && meetingParticipants.length > 0 ? "Select meeting participant" : "Select team member"}
@@ -289,14 +296,50 @@ export const ActionFormModal = ({
             rules={[{ required: true, message: 'Please set due date' }]}
             className="!mb-0"
           >
-            <DatePicker id="action_due_date" name="due_date" className="w-full" />
+            <DatePicker
+              id="due_date"
+              name="due_date"
+              className="w-full"
+              disabledDate={(current) => current && current.isBefore(dayjs().startOf('day'))}
+            />
           </Form.Item>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {existingAction ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Form.Item name="priority" label="Priority" className="!mb-0">
+              <Select
+                id="priority"
+                name="priority"
+                options={[
+                  { label: 'Low', value: 'LOW' },
+                  { label: 'Medium', value: 'MEDIUM' },
+                  { label: 'High', value: 'HIGH' },
+                  { label: 'Critical', value: 'CRITICAL' }
+                ]}
+                className="w-full"
+              />
+            </Form.Item>
+
+            <Form.Item name="status" label="Status" className="!mb-0">
+              <Select
+                id="status"
+                name="status"
+                options={[
+                  { label: 'Todo', value: 'TODO' },
+                  { label: 'In Progress', value: 'IN_PROGRESS' },
+                  { label: 'Blocked', value: 'BLOCKED' },
+                  { label: 'Completed', value: 'COMPLETED' },
+                  { label: 'Cancelled', value: 'CANCELLED' }
+                ]}
+                className="w-full"
+              />
+            </Form.Item>
+          </div>
+        ) : (
           <Form.Item name="priority" label="Priority" className="!mb-0">
             <Select
-              id="action_priority"
+              id="priority"
               name="priority"
               options={[
                 { label: 'Low', value: 'LOW' },
@@ -307,22 +350,7 @@ export const ActionFormModal = ({
               className="w-full"
             />
           </Form.Item>
-
-          <Form.Item name="status" label="Initial Status" className="!mb-0">
-            <Select
-              id="action_status"
-              name="status"
-              options={[
-                { label: 'Todo', value: 'TODO' },
-                { label: 'In Progress', value: 'IN_PROGRESS' },
-                { label: 'Blocked', value: 'BLOCKED' },
-                { label: 'Completed', value: 'COMPLETED' },
-                { label: 'Cancelled', value: 'CANCELLED' }
-              ]}
-              className="w-full"
-            />
-          </Form.Item>
-        </div>
+        )}
 
         <Form.Item
           name="dependency_ids"
@@ -335,7 +363,7 @@ export const ActionFormModal = ({
           className="!mb-0"
         >
           <Select
-            id="action_dependency_ids"
+            id="dependency_ids"
             name="dependency_ids"
             mode="multiple"
             placeholder={
@@ -352,7 +380,7 @@ export const ActionFormModal = ({
         </Form.Item>
 
         <Form.Item name="description" label="Detailed Instructions" className="!mb-0">
-          <Input.TextArea id="action_description" name="description" rows={2} placeholder="Describe specific execution steps..." className="w-full" />
+          <Input.TextArea id="description" name="description" rows={2} placeholder="Describe specific execution steps..." className="w-full" />
         </Form.Item>
 
         <Form.Item noStyle shouldUpdate={(prevValues, currentValues) => prevValues.status !== currentValues.status}>
@@ -363,7 +391,7 @@ export const ActionFormModal = ({
                 label="Completion Notes / Work Outcome (Delivered Results)"
                 className="!mb-0"
               >
-                <Input.TextArea id="action_completion_notes" name="completion_notes" rows={2} placeholder="Explain what work was completed, results achieved, or links to deliverables..." className="w-full" />
+                <Input.TextArea id="completion_notes" name="completion_notes" rows={2} placeholder="Explain what work was completed, results achieved, or links to deliverables..." className="w-full" />
               </Form.Item>
             ) : null
           }

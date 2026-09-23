@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button, Input, Select, AutoComplete, Tag, Spin, DatePicker } from 'antd';
 import { PlusOutlined, SyncOutlined, CalendarOutlined, ThunderboltOutlined, SearchOutlined, FilterOutlined } from '@ant-design/icons';
-import { format } from 'date-fns';
 import dayjs from 'dayjs';
 import { Logo } from '../Logo.jsx';
 import { meetingService, actionService } from '../../services/api.js';
@@ -133,10 +132,13 @@ export const DashboardHeader = ({
               {greetingTime}, {userName}! 👋
             </h1>
             <p className="text-xs text-slate-500 dark:text-slate-400 m-0">
-              Here&apos;s your meeting & action item overview.
+              {user?.role === 'ADMIN' || user?.role === 'OWNER'
+                ? "Here's the organization-wide meeting & employee action item performance dashboard."
+                : "Here's your personal meeting & action item workspace overview."}
             </p>
           </div>
         </div>
+
 
         {/* Action Buttons */}
         <div className="flex items-center gap-1.5 sm:gap-2 w-full sm:w-auto shrink-0">
@@ -145,7 +147,7 @@ export const DashboardHeader = ({
               type="primary"
               size="middle"
               icon={<PlusOutlined />}
-              className="w-full sm:w-auto bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl border-none shadow-xs text-xs h-9 px-2 sm:px-3.5 flex items-center justify-center truncate"
+              className="w-full sm:w-auto bg-slate-900 hover:bg-slate-800 text-white font-bold !rounded-full border-none shadow-xs text-xs h-9 px-3 sm:px-4 flex items-center justify-center truncate"
             >
               <span>Schedule Meeting</span>
             </Button>
@@ -155,7 +157,7 @@ export const DashboardHeader = ({
             <Button
               size="middle"
               icon={<ThunderboltOutlined />}
-              className="w-full sm:w-auto bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold rounded-xl border-slate-200 dark:border-slate-700 text-xs h-9 px-2 sm:px-3.5 flex items-center justify-center truncate"
+              className="w-full sm:w-auto bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold !rounded-full border-slate-200 dark:border-slate-700 text-xs h-9 px-3 sm:px-4 flex items-center justify-center truncate"
             >
               <span>View My Actions</span>
             </Button>
@@ -167,7 +169,7 @@ export const DashboardHeader = ({
               icon={<SyncOutlined spin={loading} />}
               onClick={onRefresh}
               title="Refresh Dashboard"
-              className="bg-white dark:bg-slate-800 hover:bg-slate-50 text-slate-600 dark:text-slate-300 rounded-xl border-slate-200 dark:border-slate-700 h-9 w-9 flex items-center justify-center p-0 shrink-0"
+              className="bg-white dark:bg-slate-800 hover:bg-slate-50 text-slate-600 dark:text-slate-300 !rounded-full border-slate-200 dark:border-slate-700 h-9 w-9 flex items-center justify-center p-0 shrink-0"
             />
           )}
         </div>
@@ -175,7 +177,7 @@ export const DashboardHeader = ({
 
       {/* Global Search & Time Period Filter Bar */}
       <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-2">
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
+        <div className="flex flex-row items-center justify-between gap-2">
           <div className="flex-1 min-w-0">
             <AutoComplete
               popupMatchSelectWidth={false}
@@ -195,22 +197,18 @@ export const DashboardHeader = ({
                 suffix={searching ? <Spin size="small" /> : null}
                 placeholder="Search meetings & actions..."
                 allowClear
-                className="rounded-xl text-xs h-9"
+                className="!rounded-full text-xs h-9"
               />
             </AutoComplete>
           </div>
 
-          <div className="flex items-center space-x-1.5 shrink-0 self-end sm:self-auto w-full sm:w-auto justify-between sm:justify-start">
-            <div className="flex items-center space-x-1">
-              <FilterOutlined className="text-blue-500 text-xs shrink-0" />
-              <span className="text-xs font-semibold text-slate-500 sm:hidden">Filter:</span>
-            </div>
+          <div className="flex items-center shrink-0">
             <Select
               id="header_time_period"
               name="time_period"
               value={period || 'all_time'}
               onChange={onPeriodChange}
-              className="w-32 sm:w-36 font-semibold text-xs h-9 shrink-0"
+              className="w-28 xs:w-32 sm:w-36 font-semibold text-xs h-9 !rounded-full"
               size="middle"
               popupMatchSelectWidth={false}
               options={[

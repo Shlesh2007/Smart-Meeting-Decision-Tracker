@@ -27,7 +27,7 @@ const getApiBaseUrl = () => {
   if (typeof window !== 'undefined' && !window.location.hostname.includes('localhost') && !window.location.hostname.includes('127.0.0.1')) {
     return 'https://smart-meeting-decision-tracker-s63z.onrender.com/api';
   }
-  return 'http://localhost:8080/api';
+  return 'http://localhost:8000/api';
 };
 
 const API_URL = getApiBaseUrl();
@@ -59,28 +59,9 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response Interceptor: Automatically retry against live Render production backend if local server is down (ERR_NETWORK / ERR_CONNECTION_REFUSED)
-const PROD_API_URL = 'https://smart-meeting-decision-tracker-s63z.onrender.com/api';
-
 api.interceptors.response.use(
   (response) => response,
-  async (error) => {
-    const config = error.config;
-    // Check if network connection was refused on localhost and request has not retried fallback yet
-    if (
-      config &&
-      !config._fallbackRetried &&
-      (error.code === 'ERR_NETWORK' || error.message?.includes('Network Error') || !error.response) &&
-      config.baseURL &&
-      config.baseURL.includes('localhost')
-    ) {
-      config._fallbackRetried = true;
-      config.baseURL = PROD_API_URL;
-      console.warn(`⚠️ Local backend connection refused. Retrying request against production Render API (${PROD_API_URL})...`);
-      return api(config);
-    }
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
 
@@ -186,6 +167,26 @@ export const userService = {
   }
 };
 
+export const departmentRequestService = {
+  getRequests: async (params) => {
+    const res = await api.get('/auth/department-requests/', { params });
+    return res.data;
+  },
+  createRequest: async (payload) => {
+    const res = await api.post('/auth/department-requests/', payload);
+    return res.data;
+  },
+  approveRequest: async (id, payload) => {
+    const res = await api.post(`/auth/department-requests/${id}/approve/`, payload);
+    return res.data;
+  },
+  rejectRequest: async (id, payload) => {
+    const res = await api.post(`/auth/department-requests/${id}/reject/`, payload);
+    return res.data;
+  }
+};
+
+
 export const teamService = {
   getTeams: async () => {
     const res = await api.get('/teams/');
@@ -231,6 +232,10 @@ export const meetingService = {
   },
   sendMeetingReminder: async (id) => {
     const res = await api.post(`/meetings/${id}/send-reminder/`);
+    return res.data;
+  },
+  cancelMeeting: async (id) => {
+    const res = await api.post(`/meetings/${id}/cancel/`);
     return res.data;
   }
 };
@@ -288,6 +293,22 @@ export const actionService = {
   }
 };
 
+// Notifications Service
+export const notificationService = {
+  getNotifications: async () => {
+    const res = await api.get('/notifications/');
+    return res.data;
+  },
+  markAsRead: async (id) => {
+    const res = await api.patch(`/notifications/${id}/`, { is_read: true });
+    return res.data;
+  },
+  markAllAsRead: async () => {
+    const res = await api.post('/notifications/mark-all-read/');
+    return res.data;
+  }
+};
+
 // Analytics Service
 export const analyticsService = {
   getDashboard: async (params) => {
@@ -295,4 +316,5 @@ export const analyticsService = {
     return res.data;
   }
 };
+
 

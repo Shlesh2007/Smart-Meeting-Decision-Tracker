@@ -113,11 +113,25 @@ class ActionItemViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'])
     def my_actions(self, request):
         """
-        Dedicated endpoint for logged in user's assigned or created actions
+        Dedicated endpoint for logged in user's actions.
+        - For Admin/Manager: returns all actions in scope unless scope=mine is explicitly requested.
+        - For Member: strictly returns actions assigned to or created by the logged in user.
         """
-        queryset = self.get_queryset().filter(
-            Q(assigned_to=request.user) | Q(created_by=request.user)
-        ).distinct()
+        scope = request.query_params.get('scope', '').lower()
+        user = request.user
+
+        if user.is_admin_role or user.is_manager_role:
+            if scope == 'mine':
+                queryset = self.get_queryset().filter(
+                    Q(assigned_to=user) | Q(created_by=user)
+                ).distinct()
+            else:
+                queryset = self.get_queryset()
+        else:
+            queryset = self.get_queryset().filter(
+                Q(assigned_to=user) | Q(created_by=user)
+            ).distinct()
+
         filtered_qs = self.filter_queryset(queryset)
         page = self.paginate_queryset(filtered_qs)
         if page is not None:
@@ -125,3 +139,4 @@ class ActionItemViewSet(viewsets.ModelViewSet):
             return self.get_paginated_response(serializer.data)
         serializer = self.get_serializer(filtered_qs, many=True)
         return Response(serializer.data)
+

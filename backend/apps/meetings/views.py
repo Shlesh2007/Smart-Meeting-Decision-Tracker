@@ -1,4 +1,5 @@
 from rest_framework import viewsets, permissions, filters, status
+from rest_framework.decorators import action
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
@@ -117,6 +118,53 @@ class MeetingViewSet(viewsets.ModelViewSet):
             raise permissions.PermissionDenied("Only the meeting organizer or an Admin/Owner can delete this meeting.")
         instance.delete()
 
+    @action(detail=True, methods=['post'], url_path='cancel')
+    def cancel_meeting(self, request, pk=None):
+        meeting = self.get_object()
+
+        # Authorization: Only the meeting creator/host can cancel
+        if meeting.created_by != request.user:
+            return Response(
+                {'detail': 'Only the meeting creator can cancel this meeting.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        current_status = meeting.get_calculated_status()
+        if current_status == Meeting.Status.CANCELLED:
+            return Response(
+                {'detail': 'Meeting is already cancelled.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if current_status == Meeting.Status.COMPLETED:
+            return Response(
+                {'detail': 'Completed meetings cannot be cancelled.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        meeting.status = Meeting.Status.CANCELLED
+        meeting.save(update_fields=['status', 'updated_at'])
+
+        # Dispatch meeting cancellation email notice
+        recipients = list(set([p.email for p in meeting.participants.all() if p.email] + ([meeting.created_by.email] if meeting.created_by.email else [])))
+        if recipients:
+            try:
+                subject = f"🚫 Meeting Cancelled: {meeting.title}"
+                text_body = (
+                    f"Hello,\n\n"
+                    f"The meeting '{meeting.title}' scheduled for {meeting.meeting_date} "
+                    f"from {meeting.start_time} to {meeting.end_time} has been cancelled by the meeting organizer ({request.user.get_full_name() or request.user.username}).\n\n"
+                    f"Best regards,\nSmartMeeting Tracker Team"
+                )
+                html_body = build_meeting_email_html(meeting, title_prefix="Meeting Cancelled Notice")
+                send_brevo_transactional_email(subject, recipients, text_body, html_body)
+            except Exception as email_err:
+                logger.error(f"Failed to dispatch cancellation email: {email_err}")
+
+        serializer = self.get_serializer(meeting)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
 
 class SendMeetingOTPView(APIView):
     permission_classes = (permissions.IsAuthenticated,)
@@ -214,3 +262,39 @@ class SendMeetingReminderView(APIView):
             'message': f'Meeting reminder email sent successfully to {len(recipients)} participant(s).',
             'recipients': recipients
         }, status=status.HTTP_200_OK)
+
+
+from .google_meet import parse_and_validate_meet_url, verify_google_meet_space
+
+class ValidateGoogleMeetUrlView(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def post(self, request):
+        meet_url = request.data.get('meet_url') or request.data.get('url') or request.data.get('meeting_uri')
+        if not meet_url:
+            return Response({
+                'valid': False,
+                'message': 'Google Meet URL is required in request payload.'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # 1-4. Validate URL format, HTTPS scheme, hostname meet.google.com, and meeting code format
+        is_valid_format, format_err_msg, meeting_code = parse_and_validate_meet_url(meet_url)
+        if not is_valid_format:
+            return Response({
+                'valid': False,
+                'message': format_err_msg
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # 5. Retrieve authenticated user's Google OAuth access token
+        user = request.user
+        access_token = getattr(user, 'google_access_token', None) or request.headers.get('X-Google-Access-Token') or request.data.get('access_token')
+
+        if not access_token:
+            return Response({
+                'valid': False,
+                'message': 'Google OAuth access token not found for authenticated user. Please sign in with Google.'
+            }, status=status.HTTP_401_UNAUTHORIZED)
+
+        # 6-7. Query Google Meet REST API v2 and interpret response
+        http_status, response_payload = verify_google_meet_space(access_token, meeting_code, user=user)
+        return Response(response_payload, status=http_status)

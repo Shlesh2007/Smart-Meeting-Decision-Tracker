@@ -86,7 +86,7 @@ export const DecisionModal = ({
           rules={[{ required: true, message: 'Please select outcome status' }]}
         >
           <Select
-            id="decision_status"
+            id="status"
             name="status"
             onChange={(val) => setSelectedStatus(val)}
             options={[
@@ -104,12 +104,12 @@ export const DecisionModal = ({
             label="Decision Resolution Details"
             rules={[{ required: true, message: 'Please specify the decision details' }]}
           >
-            <Input.TextArea id="decision_details" name="decision" rows={3} placeholder="e.g. Introduce Redis caching for search query results" />
+            <Input.TextArea id="decision" name="decision" rows={3} placeholder="e.g. Introduce Redis caching for search query results" />
           </Form.Item>
         )}
 
         <Form.Item name="reason" label="Reason">
-          <Input.TextArea id="decision_reason" name="reason" rows={2} placeholder="e.g. Reduces database load and response latency by 80%" />
+          <Input.TextArea id="reason" name="reason" rows={2} placeholder="e.g. Reduces database load and response latency by 80%" />
         </Form.Item>
       </Form>
     </Modal>

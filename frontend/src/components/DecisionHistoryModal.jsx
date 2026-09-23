@@ -3,7 +3,7 @@ import { Modal, Timeline, Tag, Spin, Typography, Avatar } from 'antd';
 import { decisionService } from '../services/api.js';
 import { StatusBadge } from './StatusBadge.jsx';
 import { HistoryOutlined, CalendarOutlined } from '@ant-design/icons';
-import { format } from 'date-fns';
+import dayjs from 'dayjs';
 
 const { Text, Paragraph } = Typography;
 
@@ -82,7 +82,7 @@ export const DecisionHistoryModal = ({ open, onClose, decisionId }) => {
                     </span>
                     <span className="flex items-center space-x-1">
                       <CalendarOutlined />
-                      <span>{record.changed_at ? format(new Date(record.changed_at), 'PPP p') : 'N/A'}</span>
+                      <span>{record.changed_at ? dayjs(record.changed_at).format('MMM D, YYYY h:mm A') : 'N/A'}</span>
                     </span>
                   </div>
                 </div>

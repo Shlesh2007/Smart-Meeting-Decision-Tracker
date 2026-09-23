@@ -10,7 +10,7 @@ import {
   ArrowRightOutlined,
   PlusOutlined,
 } from '@ant-design/icons';
-import { format, isToday, isTomorrow, parseISO } from 'date-fns';
+import dayjs from 'dayjs';
 import { meetingService } from '../../services/api.js';
 
 export const UpcomingMeetings = ({ meetings: initialMeetings }) => {
@@ -37,13 +37,16 @@ export const UpcomingMeetings = ({ meetings: initialMeetings }) => {
     const tomorrowList = [];
     const futureList = [];
 
+    const now = dayjs().startOf('day');
+    const tmrw = now.add(1, 'day');
+
     meetings.forEach((m) => {
       if (!m.meeting_date) return;
       try {
-        const d = parseISO(m.meeting_date);
-        if (isToday(d)) {
+        const d = dayjs(m.meeting_date).startOf('day');
+        if (d.isSame(now, 'day')) {
           todayList.push(m);
-        } else if (isTomorrow(d)) {
+        } else if (d.isSame(tmrw, 'day')) {
           tomorrowList.push(m);
         } else {
           futureList.push(m);
@@ -58,7 +61,7 @@ export const UpcomingMeetings = ({ meetings: initialMeetings }) => {
 
   const renderMeetingRow = (m) => {
     const timeStr = m.start_time ? m.start_time.slice(0, 5) : '09:00';
-    const dateStr = m.meeting_date ? format(parseISO(m.meeting_date), 'MMM d') : '';
+    const dateStr = m.meeting_date ? dayjs(m.meeting_date).format('MMM D') : '';
     const isOnline = m.location && (m.location.toLowerCase().includes('http') || m.location.toLowerCase().includes('zoom') || m.location.toLowerCase().includes('meet') || m.location.toLowerCase().includes('teams'));
 
     return (

@@ -15,7 +15,10 @@ class DiscussionSerializer(serializers.ModelSerializer):
         read_only_fields = ('id', 'created_by', 'created_at', 'updated_at')
 
     def get_decision(self, obj):
-        if hasattr(obj, 'decision'):
-            from apps.decisions.serializers import DecisionSerializer
-            return DecisionSerializer(obj.decision).data
+        try:
+            if hasattr(obj, 'decision') and obj.decision:
+                from apps.decisions.serializers import DecisionSerializer
+                return DecisionSerializer(obj.decision).data
+        except Exception:
+            return None
         return None

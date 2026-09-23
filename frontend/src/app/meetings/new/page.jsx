@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { meetingService, userService, teamService } from '../../services/api.js';
 import {
-  Form, Input, Select, DatePicker, TimePicker, Button, Card, Checkbox, Radio, ConfigProvider, Popover, Tag, App
+  Form, Input, Select, DatePicker, TimePicker, Button, Card, Checkbox, Radio, ConfigProvider, Popover, Tag, App, Space
 } from 'antd';
 import { ArrowLeftOutlined, VideoCameraOutlined, EnvironmentOutlined, LockOutlined, MailOutlined, SyncOutlined, TeamOutlined, UserOutlined, RightOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
@@ -108,6 +108,15 @@ export default function CreateMeetingPage() {
     const startTimeStr = values.time_range[0].format('HH:mm:ss');
     const meetingStartDateTime = dayjs(`${meetingDateStr} ${startTimeStr}`);
 
+    const hasTeam = values.team !== undefined && values.team !== null && values.team !== '';
+    const hasParticipants = Array.isArray(values.participant_ids) && values.participant_ids.length > 0;
+
+    if (!hasTeam && !hasParticipants) {
+      message.error('Please assign a team or invite at least one individual participant.');
+      setSubmitting(false);
+      return;
+    }
+
     if (meetingStartDateTime.isBefore(dayjs().subtract(2, 'minute'))) {
       message.error('Meeting start time cannot be scheduled in the past.');
       setSubmitting(false);
@@ -122,7 +131,7 @@ export default function CreateMeetingPage() {
       end_time: values.time_range[1].format('HH:mm:ss'),
       location: computedLocation,
       meeting_type: values.meeting_type,
-      team: values.team || undefined,
+      team: values.team ? Number(values.team) : null,
       participant_ids: values.participant_ids || [],
       is_recurring: values.is_recurring || false,
       recurrence_pattern: values.is_recurring ? (values.recurrence_pattern || 'DAILY') : undefined,
@@ -194,12 +203,12 @@ export default function CreateMeetingPage() {
                 rules={[{ required: true, message: 'Please enter meeting title' }]}
                 className="m-0"
               >
-                <Input id="create_app_meeting_title" name="title" placeholder="e.g. Q3 Architecture & API Response Time Review" />
+                <Input id="title" name="title" placeholder="e.g. Q3 Architecture & API Response Time Review" />
               </Form.Item>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Form.Item name="meeting_type" label="Meeting Type" rules={[{ required: true }]} className="m-0">
-                  <Select id="create_app_meeting_type" name="meeting_type" options={[
+                  <Select id="meeting_type" name="meeting_type" options={[
                     { label: 'Internal', value: 'INTERNAL' },
                     { label: 'Client', value: 'CLIENT' },
                     { label: 'Project', value: 'PROJECT' },
@@ -210,9 +219,9 @@ export default function CreateMeetingPage() {
                 </Form.Item>
 
                 <Form.Item name="location_type" label="Location / Link" rules={[{ required: true }]} className="m-0">
-                  <Select id="create_app_location_type" name="location_type" options={[
-                    { label: '🏢 Conference Room', value: 'CONFERENCE_ROOM' },
-                    { label: '📹 Google Meet', value: 'GOOGLE_MEET' }
+                  <Select id="location_type" name="location_type" options={[
+                    { label: 'Conference Room', value: 'CONFERENCE_ROOM' },
+                    { label: 'Google Meet', value: 'GOOGLE_MEET' }
                   ]} />
                 </Form.Item>
               </div>
@@ -224,41 +233,46 @@ export default function CreateMeetingPage() {
                   rules={[{ required: true, message: 'Please specify conference room' }]}
                   className="m-0"
                 >
-                  <Input id="create_app_conference_room" name="conference_room" prefix={<EnvironmentOutlined className="text-blue-500" />} placeholder="e.g. Conference Room A - Floor 3" />
+                  <Input id="conference_room" name="conference_room" prefix={<EnvironmentOutlined className="text-blue-500" />} placeholder="e.g. Conference Room A - Floor 3" />
                 </Form.Item>
               ) : (
                 <div className="space-y-3 bg-slate-50 dark:bg-slate-900/50 p-3.5 rounded-xl border border-slate-200 dark:border-slate-700">
                   <Form.Item
-                    name="google_meet_link"
-                    label="Enter Google Meeting Link"
-                    rules={[
-                      { required: true, message: 'Please enter Google Meet link' },
-                      {
-                        pattern: /^(https?:\/\/)?(meet\.google\.com\/[a-z]{3}-[a-z]{4}-[a-z]{3}|meet\.google\.com\/[a-zA-Z0-9_-]+)(\?.*)?$/i,
-                        message: 'Invalid Google Meet URL format. Use format: https://meet.google.com/abc-defg-hij'
-                      }
-                    ]}
+                    label={<span className="font-semibold text-slate-700 dark:text-slate-300">Enter Google Meeting Link</span>}
                     className="m-0"
                   >
-                    <Input
-                      id="create_app_google_meet_link"
-                      name="google_meet_link"
-                      prefix={<VideoCameraOutlined className="text-blue-500 mr-1" />}
-                      placeholder="https://meet.google.com/abc-defg-hij"
-                      addonAfter={
-                        <Form.Item name="access_type" noStyle initialValue="PUBLIC">
-                          <Select
-                            id="create_app_access_type"
-                            name="access_type"
-                            className="w-40 font-semibold text-xs"
-                            options={[
-                              { label: 'Public (no pass)', value: 'PUBLIC' },
-                              { label: 'With Password', value: 'PROTECTED' }
-                            ]}
-                          />
-                        </Form.Item>
-                      }
-                    />
+                    <Space.Compact block>
+                      <Form.Item
+                        name="google_meet_link"
+                        noStyle
+                        rules={[
+                          { required: true, message: 'Please enter Google Meet link' },
+                          {
+                            pattern: /^(https?:\/\/)?(meet\.google\.com\/[a-z]{3}-[a-z]{4}-[a-z]{3}|meet\.google\.com\/[a-zA-Z0-9_-]+)(\?.*)?$/i,
+                            message: 'Invalid Google Meet URL format. Use format: https://meet.google.com/abc-defg-hij'
+                          }
+                        ]}
+                      >
+                        <Input
+                          id="google_meet_link"
+                          name="google_meet_link"
+                          prefix={<VideoCameraOutlined className="text-blue-500 mr-1" />}
+                          placeholder="https://meet.google.com/abc-defg-hij"
+                          className="w-full"
+                        />
+                      </Form.Item>
+                      <Form.Item name="access_type" noStyle>
+                        <Select
+                          id="access_type"
+                          name="access_type"
+                          className="w-40 font-semibold text-xs"
+                          options={[
+                            { label: 'Public (no pass)', value: 'PUBLIC' },
+                            { label: 'With Password', value: 'PROTECTED' }
+                          ]}
+                        />
+                      </Form.Item>
+                    </Space.Compact>
                   </Form.Item>
 
                   {accessType === 'PROTECTED' && (
@@ -268,14 +282,14 @@ export default function CreateMeetingPage() {
                       rules={[{ required: true, message: 'Please enter meeting password' }]}
                       className="m-0 pt-1"
                     >
-                      <Input.Password id="create_app_google_meet_password" name="google_meet_password" prefix={<LockOutlined className="text-amber-500" />} placeholder="Enter password" />
+                      <Input.Password id="google_meet_password" name="google_meet_password" prefix={<LockOutlined className="text-amber-500" />} placeholder="Enter password" />
                     </Form.Item>
                   )}
                 </div>
               )}
 
               <Form.Item name="description" label="Meeting Agenda & Description" className="m-0">
-                <Input.TextArea id="create_app_meeting_description" name="description" rows={3} placeholder="Outline key topics to discuss..." />
+                <Input.TextArea id="description" name="description" rows={3} placeholder="Outline key topics to discuss..." />
               </Form.Item>
             </div>
 
@@ -289,7 +303,7 @@ export default function CreateMeetingPage() {
                     rules={[{ required: true, message: 'Please select meeting date' }]}
                     className="m-0 sm:col-span-5 min-w-0"
                   >
-                    <DatePicker id="create_app_meeting_date" name="meeting_date" style={{ width: '100%' }} disabledDate={(current) => current && current.isBefore(dayjs().startOf('day'))} />
+                    <DatePicker id="meeting_date" name="meeting_date" style={{ width: '100%' }} disabledDate={(current) => current && current.isBefore(dayjs().startOf('day'))} />
                   </Form.Item>
 
                   <Form.Item
@@ -299,9 +313,10 @@ export default function CreateMeetingPage() {
                     className="m-0 sm:col-span-7 min-w-0"
                   >
                     <TimePicker.RangePicker 
-                      id="create_app_time_range" 
+                      id="time_range" 
                       name="time_range" 
                       style={{ width: '100%' }} 
+                      className="w-full [&_.ant-picker-input>input]:!text-center [&_.ant-picker-input>input]:!text-xs [&_.ant-picker-separator]:!px-0.5 [&_.ant-picker-range-separator]:!px-0.5 [&_.ant-picker-suffix]:!ml-0.5"
                       format="HH:mm"
                       disabledTime={() => {
                         const selectedDate = form.getFieldValue('meeting_date');
@@ -326,80 +341,56 @@ export default function CreateMeetingPage() {
                 </div>
               </div>
 
-              <Form.Item
-                name="team"
-                label="Assign to Team (Optional)"
-                help="Selecting a team automatically invites all members of that team."
-                className="m-0"
-              >
-                <Select
-                  id="create_app_meeting_team"
+              <div>
+                <Form.Item
                   name="team"
-                  placeholder="Select team"
-                  allowClear
-                  optionLabelProp="label"
+                  label="Assign to Team (Optional)"
+                  className="m-0"
                 >
-                  {teams.map((t) => (
-                    <Select.Option key={t.id} value={t.id} label={t.name}>
-                      <Popover
-                        placement="right"
-                        mouseEnterDelay={0.15}
-                        title={
-                          <div className="flex items-center space-x-1.5 text-xs font-bold text-slate-800 dark:text-slate-200 border-b border-slate-100 dark:border-slate-700 pb-1">
-                            <TeamOutlined className="text-blue-500" />
-                            <span>{t.name} Members ({t.members_detail?.length || 0})</span>
-                          </div>
-                        }
-                        content={
-                          <div className="max-h-48 overflow-y-auto space-y-1.5 min-w-[220px] py-1">
-                            {t.members_detail && t.members_detail.length > 0 ? (
-                              t.members_detail.map((m) => (
-                                <div key={m.id} className="flex items-center space-x-2 text-xs py-0.5">
-                                  <UserOutlined className="text-slate-400 text-[10px] shrink-0" />
-                                  <div className="flex-1 min-w-0">
-                                    <span className="font-semibold text-slate-800 dark:text-slate-200 block truncate">{m.full_name || m.username}</span>
-                                    <span className="text-[10px] text-slate-400 block truncate">{m.email}</span>
-                                  </div>
-                                  <Tag color="blue" className="text-[9px] m-0 font-bold uppercase shrink-0">{m.role}</Tag>
-                                </div>
-                              ))
-                            ) : (
-                              <p className="text-slate-400 text-xs italic m-0">No members assigned</p>
-                            )}
-                          </div>
-                        }
-                      >
+                  <Select
+                    id="team"
+                    name="team"
+                    placeholder="Select team"
+                    allowClear
+                    optionLabelProp="label"
+                  >
+                    {teams.map((t) => (
+                      <Select.Option key={t.id} value={t.id} label={t.name}>
                         <div className="flex items-center justify-between w-full py-0.5">
                           <span className="font-medium text-xs text-slate-800 dark:text-slate-200">{t.name}</span>
-                          <span className="text-[10px] text-blue-600 dark:text-blue-400 font-semibold bg-blue-50 dark:bg-slate-800 px-2 py-0.5 rounded-full flex items-center space-x-1 ml-2 shrink-0">
-                            <span>{t.members_detail?.length || 0} members</span>
-                            <RightOutlined className="text-[8px]" />
+                          <span className="text-[10px] text-blue-600 dark:text-blue-400 font-semibold bg-blue-50 dark:bg-slate-800 px-2 py-0.5 rounded-full flex items-center ml-2 shrink-0">
+                            {t.members_detail?.length || (t.members ? t.members.length : 0)} members
                           </span>
                         </div>
-                      </Popover>
-                    </Select.Option>
-                  ))}
-                </Select>
-              </Form.Item>
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+                <p className="text-xs text-slate-400 dark:text-slate-400 mt-1.5 mb-5">
+                  Selecting a team automatically invites all members of that team.
+                </p>
+              </div>
 
-              <Form.Item
-                name="participant_ids"
-                label="Invite Individual Participants"
-                help={
-                  selectedTeamObj
-                    ? `Members of "${selectedTeamObj.name}" are automatically invited and hidden from this list.`
-                    : "Select additional individual users to invite."
-                }
-                className="m-0"
-              >
-                <Select
-                  id="create_app_participant_ids"
+              <div>
+                <Form.Item
                   name="participant_ids"
-                  mode="multiple"
-                  placeholder={selectedTeamObj ? "Select additional non-team participants" : "Select team members"}
-                  options={availableIndividualUsers.map(u => ({ label: `${u.full_name} • ${u.email} (${u.role})`, value: u.id }))}
-                />
-              </Form.Item>
+                  label="Invite Individual Participants"
+                  className="m-0"
+                >
+                  <Select
+                    id="participant_ids"
+                    name="participant_ids"
+                    mode="multiple"
+                    placeholder={selectedTeamObj ? "Select additional non-team participants" : "Select team members"}
+                    options={availableIndividualUsers.map(u => ({ label: `${u.full_name} • ${u.email} (${u.role})`, value: u.id }))}
+                  />
+                </Form.Item>
+                <p className="text-xs text-slate-400 dark:text-slate-400 mt-1.5 mb-5">
+                  {selectedTeamObj
+                    ? `Members of "${selectedTeamObj.name}" are automatically invited and hidden from this list.`
+                    : "Select additional individual users to invite."}
+                </p>
+              </div>
 
               <ConfigProvider
                 theme={{
@@ -412,9 +403,9 @@ export default function CreateMeetingPage() {
                 }}
               >
                 {/* RECURRING MEETING CONFIGURATION */}
-                <div className="p-3.5 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-700 space-y-3">
-                  <Form.Item name="is_recurring" valuePropName="checked" className="m-0">
-                    <Checkbox className="font-bold text-slate-800 dark:text-slate-200 text-xs">
+                <div className="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-700 [&_.ant-form-item-label]:!pb-0 [&_.ant-form-item-label]:!pt-0 [&_.ant-form-item-label>label]:!h-auto [&_.ant-form-item-label>label]:!min-h-0 [&_.ant-form-item-row]:!mb-0 [&_.ant-form-item-control-input]:!min-h-0">
+                  <Form.Item name="is_recurring" valuePropName="checked" className="!m-0" style={{ marginBottom: 0 }}>
+                    <Checkbox id="is_recurring" name="is_recurring" className="font-bold text-slate-800 dark:text-slate-200 text-xs">
                       <span className="flex items-center gap-1.5">
                         <SyncOutlined className="text-purple-600 dark:text-purple-400" />
                         Repeat this meeting automatically (e.g. Daily Client Sync)
@@ -423,11 +414,11 @@ export default function CreateMeetingPage() {
                   </Form.Item>
 
                   {isRecurring && (
-                    <div className="pt-2.5 border-t border-slate-200 dark:border-slate-700 space-y-3">
+                    <div className="mt-1.5 space-y-2">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <Form.Item name="recurrence_pattern" label="Repeat Frequency (How Often)" className="m-0">
+                        <Form.Item name="recurrence_pattern" label="Repeat Frequency (How Often)" className="!m-0" style={{ marginBottom: 0 }}>
                           <Select
-                            id="create_app_recurrence_pattern"
+                            id="recurrence_pattern"
                             name="recurrence_pattern"
                             options={[
                               { label: '🔁 Daily (Every day)', value: 'DAILY' },
@@ -437,9 +428,9 @@ export default function CreateMeetingPage() {
                           />
                         </Form.Item>
 
-                        <Form.Item name="recurrence_duration" label="Repeat Duration (How Long)" className="m-0">
+                        <Form.Item name="recurrence_duration" label="Repeat Duration (How Long)" className="!m-0" style={{ marginBottom: 0 }}>
                           <Select
-                            id="create_app_recurrence_duration"
+                            id="recurrence_duration"
                             name="recurrence_duration"
                             options={[
                               { label: 'For 7 Days (1 Week)', value: '7_DAYS' },
@@ -459,7 +450,7 @@ export default function CreateMeetingPage() {
                           className="m-0"
                         >
                           <DatePicker
-                            id="create_app_recurrence_end_date"
+                            id="recurrence_end_date"
                             name="recurrence_end_date"
                             style={{ width: '100%' }}
                             disabledDate={(current) => current && current <= dayjs().endOf('day')}
@@ -474,15 +465,15 @@ export default function CreateMeetingPage() {
                   )}
                 </div>
 
-                <div className="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2">
-                  <Form.Item name="needs_reminder" valuePropName="checked" className="m-0">
+                <div className="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-700 [&_.ant-form-item-control-input]:!min-h-0">
+                  <Form.Item name="needs_reminder" valuePropName="checked" className="!m-0" style={{ marginBottom: 0 }}>
                     <Checkbox className="font-bold text-slate-800 dark:text-slate-200 text-xs">
                       Needs to send reminder when scheduling meeting
                     </Checkbox>
                   </Form.Item>
 
                   {needsReminder && (
-                    <div className="pt-1.5 text-[11px] text-slate-600 dark:text-slate-400 flex items-center space-x-1.5 border-t border-slate-200 dark:border-slate-700">
+                    <div className="mt-1 pt-1 text-[11px] text-slate-600 dark:text-slate-400 flex items-center space-x-1.5 border-t border-slate-200 dark:border-slate-700">
                       <MailOutlined className="text-blue-500" />
                       <span>
                         Automated email reminder & Send Password option will be initialized.
@@ -493,7 +484,7 @@ export default function CreateMeetingPage() {
               </ConfigProvider>
 
               <div className="pt-3 border-t border-slate-100 dark:border-slate-700 flex justify-end space-x-3">
-                <Link to="/meetings" className="no-underline">
+                <Link to="/dashboard" className="no-underline">
                   <Button className="rounded-xl">Cancel</Button>
                 </Link>
                 <Button type="primary" htmlType="submit" loading={submitting} className="bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl border-none">

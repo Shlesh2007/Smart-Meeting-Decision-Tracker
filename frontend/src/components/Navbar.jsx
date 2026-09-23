@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { ProfileModal } from './ProfileModal.jsx';
 import { Logo } from './Logo.jsx';
-import { analyticsService, meetingService, actionService } from '../services/api.js';
+import { analyticsService, meetingService, actionService, notificationService } from '../services/api.js';
 import { Button, Dropdown, Avatar, Tag, Drawer, Input, Popover, Badge, Spin, Tooltip } from 'antd';
 import {
   DashboardOutlined,
@@ -22,8 +22,9 @@ import {
   CloseOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
+  MenuOutlined,
+  PlusOutlined,
 } from '@ant-design/icons';
-import { format } from 'date-fns';
 
 export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
   const location = useLocation();
@@ -35,65 +36,72 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
 
   // Notification state & controlled popover visibility
   const [notifications, setNotifications] = useState([]);
-  const [hasUnread, setHasUnread] = useState(true);
   const [loadingNotifications, setLoadingNotifications] = useState(false);
   const [popoverOpen, setPopoverOpen] = useState(false);
+  const [notificationTab, setNotificationTab] = useState('unread');
+
+  const fetchNotifications = () => {
+    if (!user) return;
+    setLoadingNotifications(true);
+    notificationService
+      .getNotifications()
+      .then((data) => {
+        const rawList = Array.isArray(data) ? data : (data.results || []);
+        const list = rawList.map((n) => {
+          let icon = <BellOutlined className="text-blue-500" />;
+          const nType = n.notification_type || n.type;
+          if (nType === 'overdue') {
+            icon = <ExclamationCircleOutlined className="text-rose-500" />;
+          } else if (nType === 'critical') {
+            icon = <FireOutlined className="text-red-500" />;
+          } else if (nType === 'upcoming') {
+            icon = <ClockCircleOutlined className="text-blue-500" />;
+          }
+          return { ...n, icon };
+        });
+        setNotifications(list);
+      })
+      .catch((err) => {
+        console.error('Failed to fetch notifications:', err);
+        setNotifications([]);
+      })
+      .finally(() => setLoadingNotifications(false));
+  };
 
   useEffect(() => {
-    if (user) {
-      setLoadingNotifications(true);
-      analyticsService
-        .getDashboard()
-        .then((data) => {
-          const list = [];
-          if (data.overdue_list && data.overdue_list.length > 0) {
-            data.overdue_list.forEach((item) => {
-              list.push({
-                id: `overdue-${item.id}`,
-                type: 'overdue',
-                title: `Overdue Action: ${item.title}`,
-                subtitle: `Assigned to ${item.assigned_to} • Due ${item.due_date}`,
-                link: '/my-actions?tab=OVERDUE',
-                icon: <ExclamationCircleOutlined className="text-rose-500" />,
-              });
-            });
-          }
-
-          if (data.metrics?.critical_actions > 0) {
-            list.push({
-              id: 'critical-summary',
-              type: 'critical',
-              title: `${data.metrics.critical_actions} Critical Action Items`,
-              subtitle: 'High priority tasks requiring urgent resolution',
-              link: '/my-actions?tab=CRITICAL',
-              icon: <FireOutlined className="text-red-500" />,
-            });
-          }
-
-          if (data.metrics?.upcoming_meetings > 0) {
-            list.push({
-              id: 'upcoming-summary',
-              type: 'upcoming',
-              title: `${data.metrics.upcoming_meetings} Upcoming Meetings`,
-              subtitle: 'Scheduled sessions pending completion',
-              link: '/meetings',
-              icon: <ClockCircleOutlined className="text-blue-500" />,
-            });
-          }
-
-          setNotifications(list);
-          if (list.length === 0) setHasUnread(false);
-        })
-        .catch(() => setNotifications([]))
-        .finally(() => setLoadingNotifications(false));
-    }
+    fetchNotifications();
   }, [user]);
+
+  const unreadNotifications = notifications.filter((n) => !n.is_read);
+  const hasUnread = unreadNotifications.length > 0;
+  const displayedNotifications = notificationTab === 'unread' ? unreadNotifications : notifications;
+
+  const handleNotificationClick = (n) => {
+    setNotifications((prev) =>
+      prev.map((item) => (item.id === n.id ? { ...item, is_read: true } : item))
+    );
+    setPopoverOpen(false);
+    notificationService.markAsRead(n.id).catch((err) => {
+      console.error('Failed to mark notification as read:', err);
+    });
+    if (n.link) {
+      navigate(n.link);
+    }
+  };
+
+  const markAllAsRead = () => {
+    setNotifications((prev) => prev.map((item) => ({ ...item, is_read: true })));
+    notificationService.markAllAsRead().catch((err) => {
+      console.error('Failed to mark all notifications as read:', err);
+    });
+  };
 
   const isAuthPage = pathname === '/login' || pathname === '/register';
   if (!user || isAuthPage) return null;
 
-  const fullDateStr = format(new Date(), 'EEEE, MMM d, yyyy');
-  const shortDateStr = format(new Date(), 'MMM d, yyyy');
+  const now = new Date();
+  const fullDateStr = now.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' });
+  const shortDateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   const currentDateStr = fullDateStr;
 
   const navItems = [
@@ -111,22 +119,18 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
     }
   };
 
-  const markAllAsRead = () => {
-    setHasUnread(false);
-  };
-
   const notificationPopoverContent = (
-    <div className="w-full sm:w-80 max-w-sm">
-      <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+    <div className="w-80 max-w-[calc(100vw-32px)] sm:w-80 select-none">
+      <div className="flex items-center justify-between pb-2.5 border-b border-slate-100 dark:border-slate-800">
         <div className="flex items-center space-x-2">
           <BellOutlined className="text-blue-600 font-bold" />
           <h4 className="font-extrabold text-xs text-slate-900 dark:text-white m-0">Notifications</h4>
-          {hasUnread && notifications.length > 0 && (
-            <Badge count={notifications.length} className="ml-1" size="small" />
+          {hasUnread && (
+            <Badge count={unreadNotifications.length} className="ml-1" size="small" />
           )}
         </div>
         <div className="flex items-center space-x-2">
-          {hasUnread && notifications.length > 0 && (
+          {hasUnread && (
             <button
               type="button"
               id="notification_mark_read_btn"
@@ -151,33 +155,85 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
         </div>
       </div>
 
+      {/* Filter Tabs: Unread vs All */}
+      <div className="flex items-center space-x-1 mt-2.5 mb-2 p-0.5 bg-slate-100 dark:bg-slate-800 rounded-lg text-[11px] font-semibold">
+        <button
+          type="button"
+          id="notif_tab_unread"
+          onClick={() => setNotificationTab('unread')}
+          className={`flex-1 py-1 px-2 text-center rounded-md transition-all border-0 cursor-pointer text-[11px] font-bold ${
+            notificationTab === 'unread'
+              ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-xs'
+              : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white bg-transparent'
+          }`}
+        >
+          Unread {unreadNotifications.length > 0 && `(${unreadNotifications.length})`}
+        </button>
+        <button
+          type="button"
+          id="notif_tab_all"
+          onClick={() => setNotificationTab('all')}
+          className={`flex-1 py-1 px-2 text-center rounded-md transition-all border-0 cursor-pointer text-[11px] font-bold ${
+            notificationTab === 'all'
+              ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-xs'
+              : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white bg-transparent'
+          }`}
+        >
+          All ({notifications.length})
+        </button>
+      </div>
+
       <div className="my-2 max-h-64 overflow-y-auto space-y-2 pr-1">
         {loadingNotifications ? (
           <p className="text-center text-slate-400 py-4 text-xs">Loading alerts...</p>
-        ) : notifications.length === 0 || !hasUnread ? (
-          <div className="py-6 text-center space-y-1">
+        ) : displayedNotifications.length === 0 ? (
+          <div className="py-6 text-center space-y-2">
             <div className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto text-sm">
               <CheckOutlined />
             </div>
-            <p className="font-bold text-xs text-slate-800 dark:text-slate-200 m-0">All Caught Up!</p>
-            <p className="text-[10px] text-slate-400 m-0">No new unread notifications at this time.</p>
+            <p className="font-bold text-xs text-slate-800 dark:text-slate-200 m-0">
+              {notificationTab === 'unread' ? 'All Caught Up!' : 'No Notifications'}
+            </p>
+            <p className="text-[10px] text-slate-400 m-0">
+              {notificationTab === 'unread'
+                ? 'No new unread notifications at this time.'
+                : 'No notification records found.'}
+            </p>
+            {notificationTab === 'unread' && notifications.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setNotificationTab('all')}
+                className="text-xs text-blue-600 dark:text-blue-400 font-bold hover:underline bg-transparent border-0 cursor-pointer mt-1"
+              >
+                View All Notifications ({notifications.length}) →
+              </button>
+            )}
           </div>
         ) : (
-          notifications.map((n) => (
+          displayedNotifications.map((n) => (
             <div
               key={n.id}
-              onClick={() => {
-                setHasUnread(false);
-                setPopoverOpen(false);
-                navigate(n.link);
-              }}
-              className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-500 transition-all cursor-pointer flex items-start space-x-2.5 group"
+              onClick={() => handleNotificationClick(n)}
+              className={`p-2.5 rounded-lg border transition-all cursor-pointer flex items-start space-x-2.5 group ${
+                !n.is_read
+                  ? 'bg-blue-50/70 dark:bg-blue-950/40 border-blue-200 dark:border-blue-800 hover:border-blue-400 dark:hover:border-blue-500'
+                  : 'bg-slate-50 dark:bg-slate-800/80 border-slate-100 dark:border-slate-700 opacity-75 hover:opacity-100 hover:border-slate-300 dark:hover:border-slate-600'
+              }`}
             >
               <div className="mt-0.5 shrink-0 text-sm">{n.icon}</div>
               <div className="min-w-0 flex-1 space-y-0.5">
-                <p className="font-bold text-xs text-slate-900 dark:text-white m-0 leading-tight group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                  {n.title}
-                </p>
+                <div className="flex items-center justify-between gap-1">
+                  <p className={`font-bold text-xs m-0 leading-tight transition-colors ${
+                    !n.is_read
+                      ? 'text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400'
+                      : 'text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white'
+                  }`}>
+                    {n.title}
+                  </p>
+                  {!n.is_read && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-600 shrink-0" title="Unread" />
+                  )}
+                </div>
                 <p className="text-[10px] text-slate-500 dark:text-slate-400 m-0 truncate">
                   {n.subtitle}
                 </p>
@@ -213,7 +269,6 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
     </div>
   );
 
-
   const userMenuItems = [
     {
       key: 'profile_info',
@@ -243,10 +298,10 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
       <aside className={`hidden lg:flex flex-col fixed top-0 left-0 bottom-0 z-40 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 border-r border-slate-200 dark:border-slate-700 shadow-xs transition-all duration-300 select-none ${collapsed ? 'w-16' : 'w-64'}`}>
         
         {/* Sidebar Brand Header */}
-        <div className={`pt-0 pb-3 px-3.5 border-b border-slate-200/80 dark:border-slate-700/80 flex items-center ${collapsed ? 'flex-col gap-2.5 justify-center' : 'justify-between'}`}>
+        <div className={`h-11 px-3.5 border-b border-slate-200/80 dark:border-slate-700/80 flex items-center ${collapsed ? 'flex-col gap-2.5 justify-center' : 'justify-between'}`}>
           {!collapsed && (
             <Link to="/dashboard" className="no-underline flex items-center">
-              <Logo variant="full" height={42} />
+              <Logo variant="full" height={32} />
             </Link>
           )}
           {onToggleSidebar && (
@@ -356,36 +411,27 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
       </aside>
 
       {/* Top Navigation Header Bar */}
-      <header className={`sticky top-0 z-30 w-full max-w-full overflow-hidden bg-white/90 dark:bg-slate-800/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-700 shadow-xs transition-all duration-300 ${collapsed ? 'lg:pl-16' : 'lg:pl-64'}`}>
-        <div className="w-full max-w-[1600px] mx-auto px-2.5 sm:px-6 lg:px-8 h-14 flex items-center justify-between gap-2 sm:gap-4 overflow-hidden">
+      <header className={`sticky top-0 z-30 w-full max-w-full bg-white/95 dark:bg-slate-800/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-700/80 shadow-xs transition-all duration-300 ${collapsed ? 'lg:pl-16' : 'lg:pl-64'}`}>
+        <div className="w-full max-w-[1600px] mx-auto px-3 sm:px-6 lg:px-8 h-11 flex items-center justify-between gap-2 sm:gap-4">
 
-          
-          {/* Logo Brand & Mobile/Tablet Drawer Toggle */}
-          <div className="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
-            <Button
-              type="text"
-              icon={<MenuUnfoldOutlined className="text-slate-600 dark:text-slate-300 text-lg" />}
-              onClick={() => setDrawerOpen(true)}
-              className="lg:hidden flex items-center justify-center p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700"
-              title="Open Navigation Menu"
-            />
+          {/* Logo Brand Header */}
+          <div className="flex items-center space-x-2 shrink-0">
             <div className={`items-center shrink-0 ${collapsed ? 'flex' : 'flex lg:hidden'}`}>
               <Link to="/dashboard" className="no-underline flex items-center space-x-2">
-                <Logo variant="icon" height={28} />
+                <Logo variant="icon" height={24} />
                 <span className="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white tracking-tight flex items-center">
                   Smart<span className="text-blue-600 dark:text-blue-400">Meeting</span>
-                  <span className="hidden sm:inline-block ml-1 text-[10px] sm:text-xs font-semibold uppercase text-slate-500 dark:text-slate-400">Tracker</span>
+                  <span className="hidden sm:inline-block ml-1.5 text-[10px] font-semibold uppercase text-slate-400 dark:text-slate-400">Tracker</span>
                 </span>
               </Link>
             </div>
-
           </div>
 
           {/* Right Controls: Date Badge, Notifications & Profile */}
           <div className="flex items-center space-x-1.5 sm:space-x-2.5 ml-auto shrink-0">
             {/* Live Date Badge (Visible on sm and up) */}
-            <span className="hidden sm:inline-flex items-center space-x-1 sm:space-x-1.5 text-[10px] sm:text-xs font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 sm:px-2.5 py-1 rounded-lg border border-slate-200/80 dark:border-slate-700 shrink-0">
-              <CalendarOutlined className="text-blue-500 text-xs shrink-0" />
+            <span className="hidden sm:inline-flex items-center space-x-1 text-[10px] sm:text-xs font-bold text-slate-600 dark:text-slate-300 bg-slate-100/80 dark:bg-slate-800/80 px-2 py-0.5 rounded-md border border-slate-200/80 dark:border-slate-700 shrink-0">
+              <CalendarOutlined className="text-blue-500 text-[11px] shrink-0" />
               <span className="sm:hidden">{shortDateStr}</span>
               <span className="hidden sm:inline">{fullDateStr}</span>
             </span>
@@ -397,15 +443,20 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
               placement="bottomRight"
               arrow={false}
               open={popoverOpen}
-              onOpenChange={(newOpen) => setPopoverOpen(newOpen)}
+              onOpenChange={(newOpen) => {
+                setPopoverOpen(newOpen);
+                if (newOpen) {
+                  fetchNotifications();
+                }
+              }}
               overlayClassName="notification-popover"
             >
-              <div className="relative cursor-pointer p-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors shrink-0">
-                <BellOutlined className="text-base" />
+              <div className="relative cursor-pointer w-7.5 h-7.5 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg text-slate-700 dark:text-slate-200 bg-slate-100/70 dark:bg-slate-700/50 hover:bg-blue-50 dark:hover:bg-slate-700 hover:text-blue-600 dark:hover:text-blue-400 transition-all border border-slate-200/60 dark:border-slate-700/60 shrink-0">
+                <BellOutlined className="text-sm" />
                 {hasUnread && (
                   <>
-                    <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping" />
-                    <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-rose-500" />
+                    <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-rose-500 animate-ping" />
+                    <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-rose-500 ring-2 ring-white dark:ring-slate-800" />
                   </>
                 )}
               </div>
@@ -413,8 +464,8 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
 
             {/* User Profile Dropdown */}
             <Dropdown menu={{ items: userMenuItems }} placement="bottomRight" trigger={['click']}>
-              <div className="flex items-center space-x-1.5 cursor-pointer p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-700 shrink-0">
-                <Avatar className="bg-slate-800 font-extrabold text-xs text-white shadow-xs shrink-0 flex items-center justify-center" size="small">
+              <div className="flex items-center space-x-1.5 cursor-pointer p-0.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700/70 transition-all border border-transparent hover:border-slate-200 dark:hover:border-slate-700 shrink-0">
+                <Avatar className="bg-blue-600 font-extrabold text-[11px] text-white shadow-xs ring-2 ring-blue-500/20 shrink-0 flex items-center justify-center w-7 h-7">
                   {(user?.first_name || user?.username || 'U')[0].toUpperCase()}
                 </Avatar>
                 <span className="hidden md:inline-block text-xs font-bold text-slate-800 dark:text-slate-200">
@@ -532,6 +583,161 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
       </Drawer>
 
 
+
+      {/* Bottom Navigation Bar for Mobile / Responsive Screens */}
+      <nav className="mobile-bottom-nav lg:hidden fixed bottom-0 left-0 right-0 w-full z-50 select-none !overflow-visible pointer-events-none">
+        
+        {/* Navbar Background & Tab Items Row (z-10) */}
+        <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-200/90 dark:border-slate-800 shadow-2xl rounded-t-2xl px-3 pt-1.5 pb-2.5 flex items-center justify-between relative z-10 pointer-events-auto !overflow-visible">
+          
+          {/* Item 1: Home (Dashboard) */}
+          <button
+            type="button"
+            id="mobile_nav_home"
+            name="mobile_nav_home"
+            onClick={() => handleNavigation('/dashboard')}
+            className="flex-1 flex flex-col items-center justify-center py-1 transition-all border-0 bg-transparent cursor-pointer group"
+          >
+            <div className={`p-1.5 rounded-xl transition-all ${
+              pathname === '/dashboard'
+                ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-bold scale-110'
+                : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-700 dark:group-hover:text-slate-300'
+            }`}>
+              <DashboardOutlined className="text-lg" />
+            </div>
+            <span className={`text-[10px] font-semibold mt-0.5 transition-colors ${
+              pathname === '/dashboard'
+                ? 'text-slate-900 dark:text-white font-extrabold'
+                : 'text-slate-500 dark:text-slate-400'
+            }`}>
+              Home
+            </span>
+          </button>
+
+          {/* Item 2: Meetings */}
+          <button
+            type="button"
+            id="mobile_nav_meetings"
+            name="mobile_nav_meetings"
+            onClick={() => handleNavigation('/meetings')}
+            className="flex-1 flex flex-col items-center justify-center py-1 transition-all border-0 bg-transparent cursor-pointer group"
+          >
+            <div className={`p-1.5 rounded-xl transition-all ${
+              pathname === '/meetings' || (pathname.startsWith('/meetings/') && pathname !== '/meetings/new')
+                ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-bold scale-110'
+                : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-700 dark:group-hover:text-slate-300'
+            }`}>
+              <CalendarOutlined className="text-lg" />
+            </div>
+            <span className={`text-[10px] font-semibold mt-0.5 transition-colors ${
+              pathname === '/meetings' || (pathname.startsWith('/meetings/') && pathname !== '/meetings/new')
+                ? 'text-slate-900 dark:text-white font-extrabold'
+                : 'text-slate-500 dark:text-slate-400'
+            }`}>
+              Meetings
+            </span>
+          </button>
+
+          {/* Item 3 Center Column Spacer & Label */}
+          <div
+            onClick={() => handleNavigation('/meetings/new')}
+            className="flex-1 flex flex-col items-center justify-center py-1 cursor-pointer group"
+          >
+            {/* Invisible height spacer for top half of button spacing */}
+            <div className="w-10 h-7 pointer-events-none" />
+            <span className={`text-[9.5px] font-extrabold mt-0.5 uppercase tracking-tight transition-colors ${
+              pathname === '/meetings/new'
+                ? 'text-slate-900 dark:text-white font-black'
+                : 'text-slate-500 dark:text-slate-400'
+            }`}>
+              CREATE
+            </span>
+          </div>
+
+          {/* Item 4: Action Items */}
+          <button
+            type="button"
+            id="mobile_nav_actions"
+            name="mobile_nav_actions"
+            onClick={() => handleNavigation('/my-actions')}
+            className="flex-1 flex flex-col items-center justify-center py-1 transition-all border-0 bg-transparent cursor-pointer group"
+          >
+            <div className={`p-1.5 rounded-xl transition-all ${
+              pathname === '/my-actions'
+                ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-bold scale-110'
+                : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-700 dark:group-hover:text-slate-300'
+            }`}>
+              <CheckSquareOutlined className="text-lg" />
+            </div>
+            <span className={`text-[10px] font-semibold mt-0.5 transition-colors ${
+              pathname === '/my-actions'
+                ? 'text-slate-900 dark:text-white font-extrabold'
+                : 'text-slate-500 dark:text-slate-400'
+            }`}>
+              Actions
+            </span>
+          </button>
+
+          {/* Item 5: Profile Modal */}
+          <button
+            type="button"
+            id="mobile_nav_profile"
+            name="mobile_nav_profile"
+            onClick={() => setShowProfileModal(true)}
+            className="flex-1 flex flex-col items-center justify-center py-1 transition-all border-0 bg-transparent cursor-pointer group"
+          >
+            <div className={`p-1.5 rounded-xl transition-all ${
+              showProfileModal
+                ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-bold scale-110'
+                : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-700 dark:group-hover:text-slate-300'
+            }`}>
+              <UserOutlined className="text-lg" />
+            </div>
+            <span className={`text-[10px] font-semibold mt-0.5 transition-colors ${
+              showProfileModal
+                ? 'text-slate-900 dark:text-white font-extrabold'
+                : 'text-slate-500 dark:text-slate-400'
+            }`}>
+              Profile
+            </span>
+          </button>
+
+        </div>
+
+        {/* Floating CREATE (+) Button Positioned OUTSIDE the Backdrop Container (z-50) */}
+        <button
+          type="button"
+          id="mobile_nav_create_meeting"
+          name="mobile_nav_create_meeting"
+          onClick={() => handleNavigation('/meetings/new')}
+          title="Create Meeting"
+          style={{
+            width: '52px',
+            height: '52px',
+            minWidth: '52px',
+            minHeight: '52px',
+            maxWidth: '52px',
+            maxHeight: '52px',
+            borderRadius: '9999px',
+            position: 'absolute',
+            left: '50%',
+            top: '-26px',
+            transform: 'translateX(-50%)',
+            zIndex: 50,
+            padding: 0,
+            margin: 0,
+            boxSizing: 'border-box'
+          }}
+          className={`!rounded-full shrink-0 aspect-square !p-0 flex items-center justify-center text-white shadow-2xl transition-all duration-200 cursor-pointer border-4 border-slate-100 dark:border-slate-800 pointer-events-auto ${
+            pathname === '/meetings/new'
+              ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 ring-4 ring-slate-400/50 scale-105'
+              : 'bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-900 active:scale-95'
+          }`}
+        >
+          <PlusOutlined className="text-xl font-black" />
+        </button>
+
+      </nav>
 
       {/* User Profile Modal */}
       <ProfileModal
