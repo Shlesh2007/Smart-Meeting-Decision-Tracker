@@ -381,3 +381,40 @@ main::-webkit-scrollbar,
   box-shadow: 0 14px 30px -6px rgba(0, 0, 0, 0.55), 0 8px 10px -6px rgba(0, 0, 0, 0.35) !important;
 }
 
+/* Recharts Outline & Focus Ring Removal (Fix for black box on pie chart sector click/focus) */
+.recharts-wrapper,
+.recharts-wrapper *,
+.recharts-surface,
+.recharts-surface *,
+.recharts-sector,
+.recharts-pie-sector,
+.recharts-pie-slice,
+.recharts-layer {
+  outline: none !important;
+  box-shadow: none !important;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.recharts-sector:focus,
+.recharts-sector:focus-visible,
+.recharts-pie-sector:focus,
+.recharts-pie-sector:focus-visible,
+.recharts-pie-slice:focus,
+.recharts-pie-slice:focus-visible,
+.recharts-wrapper:focus,
+.recharts-surface:focus,
+svg path:focus,
+svg path:focus-visible,
+svg g:focus,
+svg g:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.recharts-tooltip-wrapper {
+  pointer-events: none !important;
+  z-index: 50 !important;
+  outline: none !important;
+}
+
+

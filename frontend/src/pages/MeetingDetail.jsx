@@ -310,9 +310,12 @@ export default function MeetingDetail() {
                 ? [meeting.created_by_detail]
                 : []
               ).map((p) => (
-                <Tooltip key={p.id} title={`${p.full_name || p.username} (${p.role || 'Member'}) • Click to view profile`}>
+                <Tooltip key={p.id} open={selectedParticipantUser ? false : undefined} title={`${p.full_name || p.username} (${p.role || 'Member'}) • Click to view profile`}>
                   <Avatar
-                    onClick={() => setSelectedParticipantUser(p)}
+                    onClick={(e) => {
+                      e.currentTarget.blur();
+                      setSelectedParticipantUser(p);
+                    }}
                     className="bg-blue-600 font-extrabold text-xs text-white shrink-0 flex items-center justify-center cursor-pointer hover:opacity-85 hover:scale-110 transition-all shadow-xs"
                   >
                     {(p.first_name || p.full_name || p.username || 'P')[0].toUpperCase()}

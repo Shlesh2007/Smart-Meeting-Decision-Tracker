@@ -60,7 +60,7 @@ export const ActionStatusChart = ({ statusDistribution = {} }) => {
       {/* Centered Pie Chart Container (No side legend) */}
       <div className="my-2.5 relative w-full h-44 flex items-center justify-center">
         <ResponsiveContainer width="100%" height="100%">
-          <PieChart key={isInView ? 'pie-active' : 'pie-idle'}>
+          <PieChart key={isInView ? 'pie-active' : 'pie-idle'} style={{ outline: 'none' }}>
             <Pie
               data={totalActions > 0 ? chartData : zeroChartData}
               cx="50%"
@@ -73,21 +73,31 @@ export const ActionStatusChart = ({ statusDistribution = {} }) => {
               isAnimationActive={isInView}
               animationBegin={0}
               animationDuration={850}
+              activeShape={{ outerRadius: 69 }}
+              style={{ outline: 'none' }}
             >
               {(totalActions > 0 ? chartData : zeroChartData).map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.color} />
+                <Cell key={`cell-${index}`} fill={entry.color} style={{ outline: 'none' }} tabIndex={-1} />
               ))}
             </Pie>
             {totalActions > 0 && (
               <Tooltip
+                wrapperStyle={{ outline: 'none', zIndex: 50, pointerEvents: 'none' }}
+                allowEscapeViewBox={{ x: true, y: true }}
                 content={({ active, payload }) => {
                   if (active && payload && payload.length) {
-                    const data = payload[0];
-                    const pct = totalActions > 0 ? Math.round((data.value / totalActions) * 100) : 0;
+                    const itemPayload = payload[0].payload || payload[0];
+                    const dataName = itemPayload.name || payload[0].name;
+                    const dataVal = payload[0].value;
+                    const dataColor = itemPayload.color || payload[0].color || '#3b82f6';
+                    const pct = totalActions > 0 ? Math.round((dataVal / totalActions) * 100) : 0;
                     return (
-                      <div className="bg-slate-900 text-white text-[11px] px-3 py-1.5 rounded-lg shadow-lg border border-slate-700">
-                        <p className="font-bold m-0">{data.name}</p>
-                        <p className="m-0 text-slate-300 font-semibold">{data.value} items ({pct}%)</p>
+                      <div className="bg-slate-900/95 backdrop-blur-md text-white text-[11px] px-3 py-1.5 rounded-lg shadow-xl border border-slate-700/80 -translate-x-1/2 -translate-y-full -mt-3 pointer-events-none transition-all duration-150">
+                        <div className="flex items-center space-x-1.5">
+                          <span className="w-2 h-2 rounded-full inline-block flex-shrink-0" style={{ backgroundColor: dataColor }} />
+                          <p className="font-bold m-0 text-white leading-tight">{dataName}</p>
+                        </div>
+                        <p className="m-0 text-slate-300 font-semibold mt-0.5">{dataVal} items ({pct}%)</p>
                       </div>
                     );
                   }
