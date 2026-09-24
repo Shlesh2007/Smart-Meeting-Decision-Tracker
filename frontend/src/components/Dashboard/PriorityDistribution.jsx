@@ -12,6 +12,44 @@ const PRIORITIES = [
 
 export const PriorityDistribution = ({ priorityDistribution = {} }) => {
   const [containerRef, isInView] = useScrollAnimation();
+  const [activeIndex, setActiveIndex] = React.useState(null);
+
+  // Auto-dismiss timer after 4 seconds
+  React.useEffect(() => {
+    if (activeIndex !== null) {
+      const timer = setTimeout(() => {
+        setActiveIndex(null);
+      }, 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [activeIndex]);
+
+  // Tap anywhere on screen to dismiss active popup
+  React.useEffect(() => {
+    if (activeIndex !== null) {
+      const handlePointerDown = () => {
+        setActiveIndex(null);
+      };
+      const timer = setTimeout(() => {
+        document.addEventListener('pointerdown', handlePointerDown);
+      }, 10);
+      return () => {
+        clearTimeout(timer);
+        document.removeEventListener('pointerdown', handlePointerDown);
+      };
+    }
+  }, [activeIndex]);
+
+  const handleCloseTooltip = (e) => {
+    if (e) {
+      e.stopPropagation();
+      if (e.preventDefault) e.preventDefault();
+      if (e.nativeEvent && e.nativeEvent.stopImmediatePropagation) {
+        e.nativeEvent.stopImmediatePropagation();
+      }
+    }
+    setActiveIndex(null);
+  };
 
   const total = PRIORITIES.reduce(
     (sum, p) => sum + (priorityDistribution[p.key] || 0),
@@ -68,38 +106,20 @@ export const PriorityDistribution = ({ priorityDistribution = {} }) => {
               isAnimationActive={isInView}
               animationBegin={0}
               animationDuration={850}
+              activeIndex={activeIndex !== null ? activeIndex : undefined}
               activeShape={{ outerRadius: 69 }}
-              style={{ outline: 'none' }}
+              onMouseEnter={(_, index) => setActiveIndex(index)}
+              onMouseLeave={() => setActiveIndex(null)}
+              onClick={(e, index) => {
+                e?.stopPropagation?.();
+                setActiveIndex((prev) => (prev === index ? null : index));
+              }}
+              style={{ outline: 'none', cursor: 'pointer' }}
             >
               {(total > 0 ? chartData : zeroChartData).map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={entry.color} style={{ outline: 'none' }} tabIndex={-1} />
               ))}
             </Pie>
-            {total > 0 && (
-              <Tooltip
-                wrapperStyle={{ outline: 'none', zIndex: 50, pointerEvents: 'none' }}
-                allowEscapeViewBox={{ x: true, y: true }}
-                content={({ active, payload }) => {
-                  if (active && payload && payload.length) {
-                    const itemPayload = payload[0].payload || payload[0];
-                    const dataName = itemPayload.name || payload[0].name;
-                    const dataVal = payload[0].value;
-                    const dataColor = itemPayload.color || payload[0].color || '#3b82f6';
-                    const pct = total > 0 ? Math.round((dataVal / total) * 100) : 0;
-                    return (
-                      <div className="bg-slate-900/95 backdrop-blur-md text-white text-[11px] px-3 py-1.5 rounded-lg shadow-xl border border-slate-700/80 -translate-x-1/2 -translate-y-full -mt-3 pointer-events-none transition-all duration-150">
-                        <div className="flex items-center space-x-1.5">
-                          <span className="w-2 h-2 rounded-full inline-block flex-shrink-0" style={{ backgroundColor: dataColor }} />
-                          <p className="font-bold m-0 text-white leading-tight">{dataName}</p>
-                        </div>
-                        <p className="m-0 text-slate-300 font-semibold mt-0.5">{dataVal} items ({pct}%)</p>
-                      </div>
-                    );
-                  }
-                  return null;
-                }}
-              />
-            )}
           </PieChart>
         </ResponsiveContainer>
 
@@ -110,6 +130,55 @@ export const PriorityDistribution = ({ priorityDistribution = {} }) => {
           </span>
           <span className="text-[9px] uppercase font-bold text-slate-400 mt-0.5">Total Items</span>
         </div>
+
+        {/* Controlled HTML Popover (Direct React DOM overlay - 100% working close button) */}
+        {total > 0 && activeIndex !== null && chartData[activeIndex] && (
+          <div
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setActiveIndex(null);
+            }}
+            onTouchEnd={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setActiveIndex(null);
+            }}
+            className="absolute top-1 left-1/2 -translate-x-1/2 z-30 bg-slate-900/95 backdrop-blur-md text-white text-[11px] px-3 py-1.5 rounded-lg shadow-xl border border-slate-700/80 cursor-pointer transition-all duration-200 flex items-center justify-between gap-2.5 max-w-[90%]"
+          >
+            <div className="min-w-0">
+              <div className="flex items-center space-x-1.5">
+                <span
+                  className="w-2 h-2 rounded-full inline-block flex-shrink-0"
+                  style={{ backgroundColor: chartData[activeIndex].color || '#3b82f6' }}
+                />
+                <p className="font-bold m-0 text-white leading-tight truncate">
+                  {chartData[activeIndex].name}
+                </p>
+              </div>
+              <p className="m-0 text-slate-300 font-semibold mt-0.5 truncate">
+                {chartData[activeIndex].value} items ({Math.round((chartData[activeIndex].value / total) * 100)}%)
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setActiveIndex(null);
+              }}
+              onTouchEnd={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setActiveIndex(null);
+              }}
+              className="md:hidden text-slate-400 hover:text-white text-xs font-bold px-1.5 py-0.5 rounded bg-slate-800/90 hover:bg-slate-700 border border-slate-700 cursor-pointer shrink-0 leading-none"
+              title="Close"
+            >
+              ✕
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Footer Summary */}

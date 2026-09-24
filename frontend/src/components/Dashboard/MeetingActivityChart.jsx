@@ -9,6 +9,33 @@ import { useScrollAnimation } from '../../hooks/useScrollAnimation.js';
 export const MeetingActivityChart = ({ meetingActivity = [] }) => {
   const [filterDays, setFilterDays] = useState(30);
   const [containerRef, isInView] = useScrollAnimation();
+  const [activePointIndex, setActivePointIndex] = useState(null);
+
+  // Auto-dismiss timer after 4 seconds
+  React.useEffect(() => {
+    if (activePointIndex !== null) {
+      const timer = setTimeout(() => {
+        setActivePointIndex(null);
+      }, 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [activePointIndex]);
+
+  // Tap anywhere on screen to dismiss active popup
+  React.useEffect(() => {
+    if (activePointIndex !== null) {
+      const handlePointerDown = () => {
+        setActivePointIndex(null);
+      };
+      const timer = setTimeout(() => {
+        document.addEventListener('pointerdown', handlePointerDown);
+      }, 10);
+      return () => {
+        clearTimeout(timer);
+        document.removeEventListener('pointerdown', handlePointerDown);
+      };
+    }
+  }, [activePointIndex]);
 
   const chartFormattedData = React.useMemo(() => {
     if (!meetingActivity) return [];
@@ -106,7 +133,17 @@ export const MeetingActivityChart = ({ meetingActivity = [] }) => {
       <div className="my-2 h-40 w-full flex items-center justify-center">
         {chartFormattedData.length > 0 ? (
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart key={isInView ? 'area-active' : 'area-idle'} data={chartFormattedData} margin={{ top: 8, right: 8, left: -22, bottom: 0 }}>
+            <AreaChart
+              key={isInView ? 'area-active' : 'area-idle'}
+              data={chartFormattedData}
+              margin={{ top: 8, right: 8, left: -22, bottom: 0 }}
+              onMouseLeave={() => setActivePointIndex(null)}
+              onClick={(e) => {
+                if (e && e.activeTooltipIndex !== undefined) {
+                  setActivePointIndex((prev) => (prev === e.activeTooltipIndex ? null : e.activeTooltipIndex));
+                }
+              }}
+            >
               <defs>
                 <linearGradient id="meetingGradient" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#2563eb" stopOpacity={0.35} />
@@ -127,11 +164,16 @@ export const MeetingActivityChart = ({ meetingActivity = [] }) => {
                 allowDecimals={false}
               />
               <Tooltip
+                active={activePointIndex !== null ? true : undefined}
                 content={({ active, payload }) => {
-                  if (active && payload && payload.length) {
-                    const data = payload[0].payload;
+                  const isShowing = activePointIndex !== null || (active && payload && payload.length);
+                  if (isShowing) {
+                    const data = activePointIndex !== null && chartFormattedData[activePointIndex]
+                      ? chartFormattedData[activePointIndex]
+                      : (payload && payload.length ? payload[0].payload : null);
+                    if (!data) return null;
                     return (
-                      <div className="bg-slate-900 text-white text-[10px] px-2.5 py-1 rounded shadow-md">
+                      <div className="bg-slate-900 text-white text-[10px] px-2.5 py-1 rounded shadow-md pointer-events-none">
                         <p className="font-bold m-0">{data.date}</p>
                         <p className="m-0 text-blue-400 font-semibold">{data.count} Meeting(s)</p>
                       </div>
