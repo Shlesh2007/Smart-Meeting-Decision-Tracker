@@ -1,4 +1,3 @@
-'use client';
 
 import React, { useEffect, useState } from 'react';
 import { Modal, Form, Input, Select, DatePicker, TimePicker, message, Popover, Tag, Checkbox } from 'antd';
@@ -192,13 +191,13 @@ export const EditMeetingModal = ({ open, onClose, meeting, onSuccess }) => {
 
           {/* RIGHT COLUMN: Date/Time, Team/Participants, Recurrence */}
           <div className="space-y-4">
-            <div className="bg-slate-50 dark:bg-slate-900/50 p-3 sm:p-3.5 rounded-xl border border-slate-200 dark:border-slate-700">
-              <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 sm:gap-3">
+            <div className="bg-slate-50 dark:bg-slate-900/50 p-3.5 rounded-xl border border-slate-200 dark:border-slate-700">
+              <div className="grid grid-cols-1 gap-3">
                 <Form.Item
                   name="meeting_date"
                   label="Meeting Date"
                   rules={[{ required: true, message: 'Please select meeting date' }]}
-                  className="m-0 sm:col-span-5 min-w-0"
+                  className="m-0"
                 >
                   <DatePicker id="meeting_date" name="meeting_date" className="w-full" disabledDate={(current) => current && current.isBefore(dayjs().startOf('day'))} />
                 </Form.Item>
@@ -207,12 +206,12 @@ export const EditMeetingModal = ({ open, onClose, meeting, onSuccess }) => {
                   name="time_range"
                   label="Start & End Time"
                   rules={[{ required: true, message: 'Please select time range' }]}
-                  className="m-0 sm:col-span-7 min-w-0"
+                  className="m-0"
                 >
                   <TimePicker.RangePicker 
                     id="time_range" 
                     name="time_range" 
-                    className="w-full [&_.ant-picker-input>input]:!text-center [&_.ant-picker-input>input]:!text-xs [&_.ant-picker-separator]:!px-0.5 [&_.ant-picker-range-separator]:!px-0.5 [&_.ant-picker-suffix]:!ml-0.5" 
+                    className="custom-range-picker" 
                     format="HH:mm" 
                     disabledTime={() => {
                       const selectedDate = form.getFieldValue('meeting_date');

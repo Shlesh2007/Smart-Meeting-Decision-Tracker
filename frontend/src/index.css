@@ -392,7 +392,7 @@ main::-webkit-scrollbar,
 .recharts-layer {
   outline: none !important;
   box-shadow: none !important;
-  -webkit-tap-highlight-color: transparent;
+  -webkit-tap-highlight-color: transparent !important;
 }
 
 .recharts-sector:focus,
@@ -416,5 +416,32 @@ svg g:focus-visible {
   z-index: 50 !important;
   outline: none !important;
 }
+
+/* Remove default browser tap highlights, black focus rings & box shadows on navbar tabs, buttons and links */
+*, ::before, ::after {
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+*:focus,
+*:focus-visible,
+*:focus-within,
+*:active {
+  outline: none !important;
+  box-shadow: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+button, a, [role="button"], input, select, textarea {
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+button:focus, button:focus-visible, button:active,
+a:focus, a:focus-visible, a:active,
+[role="button"]:focus, [role="button"]:focus-visible, [role="button"]:active {
+  outline: none !important;
+  box-shadow: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
 
 

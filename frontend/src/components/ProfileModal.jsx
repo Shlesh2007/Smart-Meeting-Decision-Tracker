@@ -1,4 +1,3 @@
-'use client';
 
 import React, { useState, useEffect } from 'react';
 import { Modal, Avatar, Tag, Descriptions, Button, Form, Input, Alert, App } from 'antd';

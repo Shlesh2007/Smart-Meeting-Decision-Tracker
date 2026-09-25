@@ -160,6 +160,49 @@ export default function CreateMeeting() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-4">
+      <style>{`
+        .compact-meet-space.ant-space-compact-block {
+          display: flex !important;
+          width: 100% !important;
+        }
+        .compact-meet-space.ant-space-compact-block > .ant-space-compact-item:first-child {
+          flex: 1 1 auto !important;
+          min-width: 0 !important;
+        }
+        .compact-meet-space.ant-space-compact-block > .ant-space-compact-item:last-child {
+          flex: 0 0 130px !important;
+          width: 130px !important;
+          min-width: 130px !important;
+          max-width: 130px !important;
+        }
+        .custom-range-picker.ant-picker-range {
+          width: 100% !important;
+          max-width: 100% !important;
+          box-sizing: border-box !important;
+          display: flex !important;
+          padding-left: 8px !important;
+          padding-right: 8px !important;
+        }
+        .custom-range-picker.ant-picker-range .ant-picker-input {
+          min-width: 0 !important;
+          flex: 1 1 0% !important;
+          display: flex !important;
+        }
+        .custom-range-picker.ant-picker-range .ant-picker-input > input {
+          width: 0 !important;
+          min-width: 0 !important;
+          flex: 1 1 0% !important;
+          text-align: center !important;
+          font-size: 12px !important;
+          padding: 0 !important;
+        }
+        .custom-range-picker.ant-picker-range .ant-picker-range-separator {
+          padding: 0 2px !important;
+        }
+        .custom-range-picker.ant-picker-range .ant-picker-suffix {
+          margin-left: 2px !important;
+        }
+      `}</style>
       
       <div className="flex items-center space-x-3">
         <Link to="/meetings" className="no-underline">
@@ -193,10 +236,10 @@ export default function CreateMeeting() {
           }}
           size="middle"
         >
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             
             {/* LEFT COLUMN (6 cols): Primary Details & Location */}
-            <div className="md:col-span-6 lg:col-span-6 space-y-4">
+            <div className="lg:col-span-6 space-y-4">
               <Form.Item
                 name="title"
                 label="Meeting Title"
@@ -241,7 +284,7 @@ export default function CreateMeeting() {
                     label={<span className="font-semibold text-slate-700 dark:text-slate-300">Enter Google Meeting Link</span>}
                     className="m-0"
                   >
-                    <Space.Compact block>
+                    <Space.Compact block className="compact-meet-space">
                       <Form.Item
                         name="google_meet_link"
                         noStyle
@@ -258,17 +301,17 @@ export default function CreateMeeting() {
                           name="google_meet_link"
                           prefix={<VideoCameraOutlined className="text-blue-500 mr-1" />}
                           placeholder="https://meet.google.com/abc-defg-hij"
-                          className="w-full"
                         />
                       </Form.Item>
                       <Form.Item name="access_type" noStyle>
                         <Select
                           id="create_access_type"
                           name="access_type"
-                          className="w-40 font-semibold text-xs"
+                          className="font-semibold text-xs"
+                          popupMatchSelectWidth={false}
                           options={[
-                            { label: 'Public (no pass)', value: 'PUBLIC' },
-                            { label: 'With Password', value: 'PROTECTED' }
+                            { label: 'Without Pass', value: 'PUBLIC' },
+                            { label: 'With Pass', value: 'PROTECTED' }
                           ]}
                         />
                       </Form.Item>
@@ -294,14 +337,14 @@ export default function CreateMeeting() {
             </div>
 
             {/* RIGHT COLUMN (6 cols): Date, Time, Team & Participants, Reminder */}
-            <div className="md:col-span-6 lg:col-span-6 space-y-4">
-              <div className="bg-slate-50 dark:bg-slate-900/50 p-3 sm:p-3.5 rounded-xl border border-slate-200 dark:border-slate-700">
-                <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 sm:gap-3">
+            <div className="lg:col-span-6 space-y-4">
+              <div className="bg-slate-50 dark:bg-slate-900/50 p-3.5 rounded-xl border border-slate-200 dark:border-slate-700">
+                <div className="grid grid-cols-1 gap-3">
                   <Form.Item
                     name="meeting_date"
                     label="Meeting Date"
                     rules={[{ required: true, message: 'Please select meeting date' }]}
-                    className="m-0 sm:col-span-5 min-w-0"
+                    className="m-0"
                   >
                     <DatePicker id="meeting_date" name="meeting_date" style={{ width: '100%' }} disabledDate={(current) => current && current.isBefore(dayjs().startOf('day'))} />
                   </Form.Item>
@@ -310,13 +353,12 @@ export default function CreateMeeting() {
                     name="time_range"
                     label="Start & End Time"
                     rules={[{ required: true, message: 'Please select time range' }]}
-                    className="m-0 sm:col-span-7 min-w-0"
+                    className="m-0 min-w-0"
                   >
                     <TimePicker.RangePicker 
                       id="time_range" 
                       name="time_range" 
-                      style={{ width: '100%' }} 
-                      className="w-full [&_.ant-picker-input>input]:!text-center [&_.ant-picker-input>input]:!text-xs [&_.ant-picker-separator]:!px-0.5 [&_.ant-picker-range-separator]:!px-0.5 [&_.ant-picker-suffix]:!ml-0.5"
+                      className="custom-range-picker"
                       format="HH:mm"
                       disabledTime={() => {
                         const selectedDate = form.getFieldValue('meeting_date');

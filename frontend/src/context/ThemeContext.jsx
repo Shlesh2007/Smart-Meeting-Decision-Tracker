@@ -1,5 +1,3 @@
-'use client';
-
 import React, { createContext, useContext, useEffect } from 'react';
 import { ConfigProvider, theme as antdTheme, message } from 'antd';
 

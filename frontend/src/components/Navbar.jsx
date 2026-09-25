@@ -112,6 +112,9 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
   ];
 
   const handleNavigation = (path) => {
+    if (document.activeElement && typeof document.activeElement.blur === 'function') {
+      document.activeElement.blur();
+    }
     setDrawerOpen(false);
     window.scrollTo(0, 0);
     if (pathname !== path) {
@@ -588,7 +591,7 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
             id="mobile_nav_home"
             name="mobile_nav_home"
             onClick={() => handleNavigation('/dashboard')}
-            className="flex-1 flex flex-col items-center justify-center py-1 transition-all border-0 bg-transparent cursor-pointer group"
+            className="flex-1 flex flex-col items-center justify-center py-1 transition-all border-0 bg-transparent cursor-pointer group outline-none focus:outline-none focus:ring-0"
           >
             <div className={`p-1.5 rounded-xl transition-all ${
               pathname === '/dashboard'
@@ -612,7 +615,7 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
             id="mobile_nav_meetings"
             name="mobile_nav_meetings"
             onClick={() => handleNavigation('/meetings')}
-            className="flex-1 flex flex-col items-center justify-center py-1 transition-all border-0 bg-transparent cursor-pointer group"
+            className="flex-1 flex flex-col items-center justify-center py-1 transition-all border-0 bg-transparent cursor-pointer group outline-none focus:outline-none focus:ring-0"
           >
             <div className={`p-1.5 rounded-xl transition-all ${
               pathname === '/meetings' || (pathname.startsWith('/meetings/') && pathname !== '/meetings/new')
@@ -633,7 +636,7 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
           {/* Item 3 Center Column Spacer & Label */}
           <div
             onClick={() => handleNavigation('/meetings/new')}
-            className="flex-1 flex flex-col items-center justify-center py-1 cursor-pointer group"
+            className="flex-1 flex flex-col items-center justify-center py-1 cursor-pointer group outline-none focus:outline-none"
           >
             {/* Invisible height spacer for top half of button spacing */}
             <div className="w-10 h-7 pointer-events-none" />
@@ -652,7 +655,7 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
             id="mobile_nav_actions"
             name="mobile_nav_actions"
             onClick={() => handleNavigation('/my-actions')}
-            className="flex-1 flex flex-col items-center justify-center py-1 transition-all border-0 bg-transparent cursor-pointer group"
+            className="flex-1 flex flex-col items-center justify-center py-1 transition-all border-0 bg-transparent cursor-pointer group outline-none focus:outline-none focus:ring-0"
           >
             <div className={`p-1.5 rounded-xl transition-all ${
               pathname === '/my-actions'
@@ -676,7 +679,7 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
             id="mobile_nav_profile"
             name="mobile_nav_profile"
             onClick={() => setShowProfileModal(true)}
-            className="flex-1 flex flex-col items-center justify-center py-1 transition-all border-0 bg-transparent cursor-pointer group"
+            className="flex-1 flex flex-col items-center justify-center py-1 transition-all border-0 bg-transparent cursor-pointer group outline-none focus:outline-none focus:ring-0"
           >
             <div className={`p-1.5 rounded-xl transition-all ${
               showProfileModal
