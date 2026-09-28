@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { userService, teamService, departmentRequestService } from '../services/api.js';
 import { LoadingSkeleton } from '../components/LoadingSkeleton.jsx';
 import { ParticipantProfileModal } from '../components/ParticipantProfileModal.jsx';
+import { getErrorMessage } from '../utils/errorHandler.js';
 import {
   Card, Table, Tag, Button, Select, Modal, Form, Input, message, Tabs, Alert, Avatar, Popconfirm, Tooltip
 } from 'antd';
@@ -71,18 +72,7 @@ export default function Admin() {
 
         if (rejected.length > 0) {
           const firstErr = rejected[0].reason;
-          const statusCode = firstErr?.response?.status;
-          const detailMsg = firstErr?.response?.data?.detail || firstErr?.response?.data?.error || firstErr?.message;
-
-          if (statusCode === 403) {
-            message.error('Access Restricted: You need an Admin or Owner role to view administrative data.');
-          } else if (statusCode === 401) {
-            message.error('Session expired. Please log in again.');
-          } else if (!firstErr?.response) {
-            message.error('Unable to connect to backend server. Please verify Django backend is running on port 8000.');
-          } else {
-            message.error(detailMsg || 'Failed to load admin data.');
-          }
+          message.error(getErrorMessage(firstErr, 'Failed to load administrative data.'));
         }
       })
       .finally(() => setLoading(false));
@@ -115,7 +105,7 @@ export default function Admin() {
       message.success('Team deleted successfully!');
       loadData();
     } catch (err) {
-      message.error('Failed to delete team.');
+      message.error(getErrorMessage(err, 'Failed to delete team.'));
     }
   };
 
@@ -139,7 +129,7 @@ export default function Admin() {
       setEditingTeam(null);
       loadData();
     } catch (err) {
-      message.error('Failed to save team.');
+      message.error(getErrorMessage(err, 'Failed to save team. Please check fields.'));
     }
   };
 
@@ -163,8 +153,7 @@ export default function Admin() {
       message.success(`Updated ${targetUser.username}'s role to ${newRole}`);
       loadData();
     } catch (err) {
-      const errMsg = err.response?.data?.role?.[0] || err.response?.data?.detail || 'Failed to update user role.';
-      message.error(errMsg);
+      message.error(getErrorMessage(err, 'Failed to update user role.'));
     }
   };
 
@@ -174,8 +163,7 @@ export default function Admin() {
       message.success(`Updated ${targetUser.username}'s department to ${newDept || 'General Team'}`);
       loadData();
     } catch (err) {
-      const errMsg = err.response?.data?.department?.[0] || err.response?.data?.detail || 'Failed to update user department.';
-      message.error(errMsg);
+      message.error(getErrorMessage(err, 'Failed to update user department.'));
     }
   };
 

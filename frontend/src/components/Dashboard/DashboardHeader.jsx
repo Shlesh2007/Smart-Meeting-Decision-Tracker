@@ -196,7 +196,7 @@ export const DashboardHeader = ({
                 suffix={searching ? <Spin size="small" /> : null}
                 placeholder="Search meetings & actions..."
                 allowClear
-                className="!rounded-full text-xs h-9"
+                className="!rounded-xl text-xs h-9"
               />
             </AutoComplete>
           </div>
@@ -205,12 +205,13 @@ export const DashboardHeader = ({
             <Select
               id="header_time_period"
               name="time_period"
-              value={period || 'all_time'}
+              value={period || 'today'}
               onChange={onPeriodChange}
-              className="w-28 xs:w-32 sm:w-36 font-semibold text-xs h-9 !rounded-full"
+              className="w-28 xs:w-32 sm:w-36 font-semibold text-xs h-9 !rounded-xl"
               size="middle"
               popupMatchSelectWidth={false}
               options={[
+                { label: 'Today', value: 'today' },
                 { label: 'All Time', value: 'all_time' },
                 { label: 'Yesterday', value: 'yesterday' },
                 { label: 'Last 7 Days', value: 'last_7_days' },

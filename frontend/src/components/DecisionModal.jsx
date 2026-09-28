@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Modal, Form, Input, Select, message, Alert } from 'antd';
 import { decisionService } from '../services/api.js';
+import { getErrorMessage } from '../utils/errorHandler.js';
 
 export const DecisionModal = ({
   open, onClose, discussionId, existingDecision, onSuccess
@@ -50,8 +51,7 @@ export const DecisionModal = ({
       onSuccess();
       onClose();
     } catch (err) {
-      const msg = err.response?.data?.decision?.[0] || err.response?.data?.detail || 'Failed to record decision.';
-      message.error(msg);
+      message.error(getErrorMessage(err, 'Failed to record decision. Please check input fields.'));
     } finally {
       setSubmitting(false);
     }
@@ -79,7 +79,7 @@ export const DecisionModal = ({
         />
       )}
 
-      <Form form={form} layout="vertical" onFinish={handleSubmit} initialValues={{ status: 'DECISION_MADE' }}>
+      <Form form={form} layout="vertical" onFinish={handleSubmit} disabled={submitting} initialValues={{ status: 'DECISION_MADE' }}>
         <Form.Item
           name="status"
           label="Decision Outcome / Status"

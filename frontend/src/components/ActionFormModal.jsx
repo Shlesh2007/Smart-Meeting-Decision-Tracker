@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Modal, Form, Input, Select, DatePicker, message, Alert } from 'antd';
 import dayjs from 'dayjs';
 import { actionService, userService, meetingService, discussionService, decisionService } from '../services/api.js';
+import { getErrorMessage } from '../utils/errorHandler.js';
 
 export const ActionFormModal = ({
   open, onClose, decisionId, meetingId, existingAction, availableActions = [], onSuccess
@@ -131,7 +132,7 @@ export const ActionFormModal = ({
           finalDecisionId = newDec.id;
         }
       } catch (e) {
-        message.error('Failed to attach action item to meeting.');
+        message.error(getErrorMessage(e, 'Failed to attach action item to meeting.'));
         setSubmitting(false);
         return;
       }
@@ -169,8 +170,7 @@ export const ActionFormModal = ({
       if (onSuccess) onSuccess();
       onClose();
     } catch (err) {
-      const statusErr = err.response?.data?.status?.[0] || err.response?.data?.detail || 'Failed to save action item.';
-      message.error(statusErr);
+      message.error(getErrorMessage(err, 'Failed to save action item. Please check prerequisite items and required fields.'));
     } finally {
       setSubmitting(false);
     }
@@ -222,6 +222,7 @@ export const ActionFormModal = ({
         form={form}
         layout="vertical"
         onFinish={handleSubmit}
+        disabled={submitting}
         initialValues={{ priority: 'MEDIUM', status: 'TODO' }}
         className="space-y-4"
       >

@@ -14,57 +14,68 @@ import { actionService } from '../../services/api.js';
 
 import { useAuth } from '../../context/AuthContext.jsx';
 
-export const NeedsAttention = ({ overdueList = [] }) => {
-  const { user, isAdmin, isOwner } = useAuth();
+export const NeedsAttention = ({ overdueList = [], urgentList = [], loading = false }) => {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('ALL');
   const [actions, setActions] = useState([]);
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    setLoading(true);
-    const fetcher = (isAdmin || isOwner) ? actionService.getActions() : actionService.getMyActions();
-    fetcher
-      .then((res) => {
-        const list = res.results || res || [];
-        const activeList = list.filter((a) => a.status !== 'COMPLETED' && a.status !== 'CANCELLED');
-        setActions(activeList);
-      })
-      .catch(() => {
-        setActions(overdueList);
-      })
-      .finally(() => setLoading(false));
-  }, [overdueList, isAdmin, isOwner]);
+    const combinedFromProps = [...(urgentList || []), ...(overdueList || [])];
+    const itemMap = new Map();
+    combinedFromProps.forEach((item) => {
+      if (item && item.id) itemMap.set(item.id, item);
+    });
+    setActions(Array.from(itemMap.values()));
+  }, [overdueList, urgentList]);
 
 
   const filteredActions = React.useMemo(() => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = dayjs().format('YYYY-MM-DD');
 
     return actions.filter((item) => {
+      if (!item) return false;
+
+      const itemStatus = (item.status || '').toUpperCase();
+      if (itemStatus === 'COMPLETED' || itemStatus === 'CANCELLED') {
+        return false;
+      }
+
+      const itemPriority = (item.priority || '').toUpperCase();
+      const dueDateFormatted = item.due_date
+        ? dayjs(item.due_date).format('YYYY-MM-DD')
+        : null;
+
+      const isOverdue = Boolean(dueDateFormatted && dueDateFormatted < today);
+      const isCritical = itemPriority === 'CRITICAL';
+      const isHigh = itemPriority === 'HIGH';
+
       if (activeTab === 'OVERDUE') {
-        return item.due_date && item.due_date < today;
+        return isOverdue;
       }
       if (activeTab === 'CRITICAL') {
-        return item.priority === 'CRITICAL';
+        return isCritical;
       }
       if (activeTab === 'HIGH') {
-        return item.priority === 'HIGH' || item.priority === 'CRITICAL';
+        return isHigh;
       }
-      return (
-        (item.due_date && item.due_date < today) ||
-        item.priority === 'CRITICAL' ||
-        item.priority === 'HIGH'
-      );
+      return isOverdue || isCritical || isHigh;
     });
   }, [actions, activeTab]);
 
   const renderActionRow = (item) => {
-    const today = new Date().toISOString().split('T')[0];
-    const isOverdue = item.due_date && item.due_date < today;
+    const today = dayjs().format('YYYY-MM-DD');
+    const dueDateFormatted = item.due_date
+      ? dayjs(item.due_date).format('YYYY-MM-DD')
+      : null;
+    const isOverdue = Boolean(dueDateFormatted && dueDateFormatted < today && item.status !== 'COMPLETED' && item.status !== 'CANCELLED');
     const dueDateStr = item.due_date
       ? dayjs(item.due_date).format('MMM D')
       : 'No deadline';
     const assigneeName =
-      item.assigned_to_detail?.full_name || item.assigned_to_name || item.assigned_to || 'Unassigned';
+      item.assigned_to_detail?.full_name ||
+      item.assigned_to_name ||
+      (typeof item.assigned_to === 'string' ? item.assigned_to : item.assigned_to?.full_name || item.assigned_to?.username) ||
+      'Unassigned';
 
     return (
       <div

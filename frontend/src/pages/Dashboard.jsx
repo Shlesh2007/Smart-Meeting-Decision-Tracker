@@ -24,15 +24,20 @@ export default function Dashboard() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [period, setPeriod] = useState('all_time');
+  const [period, setPeriod] = useState('today');
+  const [activityPeriod, setActivityPeriod] = useState('30d');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [search, setSearch] = useState('');
 
-  const fetchDashboard = useCallback((selectedPeriod = 'all_time', searchQuery = '', sDate = '', eDate = '') => {
+  const fetchDashboard = useCallback((selectedPeriod = 'today', searchQuery = '', sDate = '', eDate = '', actPeriod = '30d') => {
     setLoading(true);
     setError(null);
-    const params = { period: selectedPeriod, search: searchQuery || undefined };
+    const params = {
+      period: selectedPeriod,
+      search: searchQuery || undefined,
+      activity_period: actPeriod,
+    };
     if (selectedPeriod === 'custom') {
       if (sDate) params.start_date = sDate;
       if (eDate) params.end_date = eDate;
@@ -50,8 +55,8 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
-    fetchDashboard(period, search, startDate, endDate);
-  }, [period, search, startDate, endDate, fetchDashboard]);
+    fetchDashboard(period, search, startDate, endDate, activityPeriod);
+  }, [period, search, startDate, endDate, activityPeriod, fetchDashboard]);
 
   if (loading && !data) return <DashboardSkeleton />;
 
@@ -67,7 +72,7 @@ export default function Dashboard() {
         />
         <Button
           type="primary"
-          onClick={() => fetchDashboard(period, search, startDate, endDate)}
+          onClick={() => fetchDashboard(period, search, startDate, endDate, activityPeriod)}
           icon={<SyncOutlined />}
           className="bg-blue-600 font-bold rounded-lg h-9 px-5 text-xs"
         >
@@ -83,15 +88,16 @@ export default function Dashboard() {
     priority_distribution = {},
     meeting_activity = [],
     overdue_list = [],
+    urgent_list = [],
   } = data;
 
   return (
-    <div className="space-y-4 w-full max-w-full overflow-x-hidden max-w-[1600px] mx-auto pb-8">
+    <div className="space-y-4 w-full max-w-full overflow-x-hidden max-w-[1600px] mx-auto">
       
       {/* 1. Header Greeting & Quick CTAs Hero with Global Search & Period Selector */}
       <DashboardHeader
         user={user}
-        onRefresh={() => fetchDashboard(period, search, startDate, endDate)}
+        onRefresh={() => fetchDashboard(period, search, startDate, endDate, activityPeriod)}
         loading={loading}
         period={period}
         onPeriodChange={(val) => setPeriod(val)}
@@ -160,7 +166,11 @@ export default function Dashboard() {
       {/* 4. ROW 3: Meeting Activity Area Chart (7 cols) | Recent Completed Actions (5 cols) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
         <div className="lg:col-span-7">
-          <MeetingActivityChart meetingActivity={meeting_activity} />
+          <MeetingActivityChart
+            meetingActivity={meeting_activity}
+            activityPeriod={activityPeriod}
+            onActivityPeriodChange={(val) => setActivityPeriod(val)}
+          />
         </div>
         <div className="lg:col-span-5">
           <RecentCompletedActions />
@@ -170,10 +180,10 @@ export default function Dashboard() {
       {/* 5. ROW 4: Needs Attention Action Table (8 cols) | Quick Actions (4 cols) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
         <div className="lg:col-span-8">
-          <NeedsAttention overdueList={overdue_list} />
+          <NeedsAttention overdueList={overdue_list} urgentList={urgent_list} loading={loading} />
         </div>
         <div className="lg:col-span-4">
-          <QuickActions />
+          <QuickActions/>
         </div>
       </div>
 

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { Logo } from '../components/Logo.jsx';
+import { getErrorMessage } from '../utils/errorHandler.js';
 import { Form, Input, Button, Card, Modal, App } from 'antd';
 import { UserOutlined, MailOutlined, LockOutlined, SafetyCertificateOutlined, SendOutlined } from '@ant-design/icons';
 
@@ -26,21 +27,7 @@ export default function Register() {
       message.success(res.message || `6-digit verification code sent to ${values.email}`);
     } catch (err) {
       console.error('Registration OTP Request Error:', err);
-      const errData = err.response?.data;
-      if (errData && typeof errData === 'object' && !Array.isArray(errData)) {
-        Object.entries(errData).forEach(([key, val]) => {
-          const detail = Array.isArray(val) ? val.join(' ') : String(val);
-          if (key === 'non_field_errors' || key === 'detail' || key === 'error') {
-            message.error(detail);
-          } else {
-            const formattedField = key.charAt(0).toUpperCase() + key.slice(1).replace('_', ' ');
-            message.error(`${formattedField}: ${detail}`);
-          }
-        });
-      } else {
-        const rawMsg = err.response?.data?.error || err.response?.data?.detail || err.message || 'Failed to send verification code.';
-        message.error(rawMsg);
-      }
+      message.error(getErrorMessage(err, 'Failed to send verification code. Please check your details.'));
     } finally {
       setSubmitting(false);
     }
@@ -63,8 +50,7 @@ export default function Register() {
       message.success('Email verified! Welcome to SmartMeeting Tracker.');
       setShowOtpModal(false);
     } catch (err) {
-      const rawMsg = err.response?.data?.error || err.response?.data?.detail || err.message || 'OTP verification failed.';
-      message.error(rawMsg);
+      message.error(getErrorMessage(err, 'OTP verification failed. Please check the code entered.'));
     } finally {
       setVerifying(false);
     }
@@ -76,7 +62,7 @@ export default function Register() {
       await requestRegisterOTP(formData);
       message.success(`A new verification code has been sent to ${formData.email}`);
     } catch (err) {
-      message.error('Failed to resend verification code.');
+      message.error(getErrorMessage(err, 'Failed to resend verification code.'));
     }
   };
 
@@ -104,6 +90,7 @@ export default function Register() {
             layout="vertical"
             onFinish={onFinishStep1}
             size="middle"
+            disabled={submitting || verifying}
           >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4">
               <Form.Item

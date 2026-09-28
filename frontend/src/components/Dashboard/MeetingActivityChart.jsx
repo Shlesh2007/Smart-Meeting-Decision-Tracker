@@ -2,13 +2,30 @@
 import React, { useState } from 'react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { BarChartOutlined } from '@ant-design/icons';
+import { Segmented } from 'antd';
 import dayjs from 'dayjs';
 import { useScrollAnimation } from '../../hooks/useScrollAnimation.js';
 
-export const MeetingActivityChart = ({ meetingActivity = [] }) => {
-  const [filterDays, setFilterDays] = useState(30);
+export const MeetingActivityChart = ({
+  meetingActivity = [],
+  activityPeriod = '30d',
+  onActivityPeriodChange,
+}) => {
+  const [filterDays, setFilterDays] = useState(() => {
+    if (activityPeriod === '7d' || activityPeriod === 7) return 7;
+    if (activityPeriod === '14d' || activityPeriod === 14) return 14;
+    if (activityPeriod === 'all' || activityPeriod === 0) return 0;
+    return 30;
+  });
   const [containerRef, isInView] = useScrollAnimation();
   const [activePointIndex, setActivePointIndex] = useState(null);
+
+  React.useEffect(() => {
+    if (activityPeriod === '7d' || activityPeriod === 7) setFilterDays(7);
+    else if (activityPeriod === '14d' || activityPeriod === 14) setFilterDays(14);
+    else if (activityPeriod === 'all' || activityPeriod === 0) setFilterDays(0);
+    else setFilterDays(30);
+  }, [activityPeriod]);
 
   // Auto-dismiss timer after 4 seconds
   React.useEffect(() => {
@@ -84,6 +101,13 @@ export const MeetingActivityChart = ({ meetingActivity = [] }) => {
 
   const totalMeetingsInPeriod = chartFormattedData.reduce((acc, curr) => acc + curr.count, 0);
 
+  const handleFilterClick = (val, apiKey) => {
+    setFilterDays(val);
+    if (onActivityPeriodChange) {
+      onActivityPeriodChange(apiKey);
+    }
+  };
+
   return (
     <div
       ref={containerRef}
@@ -104,28 +128,22 @@ export const MeetingActivityChart = ({ meetingActivity = [] }) => {
           </div>
         </div>
 
-        {/* Filter Pills */}
-        <div className="flex items-center space-x-1 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg border border-slate-200/50 dark:border-slate-700/50 text-[10px]">
-          {[
+        {/* Ant Design Segmented Control */}
+        <Segmented
+          size="small"
+          value={filterDays}
+          onChange={(val) => {
+            const apiKeys = { 7: '7d', 14: '14d', 30: '30d', 0: 'all' };
+            handleFilterClick(val, apiKeys[val] || '30d');
+          }}
+          options={[
             { label: '7D', value: 7 },
             { label: '14D', value: 14 },
             { label: '30D', value: 30 },
             { label: 'All', value: 0 },
-          ].map((tab) => (
-            <button
-              key={tab.value}
-              type="button"
-              onClick={() => setFilterDays(tab.value)}
-              className={`px-2 py-0.5 rounded font-bold border-0 cursor-pointer transition-all ${
-                filterDays === tab.value
-                  ? 'bg-blue-600 text-white shadow-xs'
-                  : 'text-slate-600 dark:text-slate-400 bg-transparent hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
+          ]}
+          className="bg-slate-100 dark:bg-slate-800 text-[10px] font-bold"
+        />
       </div>
 
       {/* Chart Body */}

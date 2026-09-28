@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Modal, Form, Input, Select, DatePicker, TimePicker, message, Popover, Tag, Checkbox } from 'antd';
 import { TeamOutlined, UserOutlined, RightOutlined, SyncOutlined } from '@ant-design/icons';
 import { meetingService, userService, teamService } from '../services/api.js';
+import { getErrorMessage } from '../utils/errorHandler.js';
 import dayjs from 'dayjs';
 
 export const EditMeetingModal = ({ open, onClose, meeting, onSuccess }) => {
@@ -97,30 +98,29 @@ export const EditMeetingModal = ({ open, onClose, meeting, onSuccess }) => {
 
     setSubmitting(true);
 
-    const payload = {
-      title: values.title,
-      description: values.description,
-      meeting_date: values.meeting_date.format('YYYY-MM-DD'),
-      start_time: values.time_range[0].format('HH:mm:ss'),
-      end_time: values.time_range[1].format('HH:mm:ss'),
-      location: values.location,
-      meeting_type: values.meeting_type,
-      team: values.team ? Number(values.team) : null,
-      participant_ids: selectedParticipants,
-      is_recurring: values.is_recurring || false,
-      recurrence_pattern: values.is_recurring ? (values.recurrence_pattern || 'DAILY') : null,
-      recurrence_end_date: values.is_recurring && values.recurrence_end_date ? values.recurrence_end_date.format('YYYY-MM-DD') : null,
-      update_series: values.update_series || false
-    };
-
     try {
+      const payload = {
+        title: values.title,
+        description: values.description,
+        meeting_date: values.meeting_date ? values.meeting_date.format('YYYY-MM-DD') : null,
+        start_time: values.time_range && values.time_range[0] ? values.time_range[0].format('HH:mm:ss') : '09:00:00',
+        end_time: values.time_range && values.time_range[1] ? values.time_range[1].format('HH:mm:ss') : '10:00:00',
+        location: values.location,
+        meeting_type: values.meeting_type,
+        team: values.team ? Number(values.team) : null,
+        participant_ids: values.participant_ids || [],
+        is_recurring: values.is_recurring || false,
+        recurrence_pattern: values.is_recurring ? (values.recurrence_pattern || 'DAILY') : null,
+        recurrence_end_date: values.is_recurring && values.recurrence_end_date ? values.recurrence_end_date.format('YYYY-MM-DD') : null,
+        update_series: values.update_series || false
+      };
+
       await meetingService.updateMeeting(meeting.id, payload);
       message.success('Meeting details updated successfully!');
-      onSuccess();
-      onClose();
+      if (onSuccess) onSuccess();
+      if (onClose) onClose();
     } catch (err) {
-      const msg = err.response?.data?.participant_ids?.[0] || err.response?.data?.detail || err.response?.data?.end_time?.[0] || 'Failed to update meeting details.';
-      message.error(msg);
+      message.error(getErrorMessage(err, 'Failed to update meeting details. Please check form fields.'));
     } finally {
       setSubmitting(false);
     }
@@ -142,6 +142,7 @@ export const EditMeetingModal = ({ open, onClose, meeting, onSuccess }) => {
         form={form}
         layout="vertical"
         onFinish={handleFinish}
+        disabled={submitting}
         className="pt-2 px-1"
       >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

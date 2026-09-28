@@ -37,14 +37,20 @@ export default function MyActions() {
 
   const fetchMyActions = useCallback(() => {
     setLoading(true);
-    const fetcher = (isAdmin || isOwner) ? actionService.getActions() : actionService.getMyActions();
+    const params = { page_size: 1000 };
+
+    if (search && search.trim()) {
+      params.search = search.trim();
+    }
+
+    const fetcher = (isAdmin || isOwner) ? actionService.getActions(params) : actionService.getMyActions(params);
     fetcher
       .then((res) => {
-        setActions(res.results || res);
+        setActions(res.results || res || []);
       })
       .catch(() => message.error('Failed to load action items.'))
       .finally(() => setLoading(false));
-  }, [isAdmin, isOwner]);
+  }, [isAdmin, isOwner, search]);
 
   useEffect(() => {
     fetchMyActions();
@@ -98,19 +104,26 @@ export default function MyActions() {
   };
 
   const filteredActions = (Array.isArray(actions) ? actions : []).filter((item) => {
+    if (!item) return false;
     const query = search.trim().toLowerCase();
     const matchesSearch = !query ||
-      item.title.toLowerCase().includes(query) ||
+      (item.title && item.title.toLowerCase().includes(query)) ||
       (item.description && item.description.toLowerCase().includes(query)) ||
       (item.completion_notes && item.completion_notes.toLowerCase().includes(query));
 
     if (!matchesSearch) return false;
 
-    if (activeTab === 'OPEN') return ['TODO', 'IN_PROGRESS', 'BLOCKED'].includes(item.status);
-    if (activeTab === 'OVERDUE') return item.is_overdue;
-    if (activeTab === 'CRITICAL') return item.priority === 'CRITICAL' && item.status !== 'COMPLETED' && item.status !== 'CANCELLED';
+    const itemStatus = (item.status || '').toUpperCase();
+    const itemPriority = (item.priority || '').toUpperCase();
+    const today = dayjs().format('YYYY-MM-DD');
+    const dueDateStr = item.due_date ? dayjs(item.due_date).format('YYYY-MM-DD') : null;
+    const isOverdueItem = Boolean(item.is_overdue || (dueDateStr && dueDateStr < today && !['COMPLETED', 'CANCELLED'].includes(itemStatus)));
+
+    if (activeTab === 'OPEN') return ['TODO', 'IN_PROGRESS', 'BLOCKED'].includes(itemStatus);
+    if (activeTab === 'OVERDUE') return isOverdueItem;
+    if (activeTab === 'CRITICAL') return itemPriority === 'CRITICAL' && !['COMPLETED', 'CANCELLED'].includes(itemStatus);
     if (activeTab === 'ALL') return true;
-    return item.status === activeTab;
+    return itemStatus === activeTab;
   });
 
   const columns = [
@@ -247,7 +260,31 @@ export default function MyActions() {
   ];
 
   const actionsList = Array.isArray(actions) ? actions : [];
-  const overdueCount = actionsList.filter(a => a.is_overdue).length;
+
+  const counts = React.useMemo(() => {
+    const today = dayjs().format('YYYY-MM-DD');
+    let open = 0, todo = 0, inProgress = 0, blocked = 0, completed = 0, overdue = 0, critical = 0;
+
+    actionsList.forEach((a) => {
+      if (!a) return;
+      const status = (a.status || '').toUpperCase();
+      const priority = (a.priority || '').toUpperCase();
+      const dueDateStr = a.due_date ? dayjs(a.due_date).format('YYYY-MM-DD') : null;
+      const isOverdue = Boolean(a.is_overdue || (dueDateStr && dueDateStr < today && !['COMPLETED', 'CANCELLED'].includes(status)));
+
+      if (['TODO', 'IN_PROGRESS', 'BLOCKED'].includes(status)) open++;
+      if (status === 'TODO') todo++;
+      if (status === 'IN_PROGRESS') inProgress++;
+      if (status === 'BLOCKED') blocked++;
+      if (status === 'COMPLETED') completed++;
+      if (isOverdue) overdue++;
+      if (priority === 'CRITICAL' && !['COMPLETED', 'CANCELLED'].includes(status)) critical++;
+    });
+
+    return { open, todo, inProgress, blocked, completed, overdue, critical, total: actionsList.length };
+  }, [actionsList]);
+
+  const overdueCount = counts.overdue;
 
   return (
     <div className="space-y-6 w-full max-w-full overflow-x-hidden">
@@ -298,25 +335,25 @@ export default function MyActions() {
           <Dropdown
             menu={{
               items: [
-                { key: 'ALL', label: `All (${actionsList.length})` },
+                { key: 'ALL', label: `All (${counts.total})` },
                 { type: 'divider' },
-                { key: 'OPEN', label: `Open (${actionsList.filter(a => ['TODO', 'IN_PROGRESS', 'BLOCKED'].includes(a.status)).length})` },
-                { key: 'TODO', label: `Todo (${actionsList.filter(a => a.status === 'TODO').length})` },
-                { key: 'IN_PROGRESS', label: `In Progress (${actionsList.filter(a => a.status === 'IN_PROGRESS').length})` },
-                { key: 'BLOCKED', label: `Blocked (${actionsList.filter(a => a.status === 'BLOCKED').length})` },
-                { key: 'COMPLETED', label: `Completed (${actionsList.filter(a => a.status === 'COMPLETED').length})` },
+                { key: 'OPEN', label: `Open (${counts.open})` },
+                { key: 'TODO', label: `Todo (${counts.todo})` },
+                { key: 'IN_PROGRESS', label: `In Progress (${counts.inProgress})` },
+                { key: 'BLOCKED', label: `Blocked (${counts.blocked})` },
+                { key: 'COMPLETED', label: `Completed (${counts.completed})` },
                 { type: 'divider' },
                 {
                   key: 'OVERDUE',
                   label: (
-                    <span className={overdueCount > 0 ? 'text-rose-600 font-bold' : ''}>
-                      Overdue ({overdueCount})
+                    <span className={counts.overdue > 0 ? 'text-rose-600 font-bold' : ''}>
+                      Overdue ({counts.overdue})
                     </span>
                   )
                 },
                 {
                   key: 'CRITICAL',
-                  label: `Critical (${actionsList.filter(a => a.priority === 'CRITICAL' && a.status !== 'COMPLETED' && a.status !== 'CANCELLED').length})`
+                  label: `Critical (${counts.critical})`
                 },
               ],
               selectedKeys: [activeTab],

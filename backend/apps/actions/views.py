@@ -10,23 +10,33 @@ from .serializers import ActionItemSerializer
 
 class ActionItemFilter(django_filters.FilterSet):
     overdue = django_filters.BooleanFilter(method='filter_overdue')
+    open = django_filters.BooleanFilter(method='filter_open')
     decision = django_filters.NumberFilter(field_name='decision')
     meeting = django_filters.NumberFilter(field_name='decision__discussion__meeting')
     assigned_to = django_filters.NumberFilter(field_name='assigned_to')
-    priority = django_filters.CharFilter(field_name='priority')
-    status = django_filters.CharFilter(field_name='status')
+    priority = django_filters.CharFilter(field_name='priority', lookup_expr='iexact')
+    status = django_filters.CharFilter(field_name='status', lookup_expr='iexact')
     due_date_lte = django_filters.DateFilter(field_name='due_date', lookup_expr='lte')
     due_date_gte = django_filters.DateFilter(field_name='due_date', lookup_expr='gte')
 
     class Meta:
         model = ActionItem
-        fields = ['decision', 'meeting', 'assigned_to', 'priority', 'status', 'overdue', 'due_date_lte', 'due_date_gte']
+        fields = ['decision', 'meeting', 'assigned_to', 'priority', 'status', 'overdue', 'open', 'due_date_lte', 'due_date_gte']
 
     def filter_overdue(self, queryset, name, value):
         if value:
             today = timezone.localdate()
             return queryset.filter(due_date__lt=today).exclude(
                 Q(status__iexact=ActionItem.Status.COMPLETED) | Q(status__iexact=ActionItem.Status.CANCELLED)
+            )
+        return queryset
+
+    def filter_open(self, queryset, name, value):
+        if value:
+            return queryset.filter(
+                Q(status__iexact=ActionItem.Status.TODO) |
+                Q(status__iexact=ActionItem.Status.IN_PROGRESS) |
+                Q(status__iexact=ActionItem.Status.BLOCKED)
             )
         return queryset
 

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { meetingService, userService, teamService } from '../services/api.js';
+import { getErrorMessage } from '../utils/errorHandler.js';
 import {
   Form, Input, Select, DatePicker, TimePicker, Button, Card, Checkbox, Radio, ConfigProvider, Popover, Tag, App, Space
 } from 'antd';
@@ -152,8 +153,7 @@ export default function CreateMeeting() {
       message.success('Meeting scheduled successfully!');
       navigate(`/meetings/${created.id}`);
     } catch (err) {
-      const msg = err.response?.data?.end_time?.[0] || err.response?.data?.detail || 'Failed to create meeting.';
-      message.error(msg);
+      message.error(getErrorMessage(err, 'Failed to create meeting. Please check form fields.'));
       setSubmitting(false);
     }
   };
@@ -223,6 +223,7 @@ export default function CreateMeeting() {
           form={form}
           layout="vertical"
           onFinish={onFinish}
+          disabled={submitting}
           initialValues={{
             meeting_type: 'INTERNAL',
             location_type: 'GOOGLE_MEET',

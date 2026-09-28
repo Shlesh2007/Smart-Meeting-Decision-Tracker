@@ -11,6 +11,7 @@ import dayjs from 'dayjs';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { authService, departmentRequestService } from '../services/api.js';
+import { getErrorMessage } from '../utils/errorHandler.js';
 
 export const ProfileModal = ({ open, onClose, user }) => {
   const navigate = useNavigate();
@@ -94,8 +95,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
       message.success('Profile details updated successfully!');
       setIsEditing(false);
     } catch (err) {
-      const errMsg = err.response?.data?.error || err.response?.data?.detail || 'Failed to update profile details.';
-      message.error(errMsg);
+      message.error(getErrorMessage(err, 'Failed to update profile details.'));
     } finally {
       setLoading(false);
     }
@@ -125,8 +125,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
       setEmailSuccessMsg(res.message || `Verification code sent to ${trimmedEmail}`);
       setEmailStep(2);
     } catch (err) {
-      const msg = err.response?.data?.error || err.response?.data?.detail || 'Failed to send verification email.';
-      setEmailError(msg);
+      setEmailError(getErrorMessage(err, 'Failed to send verification email.'));
     } finally {
       setEmailLoading(false);
     }
@@ -153,8 +152,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
       setEmailError('');
       setEmailSuccessMsg('');
     } catch (err) {
-      const msg = err.response?.data?.error || err.response?.data?.detail || 'Failed to verify code.';
-      setEmailError(msg);
+      setEmailError(getErrorMessage(err, 'Failed to verify OTP code.'));
     } finally {
       setEmailLoading(false);
     }
@@ -183,8 +181,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
       onClose();
       logout();
     } catch (err) {
-      const msg = err.response?.data?.error || err.response?.data?.detail || 'Failed to delete account.';
-      setDeleteError(msg);
+      setDeleteError(getErrorMessage(err, 'Failed to delete account.'));
     } finally {
       setDeleteLoading(false);
     }
@@ -384,6 +381,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
               form={form}
               layout="vertical"
               onFinish={handleSaveProfile}
+              disabled={loading}
               initialValues={{
                 first_name: user?.first_name || '',
                 last_name: user?.last_name || '',

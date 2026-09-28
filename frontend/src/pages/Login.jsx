@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { authService } from '../services/api.js';
 import { Logo } from '../components/Logo.jsx';
+import { getErrorMessage } from '../utils/errorHandler.js';
 import { Form, Input, Button, Card, Typography, Modal, Divider, Steps, Alert, Tag, App } from 'antd';
 import {
   UserOutlined, LockOutlined, ThunderboltOutlined, InfoCircleOutlined,
@@ -43,15 +44,9 @@ export default function Login() {
     try {
       const userProfile = await login(values);
       message.success(`Welcome back, ${userProfile?.full_name || values.username}!`);
-      
-      if (userProfile?.role === 'ADMIN' || userProfile?.role === 'OWNER') {
-        navigate('/admin');
-      } else {
-        navigate('/dashboard');
-      }
+      navigate('/dashboard');
     } catch (err) {
-      const msg = err.response?.data?.detail || 'Invalid username or password.';
-      message.error(msg);
+      message.error(getErrorMessage(err, 'Invalid username or password. Please try again.'));
     } finally {
       setSubmitting(false);
     }
@@ -74,17 +69,12 @@ export default function Login() {
       setOauthLoading('github');
       authService.loginWithGithub({ code })
         .then(async (data) => {
-          const profile = await refreshUser();
+          await refreshUser();
           message.success(data.message || 'Logged in with GitHub successfully!');
-          if (profile?.role === 'ADMIN' || profile?.role === 'OWNER') {
-            navigate('/admin');
-          } else {
-            navigate('/dashboard');
-          }
+          navigate('/dashboard');
         })
         .catch((err) => {
-          const errMsg = err.response?.data?.error || 'GitHub authentication failed.';
-          message.error(errMsg);
+          message.error(getErrorMessage(err, 'GitHub authentication failed.'));
           setOauthLoading(null);
         });
     } else if (hash && hash.includes('access_token')) {
@@ -105,17 +95,12 @@ export default function Login() {
           refresh_token: refreshToken
         })
           .then(async (data) => {
-            const profile = await refreshUser();
+            await refreshUser();
             message.success(data.message || 'Logged in with Google successfully!');
-            if (profile?.role === 'ADMIN' || profile?.role === 'OWNER') {
-              navigate('/admin');
-            } else {
-              navigate('/dashboard');
-            }
+            navigate('/dashboard');
           })
           .catch((err) => {
-            const errMsg = err.response?.data?.error || 'Google authentication failed.';
-            message.error(errMsg);
+            message.error(getErrorMessage(err, 'Google authentication failed.'));
             setOauthLoading(null);
           });
       }
@@ -277,6 +262,7 @@ export default function Login() {
             onFinish={onFinish}
             autoComplete="off"
             size="large"
+            disabled={submitting || Boolean(oauthLoading)}
           >
             <Form.Item
               name="username"
@@ -315,11 +301,12 @@ export default function Login() {
             <div className="text-right mb-5">
               <button
                 type="button"
+                disabled={submitting || Boolean(oauthLoading)}
                 onClick={() => {
                   closeResetModal();
                   setIsForgotModalOpen(true);
                 }}
-                className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-500 focus:outline-none cursor-pointer bg-transparent border-0 p-0"
+                className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-500 focus:outline-none cursor-pointer bg-transparent border-0 p-0 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Forgot password?
               </button>
@@ -330,6 +317,7 @@ export default function Login() {
                 type="primary"
                 htmlType="submit"
                 loading={submitting}
+                disabled={submitting || Boolean(oauthLoading)}
                 block
                 className="font-semibold rounded-xl border-none bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/30"
               >
@@ -347,6 +335,7 @@ export default function Login() {
               icon={<GoogleOutlined className="text-red-500" />}
               onClick={handleGoogleOAuth}
               loading={oauthLoading === 'google'}
+              disabled={submitting || Boolean(oauthLoading)}
               style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '12px' }}
               className="font-medium border-gray-200 dark:border-slate-700 hover:border-gray-300"
             >
@@ -356,6 +345,7 @@ export default function Login() {
               icon={<GithubOutlined className="text-gray-800 dark:text-white" />}
               onClick={handleGithubOAuth}
               loading={oauthLoading === 'github'}
+              disabled={submitting || Boolean(oauthLoading)}
               style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '12px' }}
               className="font-medium border-gray-200 dark:border-slate-700 hover:border-gray-300"
             >

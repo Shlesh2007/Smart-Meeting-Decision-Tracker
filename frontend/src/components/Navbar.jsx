@@ -605,7 +605,7 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
                 ? 'text-slate-900 dark:text-white font-extrabold'
                 : 'text-slate-500 dark:text-slate-400'
             }`}>
-              Home
+              Dashboard
             </span>
           </button>
 
@@ -723,10 +723,10 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
             margin: 0,
             boxSizing: 'border-box'
           }}
-          className={`!rounded-full shrink-0 aspect-square !p-0 flex items-center justify-center text-white shadow-2xl transition-all duration-200 cursor-pointer border-4 border-slate-100 dark:border-slate-800 pointer-events-auto ${
+          className={`${
             pathname === '/meetings/new'
               ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 ring-4 ring-slate-400/50 scale-105'
-              : 'bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-900 active:scale-95'
+              : 'bg-slate-900  text-white dark:bg-white dark:text-slate-900 active:scale-95'
           }`}
         >
           <PlusOutlined className="text-xl font-black" />
