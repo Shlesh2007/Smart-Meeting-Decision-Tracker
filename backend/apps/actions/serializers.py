@@ -23,8 +23,8 @@ class ActionItemSerializer(serializers.ModelSerializer):
         required=False
     )
 
-    meeting_id = serializers.ReadOnlyField(source='decision.discussion.meeting.id', default=None)
-    meeting_title = serializers.ReadOnlyField(source='decision.discussion.meeting.title', default='')
+    meeting_id = serializers.SerializerMethodField()
+    meeting_title = serializers.SerializerMethodField()
     completion_notes = serializers.CharField(allow_blank=True, allow_null=True, required=False)
 
     class Meta:
@@ -35,6 +35,30 @@ class ActionItemSerializer(serializers.ModelSerializer):
             'dependency_ids', 'created_by', 'created_by_detail', 'created_at', 'updated_at'
         )
         read_only_fields = ('id', 'meeting_id', 'meeting_title', 'dependencies', 'created_by', 'created_at', 'updated_at')
+
+    def get_meeting_id(self, obj):
+        try:
+            if obj and hasattr(obj, 'decision') and obj.decision:
+                discussion = getattr(obj.decision, 'discussion', None)
+                if discussion:
+                    meeting = getattr(discussion, 'meeting', None)
+                    if meeting:
+                        return meeting.id
+        except Exception:
+            return None
+        return None
+
+    def get_meeting_title(self, obj):
+        try:
+            if obj and hasattr(obj, 'decision') and obj.decision:
+                discussion = getattr(obj.decision, 'discussion', None)
+                if discussion:
+                    meeting = getattr(discussion, 'meeting', None)
+                    if meeting:
+                        return meeting.title
+        except Exception:
+            return ''
+        return ''
 
     def to_representation(self, instance):
         ret = super().to_representation(instance)
@@ -106,10 +130,15 @@ class ActionItemSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         dependencies = validated_data.pop('dependencies', [])
         assigned_to_users = validated_data.pop('assigned_to', [])
-        if 'request' in self.context and hasattr(self.context['request'], 'user'):
-            validated_data['created_by'] = self.context['request'].user
         
         req = self.context.get('request')
+        if 'created_by' not in validated_data or not getattr(validated_data.get('created_by'), 'is_authenticated', False):
+            if req and hasattr(req, 'user') and req.user and req.user.is_authenticated:
+                validated_data['created_by'] = req.user
+
+        if 'created_by' not in validated_data or not getattr(validated_data.get('created_by'), 'is_authenticated', False):
+            raise serializers.ValidationError({"created_by": "Authentication is required to create action items."})
+        
         if req and 'completion_notes' in req.data and 'completion_notes' not in validated_data:
             validated_data['completion_notes'] = req.data['completion_notes']
 

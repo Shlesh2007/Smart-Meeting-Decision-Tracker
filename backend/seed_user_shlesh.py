@@ -165,18 +165,18 @@ def seed_shlesh_user_and_data():
                 }
             )
             for act_data in disc_data.get("actions", []):
-                ActionItem.objects.get_or_create(
+                action, _ = ActionItem.objects.get_or_create(
                     decision=decision,
                     title=act_data["title"],
                     defaults={
                         'description': f'Action item generated from meeting decision: {act_data["title"]}',
-                        'assigned_to': user,
                         'created_by': user,
                         'priority': act_data["priority"],
                         'due_date': act_data["due"],
                         'status': act_data["status"]
                     }
                 )
+                action.assigned_to.set([user])
 
 
     print("🎉 All sample data (Teams, Meetings, Decisions, Action Items) seeded successfully for Shlesh!")

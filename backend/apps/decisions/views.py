@@ -13,6 +13,8 @@ class DecisionViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         user = self.request.user
+        if not user or not user.is_authenticated:
+            raise permissions.PermissionDenied("Authentication required to record decisions.")
         decision = serializer.save(decided_by=user, version=1, decision_date=timezone.now())
         
         # Save Version 1 History Snapshot
