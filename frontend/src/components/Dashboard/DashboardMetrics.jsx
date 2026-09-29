@@ -10,7 +10,19 @@ import {
   FireOutlined,
 } from '@ant-design/icons';
 
-export const DashboardMetrics = ({ metrics = {}, onCardClick }) => {
+export const DashboardMetrics = ({ metrics = {}, onCardClick, period = 'today' }) => {
+  const periodTrends = {
+    today: 'Today meetings',
+    yesterday: 'Yesterday meetings',
+    last_7_days: 'Past 7 days meetings',
+    last_30_days: 'Past 30 days meetings',
+    last_week: 'Last week meetings',
+    last_month: 'Last month meetings',
+    last_year: 'Last year meetings',
+    all_time: 'All time meetings',
+    custom: 'Selected date range',
+  };
+
   const cards = [
     {
       key: 'total_meetings',
@@ -19,7 +31,7 @@ export const DashboardMetrics = ({ metrics = {}, onCardClick }) => {
       subtitle: 'Logged',
       theme: 'blue',
       icon: <CalendarOutlined />,
-      trend: 'All time meetings',
+      trend: periodTrends[period] || 'Total meetings',
       onClick: () => onCardClick && onCardClick('/meetings'),
     },
     {

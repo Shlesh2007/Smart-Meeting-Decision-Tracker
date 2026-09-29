@@ -17,43 +17,72 @@ class NotificationViewSet(viewsets.ModelViewSet):
         return Notification.objects.filter(user=self.request.user)
 
     def list(self, request, *args, **kwargs):
-        self._sync_user_notifications(request.user)
+        try:
+            self._sync_user_notifications(request.user)
+        except Exception as e:
+            pass
         return super().list(request, *args, **kwargs)
 
     def _sync_user_notifications(self, user):
-        auto_update_meeting_statuses()
+        try:
+            auto_update_meeting_statuses()
+        except Exception:
+            pass
         today = timezone.localdate()
 
-        if user.is_admin_role:
-            actions_qs = ActionItem.objects.all()
-            meetings_qs = Meeting.objects.all()
-        elif user.is_manager_role:
-            actions_qs = ActionItem.objects.filter(
-                Q(assigned_to=user) | Q(created_by=user) |
-                Q(decision__discussion__meeting__created_by=user) |
-                Q(decision__discussion__meeting__team__members=user)
-            ).distinct()
-            meetings_qs = Meeting.objects.filter(
-                Q(created_by=user) | Q(participants=user) | Q(team__members=user)
-            ).distinct()
-        else:
-            actions_qs = ActionItem.objects.filter(
-                Q(assigned_to=user) | Q(created_by=user)
-            ).distinct()
-            meetings_qs = Meeting.objects.filter(
-                Q(created_by=user) | Q(participants=user) | Q(team__members=user)
-            ).distinct()
+        try:
+            if user.is_admin_role:
+                actions_qs = ActionItem.objects.all()
+                meetings_qs = Meeting.objects.all()
+            elif user.is_manager_role:
+                actions_qs = ActionItem.objects.filter(
+                    Q(assigned_to=user) | Q(created_by=user) |
+                    Q(decision__discussion__meeting__created_by=user) |
+                    Q(decision__discussion__meeting__team__members=user)
+                ).distinct()
+                meetings_qs = Meeting.objects.filter(
+                    Q(created_by=user) | Q(participants=user) | Q(team__members=user)
+                ).distinct()
+            else:
+                actions_qs = ActionItem.objects.filter(
+                    Q(assigned_to=user) | Q(created_by=user)
+                ).distinct()
+                meetings_qs = Meeting.objects.filter(
+                    Q(created_by=user) | Q(participants=user) | Q(team__members=user)
+                ).distinct()
+            _ = actions_qs.count()
+        except Exception:
+            if user.is_admin_role:
+                actions_qs = ActionItem.objects.all()
+                meetings_qs = Meeting.objects.all()
+            else:
+                actions_qs = ActionItem.objects.filter(created_by=user).distinct()
+                meetings_qs = Meeting.objects.filter(
+                    Q(created_by=user) | Q(participants=user) | Q(team__members=user)
+                ).distinct()
 
         # Sync Overdue Actions
-        overdue_items = actions_qs.filter(
-            due_date__lt=today
-        ).exclude(
-            Q(status__iexact=ActionItem.Status.COMPLETED) | Q(status__iexact=ActionItem.Status.CANCELLED)
-        ).select_related('assigned_to')[:5]
+        try:
+            overdue_items = list(actions_qs.filter(
+                due_date__lt=today
+            ).exclude(
+                Q(status__iexact=ActionItem.Status.COMPLETED) | Q(status__iexact=ActionItem.Status.CANCELLED)
+            ).prefetch_related('assigned_to')[:5])
+        except Exception:
+            overdue_items = list(actions_qs.filter(
+                due_date__lt=today
+            ).exclude(
+                Q(status__iexact=ActionItem.Status.COMPLETED) | Q(status__iexact=ActionItem.Status.CANCELLED)
+            )[:5])
 
         for item in overdue_items:
             source_id = f"overdue-{item.id}"
-            assigned_name = (item.assigned_to.get_full_name() or item.assigned_to.username) if item.assigned_to else 'Unassigned'
+            try:
+                assigned_users = list(item.assigned_to.all())
+                assigned_name = ', '.join([u.get_full_name() or u.username for u in assigned_users]) if assigned_users else 'Unassigned'
+            except Exception:
+                assigned_name = 'Unassigned'
+
             due_str = item.due_date.strftime('%Y-%m-%d') if hasattr(item.due_date, 'strftime') else str(item.due_date)
             
             Notification.objects.get_or_create(

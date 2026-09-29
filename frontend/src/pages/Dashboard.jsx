@@ -18,17 +18,85 @@ import {
   DashboardSkeleton,
 } from '../components/Dashboard';
 
+import dayjs from 'dayjs';
+
+const getDateRangeForPeriod = (selectedPeriod, customStart = '', customEnd = '') => {
+  const today = dayjs();
+  if (selectedPeriod === 'today' || selectedPeriod === 'this_day') {
+    const d = today.format('YYYY-MM-DD');
+    return { start_date: d, end_date: d };
+  }
+  if (selectedPeriod === 'yesterday') {
+    const y = today.subtract(1, 'day').format('YYYY-MM-DD');
+    return { start_date: y, end_date: y };
+  }
+  if (selectedPeriod === 'last_7_days' || selectedPeriod === 'past_week') {
+    return {
+      start_date: today.subtract(7, 'day').format('YYYY-MM-DD'),
+      end_date: today.format('YYYY-MM-DD'),
+    };
+  }
+  if (selectedPeriod === 'last_30_days' || selectedPeriod === '30_days' || selectedPeriod === 'past_month') {
+    return {
+      start_date: today.subtract(30, 'day').format('YYYY-MM-DD'),
+      end_date: today.format('YYYY-MM-DD'),
+    };
+  }
+  if (selectedPeriod === 'last_week') {
+    const startOfThisWeek = today.startOf('week');
+    const startOfLastWeek = startOfThisWeek.subtract(1, 'week');
+    const endOfLastWeek = startOfThisWeek.subtract(1, 'day');
+    return {
+      start_date: startOfLastWeek.format('YYYY-MM-DD'),
+      end_date: endOfLastWeek.format('YYYY-MM-DD'),
+    };
+  }
+  if (selectedPeriod === 'last_month') {
+    const startOfLastMonth = today.subtract(1, 'month').startOf('month');
+    const endOfLastMonth = today.subtract(1, 'month').endOf('month');
+    return {
+      start_date: startOfLastMonth.format('YYYY-MM-DD'),
+      end_date: endOfLastMonth.format('YYYY-MM-DD'),
+    };
+  }
+  if (selectedPeriod === 'last_year' || selectedPeriod === 'past_year') {
+    return {
+      start_date: today.subtract(365, 'day').format('YYYY-MM-DD'),
+      end_date: today.format('YYYY-MM-DD'),
+    };
+  }
+  if (selectedPeriod === 'custom' && customStart && customEnd) {
+    return { start_date: customStart, end_date: customEnd };
+  }
+  return { start_date: null, end_date: null };
+};
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [period, setPeriod] = useState('today');
+  const [period, setPeriod] = useState(() => {
+    return sessionStorage.getItem('dashboard_period') || 'today';
+  });
   const [activityPeriod, setActivityPeriod] = useState('30d');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [startDate, setStartDate] = useState(() => {
+    return sessionStorage.getItem('dashboard_start_date') || '';
+  });
+  const [endDate, setEndDate] = useState(() => {
+    return sessionStorage.getItem('dashboard_end_date') || '';
+  });
   const [search, setSearch] = useState('');
+
+  const handlePeriodChange = (val) => {
+    setPeriod(val);
+    sessionStorage.setItem('dashboard_period', val);
+    if (val === 'last_7_days' || val === 'last_week') setActivityPeriod('7d');
+    else if (val === 'last_30_days' || val === 'last_month' || val === 'last_year') setActivityPeriod('30d');
+    else if (val === 'all_time') setActivityPeriod('all');
+    else if (val === 'today' || val === 'yesterday') setActivityPeriod('7d');
+  };
 
   const fetchDashboard = useCallback((selectedPeriod = 'today', searchQuery = '', sDate = '', eDate = '', actPeriod = '30d') => {
     setLoading(true);
@@ -57,6 +125,29 @@ export default function Dashboard() {
   useEffect(() => {
     fetchDashboard(period, search, startDate, endDate, activityPeriod);
   }, [period, search, startDate, endDate, activityPeriod, fetchDashboard]);
+
+  const handleCardClick = (basePath) => {
+    const urlParams = new URLSearchParams();
+    if (search && search.trim()) {
+      urlParams.set('search', search.trim());
+    }
+    if (period !== 'all_time') {
+      const { start_date, end_date } = getDateRangeForPeriod(period, startDate, endDate);
+      if (start_date) urlParams.set('start_date', start_date);
+      if (end_date) urlParams.set('end_date', end_date);
+    }
+
+    const existingQuery = basePath.includes('?') ? basePath.split('?')[1] : '';
+    const pathWithoutQuery = basePath.split('?')[0];
+
+    if (existingQuery) {
+      const existingParams = new URLSearchParams(existingQuery);
+      existingParams.forEach((v, k) => urlParams.set(k, v));
+    }
+
+    const queryString = urlParams.toString();
+    navigate(queryString ? `${pathWithoutQuery}?${queryString}` : pathWithoutQuery);
+  };
 
   if (loading && !data) return <DashboardSkeleton />;
 
@@ -100,12 +191,16 @@ export default function Dashboard() {
         onRefresh={() => fetchDashboard(period, search, startDate, endDate, activityPeriod)}
         loading={loading}
         period={period}
-        onPeriodChange={(val) => setPeriod(val)}
+        onPeriodChange={handlePeriodChange}
         startDate={startDate}
         endDate={endDate}
         onCustomDateChange={(s, e) => {
           setStartDate(s || '');
           setEndDate(e || '');
+          if (s) sessionStorage.setItem('dashboard_start_date', s);
+          else sessionStorage.removeItem('dashboard_start_date');
+          if (e) sessionStorage.setItem('dashboard_end_date', e);
+          else sessionStorage.removeItem('dashboard_end_date');
         }}
         search={search}
         onSearchChange={(val) => setSearch(val)}
@@ -142,14 +237,8 @@ export default function Dashboard() {
       {/* 2. ROW 1: 6-Column Compact KPI Metrics Grid */}
       <DashboardMetrics
         metrics={metrics}
-        onCardClick={(path) => {
-          if (search && search.trim()) {
-            const sep = path.includes('?') ? '&' : '?';
-            navigate(`${path}${sep}search=${encodeURIComponent(search.trim())}`);
-          } else {
-            navigate(path);
-          }
-        }}
+        period={period}
+        onCardClick={handleCardClick}
       />
 
       {/* 3. ROW 2: Upcoming Meetings & 2 Pie Charts (Side-by-Side on Tablet md:grid-cols-2) */}

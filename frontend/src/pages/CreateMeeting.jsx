@@ -18,12 +18,22 @@ export default function CreateMeeting() {
   const [submitting, setSubmitting] = useState(false);
 
   // Form watch states
-  const locationType = Form.useWatch('location_type', form) || 'GOOGLE_MEET';
+  const meetingType = Form.useWatch('meeting_type', form) || 'INTERNAL';
+  const locationType = Form.useWatch('location_type', form) || 'CONFERENCE_ROOM';
   const accessType = Form.useWatch('access_type', form) || 'PUBLIC';
   const needsReminder = Form.useWatch('needs_reminder', form) || false;
   const isRecurring = Form.useWatch('is_recurring', form) || false;
   const recurrenceDuration = Form.useWatch('recurrence_duration', form) || '14_DAYS';
   const selectedTeamId = Form.useWatch('team', form);
+
+  // Automatically select location_type based on meeting_type: Conference Room for Internal, Google Meet for any other type
+  useEffect(() => {
+    if (meetingType === 'INTERNAL') {
+      form.setFieldsValue({ location_type: 'CONFERENCE_ROOM' });
+    } else {
+      form.setFieldsValue({ location_type: 'GOOGLE_MEET' });
+    }
+  }, [meetingType, form]);
 
   // Compute selected team object & member IDs to exclude them from individual invite list
   const selectedTeamObj = teams.find(t => t.id === selectedTeamId);
@@ -165,15 +175,40 @@ export default function CreateMeeting() {
           display: flex !important;
           width: 100% !important;
         }
-        .compact-meet-space.ant-space-compact-block > .ant-space-compact-item:first-child {
+        .compact-meet-space.ant-space-compact-block > .ant-space-compact-item:first-child,
+        .compact-meet-space.ant-space-compact-block > .ant-space-compact-item:first-child .ant-input-affix-wrapper,
+        .compact-meet-input,
+        .compact-meet-input.ant-input-affix-wrapper {
           flex: 1 1 auto !important;
           min-width: 0 !important;
+          border-top-right-radius: 0 !important;
+          border-bottom-right-radius: 0 !important;
+          border-start-end-radius: 0 !important;
+          border-end-end-radius: 0 !important;
+          border-top-left-radius: 8px !important;
+          border-bottom-left-radius: 8px !important;
+          border-start-start-radius: 8px !important;
+          border-end-start-radius: 8px !important;
         }
         .compact-meet-space.ant-space-compact-block > .ant-space-compact-item:last-child {
-          flex: 0 0 130px !important;
-          width: 130px !important;
-          min-width: 130px !important;
-          max-width: 130px !important;
+          flex: 0 0 110px !important;
+          width: 110px !important;
+          min-width: 110px !important;
+          max-width: 110px !important;
+          margin-inline-start: -1px !important;
+        }
+        .compact-meet-space.ant-space-compact-block > .ant-space-compact-item:last-child,
+        .compact-meet-space.ant-space-compact-block > .ant-space-compact-item:last-child .ant-select-selector,
+        .compact-meet-select,
+        .compact-meet-select .ant-select-selector {
+          border-top-left-radius: 0 !important;
+          border-bottom-left-radius: 0 !important;
+          border-start-start-radius: 0 !important;
+          border-end-start-radius: 0 !important;
+          border-top-right-radius: 8px !important;
+          border-bottom-right-radius: 8px !important;
+          border-start-end-radius: 8px !important;
+          border-end-end-radius: 8px !important;
         }
         .custom-range-picker.ant-picker-range {
           width: 100% !important;
@@ -226,7 +261,7 @@ export default function CreateMeeting() {
           disabled={submitting}
           initialValues={{
             meeting_type: 'INTERNAL',
-            location_type: 'GOOGLE_MEET',
+            location_type: 'CONFERENCE_ROOM',
             access_type: 'PUBLIC',
             conference_room: 'Conference Room A',
             meeting_date: dayjs(),
@@ -300,6 +335,7 @@ export default function CreateMeeting() {
                         <Input
                           id="create_google_meet_link"
                           name="google_meet_link"
+                          className="compact-meet-input"
                           prefix={<VideoCameraOutlined className="text-blue-500 mr-1" />}
                           placeholder="https://meet.google.com/abc-defg-hij"
                         />
@@ -308,7 +344,7 @@ export default function CreateMeeting() {
                         <Select
                           id="create_access_type"
                           name="access_type"
-                          className="font-semibold text-xs"
+                          className="compact-meet-select font-semibold text-xs"
                           popupMatchSelectWidth={false}
                           options={[
                             { label: 'Without Pass', value: 'PUBLIC' },

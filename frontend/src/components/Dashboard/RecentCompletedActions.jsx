@@ -87,7 +87,13 @@ export const RecentCompletedActions = () => {
                       {item.title}
                     </p>
                     <div className="flex items-center space-x-1.5 text-[9px] text-slate-400">
-                      <span className="truncate">Assignee: {item.assigned_to_detail?.full_name || item.assigned_to_name || item.assigned_to || 'You'}</span>
+                      <span className="truncate">
+                        Assignee: {
+                          Array.isArray(item.assigned_to_detail)
+                            ? (item.assigned_to_detail.length > 0 ? item.assigned_to_detail.map(u => u.full_name || u.username).join(', ') : 'You')
+                            : (item.assigned_to_detail?.full_name || item.assigned_to_name || 'You')
+                        }
+                      </span>
                       <span>•</span>
                       <span className="text-emerald-600 dark:text-emerald-400 font-semibold">{dateStr}</span>
                     </div>

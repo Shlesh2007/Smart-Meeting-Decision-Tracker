@@ -24,10 +24,8 @@ class ActionItem(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
     completion_notes = models.TextField(blank=True, null=True)
-    assigned_to = models.ForeignKey(
+    assigned_to = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
         blank=True,
         related_name='assigned_actions'
     )

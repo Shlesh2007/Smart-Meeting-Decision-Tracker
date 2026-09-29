@@ -76,28 +76,45 @@ class Meeting(models.Model):
         if self.status == self.Status.CANCELLED:
             return self.Status.CANCELLED
 
-        from django.utils import timezone
-        from datetime import datetime
+        try:
+            from django.utils import timezone
+            from datetime import datetime, date, time
 
-        now = timezone.localtime()
-        tz = timezone.get_current_timezone()
+            m_date = self.meeting_date
+            s_time = self.start_time
+            e_time = self.end_time
 
-        naive_start = datetime.combine(self.meeting_date, self.start_time)
-        naive_end = datetime.combine(self.meeting_date, self.end_time)
+            if isinstance(m_date, str):
+                m_date = date.fromisoformat(m_date)
+            if isinstance(s_time, str):
+                s_time = time.fromisoformat(s_time)
+            if isinstance(e_time, str):
+                e_time = time.fromisoformat(e_time)
 
-        start_dt = timezone.make_aware(naive_start, tz)
-        end_dt = timezone.make_aware(naive_end, tz)
+            if not m_date or not s_time or not e_time:
+                return self.status
 
-        if now < start_dt:
-            calc_status = self.Status.SCHEDULED
-        elif start_dt <= now < end_dt:
-            calc_status = self.Status.IN_PROGRESS
-        else:
-            calc_status = self.Status.COMPLETED
+            now = timezone.localtime()
+            tz = timezone.get_current_timezone()
 
-        if save_if_changed and self.pk and self.status != calc_status:
-            self.status = calc_status
-            Meeting.objects.filter(pk=self.pk).update(status=calc_status)
+            naive_start = datetime.combine(m_date, s_time)
+            naive_end = datetime.combine(m_date, e_time)
 
-        return calc_status
+            start_dt = timezone.make_aware(naive_start, tz) if timezone.is_naive(naive_start) else naive_start
+            end_dt = timezone.make_aware(naive_end, tz) if timezone.is_naive(naive_end) else naive_end
+
+            if now < start_dt:
+                calc_status = self.Status.SCHEDULED
+            elif start_dt <= now < end_dt:
+                calc_status = self.Status.IN_PROGRESS
+            else:
+                calc_status = self.Status.COMPLETED
+
+            if save_if_changed and self.pk and self.status != calc_status:
+                self.status = calc_status
+                Meeting.objects.filter(pk=self.pk).update(status=calc_status)
+
+            return calc_status
+        except Exception:
+            return self.status or self.Status.SCHEDULED
 

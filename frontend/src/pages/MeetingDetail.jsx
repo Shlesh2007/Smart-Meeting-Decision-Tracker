@@ -51,9 +51,10 @@ export default function MeetingDetail() {
       
       try {
         const d = await discussionService.getDiscussions(meetingId);
-        setDiscussions(d);
+        setDiscussions(Array.isArray(d) ? d : (d?.results || []));
       } catch (err) {
         console.error('Failed to load discussions:', err);
+        setDiscussions([]);
       }
 
       try {
@@ -283,18 +284,22 @@ export default function MeetingDetail() {
           </p>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 text-sm text-slate-600 dark:text-slate-300 w-full min-w-0">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-2 text-sm text-slate-600 dark:text-slate-300 w-full min-w-0">
           <div className="flex items-center space-x-2 min-w-0 overflow-hidden">
             <CalendarOutlined className="text-blue-600 dark:text-blue-400 text-base shrink-0" />
-            <span className="truncate">Date: <strong>{dayjs(meeting.meeting_date).format('ddd, MMM DD, YYYY')}</strong></span>
+            <span className="truncate">Meeting Date: <strong>{dayjs(meeting.meeting_date).format('ddd, MMM DD, YYYY')}</strong></span>
           </div>
           <div className="flex items-center space-x-2 min-w-0 overflow-hidden">
             <ClockCircleOutlined className="text-blue-600 dark:text-blue-400 text-base shrink-0" />
-            <span className="truncate">Time: <strong>{meeting.start_time} - {meeting.end_time}</strong></span>
+            <span className="truncate">Scheduled Time: <strong>{meeting.start_time} - {meeting.end_time}</strong></span>
           </div>
           <div className="flex items-center space-x-2 min-w-0 overflow-hidden">
             <EnvironmentOutlined className="text-blue-600 dark:text-blue-400 text-base shrink-0" />
             <span className="truncate">Location: <strong>{meeting.location}</strong></span>
+          </div>
+          <div className="flex items-center space-x-2 min-w-0 overflow-hidden">
+            <ClockCircleOutlined className="text-purple-600 dark:text-purple-400 text-base shrink-0" />
+            <span className="truncate">Created: <strong>{meeting.created_at ? dayjs(meeting.created_at).format('MMM D, YYYY [at] h:mm A') : '—'}</strong></span>
           </div>
         </div>
 
@@ -498,7 +503,13 @@ export default function MeetingDetail() {
                                   )}
 
                                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400 pt-1">
-                                    <span>Assignee: <strong>{action.assigned_to_detail?.full_name || 'Unassigned'}</strong></span>
+                                    <span>
+                                      Assignee(s): <strong>
+                                        {Array.isArray(action.assigned_to_detail)
+                                          ? (action.assigned_to_detail.length > 0 ? action.assigned_to_detail.map(u => u.full_name || u.username).join(', ') : 'Unassigned')
+                                          : (action.assigned_to_detail?.full_name || action.assigned_to_detail?.username || 'Unassigned')}
+                                      </strong>
+                                    </span>
                                     <span className="hidden sm:inline">•</span>
                                     <span>Due Date: <strong className={action.is_overdue ? 'text-rose-600 dark:text-rose-400' : ''}>{action.due_date ? new Date(action.due_date).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }) : 'N/A'}</strong></span>
                                   </div>

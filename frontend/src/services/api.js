@@ -243,8 +243,9 @@ export const meetingService = {
 
 // Discussions Service
 export const discussionService = {
-  getDiscussions: async (meetingId) => {
-    const res = await api.get('/discussions/', { params: { meeting: meetingId } });
+  getDiscussions: async (params) => {
+    const queryParams = (typeof params === 'object' && params !== null) ? params : { meeting: params };
+    const res = await api.get('/discussions/', { params: queryParams });
     return res.data.results || res.data;
   },
   createDiscussion: async (payload) => {

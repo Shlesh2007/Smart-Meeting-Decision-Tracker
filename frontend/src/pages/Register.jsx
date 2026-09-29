@@ -27,7 +27,21 @@ export default function Register() {
       message.success(res.message || `6-digit verification code sent to ${values.email}`);
     } catch (err) {
       console.error('Registration OTP Request Error:', err);
-      message.error(getErrorMessage(err, 'Failed to send verification code. Please check your details.'));
+      const resData = err.response?.data;
+      if (resData && typeof resData === 'object' && !Array.isArray(resData)) {
+        const fieldErrors = [];
+        Object.entries(resData).forEach(([key, val]) => {
+          if (['username', 'email', 'password', 'first_name', 'last_name', 'department'].includes(key)) {
+            const msg = Array.isArray(val) ? val.join(', ') : String(val);
+            fieldErrors.push({ name: key, errors: [msg] });
+          }
+        });
+        if (fieldErrors.length > 0) {
+          form.setFields(fieldErrors);
+          return;
+        }
+      }
+      form.setFields([{ name: 'email', errors: [getErrorMessage(err, 'Failed to send verification code.')] }]);
     } finally {
       setSubmitting(false);
     }

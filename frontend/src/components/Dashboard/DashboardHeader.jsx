@@ -4,7 +4,7 @@ import { Button, Input, Select, AutoComplete, Tag, Spin, DatePicker } from 'antd
 import { PlusOutlined, SyncOutlined, CalendarOutlined, ThunderboltOutlined, SearchOutlined, FilterOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { Logo } from '../Logo.jsx';
-import { meetingService, actionService } from '../../services/api.js';
+import { meetingService, actionService, discussionService } from '../../services/api.js';
 
 const { RangePicker } = DatePicker;
 
@@ -23,11 +23,11 @@ export const DashboardHeader = ({
   const navigate = useNavigate();
 
   const [searching, setSearching] = useState(false);
-  const [searchResults, setSearchResults] = useState({ meetings: [], actions: [] });
+  const [searchResults, setSearchResults] = useState({ meetings: [], actions: [], discussions: [] });
 
   useEffect(() => {
     if (!search || search.trim().length === 0) {
-      setSearchResults({ meetings: [], actions: [] });
+      setSearchResults({ meetings: [], actions: [], discussions: [] });
       return;
     }
 
@@ -35,15 +35,18 @@ export const DashboardHeader = ({
       setSearching(true);
       Promise.all([
         meetingService.getMeetings({ search: search.trim() }),
-        actionService.getActions({ search: search.trim() })
+        actionService.getActions({ search: search.trim() }),
+        discussionService.getDiscussions({ search: search.trim() })
       ])
-        .then(([mRes, aRes]) => {
+        .then(([mRes, aRes, dRes]) => {
+          const dList = Array.isArray(dRes) ? dRes : (dRes?.results || []);
           setSearchResults({
             meetings: (mRes.results || mRes || []).slice(0, 5),
-            actions: (aRes.results || aRes || []).slice(0, 5)
+            actions: (aRes.results || aRes || []).slice(0, 5),
+            discussions: dList.slice(0, 5)
           });
         })
-        .catch(() => setSearchResults({ meetings: [], actions: [] }))
+        .catch(() => setSearchResults({ meetings: [], actions: [], discussions: [] }))
         .finally(() => setSearching(false));
     }, 300);
 
@@ -88,7 +91,37 @@ export const DashboardHeader = ({
                 <CalendarOutlined className="text-blue-500 text-xs shrink-0" />
                 <span className="font-semibold text-xs text-slate-800 dark:text-slate-200 truncate">{m.title}</span>
               </div>
-              <Tag color="blue" className="text-[9px] m-0 shrink-0 font-bold">{m.meeting_date}</Tag>
+              <div className="flex items-center gap-1 shrink-0">
+                <Tag color="blue" className="text-[9px] m-0 font-bold">{m.meeting_date}</Tag>
+                {m.created_at && (
+                  <span className="text-[9px] text-slate-400 font-medium">
+                    ({dayjs(m.created_at).format('MMM D')})
+                  </span>
+                )}
+              </div>
+            </div>
+          )
+        }))
+      });
+    }
+
+    if (searchResults.discussions && searchResults.discussions.length > 0) {
+      options.push({
+        label: renderCategoryHeader('💬 Discussions', searchResults.discussions.length),
+        options: searchResults.discussions.map((d) => ({
+          key: `d_${d.id}`,
+          value: d.title,
+          targetUrl: `/meetings/${d.meeting}`,
+          label: (
+            <div
+              key={`discussion_${d.id}`}
+              className="flex items-center justify-between py-1 cursor-pointer hover:text-purple-600"
+            >
+              <div className="flex items-center space-x-2 truncate max-w-[200px] sm:max-w-[240px]">
+                <span className="text-xs shrink-0">💬</span>
+                <span className="font-semibold text-xs text-slate-800 dark:text-slate-200 truncate">{d.title}</span>
+              </div>
+              <Tag color="purple" className="text-[9px] m-0 shrink-0 font-bold">{d.priority || 'DISCUSSION'}</Tag>
             </div>
           )
         }))
@@ -146,7 +179,7 @@ export const DashboardHeader = ({
               type="primary"
               size="middle"
               icon={<PlusOutlined />}
-              className="bg-slate-900 hover:bg-slate-800 text-white font-bold !rounded-full border-none shadow-xs text-xs h-9 px-3 sm:px-4 flex items-center justify-center truncate"
+              className="bg-slate-900 hover:bg-slate-800 text-white font-bold !rounded-xl border-none shadow-xs text-xs h-9 px-3 sm:px-4 flex items-center justify-center truncate"
             >
               <span>Schedule Meeting</span>
             </Button>
@@ -156,7 +189,7 @@ export const DashboardHeader = ({
             <Button
               size="middle"
               icon={<ThunderboltOutlined />}
-              className="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold !rounded-full border-slate-200 dark:border-slate-700 text-xs h-9 px-3 sm:px-4 flex items-center justify-center truncate"
+              className="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold !rounded-xl border-slate-200 dark:border-slate-700 text-xs h-9 px-3 sm:px-4 flex items-center justify-center truncate"
             >
               <span>View My Actions</span>
             </Button>
@@ -168,7 +201,7 @@ export const DashboardHeader = ({
               icon={<SyncOutlined spin={loading} />}
               onClick={onRefresh}
               title="Refresh Dashboard"
-              className="bg-white dark:bg-slate-800 hover:bg-slate-50 text-slate-600 dark:text-slate-300 !rounded-full border-slate-200 dark:border-slate-700 h-9 w-9 flex items-center justify-center p-0 shrink-0"
+              className="bg-white dark:bg-slate-800 hover:bg-slate-50 text-slate-600 dark:text-slate-300 !rounded-xl border-slate-200 dark:border-slate-700 h-9 w-9 flex items-center justify-center p-0 shrink-0"
             />
           )}
         </div>
@@ -177,7 +210,7 @@ export const DashboardHeader = ({
       {/* Global Search & Time Period Filter Bar */}
       <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-2">
         <div className="flex flex-row items-center justify-between gap-2">
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0 flex items-center">
             <AutoComplete
               popupMatchSelectWidth={false}
               styles={{ popup: { root: { minWidth: 280 } } }}
@@ -186,7 +219,7 @@ export const DashboardHeader = ({
               onChange={(val) => onSearchChange(val)}
               onSelect={handleSelectOption}
               filterOption={false}
-              className="w-full"
+              className="w-full flex items-center"
             >
               <Input
                 id="header_global_search"
@@ -196,7 +229,7 @@ export const DashboardHeader = ({
                 suffix={searching ? <Spin size="small" /> : null}
                 placeholder="Search meetings & actions..."
                 allowClear
-                className="!rounded-xl text-xs h-9"
+                className="!rounded-xl text-xs h-9 flex items-center"
               />
             </AutoComplete>
           </div>
@@ -207,7 +240,7 @@ export const DashboardHeader = ({
               name="time_period"
               value={period || 'today'}
               onChange={onPeriodChange}
-              className="w-28 xs:w-32 sm:w-36 font-semibold text-xs h-9 !rounded-xl"
+              className="w-28 xs:w-32 sm:w-36 font-semibold text-xs h-9 !rounded-xl [&_.ant-select-selector]:!h-9 [&_.ant-select-selector]:!items-center [&_.ant-select-selector]:!rounded-xl [&_.ant-select-selection-item]:!leading-[34px]"
               size="middle"
               popupMatchSelectWidth={false}
               options={[

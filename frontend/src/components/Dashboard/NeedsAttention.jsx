@@ -71,11 +71,12 @@ export const NeedsAttention = ({ overdueList = [], urgentList = [], loading = fa
     const dueDateStr = item.due_date
       ? dayjs(item.due_date).format('MMM D')
       : 'No deadline';
-    const assigneeName =
-      item.assigned_to_detail?.full_name ||
-      item.assigned_to_name ||
-      (typeof item.assigned_to === 'string' ? item.assigned_to : item.assigned_to?.full_name || item.assigned_to?.username) ||
-      'Unassigned';
+    const assigneesList = Array.isArray(item.assigned_to_detail)
+      ? item.assigned_to_detail
+      : (item.assigned_to_detail ? [item.assigned_to_detail] : []);
+    const assigneeName = assigneesList.length > 0
+      ? assigneesList.map(u => u.full_name || u.username).join(', ')
+      : (typeof item.assigned_to_name === 'string' ? item.assigned_to_name : 'Unassigned');
 
     return (
       <div
@@ -184,7 +185,7 @@ export const NeedsAttention = ({ overdueList = [], urgentList = [], loading = fa
       </div>
 
       {/* Content / Empty State */}
-      <div className="my-2.5 space-y-2 max-h-[220px] overflow-y-auto pr-0.5 flex-1 flex flex-col justify-start">
+      <div className="my-2.5 space-y-2 max-h-[280px] overflow-y-auto pr-0.5 flex-1 flex flex-col justify-start">
         {loading ? (
           <p className="text-center text-slate-400 py-4 text-xs font-semibold">Loading items...</p>
         ) : filteredActions.length === 0 ? (
@@ -200,7 +201,7 @@ export const NeedsAttention = ({ overdueList = [], urgentList = [], loading = fa
             </div>
           </div>
         ) : (
-          filteredActions.slice(0, 4).map((item) => renderActionRow(item))
+          filteredActions.map((item) => renderActionRow(item))
         )}
       </div>
 

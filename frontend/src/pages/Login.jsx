@@ -39,14 +39,38 @@ export default function Login() {
   }, [loginForm]);
 
   const onFinish = async (values) => {
-
     setSubmitting(true);
     try {
       const userProfile = await login(values);
       message.success(`Welcome back, ${userProfile?.full_name || values.username}!`);
       navigate('/dashboard');
     } catch (err) {
-      message.error(getErrorMessage(err, 'Invalid username or password. Please try again.'));
+      const errorMsg = getErrorMessage(err, 'Invalid username or password. Please try again.');
+      
+      const resData = err.response?.data;
+      if (resData && typeof resData === 'object' && !Array.isArray(resData) && !resData.detail && !resData.error && !resData.message) {
+        const fieldErrors = [];
+        if (resData.username) {
+          const msg = Array.isArray(resData.username) ? resData.username.join(', ') : String(resData.username);
+          fieldErrors.push({ name: 'username', errors: [msg] });
+        }
+        if (resData.password) {
+          const msg = Array.isArray(resData.password) ? resData.password.join(', ') : String(resData.password);
+          fieldErrors.push({ name: 'password', errors: [msg] });
+        }
+        if (fieldErrors.length > 0) {
+          loginForm.setFields(fieldErrors);
+          return;
+        }
+      }
+
+      // Set red colored error text directly below password input using Ant Design native form field errors
+      loginForm.setFields([
+        {
+          name: 'password',
+          errors: [errorMsg],
+        },
+      ]);
     } finally {
       setSubmitting(false);
     }
@@ -172,7 +196,7 @@ export default function Login() {
         || err.response?.data?.detail 
         || (err.message === 'Network Error' ? 'Network Error: Unable to connect to backend server.' : err.message) 
         || 'Failed to send OTP code.';
-      message.error(msg);
+      requestOtpForm.setFields([{ name: 'account', errors: [msg] }]);
     } finally {
       setOtpLoading(false);
     }
@@ -187,7 +211,7 @@ export default function Login() {
       setResetStep(2);
     } catch (err) {
       const msg = err.response?.data?.error || err.response?.data?.detail || err.message || 'Invalid or expired OTP code.';
-      message.error(msg);
+      verifyOtpForm.setFields([{ name: 'otp_code', errors: [msg] }]);
     } finally {
       setOtpLoading(false);
     }
@@ -195,7 +219,7 @@ export default function Login() {
 
   const handleConfirmNewPassword = async (values) => {
     if (values.new_password !== values.confirm_password) {
-      message.error('Passwords do not match.');
+      newPasswordForm.setFields([{ name: 'confirm_password', errors: ['Passwords do not match.'] }]);
       return;
     }
     setOtpLoading(true);
@@ -205,7 +229,7 @@ export default function Login() {
       setResetStep(3);
     } catch (err) {
       const msg = err.response?.data?.error || err.response?.data?.detail || err.message || 'Failed to reset password.';
-      message.error(msg);
+      newPasswordForm.setFields([{ name: 'new_password', errors: [msg] }]);
     } finally {
       setOtpLoading(false);
     }

@@ -420,13 +420,13 @@ export default function Admin() {
         </Button>
       </div>
 
-      <Card className="shadow-xs rounded-2xl dark:bg-slate-800 dark:border-slate-700/80 w-full max-w-full overflow-hidden" styles={{ body: { padding: '12px 16px', overflowX: 'hidden' } }}>
+      <Card className="shadow-xs rounded-2xl dark:bg-slate-800 dark:border-slate-700/80 w-full max-w-full" styles={{ body: { padding: '12px 16px' } }}>
         <Tabs
           items={[
             {
               key: 'users',
               label: (
-                <span className="font-semibold flex items-center space-x-2 text-xs sm:text-sm">
+                <span className="font-semibold flex items-center space-x-2 text-xs sm:text-sm whitespace-nowrap">
                   <UserOutlined />
                   <span>Users Directory ({users.length})</span>
                 </span>
@@ -442,11 +442,11 @@ export default function Admin() {
             {
               key: 'department_requests',
               label: (
-                <span className="font-semibold flex items-center space-x-2 text-xs sm:text-sm">
+                <span className="font-semibold flex items-center space-x-1.5 sm:space-x-2 text-xs sm:text-sm whitespace-nowrap">
                   <SolutionOutlined />
                   <span>Department Requests ({deptRequests.length})</span>
                   {pendingDeptCount > 0 && (
-                    <Tag color="error" className="font-bold text-[10px] m-0 rounded-full">{pendingDeptCount} PENDING</Tag>
+                    <Tag color="error" className="font-bold text-[10px] m-0 rounded-full px-1.5 py-0">{pendingDeptCount} PENDING</Tag>
                   )}
                 </span>
               ),
@@ -466,7 +466,7 @@ export default function Admin() {
             {
               key: 'teams',
               label: (
-                <span className="font-semibold flex items-center space-x-2">
+                <span className="font-semibold flex items-center space-x-2 text-xs sm:text-sm whitespace-nowrap">
                   <TeamOutlined />
                   <span>Teams Directory ({teams.length})</span>
                 </span>

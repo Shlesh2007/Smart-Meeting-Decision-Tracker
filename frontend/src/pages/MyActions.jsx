@@ -6,10 +6,10 @@ import { StatusBadge } from '../components/StatusBadge.jsx';
 import { LoadingSkeleton } from '../components/LoadingSkeleton.jsx';
 import { EmptyState } from '../components/EmptyState.jsx';
 import {
-  Card, Table, Select, Button, Tag, message, Alert, Input, Modal, Tooltip, Dropdown, Badge
+  Card, Table, Select, Button, Tag, message, Alert, Input, Modal, Tooltip, Dropdown, Badge, Segmented
 } from 'antd';
 import {
-  CheckSquareOutlined, SearchOutlined, LockOutlined, ReloadOutlined, EllipsisOutlined
+  CheckSquareOutlined, SearchOutlined, LockOutlined, ReloadOutlined, EllipsisOutlined, EyeOutlined, RightOutlined, AppstoreOutlined, UnorderedListOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 
@@ -17,11 +17,19 @@ export default function MyActions() {
   const { user, isAdmin, isOwner } = useAuth();
   const [searchParams] = useSearchParams();
 
+  const [viewMode, setViewMode] = useState(searchParams.get('view') || 'cards');
   const [actions, setActions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'ALL');
   const [search, setSearch] = useState(searchParams.get('search') || '');
   const [updatingId, setUpdatingId] = useState(null);
+  const [viewDetailActionItem, setViewDetailActionItem] = useState(null);
+
+  const [dateRange, setDateRange] = useState(() => {
+    const s = searchParams.get('start_date');
+    const e = searchParams.get('end_date');
+    return (s && e) ? [s, e] : null;
+  });
 
   useEffect(() => {
     if (searchParams.has('search')) {
@@ -29,6 +37,9 @@ export default function MyActions() {
     }
     if (searchParams.has('tab')) {
       setActiveTab(searchParams.get('tab') || 'ALL');
+    }
+    if (searchParams.has('start_date') && searchParams.has('end_date')) {
+      setDateRange([searchParams.get('start_date'), searchParams.get('end_date')]);
     }
   }, [searchParams]);
 
@@ -42,6 +53,10 @@ export default function MyActions() {
     if (search && search.trim()) {
       params.search = search.trim();
     }
+    if (dateRange && dateRange[0] && dateRange[1]) {
+      params.due_date_gte = dateRange[0];
+      params.due_date_lte = dateRange[1];
+    }
 
     const fetcher = (isAdmin || isOwner) ? actionService.getActions(params) : actionService.getMyActions(params);
     fetcher
@@ -50,7 +65,7 @@ export default function MyActions() {
       })
       .catch(() => message.error('Failed to load action items.'))
       .finally(() => setLoading(false));
-  }, [isAdmin, isOwner, search]);
+  }, [isAdmin, isOwner, search, dateRange]);
 
   useEffect(() => {
     fetchMyActions();
@@ -113,6 +128,15 @@ export default function MyActions() {
 
     if (!matchesSearch) return false;
 
+    if (dateRange && dateRange[0] && dateRange[1]) {
+      const s = dateRange[0];
+      const e = dateRange[1];
+      const dueDateStr = item.due_date ? dayjs(item.due_date).format('YYYY-MM-DD') : null;
+      const createdAtStr = item.created_at ? dayjs(item.created_at).format('YYYY-MM-DD') : null;
+      const dateMatches = (dueDateStr && dueDateStr >= s && dueDateStr <= e) || (createdAtStr && createdAtStr >= s && createdAtStr <= e);
+      if (!dateMatches) return false;
+    }
+
     const itemStatus = (item.status || '').toUpperCase();
     const itemPriority = (item.priority || '').toUpperCase();
     const today = dayjs().format('YYYY-MM-DD');
@@ -130,11 +154,13 @@ export default function MyActions() {
     {
       title: 'Action Item & Delivered Outcome',
       key: 'title',
+      width: '35%',
+      minWidth: 320,
       render: (_, record) => (
         <div className="space-y-1">
           <span className="font-bold text-slate-900 dark:text-slate-100 block">{record.title}</span>
           {record.description && (
-            <span className="text-xs text-slate-500 dark:text-slate-400 block line-clamp-1">{record.description}</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400 block line-clamp-2">{record.description}</span>
           )}
           {record.completion_notes && (
             <div className="mt-1 p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60 text-xs text-emerald-900 dark:text-emerald-200">
@@ -146,30 +172,49 @@ export default function MyActions() {
       ),
     },
     {
-      title: 'Assignee',
+      title: 'Assignee(s)',
       key: 'assigned_to_detail',
-      render: (_, record) => (
-        <div className="text-xs space-y-1">
-          <span className="font-semibold text-slate-800 dark:text-slate-200 block">
-            {record.assigned_to_detail?.full_name || record.assigned_to_detail?.username || '—'}
-          </span>
-          {record.assigned_to === user?.id ? (
-            <Tag color="blue" className="text-[10px] m-0 font-bold">Assigned to You</Tag>
-          ) : (
-            <Tag color="purple" className="text-[10px] m-0 font-bold">Created by You</Tag>
-          )}
-        </div>
-      ),
+      width: 150,
+      render: (_, record) => {
+        const assignees = Array.isArray(record.assigned_to_detail)
+          ? record.assigned_to_detail
+          : (record.assigned_to_detail ? [record.assigned_to_detail] : []);
+        
+        const assignedIds = Array.isArray(record.assigned_to)
+          ? record.assigned_to.map(u => typeof u === 'object' ? u.id : u)
+          : (record.assigned_to ? [typeof record.assigned_to === 'object' ? record.assigned_to.id : record.assigned_to] : []);
+
+        const isAssignedToUser = user?.id && assignedIds.includes(user.id);
+        const isCreatedByUser = record.created_by === user?.id || record.created_by_detail?.id === user?.id;
+
+        return (
+          <div className="text-xs space-y-1">
+            <span className="font-semibold text-slate-800 dark:text-slate-200 block">
+              {assignees.length > 0
+                ? assignees.map(u => u.full_name || u.username).join(', ')
+                : '—'}
+            </span>
+            {isAssignedToUser && (
+              <Tag color="blue" className="text-[10px] m-0 font-bold">Assigned to You</Tag>
+            )}
+            {!isAssignedToUser && isCreatedByUser && (
+              <Tag color="purple" className="text-[10px] m-0 font-bold">Created by You</Tag>
+            )}
+          </div>
+        );
+      },
     },
     {
       title: 'Priority',
       dataIndex: 'priority',
       key: 'priority',
+      width: 110,
       render: (val) => <StatusBadge type="priority" value={val} />,
     },
     {
       title: 'Deadline',
       key: 'due_date',
+      width: 120,
       render: (_, record) => (
         <div className="text-xs">
           <span className={`font-semibold ${record.is_overdue ? 'text-rose-600' : 'text-slate-700'}`}>
@@ -184,6 +229,7 @@ export default function MyActions() {
     {
       title: 'Prerequisite Dependencies',
       key: 'dependencies',
+      width: 220,
       render: (_, record) => {
         const deps = record.dependency_details || [];
         if (deps.length === 0) return <span className="text-xs text-slate-400">None</span>;
@@ -209,6 +255,7 @@ export default function MyActions() {
     {
       title: 'Status',
       key: 'status',
+      width: 130,
       render: (_, record) => (
         <div className="flex items-center space-x-2">
           <StatusBadge type="actionStatus" value={record.status} />
@@ -218,6 +265,7 @@ export default function MyActions() {
     {
       title: 'Update Status',
       key: 'action',
+      width: 150,
       render: (_, record) => {
         const hasIncompleteDeps = record.dependency_details?.some(d => !d.is_completed);
         const isTerminal = record.status === 'COMPLETED' || record.status === 'CANCELLED';
@@ -296,7 +344,18 @@ export default function MyActions() {
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 m-0">Track and update all follow-up action items assigned to you.</p>
         </div>
-        <Button icon={<ReloadOutlined />} onClick={fetchMyActions} size="middle" className="h-9 px-3.5 text-xs font-bold rounded-xl w-full sm:w-auto">Refresh Board</Button>
+        <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto justify-between sm:justify-end">
+          <Segmented
+            value={viewMode}
+            onChange={(val) => setViewMode(val)}
+            options={[
+              { label: 'Card Grid', value: 'cards', icon: <AppstoreOutlined /> },
+              { label: 'Table View', value: 'table', icon: <UnorderedListOutlined /> },
+            ]}
+            className="p-1 rounded-xl bg-slate-100 dark:bg-slate-700 font-bold shrink-0 [&_.ant-segmented-item]:!rounded-xl [&_.ant-segmented-thumb]:!rounded-xl text-xs"
+          />
+          <Button icon={<ReloadOutlined />} onClick={fetchMyActions} size="middle" className="h-9 px-3.5 text-xs font-bold rounded-xl shrink-0">Refresh Board</Button>
+        </div>
       </div>
 
       {overdueCount > 0 && (
@@ -329,6 +388,17 @@ export default function MyActions() {
               className="text-xs font-bold shrink-0 m-0 py-1 px-2 flex items-center gap-1 cursor-pointer"
             >
               Filter: {activeTab.replace('_', ' ')}
+            </Tag>
+          )}
+
+          {dateRange && dateRange[0] && dateRange[1] && (
+            <Tag
+              color="purple"
+              closable
+              onClose={() => setDateRange(null)}
+              className="text-xs font-bold shrink-0 m-0 py-1 px-2 flex items-center gap-1 cursor-pointer"
+            >
+              Date: {dateRange[0]} to {dateRange[1]}
             </Tag>
           )}
 
@@ -376,7 +446,7 @@ export default function MyActions() {
         </div>
 
         {loading ? (
-          <LoadingSkeleton type="table" />
+          <LoadingSkeleton type={viewMode === 'table' ? 'table' : 'card'} />
         ) : filteredActions.length === 0 ? (
           <EmptyState
             title={
@@ -392,17 +462,303 @@ export default function MyActions() {
             actionText={activeTab !== 'ALL' ? 'Show All Action Items' : undefined}
             onAction={activeTab !== 'ALL' ? () => setActiveTab('ALL') : undefined}
           />
+        ) : viewMode === 'table' ? (
+          <div className="w-full overflow-x-auto">
+            <Table
+              columns={columns}
+              dataSource={filteredActions}
+              rowKey="id"
+              pagination={{ pageSize: 10 }}
+              scroll={{ x: 1050 }}
+              className="w-full"
+            />
+          </div>
         ) : (
-          <Table
-            columns={columns}
-            dataSource={filteredActions}
-            rowKey="id"
-            pagination={{ pageSize: 10 }}
-            scroll={{ x: 'max-content' }}
-            className="w-full"
-          />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredActions.map((record) => {
+              const assignees = Array.isArray(record.assigned_to_detail)
+                ? record.assigned_to_detail
+                : (record.assigned_to_detail ? [record.assigned_to_detail] : []);
+
+              const hasIncompleteDeps = record.dependency_details?.some(d => !d.is_completed);
+
+              return (
+                <Card
+                  key={record.id}
+                  className={`shadow-xs rounded-2xl border transition-all hover:shadow-md flex flex-col justify-between ${
+                    record.is_overdue
+                      ? 'bg-rose-50/40 dark:bg-rose-950/20 border-rose-200 dark:border-rose-900/60 hover:border-rose-400'
+                      : record.status === 'COMPLETED'
+                      ? 'bg-emerald-50/30 dark:bg-emerald-950/20 border-emerald-200/80 dark:border-emerald-900/40 hover:border-emerald-400'
+                      : 'bg-white dark:bg-slate-800 border-slate-200/80 dark:border-slate-700/80 hover:border-blue-400'
+                  }`}
+                  styles={{ body: { padding: '16px', display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between' } }}
+                >
+                  <div className="space-y-3">
+                    {/* Header Badges & Meeting Title */}
+                    <div className="flex flex-wrap items-center justify-between gap-1.5">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <StatusBadge type="priority" value={record.priority} />
+                        <StatusBadge type="actionStatus" value={record.status} />
+                        {record.is_overdue && <StatusBadge type="overdue" value={true} />}
+                      </div>
+                      {record.meeting_title && (
+                        <Tag color="purple" className="text-[10px] m-0 font-semibold truncate max-w-[140px]">
+                          {record.meeting_title}
+                        </Tag>
+                      )}
+                    </div>
+
+                    {/* Title & Description Preview */}
+                    <div>
+                      <h3
+                        onClick={() => setViewDetailActionItem(record)}
+                        className="font-bold text-sm text-slate-900 dark:text-white m-0 leading-snug cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                      >
+                        {record.title}
+                      </h3>
+                      {record.description && (
+                        <p className="text-xs text-slate-500 dark:text-slate-400 m-0 line-clamp-2 mt-1 leading-relaxed">
+                          {record.description}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Work Done / Delivered Outcome Box */}
+                    {record.completion_notes && (
+                      <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60 text-xs text-emerald-900 dark:text-emerald-200">
+                        <strong className="font-bold block text-emerald-800 dark:text-emerald-300 text-[11px] mb-0.5">
+                          ✅ Delivered Outcome:
+                        </strong>
+                        <span className="line-clamp-3 text-xs">{record.completion_notes}</span>
+                      </div>
+                    )}
+
+                    {/* Prerequisite Dependencies Tags */}
+                    {record.dependency_details && record.dependency_details.length > 0 && (
+                      <div className="space-y-1 pt-0.5">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                          Prerequisites ({record.dependency_details.length})
+                        </span>
+                        <div className="flex flex-wrap gap-1">
+                          {record.dependency_details.map((dep) => (
+                            <Tag key={dep.id} color={dep.is_completed ? 'success' : 'error'} className="text-[10px] m-0">
+                              {dep.is_completed ? '✓ ' : '🔒 '}{dep.title}
+                            </Tag>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Footer Info & Actions */}
+                  <div className="pt-3 mt-3 border-t border-slate-100 dark:border-slate-700/60 space-y-2.5">
+                    <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-300">
+                      <div className="min-w-0 flex-1 pr-2">
+                        <span className="text-[10px] uppercase font-bold text-slate-400 block">Assignee</span>
+                        <span className="font-semibold text-slate-800 dark:text-slate-200 truncate block text-xs">
+                          {assignees.length > 0
+                            ? assignees.map(u => u.full_name || u.username).join(', ')
+                            : (record.created_by_detail
+                                ? (record.created_by_detail.full_name || record.created_by_detail.username)
+                                : 'Unassigned')}
+                        </span>
+                      </div>
+                      <div className="shrink-0 text-right">
+                        <span className="text-[10px] uppercase font-bold text-slate-400 block">Deadline</span>
+                        <span className={`font-semibold text-xs ${record.is_overdue ? 'text-rose-600 font-bold' : 'text-slate-700 dark:text-slate-300'}`}>
+                          {dayjs(record.due_date).format('MMM DD, YYYY')}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Card Actions: Quick Status Update + Details Button */}
+                    <div className="flex items-center justify-between gap-2 pt-0.5">
+                      <Select
+                        id={`card_action_status_select_${record.id}`}
+                        name={`card_action_status_select_${record.id}`}
+                        value={record.status}
+                        loading={updatingId === record.id}
+                        onChange={(val) => handleStatusChange(record, val)}
+                        disabled={record.status === 'COMPLETED' || record.status === 'CANCELLED'}
+                        className="flex-1 min-w-0 text-xs font-medium"
+                        options={[
+                          { label: 'Todo', value: 'TODO' },
+                          { label: 'In Progress', value: 'IN_PROGRESS' },
+                          { label: 'Blocked', value: 'BLOCKED' },
+                          {
+                            label: hasIncompleteDeps ? '🔒 Completed (Locked)' : 'Completed',
+                            value: 'COMPLETED',
+                            disabled: hasIncompleteDeps
+                          },
+                          { label: 'Cancelled', value: 'CANCELLED' }
+                        ]}
+                      />
+
+                      <Button
+                        type="default"
+                        size="small"
+                        icon={<EyeOutlined />}
+                        onClick={() => setViewDetailActionItem(record)}
+                        className="rounded-lg text-xs font-bold text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:text-blue-600 dark:hover:text-blue-400 shrink-0 h-8 px-2.5 flex items-center justify-center"
+                        title="View Action Details"
+                      />
+                    </div>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
         )}
       </Card>
+
+      {/* Action Item Detail Modal (Openable on Responsive Screens) */}
+      <Modal
+        title={
+          <div className="flex items-center space-x-2 pr-6">
+            <CheckSquareOutlined className="text-blue-600 dark:text-blue-400 text-lg shrink-0" />
+            <span className="font-bold text-base truncate">Action Item Details</span>
+          </div>
+        }
+        open={Boolean(viewDetailActionItem)}
+        onCancel={() => setViewDetailActionItem(null)}
+        footer={[
+          <Button
+            key="close"
+            type="primary"
+            onClick={() => setViewDetailActionItem(null)}
+            className="rounded-xl font-bold bg-slate-900 hover:bg-slate-800 text-white border-0 px-5"
+          >
+            Close
+          </Button>
+        ]}
+        className="top-6"
+      >
+        {viewDetailActionItem && (
+          <div className="space-y-4 py-2 text-xs">
+            {/* Header Badges & Title */}
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <StatusBadge type="priority" value={viewDetailActionItem.priority} />
+                <StatusBadge type="actionStatus" value={viewDetailActionItem.status} />
+                {viewDetailActionItem.is_overdue && <StatusBadge type="overdue" value={true} />}
+                {viewDetailActionItem.meeting_title && (
+                  <Tag color="purple" className="text-[11px] font-semibold m-0">
+                    Meeting: {viewDetailActionItem.meeting_title}
+                  </Tag>
+                )}
+              </div>
+              <h2 className="text-base font-bold text-slate-900 dark:text-white m-0 leading-snug">
+                {viewDetailActionItem.title}
+              </h2>
+              {viewDetailActionItem.description && (
+                <div className="p-3 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-xl">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Description</span>
+                  <p className="text-xs text-slate-700 dark:text-slate-300 m-0 leading-relaxed whitespace-pre-wrap">
+                    {viewDetailActionItem.description}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Assignees & Deadline */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-xl">
+              <div>
+                <span className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Assignee(s)</span>
+                <span className="font-bold text-slate-800 dark:text-slate-200 block text-xs">
+                  {Array.isArray(viewDetailActionItem.assigned_to_detail) && viewDetailActionItem.assigned_to_detail.length > 0
+                    ? viewDetailActionItem.assigned_to_detail.map(u => u.full_name || u.username).join(', ')
+                    : (viewDetailActionItem.created_by_detail
+                        ? (viewDetailActionItem.created_by_detail.full_name || viewDetailActionItem.created_by_detail.username)
+                        : 'Unassigned')}
+                </span>
+                {user?.id && Array.isArray(viewDetailActionItem.assigned_to) && viewDetailActionItem.assigned_to.some(u => (typeof u === 'object' ? u.id : u) === user.id) && (
+                  <Tag color="blue" className="text-[10px] font-bold m-0 mt-1">Assigned to You</Tag>
+                )}
+              </div>
+              <div>
+                <span className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Deadline</span>
+                <span className={`font-bold text-xs block ${viewDetailActionItem.is_overdue ? 'text-rose-600' : 'text-slate-800 dark:text-slate-200'}`}>
+                  {dayjs(viewDetailActionItem.due_date).format('MMMM DD, YYYY')}
+                </span>
+                {viewDetailActionItem.is_overdue && (
+                  <span className="text-[10px] text-rose-500 font-bold uppercase block mt-0.5">Overdue Action Item</span>
+                )}
+              </div>
+            </div>
+
+            {/* Delivered Outcome / Completion Notes */}
+            {viewDetailActionItem.completion_notes && (
+              <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60 rounded-xl">
+                <strong className="font-bold block text-emerald-800 dark:text-emerald-300 text-xs mb-1">
+                  ✅ Work Done / Delivered Outcome:
+                </strong>
+                <p className="text-xs text-emerald-900 dark:text-emerald-200 m-0 leading-relaxed whitespace-pre-wrap">
+                  {viewDetailActionItem.completion_notes}
+                </p>
+              </div>
+            )}
+
+            {/* Prerequisite Dependencies */}
+            {viewDetailActionItem.dependency_details && viewDetailActionItem.dependency_details.length > 0 && (
+              <div className="p-3 bg-amber-50/60 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 rounded-xl space-y-2">
+                <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase block">
+                  Prerequisite Dependencies ({viewDetailActionItem.dependency_details.length})
+                </span>
+                <div className="space-y-1.5">
+                  {viewDetailActionItem.dependency_details.map((dep) => (
+                    <div key={dep.id} className="flex items-center justify-between text-xs p-1.5 bg-white dark:bg-slate-800 rounded-lg border border-amber-100 dark:border-amber-900/30">
+                      <span className="font-medium text-slate-800 dark:text-slate-200 truncate mr-2">
+                        {dep.is_completed ? '✓ ' : '🔒 '}{dep.title}
+                      </span>
+                      <Tag color={dep.is_completed ? 'success' : 'error'} className="text-[10px] m-0 shrink-0">
+                        {dep.status}
+                      </Tag>
+                    </div>
+                  ))}
+                </div>
+                {viewDetailActionItem.dependency_details.some(d => !d.is_completed) && (
+                  <p className="text-[11px] text-amber-700 dark:text-amber-400 font-semibold m-0 flex items-center pt-1">
+                    <LockOutlined className="mr-1 shrink-0" /> Status update to Completed is locked until all prerequisites finish.
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Status Update Control */}
+            <div className="p-3 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center justify-between">
+              <div>
+                <span className="text-[10px] font-bold text-slate-400 uppercase block">Update Status</span>
+                <span className="text-xs text-slate-500 font-medium">Change current status</span>
+              </div>
+              <Select
+                id={`modal_action_status_select_${viewDetailActionItem.id}`}
+                name={`modal_action_status_select_${viewDetailActionItem.id}`}
+                value={viewDetailActionItem.status}
+                loading={updatingId === viewDetailActionItem.id}
+                onChange={async (val) => {
+                  const itemToUpdate = viewDetailActionItem;
+                  await handleStatusChange(itemToUpdate, val);
+                  setViewDetailActionItem((prev) => prev ? { ...prev, status: val } : null);
+                }}
+                disabled={viewDetailActionItem.status === 'COMPLETED' || viewDetailActionItem.status === 'CANCELLED'}
+                className="w-40 font-medium text-xs"
+                options={[
+                  { label: 'Todo', value: 'TODO' },
+                  { label: 'In Progress', value: 'IN_PROGRESS' },
+                  { label: 'Blocked', value: 'BLOCKED' },
+                  {
+                    label: viewDetailActionItem.dependency_details?.some(d => !d.is_completed) ? '🔒 Completed (Locked)' : 'Completed',
+                    value: 'COMPLETED',
+                    disabled: viewDetailActionItem.dependency_details?.some(d => !d.is_completed)
+                  },
+                  { label: 'Cancelled', value: 'CANCELLED' }
+                ]}
+              />
+            </div>
+          </div>
+        )}
+      </Modal>
 
       {/* Action Completion Notes Modal */}
       <Modal

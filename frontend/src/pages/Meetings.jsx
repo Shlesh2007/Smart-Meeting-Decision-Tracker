@@ -19,7 +19,7 @@ const { RangePicker } = DatePicker;
 export default function Meetings() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [viewMode, setViewMode] = useState('table');
+  const [viewMode, setViewMode] = useState(() => searchParams.get('view') || 'table');
   const [selectedParticipantUser, setSelectedParticipantUser] = useState(null);
 
   const [meetings, setMeetings] = useState([]);
@@ -30,7 +30,11 @@ export default function Meetings() {
   const [search, setSearch] = useState(searchParams.get('search') || '');
   const [meetingType, setMeetingType] = useState(searchParams.get('meeting_type') || '');
   const [status, setStatus] = useState(searchParams.get('status') || '');
-  const [dateRange, setDateRange] = useState(null);
+  const [dateRange, setDateRange] = useState(() => {
+    const s = searchParams.get('start_date');
+    const e = searchParams.get('end_date');
+    return (s && e) ? [s, e] : null;
+  });
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(() => {
     if (typeof window !== 'undefined' && window.innerWidth < 1024) {
@@ -43,6 +47,10 @@ export default function Meetings() {
     if (searchParams.has('search')) setSearch(searchParams.get('search') || '');
     if (searchParams.has('status')) setStatus(searchParams.get('status') || '');
     if (searchParams.has('meeting_type')) setMeetingType(searchParams.get('meeting_type') || '');
+    if (searchParams.has('view')) setViewMode(searchParams.get('view') || 'table');
+    if (searchParams.has('start_date') && searchParams.has('end_date')) {
+      setDateRange([searchParams.get('start_date'), searchParams.get('end_date')]);
+    }
   }, [searchParams]);
 
   const fetchMeetings = useCallback(() => {
@@ -109,12 +117,26 @@ export default function Meetings() {
       ),
     },
     {
-      title: 'Date & Time',
+      title: 'Scheduled Date & Time',
       key: 'date',
       render: (_, record) => (
         <div className="text-xs">
           <p className="font-medium text-slate-900 dark:text-slate-100 m-0">{dayjs(record.meeting_date).format('MMM D, YYYY')}</p>
           <p className="text-slate-500 dark:text-slate-400 m-0">{record.start_time} - {record.end_time}</p>
+        </div>
+      ),
+    },
+    {
+      title: 'Created Time',
+      key: 'created_at',
+      render: (_, record) => (
+        <div className="text-xs">
+          <p className="font-medium text-slate-800 dark:text-slate-200 m-0">
+            {record.created_at ? dayjs(record.created_at).format('MMM D, YYYY') : '—'}
+          </p>
+          <p className="text-slate-400 text-[11px] m-0">
+            {record.created_at ? dayjs(record.created_at).format('h:mm A') : ''}
+          </p>
         </div>
       ),
     },
@@ -180,7 +202,16 @@ export default function Meetings() {
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2.5 w-full md:w-auto justify-between md:justify-end">
           <Segmented
             value={viewMode}
-            onChange={(val) => setViewMode(val)}
+            onChange={(val) => {
+              setViewMode(val);
+              const params = new URLSearchParams(searchParams);
+              if (val === 'calendar') {
+                params.set('view', 'calendar');
+              } else {
+                params.delete('view');
+              }
+              navigate(`?${params.toString()}`, { replace: true });
+            }}
             options={[
               {
                 label: 'List View',
@@ -193,11 +224,11 @@ export default function Meetings() {
                 icon: <CalendarOutlined />,
               },
             ]}
-            className="p-1 rounded-full bg-slate-100 dark:bg-slate-700 font-bold w-fit shrink-0 [&_.ant-segmented-item]:!rounded-full [&_.ant-segmented-thumb]:!rounded-full"
+            className="p-1 rounded-xl bg-slate-100 dark:bg-slate-700 font-bold w-fit shrink-0 [&_.ant-segmented-item]:!rounded-xl [&_.ant-segmented-thumb]:!rounded-xl"
           />
 
           <Link to="/meetings/new" className="no-underline w-full sm:w-auto">
-            <Button type="primary" icon={<PlusOutlined />} size="middle" className="w-full sm:w-auto bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-full border-none shadow-xs text-xs h-9 px-4 flex items-center justify-center">
+            <Button type="primary" icon={<PlusOutlined />} size="middle" className="w-full sm:w-auto bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl border-none shadow-xs text-xs h-9 px-4 flex items-center justify-center">
               Create Meeting
             </Button>
           </Link>
@@ -284,21 +315,6 @@ export default function Meetings() {
               </Button>
             )}
           </div>
-
-          {total > pageSize && viewMode !== 'calendar' && (
-            <div className="flex items-center gap-2 shrink-0">
-              <span className="text-[11px] font-semibold text-slate-400">Page {page} of {Math.ceil(total / pageSize)}</span>
-              <Pagination
-                current={page}
-                total={total}
-                pageSize={pageSize}
-                onChange={(p) => setPage(p)}
-                showSizeChanger={false}
-                size="small"
-                simple
-              />
-            </div>
-          )}
         </div>
       </Card>
 
@@ -334,6 +350,22 @@ export default function Meetings() {
               className: 'cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors',
             })}
           />
+          {total > pageSize && viewMode !== 'calendar' && (
+            <div className="px-4 py-3.5 border-t border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 flex flex-col sm:flex-row justify-between items-center gap-3">
+              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                Showing Page {page} of {Math.ceil(total / pageSize)} ({total} total meetings)
+              </span>
+              <Pagination
+                current={page}
+                total={total}
+                pageSize={pageSize}
+                onChange={(p) => setPage(p)}
+                showSizeChanger={false}
+                size="small"
+                responsive
+              />
+            </div>
+          )}
         </div>
       )}
 

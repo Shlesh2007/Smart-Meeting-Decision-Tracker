@@ -39,11 +39,18 @@ export const ActionFormModal = ({
       }
 
       if (existingAction) {
+        let initialAssignedTo = [];
+        if (Array.isArray(existingAction.assigned_to)) {
+          initialAssignedTo = existingAction.assigned_to.map(u => typeof u === 'object' ? u.id : u);
+        } else if (existingAction.assigned_to) {
+          initialAssignedTo = [typeof existingAction.assigned_to === 'object' ? existingAction.assigned_to.id : existingAction.assigned_to];
+        }
+
         form.setFieldsValue({
           title: existingAction.title,
           description: existingAction.description,
           completion_notes: existingAction.completion_notes || '',
-          assigned_to: existingAction.assigned_to,
+          assigned_to: initialAssignedTo,
           priority: existingAction.priority,
           due_date: existingAction.due_date ? dayjs(existingAction.due_date) : null,
           status: existingAction.status,
@@ -101,7 +108,7 @@ export const ActionFormModal = ({
 
   const handleMeetingChange = (mId) => {
     setSelectedMeetingId(mId);
-    form.setFieldsValue({ decision: undefined, dependency_ids: [], assigned_to: undefined });
+    form.setFieldsValue({ decision: undefined, dependency_ids: [], assigned_to: [] });
     loadMeetingPrereqs(mId);
   };
 
@@ -149,7 +156,7 @@ export const ActionFormModal = ({
       title: values.title,
       description: values.description,
       completion_notes: values.completion_notes || '',
-      assigned_to: values.assigned_to,
+      assigned_to: Array.isArray(values.assigned_to) ? values.assigned_to : (values.assigned_to ? [values.assigned_to] : []),
       priority: values.priority,
       due_date: values.due_date ? values.due_date.format('YYYY-MM-DD') : '',
       dependency_ids: values.dependency_ids || []
@@ -192,9 +199,17 @@ export const ActionFormModal = ({
     : users;
 
   const assigneeOptionsList = [...availableAssignees];
-  if (existingAction?.assigned_to && !assigneeOptionsList.some(u => u.id === existingAction.assigned_to)) {
-    const existingUser = users.find(u => u.id === existingAction.assigned_to);
-    if (existingUser) assigneeOptionsList.push(existingUser);
+  if (existingAction?.assigned_to) {
+    const existingIds = Array.isArray(existingAction.assigned_to)
+      ? existingAction.assigned_to.map(u => typeof u === 'object' ? u.id : u)
+      : [typeof existingAction.assigned_to === 'object' ? existingAction.assigned_to.id : existingAction.assigned_to];
+
+    existingIds.forEach(id => {
+      if (id && !assigneeOptionsList.some(u => u.id === id)) {
+        const existingUser = users.find(u => u.id === id);
+        if (existingUser) assigneeOptionsList.push(existingUser);
+      }
+    });
   }
 
   return (
@@ -276,15 +291,16 @@ export const ActionFormModal = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Form.Item
             name="assigned_to"
-            label={currentMeetingId && meetingParticipants.length > 0 ? "Assignee (Meeting Participant)" : "Assignee"}
-            rules={[{ required: true, message: 'Please assign to a team member' }]}
+            label={currentMeetingId && meetingParticipants.length > 0 ? "Assignees / Participants (Meeting Participants)" : "Assignees / Participants"}
+            rules={[{ required: true, message: 'Please assign to at least one team member' }]}
             className="!mb-0"
           >
             <Select
               id="assigned_to"
               name="assigned_to"
+              mode="multiple"
               showSearch
-              placeholder={currentMeetingId && meetingParticipants.length > 0 ? "Select meeting participant" : "Select team member"}
+              placeholder={currentMeetingId && meetingParticipants.length > 0 ? "Select meeting participant(s)" : "Select team member(s)"}
               optionFilterProp="children"
               options={assigneeOptionsList.map(u => ({ label: `${u.full_name} • ${u.email} (${u.role})`, value: u.id }))}
               className="w-full"
@@ -354,32 +370,26 @@ export const ActionFormModal = ({
           </Form.Item>
         )}
 
-        <Form.Item
-          name="dependency_ids"
-          label="Depends On Action(s) (Prerequisites)"
-          help={
-            currentMeetingId
-              ? "Showing actions from this meeting only."
-              : "Please select a meeting above to view meeting prerequisite actions."
-          }
-          className="!mb-0"
-        >
-          <Select
-            id="dependency_ids"
+        {filterableDeps.length > 0 && (
+          <Form.Item
             name="dependency_ids"
-            mode="multiple"
-            placeholder={
-              currentMeetingId
-                ? filterableDeps.length > 0 ? "Select prerequisite actions" : "No other actions in this meeting"
-                : "Select a meeting first"
-            }
-            options={filterableDeps.map(dep => ({
-              label: `${dep.title} [Status: ${dep.status}]`,
-              value: dep.id
-            }))}
-            className="w-full"
-          />
-        </Form.Item>
+            label="Depends On Action(s) (Prerequisites)"
+            help="Prerequisite tasks that must be completed before this action item can be marked completed."
+            className="!mb-0"
+          >
+            <Select
+              id="dependency_ids"
+              name="dependency_ids"
+              mode="multiple"
+              placeholder="Select prerequisite actions"
+              options={filterableDeps.map(dep => ({
+                label: `${dep.title} [Status: ${dep.status}]`,
+                value: dep.id
+              }))}
+              className="w-full"
+            />
+          </Form.Item>
+        )}
 
         <Form.Item name="description" label="Detailed Instructions" className="!mb-0">
           <Input.TextArea id="description" name="description" rows={2} placeholder="Describe specific execution steps..." className="w-full" />

@@ -46,9 +46,9 @@ class ActionItemBusinessRulesTestCase(TestCase):
             title='Research Elastic Options',
             due_date=yesterday,
             status='TODO',
-            created_by=self.user,
-            assigned_to=self.user
+            created_by=self.user
         )
+        overdue_action.assigned_to.add(self.user)
         self.assertTrue(overdue_action.is_overdue)
 
         # Mark completed -> should no longer be overdue
@@ -63,9 +63,9 @@ class ActionItemBusinessRulesTestCase(TestCase):
             title='Research Search Options',
             due_date=date.today() + timedelta(days=2),
             status='IN_PROGRESS',
-            created_by=self.user,
-            assigned_to=self.user
+            created_by=self.user
         )
+        action1.assigned_to.add(self.user)
 
         # Action 2: Create Search POC (Depends on Action 1)
         action2 = ActionItem.objects.create(
@@ -73,9 +73,9 @@ class ActionItemBusinessRulesTestCase(TestCase):
             title='Create Search POC',
             due_date=date.today() + timedelta(days=5),
             status='TODO',
-            created_by=self.user,
-            assigned_to=self.user
+            created_by=self.user
         )
+        action2.assigned_to.add(self.user)
         action2.dependencies.add(action1)
 
         # Attempt to mark Action 2 as COMPLETED while Action 1 is IN_PROGRESS -> Should be rejected by Backend!
@@ -106,9 +106,9 @@ class ActionItemBusinessRulesTestCase(TestCase):
             title='Setup Server Environment',
             due_date=date.today() + timedelta(days=1),
             status='IN_PROGRESS',
-            created_by=self.user,
-            assigned_to=self.user
+            created_by=self.user
         )
+        action_a.assigned_to.add(self.user)
 
         # Action B (Dependent) -> Created as BLOCKED when depending on Action A
         payload_b = {
@@ -138,9 +138,9 @@ class ActionItemBusinessRulesTestCase(TestCase):
             title='Manual Blocked Test',
             due_date=date.today() + timedelta(days=2),
             status='TODO',
-            created_by=self.user,
-            assigned_to=self.user
+            created_by=self.user
         )
+        action.assigned_to.add(self.user)
         # Update status to BLOCKED via PATCH
         res_patch = self.client.patch(f'/api/actions/{action.id}/', {'status': 'BLOCKED'}, format='json')
         self.assertEqual(res_patch.status_code, status.HTTP_200_OK)

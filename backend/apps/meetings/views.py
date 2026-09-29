@@ -39,7 +39,14 @@ class MeetingViewSet(viewsets.ModelViewSet):
     permission_classes = (permissions.IsAuthenticated,)
     filter_backends = (DjangoFilterBackend, ExactPhraseSearchFilter, filters.OrderingFilter)
     filterset_class = MeetingFilter
-    search_fields = ('title', 'description', 'location')
+    search_fields = (
+        'title',
+        'description',
+        'location',
+        'discussions__title',
+        'discussions__description',
+        'discussions__decision__decision',
+    )
     ordering_fields = ('meeting_date', 'created_at', 'title')
 
     def get_queryset(self):
@@ -59,10 +66,11 @@ class MeetingViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         meeting = serializer.save(created_by=self.request.user, status=Meeting.Status.SCHEDULED)
         
-        # Automatically dispatch meeting invitation email with Google Meet link & entry OTP code
-        recipients = list(set([p.email for p in meeting.participants.all() if p.email] + ([meeting.created_by.email] if meeting.created_by.email else [])))
-        if recipients:
-            try:
+        try:
+            # Automatically dispatch meeting invitation email with Google Meet link & entry OTP code
+            organizer_email = [meeting.created_by.email] if (meeting.created_by and getattr(meeting.created_by, 'email', None)) else []
+            recipients = list(set([p.email for p in meeting.participants.all() if getattr(p, 'email', None)] + organizer_email))
+            if recipients:
                 otp_code = f"{random.randint(100000, 999999)}"
                 subject = f"📅 Meeting Invitation: {meeting.title}"
                 text_body = (
@@ -72,15 +80,15 @@ class MeetingViewSet(viewsets.ModelViewSet):
                     f"  Date: {meeting.meeting_date}\n"
                     f"  Time: {meeting.start_time} - {meeting.end_time}\n"
                     f"  Location / Meet Link: {meeting.location or 'Online'}\n"
-                    f"  Organizer: {meeting.created_by.get_full_name() or meeting.created_by.username}\n\n"
+                    f"  Organizer: {meeting.created_by.get_full_name() or meeting.created_by.username if meeting.created_by else 'Admin'}\n\n"
                     f"  Participant Entry OTP Code: {otp_code}\n\n"
                     f"Agenda / Description:\n{meeting.description or 'No description provided.'}\n\n"
                     f"Best regards,\nSmartMeeting Tracker Team"
                 )
                 html_body = build_meeting_email_html(meeting, otp_code=otp_code, title_prefix="New Meeting Invitation")
                 send_brevo_transactional_email(subject, recipients, text_body, html_body)
-            except Exception as email_err:
-                logger.error(f"Failed to dispatch meeting invitation email: {email_err}")
+        except Exception as email_err:
+            logger.error(f"Failed to dispatch meeting invitation email: {email_err}")
 
     def perform_update(self, serializer):
         meeting = self.get_object()

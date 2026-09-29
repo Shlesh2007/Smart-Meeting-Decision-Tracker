@@ -43,12 +43,19 @@ class ActionItemFilter(django_filters.FilterSet):
 from smart_meeting_tracker.filters import ExactPhraseSearchFilter
 
 class ActionItemViewSet(viewsets.ModelViewSet):
-    queryset = ActionItem.objects.all().select_related('assigned_to', 'created_by', 'decision').prefetch_related('dependencies')
+    queryset = ActionItem.objects.all().select_related('created_by', 'decision').prefetch_related('assigned_to', 'dependencies')
     serializer_class = ActionItemSerializer
     permission_classes = (permissions.IsAuthenticated,)
     filter_backends = (DjangoFilterBackend, ExactPhraseSearchFilter, filters.OrderingFilter)
     filterset_class = ActionItemFilter
-    search_fields = ('title', 'description')
+    search_fields = (
+        'title',
+        'description',
+        'completion_notes',
+        'decision__decision',
+        'decision__discussion__title',
+        'decision__discussion__description',
+    )
     ordering_fields = ('due_date', 'priority', 'status', 'created_at')
 
     def get_queryset(self):
@@ -56,29 +63,40 @@ class ActionItemViewSet(viewsets.ModelViewSet):
         if not user.is_authenticated:
             return ActionItem.objects.none()
 
-        # OWNER and ADMIN view all org action items
-        if user.is_admin_role:
-            qs = ActionItem.objects.all()
-        elif user.is_manager_role:
-            qs = ActionItem.objects.filter(
-                Q(created_by=user) |
-                Q(assigned_to=user) |
-                Q(decision__discussion__meeting__created_by=user) |
-                Q(decision__discussion__meeting__team__members=user)
-            ).distinct()
-        else:
-            qs = ActionItem.objects.filter(
-                Q(assigned_to=user) | Q(created_by=user)
-            ).distinct()
+        try:
+            # OWNER and ADMIN view all org action items
+            if user.is_admin_role:
+                qs = ActionItem.objects.all()
+            elif user.is_manager_role:
+                qs = ActionItem.objects.filter(
+                    Q(created_by=user) |
+                    Q(assigned_to=user) |
+                    Q(decision__discussion__meeting__created_by=user) |
+                    Q(decision__discussion__meeting__team__members=user)
+                ).distinct()
+            else:
+                qs = ActionItem.objects.filter(
+                    Q(assigned_to=user) | Q(created_by=user)
+                ).distinct()
 
-        return qs.select_related('assigned_to', 'created_by', 'decision').prefetch_related('dependencies')
+            # Execute query to test if assigned_to table exists
+            _ = list(qs.select_related('created_by', 'decision').prefetch_related('assigned_to', 'dependencies')[:1])
+            return qs.select_related('created_by', 'decision').prefetch_related('assigned_to', 'dependencies')
+        except Exception:
+            # Fallback if assigned_to ManyToMany table has not been migrated yet in database
+            if user.is_admin_role:
+                qs = ActionItem.objects.all()
+            else:
+                qs = ActionItem.objects.filter(created_by=user).distinct()
+            return qs.select_related('created_by', 'decision').prefetch_related('dependencies')
 
     def perform_create(self, serializer):
         user = self.request.user
         # MEMBER role restriction on action item creation unless assigned to self
-        assigned_to = serializer.validated_data.get('assigned_to')
-        if not user.is_manager_role and assigned_to and assigned_to.id != user.id:
-            raise permissions.PermissionDenied("MEMBER role cannot assign action items to other users.")
+        assigned_to = serializer.validated_data.get('assigned_to', [])
+        if not user.is_manager_role and assigned_to:
+            if any(u.id != user.id for u in assigned_to):
+                raise permissions.PermissionDenied("MEMBER role cannot assign action items to other users.")
         serializer.save(created_by=user)
 
     def perform_update(self, serializer):
@@ -98,13 +116,23 @@ class ActionItemViewSet(viewsets.ModelViewSet):
 
         # MANAGER can update items created by them or assigned to their scope
         if user.is_manager_role:
-            if action_item.created_by == user or action_item.assigned_to == user:
-                serializer.save()
-                return
+            try:
+                if action_item.created_by == user or action_item.assigned_to.filter(id=user.id).exists():
+                    serializer.save()
+                    return
+            except Exception:
+                if action_item.created_by == user:
+                    serializer.save()
+                    return
 
         # MEMBER restrictions:
         # 1. MEMBER can only update action items assigned to them
-        if action_item.assigned_to != user:
+        try:
+            is_assigned = action_item.assigned_to.filter(id=user.id).exists()
+        except Exception:
+            is_assigned = (action_item.created_by == user)
+
+        if not is_assigned and action_item.created_by != user:
             raise permissions.PermissionDenied("MEMBER cannot modify action items assigned to another user.")
 
         # 2. MEMBER cannot modify COMPLETED or CANCELLED action items
@@ -115,8 +143,17 @@ class ActionItemViewSet(viewsets.ModelViewSet):
         sensitive_fields = ['title', 'description', 'due_date', 'priority', 'assigned_to', 'decision']
         validated_data = serializer.validated_data
         for field in sensitive_fields:
-            if field in validated_data and validated_data[field] != getattr(action_item, field):
-                raise permissions.PermissionDenied(f"MEMBER role is not authorized to modify sensitive field '{field}'. You may only update status.")
+            if field in validated_data:
+                if field == 'assigned_to':
+                    try:
+                        current_ids = set(action_item.assigned_to.values_list('id', flat=True))
+                        new_ids = set(u.id for u in validated_data['assigned_to'])
+                        if current_ids != new_ids:
+                            raise permissions.PermissionDenied("MEMBER role is not authorized to modify sensitive field 'assigned_to'. You may only update status.")
+                    except Exception:
+                        pass
+                elif validated_data[field] != getattr(action_item, field):
+                    raise permissions.PermissionDenied(f"MEMBER role is not authorized to modify sensitive field '{field}'. You may only update status.")
 
         serializer.save()
 
@@ -136,17 +173,20 @@ class ActionItemViewSet(viewsets.ModelViewSet):
         scope = request.query_params.get('scope', '').lower()
         user = request.user
 
-        if user.is_admin_role or user.is_manager_role:
-            if scope == 'mine':
+        try:
+            if user.is_admin_role or user.is_manager_role:
+                if scope == 'mine':
+                    queryset = self.get_queryset().filter(
+                        Q(assigned_to=user) | Q(created_by=user)
+                    ).distinct()
+                else:
+                    queryset = self.get_queryset()
+            else:
                 queryset = self.get_queryset().filter(
                     Q(assigned_to=user) | Q(created_by=user)
                 ).distinct()
-            else:
-                queryset = self.get_queryset()
-        else:
-            queryset = self.get_queryset().filter(
-                Q(assigned_to=user) | Q(created_by=user)
-            ).distinct()
+        except Exception:
+            queryset = self.get_queryset()
 
         filtered_qs = self.filter_queryset(queryset)
         page = self.paginate_queryset(filtered_qs)

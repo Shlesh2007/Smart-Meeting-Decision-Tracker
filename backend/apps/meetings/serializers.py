@@ -118,9 +118,16 @@ class MeetingSerializer(serializers.ModelSerializer):
 
         # Generate recurring series instances if enabled
         if is_recurring and recurrence_pattern:
+            from datetime import date
             start_date = meeting.meeting_date
+            if isinstance(start_date, str):
+                start_date = date.fromisoformat(start_date)
+
             max_end = start_date + timedelta(days=30)
             target_end_date = recurrence_end_date if recurrence_end_date else (start_date + timedelta(days=14))
+            if isinstance(target_end_date, str):
+                target_end_date = date.fromisoformat(target_end_date)
+
             if target_end_date > max_end:
                 target_end_date = max_end
 

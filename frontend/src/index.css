@@ -19,7 +19,7 @@ html, body, #root, header {
 }
 
 
-/* Ant Design Select & Input rounded utility overrides */
+/* Ant Design Global Button & Input rounded utility overrides (12px rounded-xl uniform theme) */
 .rounded-xl,
 .rounded-xl.ant-btn,
 .rounded-xl.ant-input,
@@ -31,34 +31,9 @@ html, body, #root, header {
 .\!rounded-xl.ant-input,
 .\!rounded-xl.ant-input-affix-wrapper,
 .\!rounded-xl.ant-select,
-.\!rounded-xl .ant-select-selector {
+.\!rounded-xl .ant-select-selector,
+.ant-btn:not(.ant-btn-circle) {
   border-radius: 12px !important;
-}
-
-/* Force 100% fully rounded pill shapes on all pill classes, buttons, tags, and Ant Design wrappers */
-.rounded-full,
-.rounded-full.ant-btn,
-.rounded-full.ant-btn-icon-only,
-.ant-btn-circle,
-.ant-btn-round,
-.rounded-full.ant-input,
-.rounded-full.ant-input-affix-wrapper,
-.rounded-full.ant-select,
-.rounded-full .ant-select-selector,
-.\!rounded-full,
-.\!rounded-full.ant-btn,
-.\!rounded-full.ant-btn-icon-only,
-.\!rounded-full.ant-input,
-.\!rounded-full.ant-input-affix-wrapper,
-.\!rounded-full.ant-select,
-.\!rounded-full .ant-select-selector,
-.rounded-full.ant-picker,
-.ant-segmented,
-.ant-segmented-item,
-.ant-segmented-thumb,
-.ant-segmented-item-selected,
-.ant-tag {
-  border-radius: 9999px !important;
 }
 
 *, ::before, ::after {
@@ -165,7 +140,16 @@ html, body, #root, header {
   min-width: 0 !important;
   overflow-x: auto !important;
   overflow-y: hidden !important;
-  -webkit-overflow-scrolling: touch;
+  -webkit-overflow-scrolling: touch !important;
+  touch-action: pan-x pan-y !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.ant-tabs-nav-wrap::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
 .ant-tabs-nav-list {
@@ -174,7 +158,13 @@ html, body, #root, header {
   min-width: 0 !important;
   display: flex !important;
   flex-shrink: 0 !important;
+  white-space: nowrap !important;
   transform: none !important;
+}
+
+.ant-tabs-tab {
+  flex-shrink: 0 !important;
+  white-space: nowrap !important;
 }
 
 .ant-tabs-nav-wrap::before,

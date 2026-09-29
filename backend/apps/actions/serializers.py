@@ -1,9 +1,17 @@
 from rest_framework import serializers
+from django.contrib.auth import get_user_model
 from .models import ActionItem
 from apps.authentication.serializers import UserSerializer
 
+User = get_user_model()
+
 class ActionItemSerializer(serializers.ModelSerializer):
-    assigned_to_detail = UserSerializer(source='assigned_to', read_only=True)
+    assigned_to = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(),
+        many=True,
+        required=False
+    )
+    assigned_to_detail = UserSerializer(source='assigned_to', many=True, read_only=True)
     created_by_detail = UserSerializer(source='created_by', read_only=True)
     is_overdue = serializers.ReadOnlyField()
     dependency_details = serializers.SerializerMethodField()
@@ -27,6 +35,24 @@ class ActionItemSerializer(serializers.ModelSerializer):
             'dependency_ids', 'created_by', 'created_by_detail', 'created_at', 'updated_at'
         )
         read_only_fields = ('id', 'meeting_id', 'meeting_title', 'created_by', 'created_at', 'updated_at')
+
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        # If assigned_to_detail is empty, fallback to created_by_detail so action items never show as unassigned
+        if not ret.get('assigned_to_detail') and ret.get('created_by_detail'):
+            ret['assigned_to_detail'] = [ret['created_by_detail']]
+            if instance.created_by_id:
+                ret['assigned_to'] = [instance.created_by_id]
+        return ret
+
+    def to_internal_value(self, data):
+        if isinstance(data, dict) and 'assigned_to' in data and not isinstance(data['assigned_to'], list):
+            data = data.copy()
+            if data['assigned_to'] is not None:
+                data['assigned_to'] = [data['assigned_to']]
+            else:
+                data['assigned_to'] = []
+        return super().to_internal_value(data)
 
     def get_completion_notes(self, obj):
         try:
@@ -79,6 +105,7 @@ class ActionItemSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         dependencies = validated_data.pop('dependencies', [])
+        assigned_to_users = validated_data.pop('assigned_to', [])
         validated_data['created_by'] = self.context['request'].user
         req = self.context.get('request')
         if req and 'completion_notes' in req.data:
@@ -92,10 +119,13 @@ class ActionItemSerializer(serializers.ModelSerializer):
         action = ActionItem.objects.create(**validated_data)
         if dependencies:
             action.dependencies.set(dependencies)
+        if assigned_to_users:
+            action.assigned_to.set(assigned_to_users)
         return action
 
     def update(self, instance, validated_data):
         dependencies = validated_data.pop('dependencies', None)
+        assigned_to_users = validated_data.pop('assigned_to', None)
 
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
@@ -106,6 +136,8 @@ class ActionItemSerializer(serializers.ModelSerializer):
 
         if dependencies is not None:
             instance.dependencies.set(dependencies)
+        if assigned_to_users is not None:
+            instance.assigned_to.set(assigned_to_users)
 
         # Re-evaluate instance status against its dependencies
         current_deps = instance.dependencies.all()

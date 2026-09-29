@@ -24,6 +24,7 @@ import {
   MenuUnfoldOutlined,
   MenuOutlined,
   PlusOutlined,
+  SafetyOutlined,
 } from '@ant-design/icons';
 
 export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
@@ -434,6 +435,26 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
               <span className="sm:hidden">{shortDateStr}</span>
               <span className="hidden sm:inline">{fullDateStr}</span>
             </span>
+
+            {/* Admin Panel Quick Access Button (Visible for Admin/Owner users) */}
+            {isAdmin && (
+              <Tooltip title="Admin Management Panel">
+                <button
+                  type="button"
+                  id="navbar_admin_panel_btn"
+                  name="navbar_admin_panel_btn"
+                  onClick={() => navigate('/admin')}
+                  className={`cursor-pointer h-8 px-2.5 flex items-center space-x-1.5 rounded-lg transition-all border shrink-0 ${
+                    pathname === '/admin'
+                      ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
+                      : 'text-slate-700 dark:text-slate-200 bg-slate-100/70 dark:bg-slate-700/50 hover:bg-blue-50 dark:hover:bg-slate-700 hover:text-blue-600 dark:hover:text-blue-400 border-slate-200/60 dark:border-slate-700/60'
+                  }`}
+                >
+                  <SafetyOutlined className={`text-base ${pathname === '/admin' ? 'text-white' : 'text-blue-600 dark:text-blue-400'}`} />
+                  <span className="hidden sm:inline text-xs font-bold">Admin Panel</span>
+                </button>
+              </Tooltip>
+            )}
 
             {/* Interactive Notification Bell Popover */}
             <Popover

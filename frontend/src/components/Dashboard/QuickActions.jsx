@@ -67,7 +67,7 @@ export const QuickActions = () => {
           </div>
 
           {/* Action 3: View Calendar */}
-          <Link to="/meetings" className="no-underline block">
+          <Link to="/meetings?view=calendar" className="no-underline block">
             <div className="p-2.5 rounded-lg bg-indigo-50/60 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/60 hover:bg-indigo-100/60 dark:hover:bg-indigo-900/50 transition-all flex items-center justify-between group cursor-pointer">
               <div className="flex items-center space-x-2.5">
                 <div className="w-7 h-7 rounded-lg bg-indigo-600 text-white flex items-center justify-center text-xs font-bold shadow-xs shrink-0">
@@ -78,7 +78,7 @@ export const QuickActions = () => {
                     View Calendar
                   </h4>
                   <p className="text-[9px] text-slate-500 dark:text-slate-400 m-0">
-                    Browse meeting list
+                    Monthly calendar view
                   </p>
                 </div>
               </div>

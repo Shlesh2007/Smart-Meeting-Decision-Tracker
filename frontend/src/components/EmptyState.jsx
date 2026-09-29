@@ -1,14 +1,27 @@
 import React from 'react';
 import { Button } from 'antd';
-import { InboxOutlined, PlusOutlined } from '@ant-design/icons';
+import { InboxOutlined, PlusOutlined, ReloadOutlined } from '@ant-design/icons';
 
 export const EmptyState = ({
   title = 'No Records Found',
   description = 'There are no items to display at this time.',
   icon,
   actionText,
+  actionIcon,
   onAction
 }) => {
+  let computedIcon = actionIcon;
+  if (computedIcon === undefined && actionText) {
+    const lowerText = actionText.toLowerCase();
+    if (lowerText.includes('reset') || lowerText.includes('reload') || lowerText.includes('clear') || lowerText.includes('refresh')) {
+      computedIcon = <ReloadOutlined />;
+    } else if (lowerText.includes('create') || lowerText.includes('add') || lowerText.includes('new')) {
+      computedIcon = <PlusOutlined />;
+    } else {
+      computedIcon = null;
+    }
+  }
+
   return (
     <div className="py-12 sm:py-16 px-4 bg-white dark:bg-slate-900 border border-dashed border-slate-200 dark:border-slate-800 rounded-2xl text-center shadow-xs transition-colors">
       <div className="max-w-md mx-auto space-y-4">
@@ -31,7 +44,7 @@ export const EmptyState = ({
             <Button
               type="primary"
               onClick={onAction}
-              icon={<PlusOutlined />}
+              icon={computedIcon || undefined}
               className="bg-slate-900 hover:bg-slate-800 text-white font-medium rounded-lg border-none shadow-xs px-5 py-2 text-xs sm:text-sm h-auto"
             >
               {actionText}

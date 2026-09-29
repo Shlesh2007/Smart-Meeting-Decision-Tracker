@@ -98,6 +98,12 @@ export const UpcomingMeetings = ({ meetings: initialMeetings }) => {
                   <span className="truncate">{m.location}</span>
                 </span>
               )}
+
+              {m.created_at && (
+                <span className="text-[9px] text-slate-400 font-medium">
+                  • Created: {dayjs(m.created_at).format('MMM D, h:mm A')}
+                </span>
+              )}
             </div>
           </div>
         </div>

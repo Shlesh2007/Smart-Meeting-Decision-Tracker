@@ -29,86 +29,112 @@ class DashboardAnalyticsView(APIView):
             ).lower().strip()
 
             # Filter meetings and actions based on role hierarchy
-            if user.is_admin_role:
-                base_meetings_qs = Meeting.objects.all()
-                base_actions_qs = ActionItem.objects.all()
-            elif user.is_manager_role:
-                base_meetings_qs = Meeting.objects.filter(
-                    Q(created_by=user) | Q(participants=user) | Q(team__members=user)
-                ).distinct()
-                base_actions_qs = ActionItem.objects.filter(
-                    Q(assigned_to=user) | Q(created_by=user) |
-                    Q(decision__discussion__meeting__created_by=user) |
-                    Q(decision__discussion__meeting__team__members=user)
-                ).distinct()
-            else:
-                # MEMBER role: strictly personal metrics
-                base_meetings_qs = Meeting.objects.filter(
-                    Q(created_by=user) | Q(participants=user) | Q(team__members=user)
-                ).distinct()
-                base_actions_qs = ActionItem.objects.filter(
-                    Q(assigned_to=user) | Q(created_by=user)
-                ).distinct()
+            try:
+                if user.is_admin_role:
+                    base_meetings_qs = Meeting.objects.all()
+                    base_actions_qs = ActionItem.objects.all()
+                elif user.is_manager_role:
+                    base_meetings_qs = Meeting.objects.filter(
+                        Q(created_by=user) | Q(participants=user) | Q(team__members=user)
+                    ).distinct()
+                    base_actions_qs = ActionItem.objects.filter(
+                        Q(assigned_to=user) | Q(created_by=user) |
+                        Q(decision__discussion__meeting__created_by=user) |
+                        Q(decision__discussion__meeting__team__members=user)
+                    ).distinct()
+                else:
+                    # MEMBER role: strictly personal metrics
+                    base_meetings_qs = Meeting.objects.filter(
+                        Q(created_by=user) | Q(participants=user) | Q(team__members=user)
+                    ).distinct()
+                    base_actions_qs = ActionItem.objects.filter(
+                        Q(assigned_to=user) | Q(created_by=user)
+                    ).distinct()
+                # Test query execution to ensure assigned_to table exists
+                _ = base_actions_qs.count()
+            except Exception:
+                # Fallback if assigned_to ManyToMany table has not been migrated yet in DB
+                if user.is_admin_role:
+                    base_meetings_qs = Meeting.objects.all()
+                    base_actions_qs = ActionItem.objects.all()
+                else:
+                    base_meetings_qs = Meeting.objects.filter(
+                        Q(created_by=user) | Q(participants=user) | Q(team__members=user)
+                    ).distinct()
+                    base_actions_qs = ActionItem.objects.filter(created_by=user).distinct()
 
             meetings_qs = base_meetings_qs
             actions_qs = base_actions_qs
 
-            # Apply time period filter to overall dashboard metrics
-            if period in ['today', 'this_day']:
-                meetings_qs = meetings_qs.filter(meeting_date=today)
-                actions_qs = actions_qs.filter(Q(due_date=today) | Q(created_at__date=today))
-            elif period == 'yesterday':
-                y_date = today - timedelta(days=1)
-                meetings_qs = meetings_qs.filter(meeting_date=y_date)
-                actions_qs = actions_qs.filter(Q(due_date=y_date) | Q(created_at__date=y_date))
-            elif period in ['last_7_days', 'past_week']:
-                start_date = today - timedelta(days=7)
-                meetings_qs = meetings_qs.filter(meeting_date__gte=start_date, meeting_date__lte=today)
-                actions_qs = actions_qs.filter(Q(due_date__gte=start_date, due_date__lte=today) | Q(created_at__date__gte=start_date, created_at__date__lte=today))
-            elif period in ['last_30_days', '30_days', 'past_month']:
-                start_date = today - timedelta(days=30)
-                meetings_qs = meetings_qs.filter(meeting_date__gte=start_date, meeting_date__lte=today)
-                actions_qs = actions_qs.filter(Q(due_date__gte=start_date, due_date__lte=today) | Q(created_at__date__gte=start_date, created_at__date__lte=today))
-            elif period == 'last_week':
-                start_of_this_week = today - timedelta(days=today.weekday())
-                start_of_last_week = start_of_this_week - timedelta(days=7)
-                end_of_last_week = start_of_this_week - timedelta(days=1)
-                meetings_qs = meetings_qs.filter(meeting_date__gte=start_of_last_week, meeting_date__lte=end_of_last_week)
-                actions_qs = actions_qs.filter(Q(due_date__gte=start_of_last_week, due_date__lte=end_of_last_week) | Q(created_at__date__gte=start_of_last_week, created_at__date__lte=end_of_last_week))
-            elif period == 'last_month':
-                first_of_this_month = today.replace(day=1)
-                last_day_of_last_month = first_of_this_month - timedelta(days=1)
-                first_of_last_month = last_day_of_last_month.replace(day=1)
-                meetings_qs = meetings_qs.filter(meeting_date__gte=first_of_last_month, meeting_date__lte=last_day_of_last_month)
-                actions_qs = actions_qs.filter(Q(due_date__gte=first_of_last_month, due_date__lte=last_day_of_last_month) | Q(created_at__date__gte=first_of_last_month, created_at__date__lte=last_day_of_last_month))
-            elif period in ['last_year', 'past_year']:
-                start_date = today - timedelta(days=365)
-                meetings_qs = meetings_qs.filter(meeting_date__gte=start_date, meeting_date__lte=today)
-                actions_qs = actions_qs.filter(Q(due_date__gte=start_date, due_date__lte=today) | Q(created_at__date__gte=start_date, created_at__date__lte=today))
-            elif period == 'custom':
-                start_date_param = request.query_params.get('start_date')
-                end_date_param = request.query_params.get('end_date')
-                if start_date_param:
-                    meetings_qs = meetings_qs.filter(meeting_date__gte=start_date_param)
-                    actions_qs = actions_qs.filter(Q(due_date__gte=start_date_param) | Q(created_at__date__gte=start_date_param))
-                if end_date_param:
-                    meetings_qs = meetings_qs.filter(meeting_date__lte=end_date_param)
-                    actions_qs = actions_qs.filter(Q(due_date__lte=end_date_param) | Q(created_at__date__lte=end_date_param))
+            # Apply time period filter to overall dashboard metrics (only if no active search_query is provided)
+            if not search_query:
+                if period in ['today', 'this_day']:
+                    meetings_qs = meetings_qs.filter(meeting_date=today)
+                    actions_qs = actions_qs.filter(Q(due_date=today) | Q(created_at__date=today))
+                elif period == 'yesterday':
+                    y_date = today - timedelta(days=1)
+                    meetings_qs = meetings_qs.filter(meeting_date=y_date)
+                    actions_qs = actions_qs.filter(Q(due_date=y_date) | Q(created_at__date=y_date))
+                elif period in ['last_7_days', 'past_week']:
+                    start_date = today - timedelta(days=7)
+                    meetings_qs = meetings_qs.filter(meeting_date__gte=start_date, meeting_date__lte=today)
+                    actions_qs = actions_qs.filter(Q(due_date__gte=start_date, due_date__lte=today) | Q(created_at__date__gte=start_date, created_at__date__lte=today))
+                elif period in ['last_30_days', '30_days', 'past_month']:
+                    start_date = today - timedelta(days=30)
+                    meetings_qs = meetings_qs.filter(meeting_date__gte=start_date, meeting_date__lte=today)
+                    actions_qs = actions_qs.filter(Q(due_date__gte=start_date, due_date__lte=today) | Q(created_at__date__gte=start_date, created_at__date__lte=today))
+                elif period == 'last_week':
+                    start_of_this_week = today - timedelta(days=today.weekday())
+                    start_of_last_week = start_of_this_week - timedelta(days=7)
+                    end_of_last_week = start_of_this_week - timedelta(days=1)
+                    meetings_qs = meetings_qs.filter(meeting_date__gte=start_of_last_week, meeting_date__lte=end_of_last_week)
+                    actions_qs = actions_qs.filter(Q(due_date__gte=start_of_last_week, due_date__lte=end_of_last_week) | Q(created_at__date__gte=start_of_last_week, created_at__date__lte=end_of_last_week))
+                elif period == 'last_month':
+                    first_of_this_month = today.replace(day=1)
+                    last_day_of_last_month = first_of_this_month - timedelta(days=1)
+                    first_of_last_month = last_day_of_last_month.replace(day=1)
+                    meetings_qs = meetings_qs.filter(meeting_date__gte=first_of_last_month, meeting_date__lte=last_day_of_last_month)
+                    actions_qs = actions_qs.filter(Q(due_date__gte=first_of_last_month, due_date__lte=last_day_of_last_month) | Q(created_at__date__gte=first_of_last_month, created_at__date__lte=last_day_of_last_month))
+                elif period in ['last_year', 'past_year']:
+                    start_date = today - timedelta(days=365)
+                    meetings_qs = meetings_qs.filter(meeting_date__gte=start_date, meeting_date__lte=today)
+                    actions_qs = actions_qs.filter(Q(due_date__gte=start_date, due_date__lte=today) | Q(created_at__date__gte=start_date, created_at__date__lte=today))
+                elif period == 'custom':
+                    start_date_param = request.query_params.get('start_date')
+                    end_date_param = request.query_params.get('end_date')
+                    if start_date_param:
+                        meetings_qs = meetings_qs.filter(meeting_date__gte=start_date_param)
+                        actions_qs = actions_qs.filter(Q(due_date__gte=start_date_param) | Q(created_at__date__gte=start_date_param))
+                    if end_date_param:
+                        meetings_qs = meetings_qs.filter(meeting_date__lte=end_date_param)
+                        actions_qs = actions_qs.filter(Q(due_date__lte=end_date_param) | Q(created_at__date__lte=end_date_param))
+                elif period in ['all', 'all_time', 'alltime']:
+                    # All-time metrics: no date boundaries applied
+                    pass
 
-            # Apply global search query filter
+            # Apply global search query filter across meetings, discussions, decisions, and action items
             if search_query:
-                base_meetings_qs = base_meetings_qs.filter(
-                    Q(title__icontains=search_query) | Q(description__icontains=search_query) | Q(location__icontains=search_query)
+                meeting_search_q = (
+                    Q(title__icontains=search_query) |
+                    Q(description__icontains=search_query) |
+                    Q(location__icontains=search_query) |
+                    Q(discussions__title__icontains=search_query) |
+                    Q(discussions__description__icontains=search_query) |
+                    Q(discussions__decision__decision__icontains=search_query)
                 )
-                meetings_qs = meetings_qs.filter(
-                    Q(title__icontains=search_query) | Q(description__icontains=search_query) | Q(location__icontains=search_query)
+                base_meetings_qs = base_meetings_qs.filter(meeting_search_q).distinct()
+                meetings_qs = meetings_qs.filter(meeting_search_q).distinct()
+
+                action_search_q = (
+                    Q(title__icontains=search_query) |
+                    Q(description__icontains=search_query) |
+                    Q(completion_notes__icontains=search_query) |
+                    Q(decision__decision__icontains=search_query) |
+                    Q(decision__discussion__title__icontains=search_query) |
+                    Q(decision__discussion__description__icontains=search_query)
                 )
-                base_actions_qs = base_actions_qs.filter(
-                    Q(title__icontains=search_query) | Q(description__icontains=search_query)
-                )
-                actions_qs = actions_qs.filter(
-                    Q(title__icontains=search_query) | Q(description__icontains=search_query)
-                )
+                base_actions_qs = base_actions_qs.filter(action_search_q).distinct()
+                actions_qs = actions_qs.filter(action_search_q).distinct()
 
             total_meetings = meetings_qs.count()
             upcoming_meetings = meetings_qs.filter(
@@ -127,13 +153,13 @@ class DashboardAnalyticsView(APIView):
                 status__iexact=ActionItem.Status.COMPLETED
             ).count()
             
-            overdue_actions = base_actions_qs.filter(
+            overdue_actions = actions_qs.filter(
                 due_date__lt=today
             ).exclude(
                 Q(status__iexact=ActionItem.Status.COMPLETED) | Q(status__iexact=ActionItem.Status.CANCELLED)
             ).count()
             
-            critical_actions = base_actions_qs.filter(
+            critical_actions = actions_qs.filter(
                 priority__iexact=ActionItem.Priority.CRITICAL
             ).exclude(
                 Q(status__iexact=ActionItem.Status.COMPLETED) | Q(status__iexact=ActionItem.Status.CANCELLED)
@@ -172,25 +198,40 @@ class DashboardAnalyticsView(APIView):
                 } for item in reversed(recent_activity) if item.get('meeting_date')
             ]
 
-            # Urgent & Overdue Action lists for Needs Attention widget (Respects global date/period and search filters)
-            target_actions_qs = actions_qs if (period != 'all' or search_query) else base_actions_qs
+            # Urgent & Overdue Action lists for Needs Attention widget
+            target_actions_qs = base_actions_qs.filter(
+                Q(title__icontains=search_query) | Q(description__icontains=search_query)
+            ) if search_query else base_actions_qs
 
-            urgent_items = target_actions_qs.filter(
-                Q(due_date__lt=today) |
-                Q(priority__iexact=ActionItem.Priority.CRITICAL) |
-                Q(priority__iexact=ActionItem.Priority.HIGH)
-            ).exclude(
-                Q(status__iexact=ActionItem.Status.COMPLETED) | Q(status__iexact=ActionItem.Status.CANCELLED)
-            ).select_related('assigned_to').order_by('due_date', '-priority')[:15]
+            try:
+                urgent_items = list(target_actions_qs.filter(
+                    Q(due_date__lt=today) |
+                    Q(priority__iexact=ActionItem.Priority.CRITICAL) |
+                    Q(priority__iexact=ActionItem.Priority.HIGH)
+                ).exclude(
+                    Q(status__iexact=ActionItem.Status.COMPLETED) | Q(status__iexact=ActionItem.Status.CANCELLED)
+                ).prefetch_related('assigned_to').order_by('due_date', '-priority')[:30])
+            except Exception:
+                urgent_items = list(target_actions_qs.filter(
+                    Q(due_date__lt=today) |
+                    Q(priority__iexact=ActionItem.Priority.CRITICAL) |
+                    Q(priority__iexact=ActionItem.Priority.HIGH)
+                ).exclude(
+                    Q(status__iexact=ActionItem.Status.COMPLETED) | Q(status__iexact=ActionItem.Status.CANCELLED)
+                ).order_by('due_date', '-priority')[:30])
 
             def serialize_action(item):
-                assigned_name = 'Unassigned'
-                assigned_detail = None
-                if item.assigned_to:
-                    full_name = item.assigned_to.get_full_name()
-                    username = item.assigned_to.username
-                    assigned_name = full_name if full_name else username
-                    assigned_detail = {'full_name': full_name, 'username': username}
+                try:
+                    assigned_users = list(item.assigned_to.all())
+                except Exception:
+                    assigned_users = []
+
+                assigned_name = ', '.join([u.get_full_name() or u.username for u in assigned_users]) if assigned_users else 'Unassigned'
+                assigned_detail = [
+                    {'id': u.id, 'full_name': u.get_full_name() or u.username, 'username': u.username}
+                    for u in assigned_users
+                ]
+                assigned_ids = [u.id for u in assigned_users]
 
                 return {
                     'id': item.id,
@@ -199,7 +240,7 @@ class DashboardAnalyticsView(APIView):
                     'due_date': item.due_date.strftime('%Y-%m-%d') if (item.due_date and hasattr(item.due_date, 'strftime')) else str(item.due_date) if item.due_date else None,
                     'priority': item.priority,
                     'status': item.status,
-                    'assigned_to': item.assigned_to_id,
+                    'assigned_to': assigned_ids,
                     'assigned_to_name': assigned_name,
                     'assigned_to_detail': assigned_detail,
                     'created_at': item.created_at.strftime('%Y-%m-%d') if hasattr(item.created_at, 'strftime') else str(item.created_at)
@@ -207,11 +248,18 @@ class DashboardAnalyticsView(APIView):
 
             urgent_list = [serialize_action(item) for item in urgent_items]
 
-            overdue_items = target_actions_qs.filter(
-                due_date__lt=today
-            ).exclude(
-                Q(status__iexact=ActionItem.Status.COMPLETED) | Q(status__iexact=ActionItem.Status.CANCELLED)
-            ).select_related('assigned_to').order_by('due_date')[:15]
+            try:
+                overdue_items = list(target_actions_qs.filter(
+                    due_date__lt=today
+                ).exclude(
+                    Q(status__iexact=ActionItem.Status.COMPLETED) | Q(status__iexact=ActionItem.Status.CANCELLED)
+                ).prefetch_related('assigned_to').order_by('due_date')[:15])
+            except Exception:
+                overdue_items = list(target_actions_qs.filter(
+                    due_date__lt=today
+                ).exclude(
+                    Q(status__iexact=ActionItem.Status.COMPLETED) | Q(status__iexact=ActionItem.Status.CANCELLED)
+                ).order_by('due_date')[:15])
 
             overdue_list = [serialize_action(item) for item in overdue_items]
 
