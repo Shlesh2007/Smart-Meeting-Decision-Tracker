@@ -129,7 +129,7 @@ export const ActionFormModal = ({
           const newDisc = await discussionService.createDiscussion({
             meeting: mId,
             title: 'General Action Items',
-            points: 'Action items logged for meeting'
+            description: 'Action items logged for meeting'
           });
           const newDec = await decisionService.createDecision({
             discussion: newDisc.id,

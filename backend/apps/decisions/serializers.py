@@ -33,6 +33,13 @@ class DecisionSerializer(serializers.ModelSerializer):
         status = attrs.get('status', self.instance.status if self.instance else Decision.Status.NO_DECISION)
         decision_text = attrs.get('decision', self.instance.decision if self.instance else '')
         reason_text = attrs.get('reason', self.instance.reason if self.instance else '')
+        discussion = attrs.get('discussion', self.instance.discussion if self.instance else None)
+
+        if not self.instance and discussion:
+            if hasattr(discussion, 'decision') and discussion.decision:
+                raise serializers.ValidationError({"discussion": "A decision record already exists for this discussion topic."})
+            if Decision.objects.filter(discussion=discussion).exists():
+                raise serializers.ValidationError({"discussion": "A decision record already exists for this discussion topic."})
 
         if status == Decision.Status.DECISION_MADE and not decision_text:
             raise serializers.ValidationError({"decision": "Decision details text is required when status is 'Decision Made'."})

@@ -356,12 +356,12 @@ class Command(BaseCommand):
                         title=f"Execute {disc_title} Implementation",
                         description=f"Follow-up task logged during {m_obj.title}.",
                         completion_notes=comp_notes,
-                        assigned_to=assignee,
                         priority=disc_prio,
                         due_date=act_due,
                         status=act_status,
                         created_by=creator
                     )
+                    action.assigned_to.set([assignee])
                     
                     if created_actions and random.choice([True, False]):
                         prev_action = random.choice(created_actions[-5:])

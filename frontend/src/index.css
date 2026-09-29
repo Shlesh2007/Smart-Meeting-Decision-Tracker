@@ -167,6 +167,18 @@ html, body, #root, header {
   white-space: nowrap !important;
 }
 
+@media (max-width: 640px) {
+  .ant-tabs-nav-list {
+    width: 100% !important;
+    max-width: 100% !important;
+    justify-content: space-around !important;
+  }
+  .ant-tabs-tab {
+    padding: 6px 2px !important;
+    margin: 0 !important;
+  }
+}
+
 .ant-tabs-nav-wrap::before,
 .ant-tabs-nav-wrap::after,
 .ant-tabs-nav-wrap-ping-left::before,
@@ -454,6 +466,38 @@ a:focus, a:focus-visible, a:active,
   outline: none !important;
   box-shadow: none !important;
   -webkit-tap-highlight-color: transparent !important;
+}
+
+/* Site-wide Removal of Outlines & Borders on Badges, Tags, and Modals */
+.ant-tag,
+.ant-tag-has-color,
+.ant-tag-borderless,
+.ant-badge,
+.ant-badge-count,
+.ant-badge-dot {
+  border: 0 !important;
+  border-color: transparent !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.ant-modal,
+.ant-modal-content,
+.ant-modal-header,
+.ant-modal-footer,
+.ant-modal-title {
+  border: 0 !important;
+  border-color: transparent !important;
+  outline: none !important;
+}
+
+/* Scoped Individual Item Card Hover Zoom-in Animation */
+.item-card-zoom {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, border-color 0.2s ease !important;
+}
+
+.item-card-zoom:hover {
+  transform: scale(1.015);
 }
 
 

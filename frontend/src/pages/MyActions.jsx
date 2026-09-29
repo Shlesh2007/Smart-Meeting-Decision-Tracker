@@ -485,13 +485,8 @@ export default function MyActions() {
               return (
                 <Card
                   key={record.id}
-                  className={`shadow-xs rounded-2xl border transition-all hover:shadow-md flex flex-col justify-between ${
-                    record.is_overdue
-                      ? 'bg-rose-50/40 dark:bg-rose-950/20 border-rose-200 dark:border-rose-900/60 hover:border-rose-400'
-                      : record.status === 'COMPLETED'
-                      ? 'bg-emerald-50/30 dark:bg-emerald-950/20 border-emerald-200/80 dark:border-emerald-900/40 hover:border-emerald-400'
-                      : 'bg-white dark:bg-slate-800 border-slate-200/80 dark:border-slate-700/80 hover:border-blue-400'
-                  }`}
+                  onClick={() => setViewDetailActionItem(record)}
+                  className="item-card-zoom shadow-xs rounded-2xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-800 hover:border-blue-400 hover:shadow-md flex flex-col justify-between cursor-pointer"
                   styles={{ body: { padding: '16px', display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between' } }}
                 >
                   <div className="space-y-3">
@@ -511,10 +506,7 @@ export default function MyActions() {
 
                     {/* Title & Description Preview */}
                     <div>
-                      <h3
-                        onClick={() => setViewDetailActionItem(record)}
-                        className="font-bold text-sm text-slate-900 dark:text-white m-0 leading-snug cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-                      >
+                      <h3 className="font-bold text-sm text-slate-900 dark:text-white m-0 leading-snug">
                         {record.title}
                       </h3>
                       {record.description && (
@@ -572,8 +564,8 @@ export default function MyActions() {
                       </div>
                     </div>
 
-                    {/* Card Actions: Quick Status Update + Details Button */}
-                    <div className="flex items-center justify-between gap-2 pt-0.5">
+                    {/* Quick Status Update Select (Stops propagation so changing dropdown doesn't trigger modal) */}
+                    <div className="pt-0.5" onClick={(e) => e.stopPropagation()}>
                       <Select
                         id={`card_action_status_select_${record.id}`}
                         name={`card_action_status_select_${record.id}`}
@@ -581,7 +573,7 @@ export default function MyActions() {
                         loading={updatingId === record.id}
                         onChange={(val) => handleStatusChange(record, val)}
                         disabled={record.status === 'COMPLETED' || record.status === 'CANCELLED'}
-                        className="flex-1 min-w-0 text-xs font-medium"
+                        className="w-full text-xs font-medium"
                         options={[
                           { label: 'Todo', value: 'TODO' },
                           { label: 'In Progress', value: 'IN_PROGRESS' },
@@ -593,15 +585,6 @@ export default function MyActions() {
                           },
                           { label: 'Cancelled', value: 'CANCELLED' }
                         ]}
-                      />
-
-                      <Button
-                        type="default"
-                        size="small"
-                        icon={<EyeOutlined />}
-                        onClick={() => setViewDetailActionItem(record)}
-                        className="rounded-lg text-xs font-bold text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:text-blue-600 dark:hover:text-blue-400 shrink-0 h-8 px-2.5 flex items-center justify-center"
-                        title="View Action Details"
                       />
                     </div>
                   </div>

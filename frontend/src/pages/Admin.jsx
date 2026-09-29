@@ -426,9 +426,10 @@ export default function Admin() {
             {
               key: 'users',
               label: (
-                <span className="font-semibold flex items-center space-x-2 text-xs sm:text-sm whitespace-nowrap">
+                <span className="font-semibold flex items-center space-x-1 sm:space-x-2 text-[11px] sm:text-sm whitespace-nowrap">
                   <UserOutlined />
-                  <span>Users Directory ({users.length})</span>
+                  <span className="hidden sm:inline">Users Directory ({users.length})</span>
+                  <span className="inline sm:hidden">Users ({users.length})</span>
                 </span>
               ),
               children: loading ? (
@@ -442,11 +443,14 @@ export default function Admin() {
             {
               key: 'department_requests',
               label: (
-                <span className="font-semibold flex items-center space-x-1.5 sm:space-x-2 text-xs sm:text-sm whitespace-nowrap">
+                <span className="font-semibold flex items-center space-x-1 sm:space-x-2 text-[11px] sm:text-sm whitespace-nowrap">
                   <SolutionOutlined />
-                  <span>Department Requests ({deptRequests.length})</span>
+                  <span className="hidden sm:inline">Department Requests ({deptRequests.length})</span>
+                  <span className="inline sm:hidden">Requests ({deptRequests.length})</span>
                   {pendingDeptCount > 0 && (
-                    <Tag color="error" className="font-bold text-[10px] m-0 rounded-full px-1.5 py-0">{pendingDeptCount} PENDING</Tag>
+                    <Tag color="error" className="font-bold text-[9px] sm:text-[10px] m-0 rounded-full px-1 sm:px-1.5 py-0">
+                      {pendingDeptCount} <span className="hidden sm:inline">PENDING</span>
+                    </Tag>
                   )}
                 </span>
               ),
@@ -466,9 +470,10 @@ export default function Admin() {
             {
               key: 'teams',
               label: (
-                <span className="font-semibold flex items-center space-x-2 text-xs sm:text-sm whitespace-nowrap">
+                <span className="font-semibold flex items-center space-x-1 sm:space-x-2 text-[11px] sm:text-sm whitespace-nowrap">
                   <TeamOutlined />
-                  <span>Teams Directory ({teams.length})</span>
+                  <span className="hidden sm:inline">Teams Directory ({teams.length})</span>
+                  <span className="inline sm:hidden">Teams ({teams.length})</span>
                 </span>
               ),
               children: loading ? (
