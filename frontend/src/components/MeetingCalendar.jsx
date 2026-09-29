@@ -5,7 +5,6 @@ import {
   ClockCircleOutlined,
   EnvironmentOutlined,
   UserOutlined,
-  PlusOutlined,
   RightOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
@@ -107,19 +106,6 @@ export function MeetingCalendar({ meetings = [], loading = false }) {
             </div>
           </div>
         ))}
-      </div>
-
-      <div className="pt-2 border-t border-slate-100 flex justify-end">
-        <Button
-          type="primary"
-          ghost
-          size="small"
-          icon={<PlusOutlined />}
-          className="text-[11px] font-bold rounded-lg"
-          onClick={() => navigate(`/meetings/new?date=${dateStr}`)}
-        >
-          Schedule Meeting
-        </Button>
       </div>
     </div>
   );

@@ -92,6 +92,9 @@ class ActionItemViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         user = self.request.user
+        if not user or not user.is_authenticated:
+            raise permissions.PermissionDenied("Authentication required to create action items.")
+
         # MEMBER role restriction on action item creation unless assigned to self
         assigned_to = serializer.validated_data.get('assigned_to', [])
         if not user.is_manager_role and assigned_to:

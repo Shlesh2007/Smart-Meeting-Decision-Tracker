@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Modal, Form, Input, Select, DatePicker, message, Alert } from 'antd';
+import { Modal, Form, Input, Select, DatePicker, message as staticMessage, Alert, App } from 'antd';
 import dayjs from 'dayjs';
 import { actionService, userService, meetingService, discussionService, decisionService } from '../services/api.js';
 import { getErrorMessage } from '../utils/errorHandler.js';
@@ -7,6 +7,8 @@ import { getErrorMessage } from '../utils/errorHandler.js';
 export const ActionFormModal = ({
   open, onClose, decisionId, meetingId, existingAction, availableActions = [], onSuccess
 }) => {
+  const staticApp = App.useApp ? App.useApp() : null;
+  const message = staticApp?.message || staticMessage;
   const [form] = Form.useForm();
   const [users, setUsers] = useState([]);
   const [meetingParticipants, setMeetingParticipants] = useState([]);

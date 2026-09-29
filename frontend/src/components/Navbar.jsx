@@ -3,8 +3,22 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { ProfileModal } from './ProfileModal.jsx';
 import { Logo } from './Logo.jsx';
-import { analyticsService, meetingService, actionService, notificationService } from '../services/api.js';
-import { Button, Dropdown, Avatar, Tag, Drawer, Input, Popover, Badge, Spin, Tooltip } from 'antd';
+import { notificationService } from '../services/api.js';
+import {
+  Button,
+  Dropdown,
+  Avatar,
+  Tag,
+  Drawer,
+  Popover,
+  Badge,
+  Tooltip,
+  Menu,
+  Segmented,
+  Space,
+  Flex,
+  Grid
+} from 'antd';
 import {
   DashboardOutlined,
   CalendarOutlined,
@@ -13,7 +27,6 @@ import {
   UserOutlined,
   LogoutOutlined,
   RightOutlined,
-  SearchOutlined,
   BellOutlined,
   ExclamationCircleOutlined,
   CheckOutlined,
@@ -22,16 +35,19 @@ import {
   CloseOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
-  MenuOutlined,
   PlusOutlined,
   SafetyOutlined,
 } from '@ant-design/icons';
+
+const { useBreakpoint } = Grid;
 
 export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
   const location = useLocation();
   const pathname = location.pathname;
   const navigate = useNavigate();
   const { user, logout, isAdmin } = useAuth();
+  const screens = useBreakpoint();
+
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
 
@@ -103,14 +119,14 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
   const now = new Date();
   const fullDateStr = now.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' });
   const shortDateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  const currentDateStr = fullDateStr;
 
-  const navItems = [
-    { label: 'Dashboard', path: '/dashboard', icon: <DashboardOutlined /> },
-    { label: 'Meetings', path: '/meetings', icon: <CalendarOutlined /> },
-    { label: 'Action Items', path: '/my-actions', icon: <CheckSquareOutlined /> },
-    ...(isAdmin ? [{ label: 'Admin Management', path: '/admin', icon: <TeamOutlined /> }] : []),
-  ];
+  const getActiveKey = () => {
+    if (pathname === '/dashboard') return '/dashboard';
+    if (pathname.startsWith('/meetings')) return '/meetings';
+    if (pathname.startsWith('/my-actions')) return '/my-actions';
+    if (pathname.startsWith('/admin')) return '/admin';
+    return pathname;
+  };
 
   const handleNavigation = (path) => {
     if (document.activeElement && typeof document.activeElement.blur === 'function') {
@@ -123,68 +139,82 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
     }
   };
 
+  const menuItems = [
+    {
+      key: '/dashboard',
+      icon: <DashboardOutlined className="text-base" />,
+      label: 'Dashboard',
+      onClick: () => handleNavigation('/dashboard'),
+    },
+    {
+      key: '/meetings',
+      icon: <CalendarOutlined className="text-base" />,
+      label: 'Meetings',
+      onClick: () => handleNavigation('/meetings'),
+    },
+    {
+      key: '/my-actions',
+      icon: <CheckSquareOutlined className="text-base" />,
+      label: 'Action Items',
+      onClick: () => handleNavigation('/my-actions'),
+    },
+    ...(isAdmin ? [
+      {
+        key: '/admin',
+        icon: <TeamOutlined className="text-base" />,
+        label: 'Admin Management',
+        onClick: () => handleNavigation('/admin'),
+      },
+    ] : []),
+  ];
+
   const notificationPopoverContent = (
     <div className="w-80 max-w-[calc(100vw-32px)] sm:w-80 select-none">
-      <div className="flex items-center justify-between pb-2.5 border-b border-slate-100 dark:border-slate-800">
-        <div className="flex items-center space-x-2">
+      <Flex align="center" justify="space-between" className="pb-2.5 border-b border-slate-100 dark:border-slate-800">
+        <Space size={6}>
           <BellOutlined className="text-blue-600 font-bold" />
           <h4 className="font-extrabold text-xs text-slate-900 dark:text-white m-0">Notifications</h4>
+          {hasUnread && <Badge count={unreadNotifications.length} size="small" />}
+        </Space>
+        <Space size={4}>
           {hasUnread && (
-            <Badge count={unreadNotifications.length} className="ml-1" size="small" />
-          )}
-        </div>
-        <div className="flex items-center space-x-2">
-          {hasUnread && (
-            <button
-              type="button"
-              id="notification_mark_read_btn"
-              name="notification_mark_read_btn"
+            <Button
+              type="link"
+              size="small"
               onClick={markAllAsRead}
-              className="text-[10px] text-blue-600 hover:underline font-bold bg-transparent border-0 cursor-pointer"
+              className="p-0 text-[10px] font-bold text-blue-600 hover:text-blue-700 h-auto border-none"
             >
               Mark all read
-            </button>
+            </Button>
           )}
-          <button
-            type="button"
-            id="notification_close_btn"
-            name="notification_close_btn"
+          <Button
+            type="text"
+            shape="circle"
+            size="small"
+            icon={<CloseOutlined className="text-xs text-slate-400" />}
             onClick={() => setPopoverOpen(false)}
-            className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors bg-transparent border-0 cursor-pointer"
-            aria-label="Close Notifications"
-            title="Close Notifications"
-          >
-            <CloseOutlined className="text-xs" />
-          </button>
-        </div>
-      </div>
+          />
+        </Space>
+      </Flex>
 
-      {/* Filter Tabs: Unread vs All */}
-      <div className="flex items-center space-x-1 mt-2.5 mb-2 p-0.5 bg-slate-100 dark:bg-slate-800 rounded-lg text-[11px] font-semibold">
-        <button
-          type="button"
-          id="notif_tab_unread"
-          onClick={() => setNotificationTab('unread')}
-          className={`flex-1 py-1 px-2 text-center rounded-md transition-all border-0 cursor-pointer text-[11px] font-bold ${
-            notificationTab === 'unread'
-              ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-xs'
-              : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white bg-transparent'
-          }`}
-        >
-          Unread {unreadNotifications.length > 0 && `(${unreadNotifications.length})`}
-        </button>
-        <button
-          type="button"
-          id="notif_tab_all"
-          onClick={() => setNotificationTab('all')}
-          className={`flex-1 py-1 px-2 text-center rounded-md transition-all border-0 cursor-pointer text-[11px] font-bold ${
-            notificationTab === 'all'
-              ? 'bg-white dark:bg-slate-700 text-blue-600 dark:text-blue-400 shadow-xs'
-              : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white bg-transparent'
-          }`}
-        >
-          All ({notifications.length})
-        </button>
+      <div className="my-2">
+        <Segmented
+          value={notificationTab}
+          onChange={setNotificationTab}
+          options={[
+            {
+              label: unreadNotifications.length > 0 ? `Unread (${unreadNotifications.length})` : 'Unread',
+              value: 'unread'
+            },
+            {
+              label: `All (${notifications.length})`,
+              value: 'all'
+            }
+          ]}
+          block
+          size="small"
+          className="font-bold text-[11px]"
+        />
       </div>
 
       <div className="my-2 max-h-64 overflow-y-auto space-y-2 pr-1">
@@ -204,13 +234,14 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
                 : 'No notification records found.'}
             </p>
             {notificationTab === 'unread' && notifications.length > 0 && (
-              <button
-                type="button"
+              <Button
+                type="link"
+                size="small"
                 onClick={() => setNotificationTab('all')}
-                className="text-xs text-blue-600 dark:text-blue-400 font-bold hover:underline bg-transparent border-0 cursor-pointer mt-1"
+                className="text-xs text-blue-600 dark:text-blue-400 font-bold p-0 h-auto"
               >
                 View All Notifications ({notifications.length}) →
-              </button>
+              </Button>
             )}
           </div>
         ) : (
@@ -247,20 +278,19 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
         )}
       </div>
 
-      <div className="pt-2 border-t border-slate-100 dark:border-slate-800 text-[10px] text-slate-400 flex justify-end items-center">
-        <button
-          type="button"
-          id="notification_view_actions_btn"
-          name="notification_view_actions_btn"
+      <Flex justify="end" className="pt-2 border-t border-slate-100 dark:border-slate-800">
+        <Button
+          type="link"
+          size="small"
           onClick={() => {
             setPopoverOpen(false);
             navigate('/my-actions');
           }}
-          className="no-underline text-blue-600 dark:text-blue-400 font-bold hover:underline bg-transparent border-0 cursor-pointer text-[10px]"
+          className="text-blue-600 dark:text-blue-400 font-bold p-0 text-[10px] h-auto"
         >
           View Actions →
-        </button>
-      </div>
+        </Button>
+      </Flex>
     </div>
   );
 
@@ -268,10 +298,10 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
     {
       key: 'profile_info',
       label: (
-        <div onClick={() => setShowProfileModal(true)} className="py-1.5 px-0.5 cursor-pointer">
+        <div onClick={() => setShowProfileModal(true)} className="py-1 px-0.5 cursor-pointer">
           <p className="font-bold text-slate-900 dark:text-white m-0">{user.full_name || user.username}</p>
           <p className="text-xs text-slate-500 dark:text-slate-400 m-0">{user.email}</p>
-          <span className="text-[11px] text-blue-600 font-semibold block mt-1.5 hover:underline">
+          <span className="text-[11px] text-blue-600 font-semibold block mt-1 hover:underline">
             View Profile Details <RightOutlined className="text-[9px]" />
           </span>
         </div>
@@ -298,11 +328,11 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
 
   return (
     <>
-      {/* Light Clean Left Sidebar for Desktop */}
+      {/* Desktop Left Sidebar powered by AntD Menu & Grid */}
       <aside className={`hidden lg:flex flex-col fixed top-0 left-0 bottom-0 z-40 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 border-r border-slate-200 dark:border-slate-700 shadow-xs transition-all duration-300 select-none ${collapsed ? 'w-16' : 'w-64'}`}>
         
         {/* Sidebar Brand Header */}
-        <div className={`h-11 px-3.5 border-b border-slate-200/80 dark:border-slate-700/80 flex items-center ${collapsed ? 'flex-col gap-2.5 justify-center' : 'justify-between'}`}>
+        <Flex align="center" justify={collapsed ? 'center' : 'space-between'} className="h-11 px-3.5 border-b border-slate-200/80 dark:border-slate-700/80 shrink-0">
           {!collapsed && (
             <Link to="/dashboard" className="no-underline flex items-center">
               <Logo variant="full" height={32} />
@@ -312,53 +342,28 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
             <Button
               type="text"
               size="small"
-              icon={collapsed ? <MenuUnfoldOutlined className="text-slate-500 hover:text-slate-800" /> : <MenuFoldOutlined className="text-slate-500 hover:text-slate-800" />}
+              icon={collapsed ? <MenuUnfoldOutlined className="text-slate-500" /> : <MenuFoldOutlined className="text-slate-500" />}
               onClick={onToggleSidebar}
               title={collapsed ? "Expand Sidebar" : "Collapse Sidebar"}
-              className="p-1 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg"
+              className="p-1 rounded-lg"
             />
           )}
-        </div>
+        </Flex>
 
-        {/* Navigation Items */}
-        <div className="flex-1 px-2.5 pt-0 pb-4 space-y-1 overflow-y-auto">
+        {/* AntD Navigation Menu */}
+        <div className="flex-1 px-1.5 pt-2 pb-4 overflow-y-auto">
           {!collapsed && (
             <div className="px-3 pb-2 text-[10px] uppercase font-extrabold tracking-wider text-slate-400">
               Navigation
             </div>
           )}
-
-          {navItems.map((item) => {
-            const isActive =
-              pathname === item.path ||
-              (item.path !== '/dashboard' && pathname.startsWith(item.path));
-
-            const buttonContent = (
-              <button
-                key={item.path}
-                type="button"
-                onClick={() => handleNavigation(item.path)}
-                className={`w-full flex items-center transition-all border-0 cursor-pointer ${
-                  collapsed ? 'justify-center p-2.5 rounded-xl' : 'space-x-3 px-3 py-2.5 text-xs font-bold rounded-lg'
-                } ${
-                  isActive
-                    ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 font-extrabold border-l-4 border-blue-600'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 bg-transparent'
-                }`}
-              >
-                <span className={`text-base ${isActive ? 'text-blue-600 dark:text-blue-400' : ''}`}>{item.icon}</span>
-                {!collapsed && <span className="truncate">{item.label}</span>}
-              </button>
-            );
-
-            return collapsed ? (
-              <Tooltip key={item.path} title={item.label} placement="right">
-                {buttonContent}
-              </Tooltip>
-            ) : (
-              buttonContent
-            );
-          })}
+          <Menu
+            mode="inline"
+            inlineCollapsed={collapsed}
+            selectedKeys={[getActiveKey()]}
+            items={menuItems}
+            className="border-none bg-transparent font-bold text-xs"
+          />
         </div>
 
         {/* Bottom Sidebar User Profile Card */}
@@ -392,23 +397,25 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
           <div className="pt-1 w-full flex justify-center">
             {collapsed ? (
               <Tooltip title="Logout" placement="right">
-                <button
-                  type="button"
+                <Button
+                  type="text"
+                  danger
+                  icon={<LogoutOutlined />}
                   onClick={logout}
-                  className="w-8 h-8 flex items-center justify-center rounded-lg bg-rose-500/10 text-rose-600 hover:bg-rose-500 hover:text-white border border-rose-200 text-xs font-bold transition-all cursor-pointer"
-                >
-                  <LogoutOutlined />
-                </button>
+                  className="w-8 h-8 rounded-lg bg-rose-500/10 text-rose-600 hover:bg-rose-500 hover:text-white border border-rose-200"
+                />
               </Tooltip>
             ) : (
-              <button
-                type="button"
+              <Button
+                type="default"
+                danger
+                icon={<LogoutOutlined />}
                 onClick={logout}
-                className="w-full flex items-center justify-center space-x-2 py-1.5 rounded-lg bg-rose-500/10 text-rose-600 hover:bg-rose-500 hover:text-white border border-rose-200 text-xs font-bold transition-all cursor-pointer"
+                block
+                className="rounded-lg bg-rose-500/10 text-rose-600 hover:bg-rose-500 hover:text-white border-rose-200 text-xs font-bold"
               >
-                <LogoutOutlined />
-                <span>Logout</span>
-              </button>
+                Logout
+              </Button>
             )}
           </div>
         </div>
@@ -416,43 +423,38 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
 
       {/* Top Navigation Header Bar */}
       <header className={`sticky top-0 z-30 w-full max-w-full bg-white/95 dark:bg-slate-800/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-700/80 shadow-xs transition-all duration-300 ${collapsed ? 'lg:pl-16' : 'lg:pl-64'}`}>
-        <div className="w-full max-w-[1600px] mx-auto px-3 sm:px-6 lg:px-8 h-11 flex items-center justify-between gap-2 sm:gap-4">
+        <Flex align="center" justify="space-between" className="w-full max-w-[1600px] mx-auto px-3 sm:px-6 lg:px-8 h-11 gap-2 sm:gap-4">
 
           {/* Logo Brand Header */}
-          <div className="flex items-center space-x-2 shrink-0">
+          <Flex align="center" size={8} className="shrink-0">
             <div className={`items-center shrink-0 ${collapsed ? 'flex' : 'flex lg:hidden'}`}>
               <Link to="/dashboard" className="no-underline flex items-center">
                 <Logo variant="full" height={28} />
               </Link>
             </div>
-          </div>
+          </Flex>
 
           {/* Right Controls: Date Badge, Notifications & Profile */}
-          <div className="flex items-center space-x-1.5 sm:space-x-2.5 ml-auto shrink-0">
-            {/* Live Date Badge (Visible on sm and up) */}
+          <Space size={screens.md ? 10 : 6} className="ml-auto shrink-0">
+            {/* Live Date Badge */}
             <span className="hidden sm:inline-flex items-center space-x-1 text-[10px] sm:text-xs font-bold text-slate-600 dark:text-slate-300 bg-slate-100/80 dark:bg-slate-800/80 px-2 py-0.5 rounded-md border border-slate-200/80 dark:border-slate-700 shrink-0">
               <CalendarOutlined className="text-blue-500 text-[11px] shrink-0" />
               <span className="sm:hidden">{shortDateStr}</span>
               <span className="hidden sm:inline">{fullDateStr}</span>
             </span>
 
-            {/* Admin Panel Quick Access Button (Visible for Admin/Owner users) */}
+            {/* Admin Panel Quick Access Button */}
             {isAdmin && (
               <Tooltip title="Admin Management Panel">
-                <button
-                  type="button"
-                  id="navbar_admin_panel_btn"
-                  name="navbar_admin_panel_btn"
+                <Button
+                  type={pathname === '/admin' ? 'primary' : 'default'}
+                  icon={<SafetyOutlined className={pathname === '/admin' ? 'text-white' : 'text-blue-600 dark:text-blue-400'} />}
                   onClick={() => navigate('/admin')}
-                  className={`cursor-pointer h-8 px-2.5 flex items-center space-x-1.5 rounded-lg transition-all border shrink-0 ${
-                    pathname === '/admin'
-                      ? 'bg-blue-600 text-white border-blue-600 shadow-xs'
-                      : 'text-slate-700 dark:text-slate-200 bg-slate-100/70 dark:bg-slate-700/50 hover:bg-blue-50 dark:hover:bg-slate-700 hover:text-blue-600 dark:hover:text-blue-400 border-slate-200/60 dark:border-slate-700/60'
-                  }`}
+                  size="small"
+                  className={`h-8 px-2.5 font-bold rounded-lg ${pathname === '/admin' ? 'bg-blue-600' : 'bg-slate-100/70 dark:bg-slate-700/50'}`}
                 >
-                  <SafetyOutlined className={`text-base ${pathname === '/admin' ? 'text-white' : 'text-blue-600 dark:text-blue-400'}`} />
                   <span className="hidden sm:inline text-xs font-bold">Admin Panel</span>
-                </button>
+                </Button>
               </Tooltip>
             )}
 
@@ -471,30 +473,33 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
               }}
               overlayClassName="notification-popover"
             >
-              <div className="cursor-pointer w-8 h-8 flex items-center justify-center rounded-lg text-slate-700 dark:text-slate-200 bg-slate-100/70 dark:bg-slate-700/50 hover:bg-blue-50 dark:hover:bg-slate-700 hover:text-blue-600 dark:hover:text-blue-400 transition-all border border-slate-200/60 dark:border-slate-700/60 shrink-0">
-                <Badge dot={hasUnread} offset={[-1, 1]} className="flex items-center justify-center">
+              <Button
+                type="text"
+                className="w-8 h-8 p-0 flex items-center justify-center rounded-lg bg-slate-100/70 dark:bg-slate-700/50 border border-slate-200/60 dark:border-slate-700/60"
+              >
+                <Badge dot={hasUnread} offset={[-1, 1]}>
                   <BellOutlined className="text-base text-slate-700 dark:text-slate-200" />
                 </Badge>
-              </div>
+              </Button>
             </Popover>
 
             {/* User Profile Dropdown */}
             <Dropdown menu={{ items: userMenuItems }} placement="bottomRight" trigger={['click']}>
-              <div className="flex items-center space-x-1.5 cursor-pointer p-0.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700/70 transition-all border border-transparent hover:border-slate-200 dark:hover:border-slate-700 shrink-0">
+              <Flex align="center" size={6} className="cursor-pointer p-0.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700/70 transition-all border border-transparent hover:border-slate-200 dark:hover:border-slate-700 shrink-0">
                 <Avatar className="bg-blue-600 font-extrabold text-[11px] text-white shadow-xs ring-2 ring-blue-500/20 shrink-0 flex items-center justify-center w-7 h-7">
-                  {(user?.first_name || user?.username || 'U')[0].toUpperCase()}
+                   {(user?.first_name || user?.username || 'U')[0].toUpperCase()}
                 </Avatar>
-                <span className="hidden md:inline-block text-xs font-bold text-slate-800 dark:text-slate-200">
-                  {user.first_name || user.username}
+                <span className="hidden md:inline-block text-xs font-bold text-slate-800 dark:text-slate-200" style={{padding:'7px'}}>
+                   {user.first_name || user.username}
                 </span>
-              </div>
+              </Flex>
             </Dropdown>
-          </div>
+          </Space>
 
-        </div>
+        </Flex>
       </header>
 
-      {/* Clean Light Mobile Offcanvas Navigation Drawer */}
+      {/* Clean Offcanvas Mobile Navigation Drawer powered by AntD Drawer & Menu */}
       <Drawer
         title={
           <Link to="/dashboard" className="no-underline flex items-center" onClick={() => setDrawerOpen(false)}>
@@ -520,7 +525,7 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
             padding: '16px',
             display: 'flex',
             flexDirection: 'column',
-            justify: 'space-between',
+            justifyContent: 'space-between',
           },
         }}
       >
@@ -529,40 +534,24 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
             Navigation
           </div>
 
-          {/* Navigation Items */}
-          <div className="space-y-1.5">
-            {navItems.map((item) => {
-              const isActive =
-                pathname === item.path ||
-                (item.path !== '/dashboard' && pathname.startsWith(item.path));
-
-              return (
-                <button
-                  key={item.path}
-                  type="button"
-                  onClick={() => handleNavigation(item.path)}
-                  className={`w-full flex items-center space-x-3 px-3 py-2.5 text-xs font-bold transition-all border-0 text-left cursor-pointer ${
-                    isActive
-                      ? 'bg-blue-50 text-blue-600 font-extrabold border-l-4 border-blue-600 rounded-r-lg'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 bg-transparent rounded-lg'
-                  }`}
-                >
-                  <span className={`text-base ${isActive ? 'text-blue-600' : ''}`}>{item.icon}</span>
-                  <span className="truncate">{item.label}</span>
-                </button>
-              );
-            })}
-          </div>
+          <Menu
+            mode="inline"
+            selectedKeys={[getActiveKey()]}
+            items={menuItems}
+            className="border-none bg-transparent font-bold text-xs"
+          />
         </div>
 
         {/* Offcanvas Footer Profile Card */}
         <div className="pt-4 border-t border-slate-200 space-y-3">
-          <div
+          <Flex
+            align="center"
+            size={8}
             onClick={() => {
               setDrawerOpen(false);
               setShowProfileModal(true);
             }}
-            className="flex items-center space-x-2 cursor-pointer p-1.5 rounded-xl bg-slate-50 border border-slate-200 hover:bg-slate-100 transition-colors"
+            className="cursor-pointer p-1.5 rounded-xl bg-slate-50 border border-slate-200 hover:bg-slate-100 transition-colors"
           >
             <Avatar className="bg-blue-600 font-extrabold text-[11px] text-white shrink-0 flex items-center justify-center w-7 h-7">
               {(user?.first_name || user?.username || 'U')[0].toUpperCase()}
@@ -580,44 +569,40 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
                 {user.email}
               </p>
             </div>
-          </div>
+          </Flex>
 
           <div>
-            <button
-              type="button"
+            <Button
+              type="default"
+              danger
+              icon={<LogoutOutlined />}
               onClick={() => {
                 setDrawerOpen(false);
                 logout();
               }}
-              className="w-full flex items-center justify-center space-x-2 py-2 rounded-lg bg-rose-500/10 text-rose-600 hover:bg-rose-500 hover:text-white border border-rose-200 text-xs font-bold transition-all cursor-pointer"
+              block
+              className="rounded-lg bg-rose-500/10 text-rose-600 hover:bg-rose-500 hover:text-white border-rose-200 text-xs font-bold"
             >
-              <LogoutOutlined />
-              <span>Logout</span>
-            </button>
+              Logout
+            </Button>
           </div>
         </div>
       </Drawer>
 
-
-
-      {/* Bottom Navigation Bar for Mobile / Responsive Screens */}
+      {/* Bottom Navigation Bar for Mobile / Responsive Screens powered by AntD Buttons & Badge */}
       <nav className="mobile-bottom-nav lg:hidden fixed bottom-0 left-0 right-0 w-full z-50 select-none !overflow-visible pointer-events-none">
-        
-        {/* Navbar Background & Tab Items Row (z-10) */}
         <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-200/90 dark:border-slate-800 shadow-2xl rounded-t-2xl px-3 pt-1.5 pb-2.5 flex items-center justify-between relative z-10 pointer-events-auto !overflow-visible">
           
           {/* Item 1: Home (Dashboard) */}
-          <button
-            type="button"
-            id="mobile_nav_home"
-            name="mobile_nav_home"
+          <Button
+            type="text"
             onClick={() => handleNavigation('/dashboard')}
-            className="flex-1 flex flex-col items-center justify-center py-1 transition-all border-0 bg-transparent cursor-pointer group outline-none focus:outline-none focus:ring-0"
+            className="flex-1 flex flex-col items-center justify-center h-auto py-1 border-none hover:bg-transparent"
           >
             <div className={`p-1.5 rounded-xl transition-all ${
               pathname === '/dashboard'
                 ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-bold scale-110'
-                : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-700 dark:group-hover:text-slate-300'
+                : 'text-slate-400 dark:text-slate-500'
             }`}>
               <DashboardOutlined className="text-lg" />
             </div>
@@ -628,20 +613,18 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
             }`}>
               Dashboard
             </span>
-          </button>
+          </Button>
 
           {/* Item 2: Meetings */}
-          <button
-            type="button"
-            id="mobile_nav_meetings"
-            name="mobile_nav_meetings"
+          <Button
+            type="text"
             onClick={() => handleNavigation('/meetings')}
-            className="flex-1 flex flex-col items-center justify-center py-1 transition-all border-0 bg-transparent cursor-pointer group outline-none focus:outline-none focus:ring-0"
+            className="flex-1 flex flex-col items-center justify-center h-auto py-1 border-none hover:bg-transparent"
           >
             <div className={`p-1.5 rounded-xl transition-all ${
               pathname === '/meetings' || (pathname.startsWith('/meetings/') && pathname !== '/meetings/new')
                 ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-bold scale-110'
-                : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-700 dark:group-hover:text-slate-300'
+                : 'text-slate-400 dark:text-slate-500'
             }`}>
               <CalendarOutlined className="text-lg" />
             </div>
@@ -652,14 +635,13 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
             }`}>
               Meetings
             </span>
-          </button>
+          </Button>
 
-          {/* Item 3 Center Column Spacer & Label */}
+          {/* Item 3 Center Spacer & Create Button Label */}
           <div
             onClick={() => handleNavigation('/meetings/new')}
-            className="flex-1 flex flex-col items-center justify-center py-1 cursor-pointer group outline-none focus:outline-none"
+            className="flex-1 flex flex-col items-center justify-center py-1 cursor-pointer group"
           >
-            {/* Invisible height spacer for top half of button spacing */}
             <div className="w-10 h-7 pointer-events-none" />
             <span className={`text-[9.5px] font-extrabold mt-0.5 uppercase tracking-tight transition-colors ${
               pathname === '/meetings/new'
@@ -671,17 +653,15 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
           </div>
 
           {/* Item 4: Action Items */}
-          <button
-            type="button"
-            id="mobile_nav_actions"
-            name="mobile_nav_actions"
+          <Button
+            type="text"
             onClick={() => handleNavigation('/my-actions')}
-            className="flex-1 flex flex-col items-center justify-center py-1 transition-all border-0 bg-transparent cursor-pointer group outline-none focus:outline-none focus:ring-0"
+            className="flex-1 flex flex-col items-center justify-center h-auto py-1 border-none hover:bg-transparent"
           >
             <div className={`p-1.5 rounded-xl transition-all ${
               pathname === '/my-actions'
                 ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-bold scale-110'
-                : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-700 dark:group-hover:text-slate-300'
+                : 'text-slate-400 dark:text-slate-500'
             }`}>
               <CheckSquareOutlined className="text-lg" />
             </div>
@@ -692,20 +672,18 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
             }`}>
               Actions
             </span>
-          </button>
+          </Button>
 
           {/* Item 5: Profile Modal */}
-          <button
-            type="button"
-            id="mobile_nav_profile"
-            name="mobile_nav_profile"
+          <Button
+            type="text"
             onClick={() => setShowProfileModal(true)}
-            className="flex-1 flex flex-col items-center justify-center py-1 transition-all border-0 bg-transparent cursor-pointer group outline-none focus:outline-none focus:ring-0"
+            className="flex-1 flex flex-col items-center justify-center h-auto py-1 border-none hover:bg-transparent"
           >
             <div className={`p-1.5 rounded-xl transition-all ${
               showProfileModal
                 ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-bold scale-110'
-                : 'text-slate-400 dark:text-slate-500 group-hover:text-slate-700 dark:group-hover:text-slate-300'
+                : 'text-slate-400 dark:text-slate-500'
             }`}>
               <UserOutlined className="text-lg" />
             </div>
@@ -716,43 +694,33 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
             }`}>
               Profile
             </span>
-          </button>
+          </Button>
 
         </div>
 
-        {/* Floating CREATE (+) Button Positioned OUTSIDE the Backdrop Container (z-50) */}
-        <button
-          type="button"
-          id="mobile_nav_create_meeting"
-          name="mobile_nav_create_meeting"
+        {/* Floating AntD Primary CREATE (+) Button */}
+        <Button
+          type="primary"
+          shape="circle"
+          icon={<PlusOutlined className="text-xl font-black" />}
           onClick={() => handleNavigation('/meetings/new')}
           title="Create Meeting"
           style={{
             width: '52px',
             height: '52px',
-            minWidth: '52px',
-            minHeight: '52px',
-            maxWidth: '52px',
-            maxHeight: '52px',
-            borderRadius: '9999px',
             position: 'absolute',
             left: '50%',
             top: '-26px',
             transform: 'translateX(-50%)',
             zIndex: 50,
-            padding: 0,
-            margin: 0,
-            boxSizing: 'border-box'
+            pointerEvents: 'auto',
           }}
-          className={`${
+          className={`border-none flex items-center justify-center shadow-lg pointer-events-auto cursor-pointer ${
             pathname === '/meetings/new'
               ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 ring-4 ring-slate-400/50 scale-105'
-              : 'bg-slate-900  text-white dark:bg-white dark:text-slate-900 active:scale-95'
+              : 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 active:scale-95'
           }`}
-        >
-          <PlusOutlined className="text-xl font-black" />
-        </button>
-
+        />
       </nav>
 
       {/* User Profile Modal */}

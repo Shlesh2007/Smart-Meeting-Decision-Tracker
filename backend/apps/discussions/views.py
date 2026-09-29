@@ -14,4 +14,7 @@ class DiscussionViewSet(viewsets.ModelViewSet):
     search_fields = ('title', 'description')
 
     def perform_create(self, serializer):
-        serializer.save(created_by=self.request.user)
+        user = self.request.user
+        if not user or not user.is_authenticated:
+            raise permissions.PermissionDenied("Authentication required to create a discussion topic.")
+        serializer.save(created_by=user)

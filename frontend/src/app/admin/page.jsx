@@ -169,7 +169,7 @@ export default function AdminPage() {
       render: (_, u) => (
         <div className="flex items-center space-x-2.5">
           <Avatar className="bg-blue-600 font-extrabold text-xs text-white shrink-0 flex items-center justify-center">
-            {(u.first_name || u.full_name || u.username || 'U')[0].toUpperCase()}
+             {(u.first_name || u.full_name || u.username || 'U')[0].toUpperCase()}
           </Avatar>
           <div>
             <span className="font-semibold text-slate-900 dark:text-slate-100 block">{u.full_name}</span>
