@@ -127,6 +127,7 @@ export const ActionDetailModal = ({
         </div>
       }
       width={640}
+      style={{ maxWidth: 'calc(100vw - 24px)', margin: '12px auto' }}
       className="top-6"
     >
       <div className="space-y-4 py-2 text-xs">
@@ -266,29 +267,29 @@ export const ActionDetailModal = ({
 
         {/* Prerequisite Dependencies Section */}
         {dependencies.length > 0 && (
-          <div className="p-3 bg-amber-50/70 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 rounded-xl space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-extrabold text-amber-800 dark:text-amber-400 uppercase tracking-wider">
+          <div className="p-3 bg-amber-50/70 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 rounded-xl space-y-2 min-w-0 max-w-full overflow-hidden">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[10px] font-extrabold text-amber-800 dark:text-amber-400 uppercase tracking-wider shrink-0">
                 Prerequisite Dependencies ({dependencies.length})
               </span>
               {hasIncompleteDeps && (
-                <Tag color="warning" className="text-[9.5px] font-bold m-0 px-1.5 py-0">
+                <Tag color="warning" className="text-[9.5px] font-bold m-0 px-1.5 py-0 shrink-0">
                   Prereqs Incomplete
                 </Tag>
               )}
             </div>
 
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 min-w-0 max-w-full overflow-hidden">
               {dependencies.map((dep) => (
                 <div
                   key={dep.id}
-                  className="flex items-center justify-between text-xs p-2 bg-white dark:bg-slate-900 rounded-lg border border-amber-200/80 dark:border-amber-900/40 shadow-2xs"
+                  className="flex items-center justify-between gap-2 text-xs p-2 bg-white dark:bg-slate-900 rounded-lg border border-amber-200/80 dark:border-amber-900/40 shadow-2xs min-w-0 max-w-full overflow-hidden"
                 >
-                  <div className="flex items-center space-x-2 min-w-0 pr-2">
+                  <div className="flex items-center space-x-2 min-w-0 flex-1 overflow-hidden">
                     <span className="text-sm shrink-0">
                       {dep.is_completed ? '✓' : '🔒'}
                     </span>
-                    <span className="font-semibold text-slate-800 dark:text-slate-200 truncate">
+                    <span className="font-semibold text-slate-800 dark:text-slate-200 truncate block min-w-0 flex-1" title={dep.title}>
                       {dep.title}
                     </span>
                   </div>
@@ -303,9 +304,9 @@ export const ActionDetailModal = ({
             </div>
 
             {hasIncompleteDeps && (
-              <div className="pt-1.5 border-t border-amber-200 dark:border-amber-900/50 flex items-center space-x-1.5 text-amber-800 dark:text-amber-300 font-bold text-[11px] leading-tight">
+              <div className="pt-1.5 border-t border-amber-200 dark:border-amber-900/50 flex items-center space-x-1.5 text-amber-800 dark:text-amber-300 font-bold text-[11px] leading-tight min-w-0 max-w-full overflow-hidden">
                 <LockOutlined className="shrink-0 text-xs text-amber-600" />
-                <span>
+                <span className="min-w-0 flex-1">
                   Status update to Completed is locked until all prerequisites finish.
                 </span>
               </div>

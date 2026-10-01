@@ -552,13 +552,17 @@ export default function MyActions() {
 
                       {/* Prerequisite Dependencies Tags */}
                       {record.dependency_details && record.dependency_details.length > 0 && (
-                        <div className="space-y-1 pt-0.5">
+                        <div className="space-y-1 pt-0.5 min-w-0 max-w-full overflow-hidden">
                           <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
                             Prerequisites ({record.dependency_details.length})
                           </span>
-                          <div className="flex flex-wrap gap-1">
+                          <div className="flex flex-wrap gap-1 max-w-full overflow-hidden">
                             {record.dependency_details.map((dep) => (
-                              <Tag key={dep.id} color={dep.is_completed ? 'success' : 'error'} className="text-[10px] m-0">
+                              <Tag
+                                key={dep.id}
+                                color={dep.is_completed ? 'success' : 'error'}
+                                className="text-[10px] m-0 max-w-full whitespace-normal break-words py-0.5 px-2 rounded-md leading-tight"
+                              >
                                 {dep.is_completed ? '✓ ' : '🔒 '}{dep.title}
                               </Tag>
                             ))}

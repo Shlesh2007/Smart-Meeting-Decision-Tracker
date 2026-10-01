@@ -218,7 +218,7 @@ export const ActionFormModal = ({
     <Modal
       title={existingAction ? 'Edit Action Item' : 'Add Action Item'}
       open={open}
-      style={{ maxWidth: '95vw' }}
+      style={{ maxWidth: 'calc(100vw - 24px)', margin: '12px auto' }}
       onCancel={onClose}
       onOk={() => form.submit()}
       confirmLoading={submitting}
