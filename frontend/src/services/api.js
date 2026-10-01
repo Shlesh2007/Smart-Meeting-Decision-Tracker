@@ -256,6 +256,10 @@ export const discussionService = {
 
 // Decisions & History Service
 export const decisionService = {
+  getDecisions: async (params) => {
+    const res = await api.get('/decisions/', { params });
+    return res.data;
+  },
   createDecision: async (payload) => {
     const res = await api.post('/decisions/', payload);
     return res.data;

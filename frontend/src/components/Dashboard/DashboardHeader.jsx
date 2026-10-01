@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button, Input, Select, AutoComplete, Tag, Spin, DatePicker } from 'antd';
-import { PlusOutlined, SyncOutlined, CalendarOutlined, ThunderboltOutlined, FormOutlined, SearchOutlined, FilterOutlined } from '@ant-design/icons';
+import { PlusOutlined, SyncOutlined, CalendarOutlined, ThunderboltOutlined, SearchOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
-import { Logo } from '../Logo.jsx';
-import { ActionFormModal } from '../ActionFormModal.jsx';
 import { meetingService, actionService, discussionService } from '../../services/api.js';
 
 const { RangePicker } = DatePicker;
@@ -23,7 +21,6 @@ export const DashboardHeader = ({
 }) => {
   const navigate = useNavigate();
 
-  const [showAddActionModal, setShowAddActionModal] = useState(false);
   const [searching, setSearching] = useState(false);
   const [searchResults, setSearchResults] = useState({ meetings: [], actions: [], discussions: [] });
 
@@ -187,25 +184,6 @@ export const DashboardHeader = ({
             </Button>
           </Link>
 
-          <Button
-            size="middle"
-            icon={<FormOutlined className="text-amber-500 font-bold" />}
-            onClick={() => setShowAddActionModal(true)}
-            className="hidden sm:inline-flex bg-amber-50/80 dark:bg-amber-950/40 hover:bg-amber-100 text-amber-900 dark:text-amber-200 font-bold !rounded-xl border-amber-200/80 dark:border-amber-900/60 text-xs h-9 px-2.5 sm:px-3.5 flex-initial items-center justify-center truncate"
-          >
-            <span className="text-xs font-bold">Add Action Item</span>
-          </Button>
-
-          <Link to="/meetings?view=calendar" className="hidden md:inline-flex no-underline">
-            <Button
-              size="middle"
-              icon={<CalendarOutlined className="text-indigo-500 font-bold" />}
-              className="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-200 font-bold !rounded-xl border-slate-200 dark:border-slate-700 text-xs h-9 px-2.5 sm:px-3.5 flex items-center justify-center truncate"
-            >
-              <span className="text-xs font-bold">Calendar</span>
-            </Button>
-          </Link>
-
           {onRefresh && (
             <Button
               size="middle"
@@ -297,12 +275,6 @@ export const DashboardHeader = ({
           </div>
         )}
       </div>
-
-      <ActionFormModal
-        open={showAddActionModal}
-        onClose={() => setShowAddActionModal(false)}
-        onSuccess={() => setShowAddActionModal(false)}
-      />
     </div>
   );
 };

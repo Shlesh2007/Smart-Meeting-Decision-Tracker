@@ -30,10 +30,10 @@ export const NeedsAttention = ({ overdueList = [], urgentList = [], loading = fa
   }, [overdueList, urgentList]);
 
   const handleViewAction = (item) => {
-    if (item.meeting_id) {
-      navigate(`/meetings/${item.meeting_id}`);
+    if (item && item.id) {
+      navigate(`/my-actions?action_id=${item.id}&search=${encodeURIComponent(item.title || '')}`);
     } else {
-      navigate(`/my-actions?search=${encodeURIComponent(item.title)}`);
+      navigate('/my-actions');
     }
   };
 
@@ -90,7 +90,8 @@ export const NeedsAttention = ({ overdueList = [], urgentList = [], loading = fa
     return (
       <div
         key={item.id}
-        className="p-2.5 rounded-lg bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-600 transition-all flex items-center justify-between gap-2 group"
+        onClick={() => handleViewAction(item)}
+        className="py-1.5 px-2.5 rounded-xl bg-slate-50/70 dark:bg-slate-800/40 hover:bg-slate-100/80 dark:hover:bg-slate-800/80 border border-slate-200/60 dark:border-slate-700/60 hover:border-slate-300 dark:hover:border-slate-600 transition-all flex items-center justify-between gap-2 cursor-pointer group shadow-2xs"
       >
         <div className="flex items-center space-x-2.5 min-w-0 flex-1">
           <div
@@ -142,7 +143,10 @@ export const NeedsAttention = ({ overdueList = [], urgentList = [], loading = fa
           <Button
             type="primary"
             size="small"
-            onClick={() => handleViewAction(item)}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleViewAction(item);
+            }}
             className="bg-slate-900 hover:bg-slate-800 font-semibold rounded-md text-[10px] border-none px-2 py-0.5 h-6 flex items-center gap-1 text-white cursor-pointer"
           >
             <span>View</span>
@@ -154,9 +158,9 @@ export const NeedsAttention = ({ overdueList = [], urgentList = [], loading = fa
   };
 
   return (
-    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 sm:p-4 shadow-xs transition-all h-full flex flex-col justify-between">
+    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 sm:p-3.5 shadow-xs transition-all h-full flex flex-col justify-between">
       {/* Header & Tabs */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-slate-100 dark:border-slate-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-1.5 border-b border-slate-100 dark:border-slate-800">
         <div className="flex items-center space-x-2">
           <div className="w-6.5 h-6.5 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center text-xs font-bold">
             <FireOutlined />
@@ -184,7 +188,7 @@ export const NeedsAttention = ({ overdueList = [], urgentList = [], loading = fa
       </div>
 
       {/* Content / Empty State */}
-      <div className="my-2.5 space-y-2 max-h-[280px] overflow-y-auto pr-0.5 flex-1 flex flex-col justify-start">
+      <div className="my-1 space-y-1.5 max-h-[330px] overflow-y-auto pr-0.5 flex-1 flex flex-col justify-start">
         {loading ? (
           <p className="text-center text-slate-400 py-4 text-xs font-semibold">Loading items...</p>
         ) : filteredActions.length === 0 ? (
@@ -205,7 +209,7 @@ export const NeedsAttention = ({ overdueList = [], urgentList = [], loading = fa
       </div>
 
       {/* Footer */}
-      <div className="pt-2 border-t border-slate-100 dark:border-slate-800 text-[10px] text-slate-400 flex items-center justify-between">
+      <div className="pt-1.5 border-t border-slate-100 dark:border-slate-800 text-[10px] text-slate-400 flex items-center justify-between">
         <span>High Priority Action Items</span>
         <Link to="/my-actions" className="no-underline">
           <span className="font-bold text-rose-600 dark:text-rose-400 hover:underline">

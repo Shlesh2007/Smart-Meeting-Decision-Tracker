@@ -8,4 +8,7 @@ export { UpcomingMeetings } from './UpcomingMeetings.jsx';
 export { RecentCompletedActions } from './RecentCompletedActions.jsx';
 export { NeedsAttention } from './NeedsAttention.jsx';
 export { QuickActions } from './QuickActions.jsx';
+export { MyNextUpCard } from './MyNextUpCard.jsx';
+export { RecentDecisionsCard } from './RecentDecisionsCard.jsx';
 export { DashboardSkeleton } from './DashboardSkeleton.jsx';
+

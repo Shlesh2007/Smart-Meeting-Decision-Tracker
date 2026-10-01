@@ -14,6 +14,7 @@ import {
   UpcomingMeetings,
   RecentCompletedActions,
   NeedsAttention,
+  RecentDecisionsCard,
   QuickActions,
   DashboardSkeleton,
 } from '../components/Dashboard';
@@ -274,17 +275,16 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* 5. ROW 4: Needs Attention Action Table (8 cols) | Quick Actions (4 cols) */}
+      {/* 5. ROW 4: Needs Attention Action Table (8 cols) | Recent Key Decisions Audit Feed (4 cols) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
         <div className="lg:col-span-8">
           <NeedsAttention overdueList={overdue_list} urgentList={urgent_list} loading={loading} />
         </div>
         <div className="lg:col-span-4">
-          <QuickActions/>
+          <RecentDecisionsCard />
         </div>
       </div>
 
     </div>
   );
 }
-

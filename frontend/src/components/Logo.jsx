@@ -1,7 +1,7 @@
 
 import React, { useId } from 'react';
 
-export function Logo({ variant = 'full', height = 36, className = '', isDark = false }) {
+export function Logo({ variant = 'full', height = 46, className = '', isDark = false }) {
   const rawId = useId();
   const uid = rawId ? rawId.replace(/[^a-zA-Z0-9_-]/g, '') : 'logo';
   const bgGradId = `logoBgGrad_${uid}`;

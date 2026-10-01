@@ -87,7 +87,7 @@ export default function MeetingsPage() {
       render: (text, record) => (
         <div className="group">
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="font-semibold text-slate-900 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 block transition-colors">
+            <span className="font-semibold text-slate-900 dark:text-slate-100 group-hover:text-slate-600 dark:group-hover:text-slate-400 block transition-colors">
               {text}
             </span>
             {record.is_recurring && (

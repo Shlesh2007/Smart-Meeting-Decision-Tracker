@@ -4,10 +4,10 @@ import { BarChartOutlined } from '@ant-design/icons';
 import { useScrollAnimation } from '../../hooks/useScrollAnimation.js';
 
 const PRIORITIES = [
-  { key: 'CRITICAL', label: 'Critical Priority', color: '#ef4444' },
+  { key: 'CRITICAL', label: 'Critical Priority', color: '#e11d48' },
   { key: 'HIGH', label: 'High Priority', color: '#f97316' },
-  { key: 'MEDIUM', label: 'Medium Priority', color: '#f59e0b' },
-  { key: 'LOW', label: 'Low Priority', color: '#10b981' },
+  { key: 'MEDIUM', label: 'Medium Priority', color: '#8b5cf6' },
+  { key: 'LOW', label: 'Low Priority', color: '#06b6d4' },
 ];
 
 export const PriorityDistribution = ({ priorityDistribution = {} }) => {

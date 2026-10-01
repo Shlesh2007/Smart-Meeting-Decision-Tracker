@@ -116,11 +116,11 @@ class ActionItemSerializer(serializers.ModelSerializer):
         if self.instance and self.instance in proposed_deps:
             raise serializers.ValidationError({"dependencies": "An action item cannot depend on itself."})
 
-        # Rule 2: Dependency Validation on Status (IN_PROGRESS or COMPLETED)
+        # Rule 2: Dependency Validation on Status (TODO, IN_PROGRESS, or COMPLETED)
         incomplete_deps = [dep for dep in proposed_deps if getattr(dep, 'status', None) != ActionItem.Status.COMPLETED]
-        if incomplete_deps and target_status in [ActionItem.Status.IN_PROGRESS, ActionItem.Status.COMPLETED]:
+        if incomplete_deps and target_status in [ActionItem.Status.TODO, ActionItem.Status.IN_PROGRESS, ActionItem.Status.COMPLETED]:
             titles = ", ".join([f"'{getattr(dep, 'title', str(dep))}' ({getattr(dep, 'status', 'Unknown')})" for dep in incomplete_deps])
-            status_label = "In Progress" if target_status == ActionItem.Status.IN_PROGRESS else "Completed"
+            status_label = "Todo" if target_status == ActionItem.Status.TODO else ("In Progress" if target_status == ActionItem.Status.IN_PROGRESS else "Completed")
             raise serializers.ValidationError({
                 "status": f"Cannot set status to {status_label}. Outstanding incomplete prerequisite dependencies: {titles}."
             })

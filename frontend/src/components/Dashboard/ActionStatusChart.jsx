@@ -4,11 +4,11 @@ import { PieChartOutlined } from '@ant-design/icons';
 import { useScrollAnimation } from '../../hooks/useScrollAnimation.js';
 
 const STATUS_CONFIG = [
-  { key: 'TODO', label: 'Todo', color: '#9ca3af' },
-  { key: 'IN_PROGRESS', label: 'In Progress', color: '#2563eb' },
-  { key: 'BLOCKED', label: 'Blocked', color: '#ef4444' },
+  { key: 'TODO', label: 'Todo', color: '#64748b' },
+  { key: 'IN_PROGRESS', label: 'In Progress', color: '#6366f1' },
+  { key: 'BLOCKED', label: 'Blocked', color: '#f43f5e' },
   { key: 'COMPLETED', label: 'Completed', color: '#10b981' },
-  { key: 'CANCELLED', label: 'Cancelled', color: '#6b7280' },
+  { key: 'CANCELLED', label: 'Cancelled', color: '#a1a1aa' },
 ];
 
 export const ActionStatusChart = ({ statusDistribution = {} }) => {

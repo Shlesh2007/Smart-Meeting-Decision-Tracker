@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Card, List, Typography, Avatar, Flex, Space, Button, Spin, Empty } from 'antd';
-import { CheckCircleOutlined } from '@ant-design/icons';
+import { CheckCircleOutlined, ArrowRightOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { actionService } from '../../services/api.js';
 import { StatusBadge } from '../StatusBadge.jsx';
@@ -10,6 +10,7 @@ import { useAuth } from '../../context/AuthContext.jsx';
 const { Text, Title } = Typography;
 
 export const RecentCompletedActions = () => {
+  const navigate = useNavigate();
   const { isAdmin, isOwner } = useAuth();
   const [completedActions, setCompletedActions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -23,7 +24,7 @@ export const RecentCompletedActions = () => {
     fetcher
       .then((res) => {
         const list = res.results || res || [];
-        setCompletedActions(list.slice(0, 4));
+        setCompletedActions(list.slice(0, 6));
       })
       .catch(() => setCompletedActions([]))
       .finally(() => setLoading(false));
@@ -34,7 +35,7 @@ export const RecentCompletedActions = () => {
       className="rounded-xl border-slate-200 dark:border-slate-800 shadow-xs h-full flex flex-col justify-between dark:bg-slate-900"
       styles={{
         body: {
-          padding: '14px',
+          padding: '12px',
           height: '100%',
           display: 'flex',
           flexDirection: 'column',
@@ -55,14 +56,15 @@ export const RecentCompletedActions = () => {
             </Title>
           </Space>
           <Link to="/my-actions?tab=COMPLETED" className="no-underline">
-            <Button type="link" size="small" className="text-[11px] text-blue-600 dark:text-blue-400 font-bold p-0">
-              View All →
+            <Button type="link" size="small" className="text-[11px] text-blue-600 dark:text-blue-400 font-bold p-0 flex items-center gap-1">
+              <span>View All</span>
+              <ArrowRightOutlined className="text-[9px]" />
             </Button>
           </Link>
         </Flex>
       }
     >
-      <div className="my-2 max-h-[170px] overflow-y-auto flex-1">
+      <div className="my-1 max-h-[330px] overflow-y-auto flex-1">
         {loading ? (
           <Flex justify="center" align="center" className="py-6">
             <Spin size="small" tip="Loading completed items..." />
@@ -93,7 +95,16 @@ export const RecentCompletedActions = () => {
                 : (item.assigned_to_detail?.full_name || item.assigned_to_name || 'You');
 
               return (
-                <List.Item className="!p-2 !rounded-lg !bg-slate-50/70 dark:!bg-slate-800/40 !border !border-slate-100 dark:!border-slate-800 hover:!border-emerald-300 dark:hover:!border-emerald-800 transition-all !mb-1.5 last:!mb-0 flex items-center justify-between">
+                <List.Item
+                  onClick={() => {
+                    if (item && item.id) {
+                      navigate(`/my-actions?tab=COMPLETED&action_id=${item.id}&search=${encodeURIComponent(item.title || '')}`);
+                    } else {
+                      navigate('/my-actions?tab=COMPLETED');
+                    }
+                  }}
+                  className="!p-2.5 !rounded-xl !bg-slate-50/70 dark:!bg-slate-800/40 hover:!bg-slate-100/80 dark:hover:!bg-slate-800/80 !border !border-slate-200/60 dark:!border-slate-700/60 hover:!border-slate-300 dark:hover:!border-slate-600 transition-all !mb-1.5 last:!mb-0 flex items-center justify-between cursor-pointer group shadow-2xs"
+                >
                   <List.Item.Meta
                     avatar={
                       <Avatar
@@ -104,7 +115,7 @@ export const RecentCompletedActions = () => {
                       />
                     }
                     title={
-                      <Text className="font-bold text-xs text-slate-900 dark:text-slate-100 truncate block">
+                      <Text className="font-bold text-xs text-slate-900 dark:text-slate-100 truncate block group-hover:text-slate-900 dark:group-hover:text-slate-900 transition-colors">
                         {item.title}
                       </Text>
                     }

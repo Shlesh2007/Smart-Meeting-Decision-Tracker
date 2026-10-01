@@ -163,7 +163,7 @@ export const MeetingActivityChart = ({
       {/* Top Header & Range Filters */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-slate-100 dark:border-slate-800">
         <div className="flex items-center space-x-2">
-          <div className="w-6.5 h-6.5 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xs">
+          <div className="w-6.5 h-6.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-xs">
             <BarChartOutlined />
           </div>
           <div>
@@ -192,13 +192,13 @@ export const MeetingActivityChart = ({
       </div>
 
       {/* Chart Body */}
-      <div className="my-2 h-40 w-full flex items-center justify-center">
+      <div className="my-1 flex-1 min-h-[220px] w-full flex items-center justify-center">
         {chartFormattedData.length > 0 ? (
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart
               key={isInView ? 'area-active' : 'area-idle'}
               data={chartFormattedData}
-              margin={{ top: 8, right: 8, left: -22, bottom: 0 }}
+              margin={{ top: 12, right: 8, left: -22, bottom: 0 }}
               onMouseLeave={() => setActivePointIndex(null)}
               onClick={(e) => {
                 if (e && e.activeTooltipIndex !== undefined) {
@@ -208,8 +208,8 @@ export const MeetingActivityChart = ({
             >
               <defs>
                 <linearGradient id="meetingGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#2563eb" stopOpacity={0.35} />
-                  <stop offset="95%" stopColor="#2563eb" stopOpacity={0.0} />
+                  <stop offset="5%" stopColor="#6366f1" stopOpacity={0.4} />
+                  <stop offset="95%" stopColor="#06b6d4" stopOpacity={0.02} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" opacity={0.5} />
@@ -237,7 +237,7 @@ export const MeetingActivityChart = ({
                     return (
                       <div className="bg-slate-900 text-white text-[10px] px-2.5 py-1 rounded shadow-md pointer-events-none">
                         <p className="font-bold m-0">{data.date}</p>
-                        <p className="m-0 text-blue-400 font-semibold">{data.count} Meeting(s)</p>
+                        <p className="m-0 text-indigo-400 font-semibold">{data.count} Meeting(s)</p>
                       </div>
                     );
                   }
@@ -247,7 +247,7 @@ export const MeetingActivityChart = ({
               <Area
                 type="monotone"
                 dataKey="count"
-                stroke="#2563eb"
+                stroke="#6366f1"
                 strokeWidth={2.5}
                 fillOpacity={1}
                 fill="url(#meetingGradient)"

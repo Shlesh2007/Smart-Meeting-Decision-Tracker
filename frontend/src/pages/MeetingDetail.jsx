@@ -10,6 +10,7 @@ import { ActionFormModal } from '../components/ActionFormModal.jsx';
 import { DecisionHistoryModal } from '../components/DecisionHistoryModal.jsx';
 import { EditMeetingModal } from '../components/EditMeetingModal.jsx';
 import { ParticipantProfileModal } from '../components/ParticipantProfileModal.jsx';
+import { ActionDetailModal } from '../components/ActionDetailModal.jsx';
 import {
   Button, Card, Tag, Avatar, Tooltip, Alert, message, Breadcrumb, Popconfirm
 } from 'antd';
@@ -46,6 +47,7 @@ export default function MeetingDetail() {
   const [activeDecisionForAction, setActiveDecisionForAction] = useState(null);
   const [activeHistoryDecisionId, setActiveHistoryDecisionId] = useState(null);
   const [editingAction, setEditingAction] = useState(null);
+  const [viewingDetailAction, setViewingDetailAction] = useState(null);
   const [errorState, setErrorState] = useState(null);
 
   const loadData = useCallback(async () => {
@@ -64,8 +66,34 @@ export default function MeetingDetail() {
       }
 
       try {
-        const aRes = await actionService.getActions();
-        setAllActions(aRes.results || aRes);
+        const [aResMeeting, aResAll] = await Promise.all([
+          actionService.getActions({ meeting: meetingId, page_size: 1000 }).catch(() => []),
+          actionService.getActions({ page_size: 1000 }).catch(() => [])
+        ]);
+
+        const listMeeting = aResMeeting.results || aResMeeting || [];
+        const listAll = aResAll.results || aResAll || [];
+
+        const map = new Map();
+        listMeeting.forEach(item => {
+          if (item && item.id) map.set(item.id, item);
+        });
+
+        listAll.forEach(item => {
+          if (!item || !item.id) return;
+          const aMeetingId = item.meeting_id || item.meeting || (typeof item.meeting === 'object' ? item.meeting?.id : null) || (item.meeting_detail && item.meeting_detail.id);
+          if (Number(aMeetingId) === Number(meetingId)) {
+            map.set(item.id, item);
+          }
+        });
+
+        if (map.size === 0 && listAll.length > 0) {
+          listAll.forEach(item => {
+            if (item && item.id) map.set(item.id, item);
+          });
+        }
+
+        setAllActions(Array.from(map.values()));
       } catch (err) {
         console.error('Failed to load actions:', err);
       }
@@ -367,7 +395,11 @@ export default function MeetingDetail() {
         ) : (
           discussions.map((disc, idx) => {
             const decision = disc.decision;
-            const decisionActions = allActions.filter(a => decision && a.decision === decision.id);
+            const decisionActions = allActions.filter(a => {
+              if (!a || !decision) return false;
+              const aDecisionId = typeof a.decision === 'object' ? a.decision?.id : a.decision;
+              return Number(aDecisionId) === Number(decision.id);
+            });
 
             return (
               <Card key={disc.id} className="shadow-sm rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-800 overflow-hidden w-full min-w-0">
@@ -551,10 +583,16 @@ export default function MeetingDetail() {
                           {decisionActions.map((action) => (
                             <div
                               key={action.id}
-                              className={`p-3 rounded-lg border transition-all w-full min-w-0 overflow-hidden ${
+                              onClick={() => setViewingDetailAction({
+                                ...action,
+                                meeting_title: meeting.title,
+                                meeting_id: meeting.id,
+                                meeting_date: meeting.meeting_date
+                              })}
+                              className={`p-3 rounded-lg border transition-all w-full min-w-0 overflow-hidden cursor-pointer hover:shadow-md ${
                                 action.is_overdue
-                                  ? 'bg-rose-50/70 border-rose-200 dark:bg-rose-950/40 dark:border-rose-800/60'
-                                  : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-500'
+                                  ? 'bg-rose-50/70 border-rose-200 dark:bg-rose-950/40 dark:border-rose-800/60 hover:border-rose-400'
+                                  : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 hover:border-blue-400 dark:hover:border-blue-500'
                               }`}
                             >
                               <div className="flex justify-between items-start gap-2 w-full min-w-0">
@@ -571,12 +609,19 @@ export default function MeetingDetail() {
                                   )}
 
                                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400 pt-1">
-                                    <span>
-                                      Assignee(s): <strong>
-                                        {Array.isArray(action.assigned_to_detail)
-                                          ? (action.assigned_to_detail.length > 0 ? action.assigned_to_detail.map(u => u.full_name || u.username).join(', ') : 'Unassigned')
-                                          : (action.assigned_to_detail?.full_name || action.assigned_to_detail?.username || 'Unassigned')}
-                                      </strong>
+                                    <span className="flex items-center gap-1 flex-wrap">
+                                      Assignee(s):
+                                      {Array.isArray(action.assigned_to_detail) && action.assigned_to_detail.length > 0 ? (
+                                        action.assigned_to_detail.map(u => (
+                                          <Tag key={u.id} color="blue" className="text-[10px] font-bold m-0 px-1.5 py-0">
+                                            {u.full_name || u.username}
+                                          </Tag>
+                                        ))
+                                      ) : (
+                                        <strong className="text-slate-700 dark:text-slate-300">
+                                          {action.assigned_to_detail?.full_name || action.assigned_to_detail?.username || 'Unassigned'}
+                                        </strong>
+                                      )}
                                     </span>
                                     <span className="hidden sm:inline">•</span>
                                     <span>Due Date: <strong className={action.is_overdue ? 'text-rose-600 dark:text-rose-400' : ''}>{action.due_date ? new Date(action.due_date).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }) : 'N/A'}</strong></span>
@@ -605,7 +650,8 @@ export default function MeetingDetail() {
                                   size="small"
                                   type="text"
                                   icon={<EditOutlined />}
-                                  onClick={() => {
+                                  onClick={(e) => {
+                                    e.stopPropagation();
                                     setEditingAction(action);
                                     setActiveDecisionForAction(decision);
                                   }}
@@ -624,6 +670,109 @@ export default function MeetingDetail() {
             );
           })
         )}
+
+        {/* General & Unlinked Action Items for this Meeting */}
+        {(() => {
+          const allDiscussionDecisionIds = discussions.map(d => d.decision?.id).filter(Boolean);
+          const generalMeetingActions = allActions.filter(a => {
+            if (!a) return false;
+            const aDecisionId = typeof a.decision === 'object' ? a.decision?.id : a.decision;
+            return !aDecisionId || !allDiscussionDecisionIds.map(Number).includes(Number(aDecisionId));
+          });
+
+          if (generalMeetingActions.length === 0) return null;
+
+          return (
+            <Card className="shadow-sm rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-800 overflow-hidden w-full min-w-0 mt-4">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-3 border-b border-slate-100 dark:border-slate-700 gap-2 mb-3">
+                <div>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white m-0 flex items-center space-x-2">
+                    <CheckSquareOutlined className="text-blue-600 dark:text-blue-400" />
+                    <span>General Meeting Action Items ({generalMeetingActions.length})</span>
+                  </h3>
+                  <p className="text-xs text-slate-400 m-0">Action items logged directly for this meeting</p>
+                </div>
+                <Button
+                  size="small"
+                  type="dashed"
+                  icon={<PlusOutlined />}
+                  onClick={() => {
+                    setEditingAction(null);
+                    setActiveDecisionForAction({ id: null });
+                  }}
+                  className="text-blue-600 border-blue-400 dark:text-blue-400 dark:border-blue-500 text-xs"
+                >
+                  Add Action Item
+                </Button>
+              </div>
+
+              <div className="space-y-2 w-full min-w-0">
+                {generalMeetingActions.map((action) => (
+                  <div
+                    key={action.id}
+                    onClick={() => setViewingDetailAction({
+                      ...action,
+                      meeting_title: meeting.title,
+                      meeting_id: meeting.id,
+                      meeting_date: meeting.meeting_date
+                    })}
+                    className={`p-3 rounded-lg border transition-all w-full min-w-0 overflow-hidden cursor-pointer hover:shadow-md ${
+                      action.is_overdue
+                        ? 'bg-rose-50/70 border-rose-200 dark:bg-rose-950/40 dark:border-rose-800/60 hover:border-rose-400'
+                        : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 hover:border-blue-400 dark:hover:border-blue-500'
+                    }`}
+                  >
+                    <div className="flex justify-between items-start gap-2 w-full min-w-0">
+                      <div className="space-y-1.5 min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <span className="font-semibold text-slate-900 dark:text-white text-sm break-words">{action.title}</span>
+                          <StatusBadge type="priority" value={action.priority} />
+                          <StatusBadge type="actionStatus" value={action.status} />
+                          {action.is_overdue && <StatusBadge type="overdue" value={true} />}
+                        </div>
+
+                        {action.description && (
+                          <p className="text-xs text-slate-600 dark:text-slate-300 m-0 break-words">{action.description}</p>
+                        )}
+
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500 dark:text-slate-400 pt-1">
+                          <span className="flex items-center gap-1 flex-wrap">
+                            Assignee(s):
+                            {Array.isArray(action.assigned_to_detail) && action.assigned_to_detail.length > 0 ? (
+                              action.assigned_to_detail.map(u => (
+                                <Tag key={u.id} color="blue" className="text-[10px] font-bold m-0 px-1.5 py-0">
+                                  {u.full_name || u.username}
+                                </Tag>
+                              ))
+                            ) : (
+                              <strong className="text-slate-700 dark:text-slate-300">
+                                {action.assigned_to_detail?.full_name || action.assigned_to_detail?.username || 'Unassigned'}
+                              </strong>
+                            )}
+                          </span>
+                          <span className="hidden sm:inline">•</span>
+                          <span>Due Date: <strong className={action.is_overdue ? 'text-rose-600 dark:text-rose-400' : ''}>{action.due_date ? new Date(action.due_date).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }) : 'N/A'}</strong></span>
+                        </div>
+                      </div>
+
+                      <Button
+                        size="small"
+                        type="text"
+                        icon={<EditOutlined />}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditingAction(action);
+                          setActiveDecisionForAction({ id: null });
+                        }}
+                        className="shrink-0"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          );
+        })()}
       </div>
 
       <DiscussionModal
@@ -675,6 +824,17 @@ export default function MeetingDetail() {
         open={Boolean(selectedParticipantUser)}
         onClose={() => setSelectedParticipantUser(null)}
         user={selectedParticipantUser}
+      />
+
+      <ActionDetailModal
+        open={Boolean(viewingDetailAction)}
+        onClose={() => setViewingDetailAction(null)}
+        actionItem={viewingDetailAction}
+        onStatusChange={async (item, newStatus) => {
+          await actionService.updateActionStatus(item.id, newStatus);
+          setViewingDetailAction((prev) => (prev ? { ...prev, status: newStatus } : null));
+          loadData();
+        }}
       />
     </div>
   );

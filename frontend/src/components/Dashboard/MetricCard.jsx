@@ -2,17 +2,17 @@
 import React from 'react';
 
 const themes = {
-  blue: {
-    iconBg: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
-    hoverBorder: 'hover:border-blue-500/50',
-    accentDot: 'bg-blue-500',
-    badge: 'bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-900',
-  },
   indigo: {
     iconBg: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400',
     hoverBorder: 'hover:border-indigo-500/50',
     accentDot: 'bg-indigo-500',
     badge: 'bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-900',
+  },
+  cyan: {
+    iconBg: 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400',
+    hoverBorder: 'hover:border-cyan-500/50',
+    accentDot: 'bg-cyan-500',
+    badge: 'bg-cyan-50 dark:bg-cyan-950/50 text-cyan-700 dark:text-cyan-300 border-cyan-200 dark:border-cyan-900',
   },
   amber: {
     iconBg: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
@@ -20,7 +20,7 @@ const themes = {
     accentDot: 'bg-amber-500',
     badge: 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-900',
   },
-  green: {
+  emerald: {
     iconBg: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
     hoverBorder: 'hover:border-emerald-500/50',
     accentDot: 'bg-emerald-500',
@@ -31,6 +31,24 @@ const themes = {
     hoverBorder: 'hover:border-rose-500/50',
     accentDot: 'bg-rose-500',
     badge: 'bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-900',
+  },
+  coral: {
+    iconBg: 'bg-red-500/10 text-red-600 dark:text-red-400',
+    hoverBorder: 'hover:border-red-500/50',
+    accentDot: 'bg-red-500',
+    badge: 'bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-300 border-red-200 dark:border-red-900',
+  },
+  blue: {
+    iconBg: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
+    hoverBorder: 'hover:border-blue-500/50',
+    accentDot: 'bg-blue-500',
+    badge: 'bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-900',
+  },
+  green: {
+    iconBg: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+    hoverBorder: 'hover:border-emerald-500/50',
+    accentDot: 'bg-emerald-500',
+    badge: 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900',
   },
   red: {
     iconBg: 'bg-red-500/10 text-red-600 dark:text-red-400',

@@ -386,32 +386,53 @@ body.ant-modal-open {
   -webkit-overflow-scrolling: touch;
 }
 
-/* Hide all vertical scrollbars globally across browsers while maintaining full scrollability */
-html, body, main,
-.ant-table-wrapper,
-.ant-table-content,
-.ant-table-body,
-.ant-modal-body,
-.ant-drawer-body,
-.ant-tabs-nav-wrap,
-.drag-scroll-x {
-  scrollbar-width: none !important;
-  -ms-overflow-style: none !important;
+/* Global Slim Custom Scrollbars Across Browsers */
+::-webkit-scrollbar {
+  width: 5px !important;
+  height: 5px !important;
 }
 
-html::-webkit-scrollbar,
-body::-webkit-scrollbar,
-main::-webkit-scrollbar,
-.ant-table-wrapper::-webkit-scrollbar,
-.ant-table-content::-webkit-scrollbar,
-.ant-table-body::-webkit-scrollbar,
-.ant-modal-body::-webkit-scrollbar,
-.ant-drawer-body::-webkit-scrollbar,
-.ant-tabs-nav-wrap::-webkit-scrollbar,
-.drag-scroll-x::-webkit-scrollbar {
+::-webkit-scrollbar-track {
+  background: transparent !important;
+  border-radius: 9999px !important;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1 !important;
+  border-radius: 9999px !important;
+  transition: background-color 0.2s ease !important;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8 !important;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #475569 !important;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #64748b !important;
+}
+
+::-webkit-scrollbar-button {
   display: none !important;
   width: 0 !important;
   height: 0 !important;
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent !important;
+}
+
+/* Firefox Slim Scrollbars */
+* {
+  scrollbar-width: thin !important;
+  scrollbar-color: #cbd5e1 transparent !important;
+}
+
+.dark * {
+  scrollbar-color: #475569 transparent !important;
 }
 
 /* Palm swipe & Mouse drag for horizontal scroll containers */
@@ -636,10 +657,3 @@ aside .ant-menu-inline-collapsed .ant-menu-title-content {
 .dark .meeting-calendar-custom .ant-picker-calendar-date-value {
   color: #94a3b8;
 }
-
-
-
-
-
-
-

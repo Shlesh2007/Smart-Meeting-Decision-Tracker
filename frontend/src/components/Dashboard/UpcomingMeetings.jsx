@@ -67,7 +67,7 @@ export const UpcomingMeetings = ({ meetings: initialMeetings }) => {
     return (
       <div
         key={m.id}
-        className="p-2.5 rounded-lg bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 hover:border-blue-300 dark:hover:border-blue-800 transition-all flex items-center justify-between gap-2 group"
+        className="p-2.5 rounded-xl bg-slate-50/70 dark:bg-slate-800/40 hover:bg-blue-50/40 dark:hover:bg-blue-950/30 border border-slate-200/60 dark:border-slate-700/60 hover:border-blue-400 dark:hover:border-blue-500 transition-all flex items-center justify-between gap-2 cursor-pointer group shadow-2xs"
       >
         <div className="flex items-center space-x-2.5 min-w-0 flex-1">
           <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-900/60 flex flex-col items-center justify-center shrink-0 font-bold text-[10px]">
@@ -125,9 +125,9 @@ export const UpcomingMeetings = ({ meetings: initialMeetings }) => {
   };
 
   return (
-    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 sm:p-4 shadow-xs transition-all h-full flex flex-col justify-between">
+    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 sm:p-3.5 shadow-xs transition-all h-full flex flex-col justify-between">
       {/* Header */}
-      <div className="flex items-center justify-between pb-2.5 border-b border-slate-100 dark:border-slate-800">
+      <div className="flex items-center justify-between pb-1.5 border-b border-slate-100 dark:border-slate-800">
         <div className="flex items-center space-x-2">
           <div className="w-6.5 h-6.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-xs">
             <ClockCircleOutlined />
@@ -147,7 +147,7 @@ export const UpcomingMeetings = ({ meetings: initialMeetings }) => {
       </div>
 
       {/* Content / Empty State */}
-      <div className="my-2.5 space-y-2 max-h-[220px] overflow-y-auto pr-0.5 flex-1 flex flex-col justify-start">
+      <div className="my-1 space-y-1.5 max-h-[330px] overflow-y-auto pr-0.5 flex-1 flex flex-col justify-start">
         {loading ? (
           <p className="text-center text-slate-400 py-4 text-xs font-semibold">Loading meetings...</p>
         ) : meetings.length === 0 ? (

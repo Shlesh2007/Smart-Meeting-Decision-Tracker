@@ -374,7 +374,7 @@ export default function MyActionsPage() {
         onCancel={() => setCompletingItem(null)}
         onOk={handleConfirmCompletion}
         okText="Mark Completed"
-        okButtonProps={{ className: 'bg-emerald-600 hover:bg-emerald-700 font-bold' }}
+        okButtonProps={{ className: 'bg-slate-900 hover:bg-slate-900 font-bold' }}
       >
         <div className="space-y-3 py-2">
           <p className="text-xs text-slate-600 dark:text-slate-400 m-0">

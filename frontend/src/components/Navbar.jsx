@@ -44,7 +44,7 @@ import {
 
 const { useBreakpoint } = Grid;
 
-export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
+export const Navbar = ({ collapsed = false, onToggleSidebar, onCollapseSidebar }) => {
   const location = useLocation();
   const pathname = location.pathname;
   const navigate = useNavigate();
@@ -170,6 +170,9 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
       document.activeElement.blur();
     }
     setDrawerOpen(false);
+    if (onCollapseSidebar) {
+      onCollapseSidebar();
+    }
     window.scrollTo(0, 0);
     if (pathname !== path) {
       navigate(path);
@@ -375,17 +378,17 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
       <aside className={`hidden lg:flex flex-col fixed top-0 left-0 bottom-0 z-40 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 border-r border-slate-200 dark:border-slate-700 shadow-xs transition-all duration-300 select-none overflow-x-hidden ${collapsed ? 'w-16' : 'w-64'}`}>
         
         {/* Sidebar Brand Header */}
-        <Flex align="center" justify={collapsed ? 'center' : 'space-between'} className="h-11 px-3.5 border-b border-slate-200/80 dark:border-slate-700/80 shrink-0 overflow-x-hidden">
+        <Flex align="center" justify={collapsed ? 'center' : 'space-between'} className="h-16 px-4 border-b border-slate-200/80 dark:border-slate-700/80 shrink-0 overflow-x-hidden">
           {!collapsed && (
             <Link to="/dashboard" className="no-underline flex items-center">
-              <Logo variant="full" height={32} />
+              <Logo variant="full" height={46} />
             </Link>
           )}
           {onToggleSidebar && (
             <Button
               type="text"
               size="small"
-              icon={collapsed ? <MenuUnfoldOutlined className="text-slate-500" /> : <MenuFoldOutlined className="text-slate-500" />}
+              icon={collapsed ? <MenuUnfoldOutlined className="text-slate-500 text-base" /> : <MenuFoldOutlined className="text-slate-500 text-base" />}
               onClick={onToggleSidebar}
               title={collapsed ? "Expand Sidebar" : "Collapse Sidebar"}
               className="p-1 rounded-lg"
@@ -466,40 +469,39 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
       </aside>
 
       {/* Top Navigation Header Bar */}
-      <header className={`sticky top-0 z-3F0 w-full max-w-full bg-white/95 dark:bg-slate-800/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-700/80 shadow-xs transition-all duration-300 ${collapsed ? 'lg:pl-16' : 'lg:pl-64'}`}>
-        <Flex align="center" justify="space-between" className="w-full max-w-[1600px] mx-auto px-3 sm:px-6 lg:px-8 h-11 gap-2 sm:gap-4">
+      <header className={`sticky top-0 lg:relative z-30 w-full max-w-full bg-white/95 dark:bg-slate-800/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-700/80 shadow-xs transition-all duration-300 ${collapsed ? 'lg:pl-16' : 'lg:pl-64'}`}>
+        <Flex align="center" justify="space-between" className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 h-16 gap-2 sm:gap-4">
 
           {/* Logo Brand Header */}
           <Flex align="center" size={8} className="shrink-0">
             <div className={`items-center shrink-0 ${collapsed ? 'flex' : 'flex lg:hidden'}`}>
               <Link to="/dashboard" className="no-underline flex items-center">
-                <Logo variant="full" height={28} />
+                <Logo variant="full" height={46} />
               </Link>
             </div>
           </Flex>
 
           {/* Right Controls: Date Badge, Notifications & Profile */}
-          <Space size={screens.md ? 10 : 6} className="ml-auto shrink-0">
+          <Space size={screens.md ? 12 : 8} className="ml-auto shrink-0">
             {/* Quick Actions Header Dropdown Button */}
             <Dropdown menu={{ items: quickActionItems }} placement="bottomRight" trigger={['click']}>
               <Button
                 type="default"
                 icon={<FormOutlined className="text-amber-500 text-xs font-bold" />}
-                size="small"
-                className="h-8 px-2.5 font-bold rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800/80 flex items-center justify-center gap-1 shadow-xs cursor-pointer"
+                className="h-9 px-3 font-bold rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800/80 flex items-center justify-center gap-1.5 shadow-xs cursor-pointer"
               >
                 <span className="hidden xs:inline text-xs font-bold">Quick Actions</span>
               </Button>
             </Dropdown>
 
             {/* Live Date Badge */}
-            <span className="hidden sm:inline-flex items-center space-x-1 text-[10px] sm:text-xs font-bold text-slate-600 dark:text-slate-300 bg-slate-100/80 dark:bg-slate-800/80 px-2 py-0.5 rounded-md border border-slate-200/80 dark:border-slate-700 shrink-0">
-              <CalendarOutlined className="text-blue-500 text-[11px] shrink-0" />
+            <span className="hidden sm:inline-flex items-center space-x-1.5 text-xs font-bold text-slate-600 dark:text-slate-300 bg-slate-100/80 dark:bg-slate-800/80 px-2.5 py-1.5 rounded-xl border border-slate-200/80 dark:border-slate-700 shrink-0">
+              <CalendarOutlined className="text-blue-500 text-xs shrink-0" />
               <span className="sm:hidden">{shortDateStr}</span>
               <span className="hidden sm:inline">{fullDateStr}</span>
             </span>
 
-            {/* Admin Panel Quick Access Button (Mobile/Tablet screens only, hidden on lg laptop/desktop screens where left sidebar navigation is active) */}
+            {/* Admin Panel Quick Access Button (Mobile/Tablet screens only) */}
             {isAdmin && (
               <span className="lg:hidden">
                 <Tooltip title="Admin Management Panel">
@@ -507,8 +509,7 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
                     type={pathname === '/admin' ? 'primary' : 'default'}
                     icon={<SafetyOutlined className={pathname === '/admin' ? 'text-white dark:text-slate-900' : 'text-slate-700 dark:text-slate-300'} />}
                     onClick={() => navigate('/admin')}
-                    size="small"
-                    className={`h-8 px-2.5 font-bold rounded-lg border-none ${pathname === '/admin' ? 'bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-100 dark:hover:bg-slate-200 dark:text-slate-900' : 'bg-slate-100/70 dark:bg-slate-700/50'}`}
+                    className={`h-9 px-3 font-bold rounded-xl border-none ${pathname === '/admin' ? 'bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-100 dark:hover:bg-slate-200 dark:text-slate-900' : 'bg-slate-100/70 dark:bg-slate-700/50'}`}
                   >
                     <span className="hidden sm:inline text-xs font-bold">Admin Panel</span>
                   </Button>
@@ -533,7 +534,7 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
             >
               <Button
                 type="text"
-                className="w-8 h-8 p-0 flex items-center justify-center rounded-lg bg-slate-100/70 dark:bg-slate-700/50 border border-slate-200/60 dark:border-slate-700/60"
+                className="w-9 h-9 p-0 flex items-center justify-center rounded-xl bg-slate-100/70 dark:bg-slate-700/50 border border-slate-200/60 dark:border-slate-700/60"
               >
                 <Badge dot={hasUnread} offset={[-1, 1]}>
                   <BellOutlined className="text-base text-slate-700 dark:text-slate-200" />
@@ -543,11 +544,11 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
 
             {/* User Profile Dropdown */}
             <Dropdown menu={{ items: userMenuItems }} placement="bottomRight" trigger={['click']}>
-              <Flex align="center" size={6} className="cursor-pointer p-0.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700/70 transition-all border border-transparent hover:border-slate-200 dark:hover:border-slate-700 shrink-0">
-                <Avatar size={28} shape="circle" className="bg-blue-600 font-extrabold text-[11px] text-white shadow-xs ring-2 ring-blue-500/20 shrink-0 flex items-center justify-center !w-7 !h-7 !min-w-[28px] !min-h-[28px] !rounded-full !aspect-square">
+              <Flex align="center" size={8} className="cursor-pointer p-1 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700/70 transition-all border border-transparent hover:border-slate-200 dark:hover:border-slate-700 shrink-0">
+                <Avatar size={32} shape="circle" className="bg-blue-600 font-extrabold text-xs text-white shadow-xs ring-2 ring-blue-500/20 shrink-0 flex items-center justify-center !w-8 !h-8 !min-w-[32px] !min-h-[32px] !rounded-full !aspect-square">
                    {(user?.first_name || user?.username || 'U')[0].toUpperCase()}
                 </Avatar>
-                <span className="hidden md:inline-block text-xs font-bold text-slate-800 dark:text-slate-200" style={{padding:'7px'}}>
+                <span className="hidden md:inline-block text-xs font-bold text-slate-800 dark:text-slate-200 px-1">
                    {user.first_name || user.username}
                 </span>
               </Flex>
@@ -561,7 +562,7 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
       <Drawer
         title={
           <Link to="/dashboard" className="no-underline flex items-center" onClick={() => setDrawerOpen(false)}>
-            <Logo variant="full" height={36} />
+            <Logo variant="full" height={46} />
           </Link>
         }
         placement="left"

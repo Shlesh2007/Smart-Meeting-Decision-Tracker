@@ -99,7 +99,7 @@ export default function Meetings() {
       render: (text, record) => (
         <div className="group">
           <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="font-semibold text-slate-900 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 block transition-colors">
+            <span className="font-semibold text-slate-900 dark:text-slate-900 group-hover:text-slate-900 dark:group-hover:text-slate-900 block transition-colors">
               {text}
             </span>
             {record.is_recurring && (
@@ -352,21 +352,105 @@ export default function Meetings() {
           onAction={search || meetingType || status || (dateRange && dateRange[0] && dateRange[1]) ? handleResetFilters : () => navigate('/meetings/new')}
         />
       ) : (
-        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-xs mb-12">
-          <Table
-            columns={columns}
-            dataSource={meetings}
-            rowKey="id"
-            pagination={false}
-            scroll={{ x: 700 }}
-            className="w-full"
-            onRow={(record) => ({
-              onClick: () => navigate(`/meetings/${record.id}`),
-              className: 'cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors',
-            })}
-          />
+        <div className="space-y-4 mb-12">
+          {/* Table View for Laptop / Desktop screens (lg breakpoint: >= 1024px) */}
+          <div className="hidden lg:block bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-xs">
+            <Table
+              columns={columns}
+              dataSource={meetings}
+              rowKey="id"
+              pagination={false}
+              scroll={{ x: 700 }}
+              className="w-full"
+              onRow={(record) => ({
+                onClick: () => navigate(`/meetings/${record.id}`),
+                className: 'cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors',
+              })}
+            />
+          </div>
+
+          {/* Card Grid View for Responsive / Mobile screens (< 1024px) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 block lg:hidden">
+            {meetings.map((record) => (
+              <Card
+                key={record.id}
+                onClick={() => navigate(`/meetings/${record.id}`)}
+                className="item-card-zoom shadow-xs rounded-2xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-800 hover:border-blue-400 hover:shadow-md flex flex-col justify-between cursor-pointer"
+                styles={{ body: { padding: '16px', display: 'flex', flexDirection: 'column', height: '100%', justifyContent: 'space-between' } }}
+              >
+                <div className="space-y-3">
+                  {/* Header Badges & Type */}
+                  <div className="flex flex-wrap items-center justify-between gap-1.5">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <StatusBadge type="meetingType" value={record.meeting_type} />
+                      <StatusBadge type="meetingStatus" value={record.status} />
+                      {record.is_recurring && (
+                        <Tag color="purple" className="text-[10px] py-0 px-1.5 rounded-full border-0 bg-purple-100 dark:bg-purple-900/60 text-purple-700 dark:text-purple-300 font-medium">
+                          🔁 {record.recurrence_pattern === 'DAILY' ? 'Daily' : record.recurrence_pattern === 'WEEKDAYS' ? 'Weekdays' : record.recurrence_pattern === 'WEEKLY' ? 'Weekly' : 'Recurring'}
+                        </Tag>
+                      )}
+                    </div>
+                    <Tag color="blue" className="text-[10px] font-bold m-0">
+                      {record.discussions_count || 0} Points
+                    </Tag>
+                  </div>
+
+                  {/* Title & Description */}
+                  <div>
+                    <h3 className="font-bold text-sm text-slate-900 dark:text-white m-0 leading-snug hover:text-blue-600 transition-colors">
+                      {record.title}
+                    </h3>
+                    {record.description && (
+                      <p className="text-xs text-slate-500 dark:text-slate-400 m-0 line-clamp-2 mt-1 leading-relaxed">
+                        {record.description}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Footer Meta & Participants */}
+                <div className="pt-3 mt-3 border-t border-slate-100 dark:border-slate-700/60 space-y-2">
+                  <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-300">
+                    <div>
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Date & Time</span>
+                      <span className="font-semibold text-slate-900 dark:text-slate-100 block">
+                        {dayjs(record.meeting_date).format('MMM D, YYYY')}
+                      </span>
+                      <span className="text-[11px] text-slate-500 dark:text-slate-400 block">
+                        {record.start_time} - {record.end_time}
+                      </span>
+                    </div>
+
+                    {record.participants_detail && record.participants_detail.length > 0 && (
+                      <div className="text-right">
+                        <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Participants</span>
+                        <Avatar.Group max={{ count: 3, style: { color: '#f56a00', backgroundColor: '#fde3cf' } }}>
+                          {record.participants_detail.map((p) => (
+                            <Tooltip key={p.id} title={`${p.full_name || p.username} (${p.role || 'Member'})`}>
+                              <Avatar
+                                key={p.id}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  e.currentTarget.blur();
+                                  setSelectedParticipantUser(p);
+                                }}
+                                className="bg-blue-600 font-extrabold text-xs text-white cursor-pointer hover:scale-110 transition-all"
+                              >
+                                {(p.first_name || p.full_name || p.username || 'U')[0].toUpperCase()}
+                              </Avatar>
+                            </Tooltip>
+                          ))}
+                        </Avatar.Group>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+
           {total > pageSize && viewMode !== 'calendar' && (
-            <div className="px-4 py-3.5 border-t border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/50 flex flex-col sm:flex-row justify-between items-center gap-3">
+            <div className="px-4 py-3.5 border border-slate-200 dark:border-slate-700 rounded-xl bg-slate-50/50 dark:bg-slate-800/50 flex flex-col sm:flex-row justify-between items-center gap-3">
               <span className="text-xs font-semibold text-slate-500 dark:text-slate-400">
                 Showing Page {page} of {Math.ceil(total / pageSize)} ({total} total meetings)
               </span>
