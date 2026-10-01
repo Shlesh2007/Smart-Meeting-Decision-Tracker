@@ -159,9 +159,9 @@ export const DashboardHeader = ({
   return (
     <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xs transition-all space-y-3">
       
-      <div className="flex flex-row items-start sm:items-center justify-between gap-3">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
         {/* Greeting & Date Info */}
-        <div className="flex items-center space-x-3 flex-1 min-w-0">
+        <div className="flex items-center space-x-3 w-full sm:w-auto flex-1 min-w-0">
           <div className="space-y-0.5">
             <h1 className="text-base sm:text-lg font-extrabold text-slate-900 dark:text-white m-0 tracking-tight leading-snug">
               {greetingTime}, {userName}! 👋
@@ -175,13 +175,13 @@ export const DashboardHeader = ({
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 flex-wrap justify-end">
-          <Link to="/meetings/new" className="no-underline">
+        <div className="flex items-center gap-2 w-full sm:w-auto flex-wrap sm:justify-end">
+          <Link to="/meetings/new" className="no-underline flex-1 sm:flex-initial">
             <Button
               type="primary"
               size="middle"
               icon={<PlusOutlined />}
-              className="bg-slate-900 hover:bg-slate-800 text-white font-bold !rounded-xl border-none shadow-xs text-xs h-9 px-2.5 sm:px-3.5 flex items-center justify-center truncate"
+              className="bg-slate-900 hover:bg-slate-800 text-white font-bold !rounded-xl border-none shadow-xs text-xs h-9 px-2.5 sm:px-3.5 w-full flex items-center justify-center truncate"
             >
               <span className="text-xs font-bold">Schedule Meeting</span>
             </Button>
@@ -191,7 +191,7 @@ export const DashboardHeader = ({
             size="middle"
             icon={<FormOutlined className="text-amber-500 font-bold" />}
             onClick={() => setShowAddActionModal(true)}
-            className="bg-amber-50/80 dark:bg-amber-950/40 hover:bg-amber-100 text-amber-900 dark:text-amber-200 font-bold !rounded-xl border-amber-200/80 dark:border-amber-900/60 text-xs h-9 px-2.5 sm:px-3.5 flex items-center justify-center truncate"
+            className="bg-amber-50/80 dark:bg-amber-950/40 hover:bg-amber-100 text-amber-900 dark:text-amber-200 font-bold !rounded-xl border-amber-200/80 dark:border-amber-900/60 text-xs h-9 px-2.5 sm:px-3.5 flex-1 sm:flex-initial flex items-center justify-center truncate"
           >
             <span className="text-xs font-bold">Add Action Item</span>
           </Button>
