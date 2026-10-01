@@ -191,7 +191,7 @@ export const DashboardHeader = ({
             size="middle"
             icon={<FormOutlined className="text-amber-500 font-bold" />}
             onClick={() => setShowAddActionModal(true)}
-            className="bg-amber-50/80 dark:bg-amber-950/40 hover:bg-amber-100 text-amber-900 dark:text-amber-200 font-bold !rounded-xl border-amber-200/80 dark:border-amber-900/60 text-xs h-9 px-2.5 sm:px-3.5 flex-1 sm:flex-initial flex items-center justify-center truncate"
+            className="hidden sm:inline-flex bg-amber-50/80 dark:bg-amber-950/40 hover:bg-amber-100 text-amber-900 dark:text-amber-200 font-bold !rounded-xl border-amber-200/80 dark:border-amber-900/60 text-xs h-9 px-2.5 sm:px-3.5 flex-initial items-center justify-center truncate"
           >
             <span className="text-xs font-bold">Add Action Item</span>
           </Button>
