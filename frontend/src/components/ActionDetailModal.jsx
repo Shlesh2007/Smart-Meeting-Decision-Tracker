@@ -230,7 +230,7 @@ export const ActionDetailModal = ({
           {/* Deadline Card */}
           <div className="p-3 bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 rounded-xl flex flex-col justify-between">
             <div>
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
                 Deadline
               </span>
               <span
@@ -241,6 +241,9 @@ export const ActionDetailModal = ({
                 {actionItem.due_date
                   ? dayjs(actionItem.due_date).format('MMMM DD, YYYY')
                   : 'No Target Date'}
+              </span>
+              <span className="text-[10.5px] text-slate-500 dark:text-slate-400 font-medium block mt-1">
+                Created: <strong>{actionItem.created_at ? dayjs(actionItem.created_at).format('MMM DD, YYYY [at] h:mm A') : '—'}</strong>
               </span>
             </div>
 

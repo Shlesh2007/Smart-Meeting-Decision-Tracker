@@ -410,9 +410,9 @@ export default function Meetings() {
 
                 {/* Footer Meta & Participants */}
                 <div className="pt-3 mt-3 border-t border-slate-100 dark:border-slate-700/60 space-y-2">
-                  <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-300">
+                  <div className="flex items-start justify-between text-xs text-slate-600 dark:text-slate-300 gap-2">
                     <div>
-                      <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Date & Time</span>
+                      <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Scheduled</span>
                       <span className="font-semibold text-slate-900 dark:text-slate-100 block">
                         {dayjs(record.meeting_date).format('MMM D, YYYY')}
                       </span>
@@ -443,6 +443,13 @@ export default function Meetings() {
                         </Avatar.Group>
                       </div>
                     )}
+                  </div>
+
+                  <div className="pt-1.5 text-[11px] text-slate-400 dark:text-slate-400 flex items-center justify-between border-t border-slate-100/60 dark:border-slate-700/40">
+                    <span>Created:</span>
+                    <span className="font-medium text-slate-600 dark:text-slate-300">
+                      {record.created_at ? dayjs(record.created_at).format('MMM D, YYYY [at] h:mm A') : '—'}
+                    </span>
                   </div>
                 </div>
               </Card>

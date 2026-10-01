@@ -572,8 +572,15 @@ export default function MyActions() {
                     </div>
 
                     {/* Footer Info & Actions */}
-                    <div className="pt-3 mt-3 border-t border-slate-100 dark:border-slate-700/60 space-y-2.5">
-                      <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-300">
+                    <div className="pt-3 mt-3 border-t border-slate-100 dark:border-slate-700/60 space-y-2">
+                      <div className="flex items-center justify-between text-[10px] text-slate-400 font-medium pb-1.5 border-b border-slate-100/80 dark:border-slate-700/40">
+                        <span>Created: <strong className="text-slate-700 dark:text-slate-300">{record.created_at ? dayjs(record.created_at).format('MMM DD, YYYY [at] h:mm A') : '—'}</strong></span>
+                        {record.created_by_detail && (
+                          <span className="truncate max-w-[140px]">By: <strong>{record.created_by_detail.full_name || record.created_by_detail.username}</strong></span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-300 pt-0.5">
                         <div className="min-w-0 flex-1 pr-2">
                           <span className="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">Assignee(s)</span>
                           {assignees.length === 0 ? (

@@ -469,7 +469,7 @@ export const Navbar = ({ collapsed = false, onToggleSidebar, onCollapseSidebar }
       </aside>
 
       {/* Top Navigation Header Bar */}
-      <header className={`sticky top-0 lg:relative z-30 w-full max-w-full bg-white/95 dark:bg-slate-800/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-700/80 shadow-xs transition-all duration-300 ${collapsed ? 'lg:pl-16' : 'lg:pl-64'}`}>
+      <header className={`sticky top-0 z-50 w-full max-w-full bg-white/95 dark:bg-slate-800/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-700/80 shadow-xs transition-all duration-300 ${collapsed ? 'lg:pl-16' : 'lg:pl-64'}`}>
         <Flex align="center" justify="space-between" className="w-full max-w-[1600px] mx-auto px-3 sm:px-6 lg:px-8 h-16 gap-2 sm:gap-4">
 
           {/* Logo Brand Header */}

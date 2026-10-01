@@ -636,6 +636,8 @@ export default function MeetingDetail() {
                                     </span>
                                     <span className="hidden sm:inline">•</span>
                                     <span>Due Date: <strong className={action.is_overdue ? 'text-rose-600 dark:text-rose-400' : ''}>{action.due_date ? new Date(action.due_date).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }) : 'N/A'}</strong></span>
+                                    <span className="hidden sm:inline">•</span>
+                                    <span>Created: <strong>{action.created_at ? dayjs(action.created_at).format('MMM DD, YYYY [at] h:mm A') : '—'}</strong></span>
                                   </div>
 
                                   {action.completion_notes && (
@@ -763,6 +765,8 @@ export default function MeetingDetail() {
                           </span>
                           <span className="hidden sm:inline">•</span>
                           <span>Due Date: <strong className={action.is_overdue ? 'text-rose-600 dark:text-rose-400' : ''}>{action.due_date ? new Date(action.due_date).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }) : 'N/A'}</strong></span>
+                          <span className="hidden sm:inline">•</span>
+                          <span>Created: <strong>{action.created_at ? dayjs(action.created_at).format('MMM DD, YYYY [at] h:mm A') : '—'}</strong></span>
                         </div>
                       </div>
 
