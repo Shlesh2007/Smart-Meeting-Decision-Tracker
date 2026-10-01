@@ -59,7 +59,8 @@ export default function MeetingDetail() {
       
       try {
         const d = await discussionService.getDiscussions(meetingId);
-        setDiscussions(Array.isArray(d) ? d : (d?.results || []));
+        const listDisc = Array.isArray(d) ? d : (Array.isArray(d?.results) ? d.results : []);
+        setDiscussions(listDisc);
       } catch (err) {
         console.error('Failed to load discussions:', err);
         setDiscussions([]);
@@ -71,8 +72,17 @@ export default function MeetingDetail() {
           actionService.getActions({ page_size: 1000 }).catch(() => [])
         ]);
 
-        const listMeeting = aResMeeting.results || aResMeeting || [];
-        const listAll = aResAll.results || aResAll || [];
+        const listMeeting = Array.isArray(aResMeeting?.results)
+          ? aResMeeting.results
+          : Array.isArray(aResMeeting)
+          ? aResMeeting
+          : [];
+
+        const listAll = Array.isArray(aResAll?.results)
+          ? aResAll.results
+          : Array.isArray(aResAll)
+          ? aResAll
+          : [];
 
         const map = new Map();
         listMeeting.forEach(item => {
@@ -96,6 +106,7 @@ export default function MeetingDetail() {
         setAllActions(Array.from(map.values()));
       } catch (err) {
         console.error('Failed to load actions:', err);
+        setAllActions([]);
       }
     } catch (err) {
       const status = err.response?.status;

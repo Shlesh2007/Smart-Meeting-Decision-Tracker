@@ -26,6 +26,8 @@ function ScrollToTop() {
   return null;
 }
 
+import { ErrorBoundary } from './components/ErrorBoundary.jsx';
+
 import { App as AntdApp } from 'antd';
 
 export default function App() {
@@ -36,8 +38,9 @@ export default function App() {
         <AntdApp>
           <InitialSplashScreen>
             <AuthProvider>
-              <MainLayout>
-              <Routes>
+              <ErrorBoundary>
+                <MainLayout>
+                  <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/login/:panelType" element={<Login />} />
@@ -51,8 +54,8 @@ export default function App() {
                 <Route path="/oauth-callback" element={<OAuthCallback />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
-
-            </MainLayout>
+              </MainLayout>
+            </ErrorBoundary>
           </AuthProvider>
         </InitialSplashScreen>
         </AntdApp>
