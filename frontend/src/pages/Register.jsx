@@ -215,6 +215,7 @@ export default function Register() {
         onCancel={() => setShowOtpModal(false)}
         footer={null}
         centered
+        style={{ maxWidth: 'calc(100vw - 24px)', margin: '12px auto' }}
         destroyOnHidden
       >
         <div className="py-2 space-y-4">

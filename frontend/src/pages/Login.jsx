@@ -393,6 +393,7 @@ export default function Login() {
         footer={null}
         destroyOnHidden
         width={500}
+        style={{ maxWidth: 'calc(100vw - 24px)', margin: '12px auto' }}
       >
         <div className="py-2">
           <Steps

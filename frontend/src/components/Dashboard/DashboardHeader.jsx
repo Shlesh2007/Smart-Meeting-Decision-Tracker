@@ -158,8 +158,8 @@ export const DashboardHeader = ({
       
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
         {/* Greeting & Date Info */}
-        <div className="flex items-center space-x-3 w-full sm:w-auto flex-1 min-w-0">
-          <div className="space-y-0.5">
+        <div className="flex items-start justify-between w-full sm:w-auto flex-1 min-w-0 gap-2">
+          <div className="space-y-0.5 min-w-0 flex-1">
             <h1 className="text-base sm:text-lg font-extrabold text-slate-900 dark:text-white m-0 tracking-tight leading-snug">
               {greetingTime}, {userName}! 👋
             </h1>
@@ -169,6 +169,19 @@ export const DashboardHeader = ({
                 : "Here's your personal meeting & action item workspace overview."}
             </p>
           </div>
+
+          {/* Refresh Button for Mobile screens (top right) */}
+          {onRefresh && (
+            <div className="sm:hidden shrink-0">
+              <Button
+                size="middle"
+                icon={<SyncOutlined spin={loading} />}
+                onClick={onRefresh}
+                title="Refresh Dashboard"
+                className="bg-white dark:bg-slate-800 hover:bg-slate-50 text-slate-600 dark:text-slate-300 !rounded-xl border-slate-200 dark:border-slate-700 h-9 w-9 flex items-center justify-center p-0 shrink-0"
+              />
+            </div>
+          )}
         </div>
 
         {/* Action Buttons */}
@@ -184,14 +197,17 @@ export const DashboardHeader = ({
             </Button>
           </Link>
 
+          {/* Refresh Button for Tablet & Desktop screens */}
           {onRefresh && (
-            <Button
-              size="middle"
-              icon={<SyncOutlined spin={loading} />}
-              onClick={onRefresh}
-              title="Refresh Dashboard"
-              className="bg-white dark:bg-slate-800 hover:bg-slate-50 text-slate-600 dark:text-slate-300 !rounded-xl border-slate-200 dark:border-slate-700 h-9 w-9 flex items-center justify-center p-0 shrink-0"
-            />
+            <div className="hidden sm:block shrink-0">
+              <Button
+                size="middle"
+                icon={<SyncOutlined spin={loading} />}
+                onClick={onRefresh}
+                title="Refresh Dashboard"
+                className="bg-white dark:bg-slate-800 hover:bg-slate-50 text-slate-600 dark:text-slate-300 !rounded-xl border-slate-200 dark:border-slate-700 h-9 w-9 flex items-center justify-center p-0 shrink-0"
+              />
+            </div>
           )}
         </div>
       </div>

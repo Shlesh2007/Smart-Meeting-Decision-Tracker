@@ -436,9 +436,107 @@ export default function Admin() {
               children: loading ? (
                 <LoadingSkeleton type="table" />
               ) : (
-                <div className="overflow-x-auto w-full">
-                  <Table columns={userColumns} dataSource={users} rowKey="id" pagination={{ pageSize: 8 }} scroll={{ x: 750 }} />
-                </div>
+                <>
+                  {/* Desktop Table View (>= 1024px) */}
+                  <div className="hidden lg:block w-full overflow-x-auto">
+                    <Table columns={userColumns} dataSource={users} rowKey="id" pagination={{ pageSize: 8 }} scroll={{ x: 750 }} />
+                  </div>
+
+                  {/* Responsive Cards Grid View (< 1024px) */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 block lg:hidden py-1.5">
+                    {users.map((u) => {
+                      const isTargetOwner = u.role === 'OWNER';
+                      const isSelf = u.id === user?.id;
+                      const isDisabled = isSelf || (isTargetOwner && !isOwner) || (!isOwner && u.role === 'ADMIN');
+
+                      return (
+                        <Card
+                          key={u.id}
+                          className="shadow-xs rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-800 hover:border-blue-400 transition-all"
+                          styles={{ body: { padding: '10px 12px' } }}
+                        >
+                          {/* Header: Name, Username, Email, Role Tag */}
+                          <div className="flex items-center justify-between gap-2 pb-1.5 border-b border-slate-100 dark:border-slate-700/60">
+                            <div className="min-w-0 flex-1">
+                              <div
+                                onClick={() => setSelectedUserModal(u)}
+                                className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white flex items-center gap-1 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors truncate leading-tight"
+                              >
+                                <span className="truncate">{u.full_name || u.username}</span>
+                                {u.role === 'OWNER' && <CrownOutlined className="text-amber-500 text-[10px] shrink-0" />}
+                              </div>
+                              <span className="text-[10.5px] text-slate-400 block truncate leading-tight">{u.email}</span>
+                            </div>
+                            <div className="shrink-0">{getRoleTag(u.role)}</div>
+                          </div>
+
+                          {/* 2-Column Controls Grid: Department & Role */}
+                          <div className="grid grid-cols-2 gap-2 pt-1.5">
+                            <div className="min-w-0">
+                              <span className="text-[9.5px] uppercase font-bold text-slate-400 block mb-0.5">Department</span>
+                              <Select
+                                id={`card_user_dept_${u.id}`}
+                                name={`card_user_dept_${u.id}`}
+                                size="small"
+                                value={u.department || undefined}
+                                placeholder="Dept..."
+                                onChange={(newDept) => handleDepartmentChange(u, newDept)}
+                                disabled={isDisabled}
+                                className="w-full text-[11px]"
+                                allowClear
+                                options={[
+                                  { label: 'Executive & Strategy', value: 'Executive & Strategy' },
+                                  { label: 'Engineering & Tech Lead', value: 'Engineering & Tech Lead' },
+                                  { label: 'Operations & Governance', value: 'Operations & Governance' },
+                                  { label: 'Backend Infrastructure', value: 'Backend Infrastructure' },
+                                  { label: 'Frontend & Mobile Guild', value: 'Frontend & Mobile Guild' },
+                                  { label: 'DevOps & Cloud Systems', value: 'DevOps & Cloud Systems' },
+                                  { label: 'QA & Security Assurance', value: 'QA & Security Assurance' },
+                                  { label: 'Product & Analytics', value: 'Product & Analytics' },
+                                  { label: 'General Team', value: 'General Team' }
+                                ]}
+                              />
+                            </div>
+
+                            <div className="min-w-0">
+                              <span className="text-[9.5px] uppercase font-bold text-slate-400 block mb-0.5">Manage Role</span>
+                              {isTargetOwner && !isOwner ? (
+                                <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold block pt-1 truncate">
+                                  🔒 Protected Owner
+                                </span>
+                              ) : (
+                                <Select
+                                  id={`card_user_role_${u.id}`}
+                                  name={`card_user_role_${u.id}`}
+                                  size="small"
+                                  value={u.role}
+                                  onChange={(newRole) => handleRoleChange(u, newRole)}
+                                  disabled={isDisabled}
+                                  className="w-full text-[11px] font-bold"
+                                  options={allowedRoleOptions}
+                                />
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Footer: Date & Profile */}
+                          <div className="pt-1.5 mt-1.5 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-between text-[10.5px] text-slate-400">
+                            <span>Joined: {u.date_joined ? new Date(u.date_joined).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }) : '—'}</span>
+                            <Button
+                              type="link"
+                              size="small"
+                              icon={<EyeOutlined className="text-[9px]" />}
+                              onClick={() => setSelectedUserModal(u)}
+                              className="text-blue-600 dark:text-blue-400 font-bold p-0 text-[10.5px] h-auto"
+                            >
+                              Profile
+                            </Button>
+                          </div>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                </>
               ),
             },
             {
@@ -463,9 +561,95 @@ export default function Admin() {
                   <p className="font-medium text-slate-700 dark:text-slate-300 m-0">No department change requests submitted yet.</p>
                 </div>
               ) : (
-                <div className="overflow-x-auto w-full">
-                  <Table columns={deptColumns} dataSource={deptRequests} rowKey="id" pagination={{ pageSize: 8 }} scroll={{ x: 750 }} />
-                </div>
+                <>
+                  {/* Desktop Table View (>= 1024px) */}
+                  <div className="hidden lg:block w-full overflow-x-auto">
+                    <Table columns={deptColumns} dataSource={deptRequests} rowKey="id" pagination={{ pageSize: 8 }} scroll={{ x: 750 }} />
+                  </div>
+
+                  {/* Responsive Cards Grid View (< 1024px) */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 block lg:hidden py-1.5">
+                    {deptRequests.map((r) => {
+                      const isPending = r.status === 'PENDING';
+                      const statusTag = r.status === 'APPROVED' ? (
+                        <Tag color="success" className="font-bold text-[10px] m-0 px-1 py-0">APPROVED</Tag>
+                      ) : r.status === 'REJECTED' ? (
+                        <Tag color="error" className="font-bold text-[10px] m-0 px-1 py-0">REJECTED</Tag>
+                      ) : (
+                        <Tag color="warning" className="font-bold text-[10px] m-0 px-1 py-0">PENDING</Tag>
+                      );
+
+                      return (
+                        <Card
+                          key={r.id}
+                          className="shadow-xs rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-800 hover:border-blue-400 transition-all"
+                          styles={{ body: { padding: '10px 12px' } }}
+                        >
+                          {/* Header: Member info & Status tag */}
+                          <div className="flex items-center justify-between gap-2 pb-1 border-b border-slate-100 dark:border-slate-700/60">
+                            <div className="min-w-0 flex-1">
+                              <span className="font-bold text-xs text-slate-900 dark:text-white block truncate leading-tight">
+                                {r.user_detail?.full_name || r.user_detail?.username}
+                              </span>
+                              <span className="text-[10.5px] text-slate-400 block truncate leading-tight">{r.user_detail?.email}</span>
+                            </div>
+                            <div className="shrink-0">{statusTag}</div>
+                          </div>
+
+                          {/* Department Transfer & Reason */}
+                          <div className="py-1 space-y-0.5">
+                            <div className="flex items-center gap-1 text-[11px] flex-wrap">
+                              <Tag color="default" className="m-0 text-[10px] px-1 py-0">{r.user_detail?.department || 'General'}</Tag>
+                              <span className="text-slate-400 text-[10px]">➔</span>
+                              <Tag color="blue" className="m-0 text-[10px] font-bold px-1 py-0">{r.requested_department}</Tag>
+                            </div>
+                            {r.reason && (
+                              <p className="text-[10.5px] italic text-slate-500 dark:text-slate-400 m-0 truncate leading-tight">
+                                "{r.reason}"
+                              </p>
+                            )}
+                          </div>
+
+                          {/* Footer: Date & Actions */}
+                          <div className="pt-1.5 mt-1 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-between text-[10.5px]">
+                            <span className="text-slate-400">
+                              {r.created_at ? dayjs(r.created_at).format('MMM DD, YYYY') : '—'}
+                            </span>
+
+                            {isPending ? (
+                              <div className="flex items-center space-x-1.5">
+                                <Button
+                                  type="primary"
+                                  size="small"
+                                  icon={<CheckOutlined className="text-[9px]" />}
+                                  loading={actionLoadingId === r.id}
+                                  onClick={() => handleApproveDeptRequest(r.id)}
+                                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] border-none rounded-md h-6 px-2.5"
+                                >
+                                  Approve
+                                </Button>
+                                <Button
+                                  danger
+                                  size="small"
+                                  icon={<CloseOutlined className="text-[9px]" />}
+                                  loading={actionLoadingId === r.id}
+                                  onClick={() => handleRejectDeptRequest(r.id)}
+                                  className="font-bold text-[10px] rounded-md h-6 px-2.5"
+                                >
+                                  Reject
+                                </Button>
+                              </div>
+                            ) : (
+                              <span className="text-slate-400 italic text-[10px]">
+                                Reviewed by {r.reviewed_by_detail?.full_name || 'Admin'}
+                              </span>
+                            )}
+                          </div>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                </>
               ),
             },
             {
@@ -579,6 +763,7 @@ export default function Admin() {
         }}
         onOk={() => teamForm.submit()}
         okText={editingTeam ? 'Update Team' : 'Create Team'}
+        style={{ maxWidth: 'calc(100vw - 24px)', margin: '12px auto' }}
       >
         <Form form={teamForm} layout="vertical" onFinish={handleSaveTeam}>
           <Form.Item
