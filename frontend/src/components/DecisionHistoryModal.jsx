@@ -33,6 +33,7 @@ export const DecisionHistoryModal = ({ open, onClose, decisionId }) => {
       onCancel={onClose}
       footer={null}
       width={650}
+      style={{ maxWidth: 'calc(100vw - 24px)', margin: '12px auto' }}
     >
       {loading ? (
         <div className="py-12 text-center">

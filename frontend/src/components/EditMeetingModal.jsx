@@ -154,7 +154,7 @@ export const EditMeetingModal = ({ open, onClose, meeting, onSuccess }) => {
       confirmLoading={submitting}
       okText="Update Meeting"
       width={960}
-      style={{ maxWidth: '95vw' }}
+      style={{ maxWidth: 'calc(100vw - 24px)', margin: '12px auto' }}
       destroyOnHidden
     >
       <Form

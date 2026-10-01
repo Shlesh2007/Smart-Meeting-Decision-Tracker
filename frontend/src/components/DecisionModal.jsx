@@ -98,7 +98,7 @@ export const DecisionModal = ({
             : 'bg-slate-900 hover:bg-slate-800 font-bold text-xs h-8.5 px-4 text-white border-none rounded-xl shadow-xs'
       }}
       width={480}
-      style={{ maxWidth: '95vw' }}
+      style={{ maxWidth: 'calc(100vw - 24px)', margin: '12px auto' }}
     >
       {existingDecision && (
         <Alert

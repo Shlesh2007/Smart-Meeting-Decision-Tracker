@@ -35,6 +35,7 @@ export const DiscussionModal = ({ open, onClose, meetingId, onSuccess }) => {
       confirmLoading={submitting}
       okText="Add Discussion"
       okButtonProps={{ className: 'bg-slate-900 hover:bg-slate-800 font-semibold text-white' }}
+      style={{ maxWidth: 'calc(100vw - 24px)', margin: '12px auto' }}
     >
       <Form form={form} layout="vertical" onFinish={handleSubmit} initialValues={{ priority: 'MEDIUM' }}>
         <Form.Item

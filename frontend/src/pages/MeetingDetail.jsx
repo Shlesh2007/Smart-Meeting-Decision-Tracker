@@ -17,7 +17,7 @@ import {
 import {
   CalendarOutlined, ClockCircleOutlined, EnvironmentOutlined, UserOutlined,
   PlusOutlined, HistoryOutlined, ArrowLeftOutlined, EditOutlined, MessageOutlined, FileTextOutlined,
-  MailOutlined, SafetyCertificateOutlined, StopOutlined, CloseCircleOutlined
+  MailOutlined, SafetyCertificateOutlined, StopOutlined, CloseCircleOutlined, CheckSquareOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 

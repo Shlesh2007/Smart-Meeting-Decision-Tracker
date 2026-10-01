@@ -25,6 +25,7 @@ export const ParticipantProfileModal = ({ open, onClose, user }) => {
       onCancel={onClose}
       footer={null}
       width={520}
+      style={{ maxWidth: 'calc(100vw - 24px)', margin: '12px auto' }}
       centered
       destroyOnHidden
     >
