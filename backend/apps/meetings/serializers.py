@@ -90,6 +90,26 @@ class MeetingSerializer(serializers.ModelSerializer):
                 "participant_ids": "Please select a team or invite at least one individual participant."
             })
 
+        # Validate recurring meeting end date
+        is_recurring = attrs.get('is_recurring', self.instance.is_recurring if self.instance else False)
+        if is_recurring:
+            recurrence_pattern = attrs.get('recurrence_pattern', self.instance.recurrence_pattern if self.instance else 'DAILY')
+            recurrence_end_date = attrs.get('recurrence_end_date', self.instance.recurrence_end_date if self.instance else None)
+
+            if recurrence_end_date and meeting_date:
+                from datetime import date, timedelta
+                rec_end = date.fromisoformat(recurrence_end_date) if isinstance(recurrence_end_date, str) else recurrence_end_date
+                m_date = date.fromisoformat(meeting_date) if isinstance(meeting_date, str) else meeting_date
+
+                if rec_end <= m_date:
+                    raise serializers.ValidationError({
+                        "recurrence_end_date": "Repeat Until Date cannot be the same as or before the meeting start date."
+                    })
+                if recurrence_pattern == Meeting.RecurrencePattern.WEEKLY and rec_end < (m_date + timedelta(days=7)):
+                    raise serializers.ValidationError({
+                        "recurrence_end_date": "Repeat Until Date must be at least 1 week (7 days) after the meeting start date for Weekly recurring meetings."
+                    })
+
         return attrs
 
     def create(self, validated_data):

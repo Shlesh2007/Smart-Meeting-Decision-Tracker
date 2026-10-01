@@ -165,3 +165,55 @@ class MeetingTestCase(TestCase):
         res_re_cancel = self.client.post(f'/api/meetings/{meeting.id}/cancel/')
         self.assertEqual(res_re_cancel.status_code, status.HTTP_400_BAD_REQUEST)
 
+    def test_recurring_meeting_date_validation(self):
+        from datetime import timedelta
+        self.client.force_authenticate(user=self.admin)
+        today_str = str(date.today())
+
+        # 1. Same start and end date -> 400 Bad Request
+        payload_same_date = {
+            'title': 'Daily Standup Mismatch',
+            'meeting_date': today_str,
+            'start_time': '10:00:00',
+            'end_time': '11:00:00',
+            'meeting_type': 'INTERNAL',
+            'participant_ids': [self.admin.id],
+            'is_recurring': True,
+            'recurrence_pattern': 'DAILY',
+            'recurrence_end_date': today_str
+        }
+        res_same = self.client.post('/api/meetings/', payload_same_date, format='json')
+        self.assertEqual(res_same.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('recurrence_end_date', res_same.data)
+
+        # 2. Weekly recurrence with less than 7 days end date -> 400 Bad Request
+        payload_weekly_invalid = {
+            'title': 'Weekly Sync Short End Date',
+            'meeting_date': today_str,
+            'start_time': '10:00:00',
+            'end_time': '11:00:00',
+            'meeting_type': 'INTERNAL',
+            'participant_ids': [self.admin.id],
+            'is_recurring': True,
+            'recurrence_pattern': 'WEEKLY',
+            'recurrence_end_date': str(date.today() + timedelta(days=3))
+        }
+        res_weekly = self.client.post('/api/meetings/', payload_weekly_invalid, format='json')
+        self.assertEqual(res_weekly.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('recurrence_end_date', res_weekly.data)
+
+        # 3. Daily recurrence with 2 days duration -> 201 Created
+        payload_daily_valid = {
+            'title': 'Daily Sync Valid',
+            'meeting_date': today_str,
+            'start_time': '10:00:00',
+            'end_time': '11:00:00',
+            'meeting_type': 'INTERNAL',
+            'participant_ids': [self.admin.id],
+            'is_recurring': True,
+            'recurrence_pattern': 'DAILY',
+            'recurrence_end_date': str(date.today() + timedelta(days=2))
+        }
+        res_daily = self.client.post('/api/meetings/', payload_daily_valid, format='json')
+        self.assertEqual(res_daily.status_code, status.HTTP_201_CREATED)
+

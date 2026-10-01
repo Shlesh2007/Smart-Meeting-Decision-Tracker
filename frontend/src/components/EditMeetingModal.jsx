@@ -96,6 +96,25 @@ export const EditMeetingModal = ({ open, onClose, meeting, onSuccess }) => {
       return;
     }
 
+    if (values.is_recurring && values.recurrence_end_date && values.meeting_date) {
+      const pattern = values.recurrence_pattern || 'DAILY';
+      const meetingDateStart = values.meeting_date.startOf('day');
+      const endDateStart = values.recurrence_end_date.startOf('day');
+
+      if (endDateStart.isSame(meetingDateStart) || endDateStart.isBefore(meetingDateStart)) {
+        message.error('Repeat Until Date cannot be the same as or before the meeting start date.');
+        return;
+      }
+
+      if (pattern === 'WEEKLY') {
+        const minEndDate = values.meeting_date.add(7, 'day').startOf('day');
+        if (endDateStart.isBefore(minEndDate)) {
+          message.error('Repeat Until Date must be at least 1 week (7 days) after the meeting start date for weekly recurring meetings.');
+          return;
+        }
+      }
+    }
+
     setSubmitting(true);
 
     try {
@@ -310,6 +329,18 @@ export const EditMeetingModal = ({ open, onClose, meeting, onSuccess }) => {
                         name="recurrence_end_date"
                         className="w-full"
                         placeholder="Select end date"
+                        disabledDate={(current) => {
+                          const startDate = form.getFieldValue('meeting_date') || dayjs();
+                          const pattern = form.getFieldValue('recurrence_pattern') || 'DAILY';
+                          if (!current) return false;
+                          if (pattern === 'WEEKLY') {
+                            const minEndDate = startDate.add(7, 'day').startOf('day');
+                            return current < minEndDate;
+                          } else {
+                            const minEndDate = startDate.add(1, 'day').startOf('day');
+                            return current < minEndDate;
+                          }
+                        }}
                       />
                     </Form.Item>
                   </div>

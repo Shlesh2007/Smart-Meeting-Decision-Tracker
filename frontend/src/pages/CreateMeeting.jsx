@@ -24,6 +24,7 @@ export default function CreateMeeting() {
   const needsReminder = Form.useWatch('needs_reminder', form) || false;
   const isRecurring = Form.useWatch('is_recurring', form) || false;
   const recurrenceDuration = Form.useWatch('recurrence_duration', form) || '14_DAYS';
+  const recurrencePattern = Form.useWatch('recurrence_pattern', form) || 'DAILY';
   const selectedTeamId = Form.useWatch('team', form);
 
   // Automatically select location_type based on meeting_type: Conference Room for Internal, Google Meet for any other type
@@ -109,11 +110,23 @@ export default function CreateMeeting() {
       } else if (values.recurrence_duration === '30_DAYS') {
         recurrenceEndDate = values.meeting_date.add(30, 'day').format('YYYY-MM-DD');
       } else if (values.recurrence_duration === 'CUSTOM' && values.recurrence_end_date) {
-        const minEndDate = values.meeting_date.add(7, 'day').startOf('day');
-        if (values.recurrence_end_date.startOf('day').isBefore(minEndDate)) {
-          message.error('Repeat Until Date must be at least 1 week (7 days) after the meeting start date.');
+        const pattern = values.recurrence_pattern || 'DAILY';
+        const meetingDateStart = values.meeting_date.startOf('day');
+        const endDateStart = values.recurrence_end_date.startOf('day');
+
+        if (endDateStart.isSame(meetingDateStart) || endDateStart.isBefore(meetingDateStart)) {
+          message.error('Repeat Until Date cannot be the same as or before the meeting start date.');
           setSubmitting(false);
           return;
+        }
+
+        if (pattern === 'WEEKLY') {
+          const minEndDate = values.meeting_date.add(7, 'day').startOf('day');
+          if (endDateStart.isBefore(minEndDate)) {
+            message.error('Repeat Until Date must be at least 1 week (7 days) after the meeting start date for weekly recurring meetings.');
+            setSubmitting(false);
+            return;
+          }
         }
         recurrenceEndDate = values.recurrence_end_date.format('YYYY-MM-DD');
       } else {
@@ -531,8 +544,8 @@ export default function CreateMeeting() {
                         <div>
                           <Form.Item
                             name="recurrence_end_date"
-                            label="Repeat Until Date (At least 1 week after start date)"
-                            rules={[{ required: true, message: 'Please select an end date at least 7 days after meeting start date' }]}
+                            label={recurrencePattern === 'WEEKLY' ? "Repeat Until Date (At least 1 week after start date)" : "Repeat Until Date (After start date)"}
+                            rules={[{ required: true, message: 'Please select an end date for recurring meeting' }]}
                             className="m-0"
                           >
                             <DatePicker
@@ -541,13 +554,23 @@ export default function CreateMeeting() {
                               style={{ width: '100%' }}
                               disabledDate={(current) => {
                                 const startDate = form.getFieldValue('meeting_date') || dayjs();
-                                const minEndDate = startDate.add(7, 'day').startOf('day');
-                                return current && current < minEndDate;
+                                const pattern = form.getFieldValue('recurrence_pattern') || 'DAILY';
+                                if (!current) return false;
+                                if (pattern === 'WEEKLY') {
+                                  const minEndDate = startDate.add(7, 'day').startOf('day');
+                                  return current < minEndDate;
+                                } else {
+                                  // For DAILY or WEEKDAYS, end date must be strictly after meeting_date (start date + 1 day)
+                                  const minEndDate = startDate.add(1, 'day').startOf('day');
+                                  return current < minEndDate;
+                                }
                               }}
                             />
                           </Form.Item>
                           <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 m-0">
-                            Custom end date must be at least 7 days (1 week) after the meeting start date to allow recurring occurrences.
+                            {recurrencePattern === 'WEEKLY'
+                              ? "Custom end date must be at least 7 days (1 week) after the meeting start date to allow weekly recurring occurrences."
+                              : "Custom end date must be after the meeting start date (cannot be the same date)."}
                           </p>
                         </div>
                       )}

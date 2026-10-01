@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Button, Tag } from 'antd';
+import { Button, Tag, Segmented } from 'antd';
 import {
   FireOutlined,
   CalendarOutlined,
@@ -168,28 +168,19 @@ export const NeedsAttention = ({ overdueList = [], urgentList = [], loading = fa
           </div>
         </div>
 
-        {/* Filter Tabs */}
-        <div className="flex items-center space-x-1 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg border border-slate-200/50 dark:border-slate-700/50 text-[10px] overflow-x-auto max-w-full">
-          {[
-            { label: 'All Urgent', key: 'ALL' },
-            { label: 'Overdue', key: 'OVERDUE' },
-            { label: 'Critical', key: 'CRITICAL' },
-            { label: 'High', key: 'HIGH' },
-          ].map((tab) => (
-            <button
-              key={tab.key}
-              type="button"
-              onClick={() => setActiveTab(tab.key)}
-              className={`px-2 py-0.5 rounded font-bold border-0 cursor-pointer transition-all whitespace-nowrap ${
-                activeTab === tab.key
-                  ? 'bg-rose-600 text-white shadow-xs'
-                  : 'text-slate-600 dark:text-slate-400 bg-transparent hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
+        {/* Filter Tabs using AntD Segmented */}
+        <Segmented
+          size="small"
+          value={activeTab}
+          onChange={(val) => setActiveTab(val)}
+          options={[
+            { label: 'All Urgent', value: 'ALL' },
+            { label: 'Overdue', value: 'OVERDUE' },
+            { label: 'Critical', value: 'CRITICAL' },
+            { label: 'High', value: 'HIGH' },
+          ]}
+          className="bg-slate-100 dark:bg-slate-800 text-[10px] font-bold"
+        />
       </div>
 
       {/* Content / Empty State */}
