@@ -332,7 +332,7 @@ export default function LoginPage() {
                 htmlType="submit"
                 loading={submitting}
                 block
-                className="font-semibold rounded-xl border-none bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/30"
+                className="font-semibold rounded-xl border-none bg-slate-800 hover:bg-slate-900 text-white shadow-lg shadow-blue-600/30"
               >
                 Sign In
               </Button>

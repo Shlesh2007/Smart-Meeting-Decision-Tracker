@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button, Tag } from 'antd';
 import {
   FireOutlined,
@@ -15,6 +15,7 @@ import { actionService } from '../../services/api.js';
 import { useAuth } from '../../context/AuthContext.jsx';
 
 export const NeedsAttention = ({ overdueList = [], urgentList = [], loading = false }) => {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('ALL');
   const [actions, setActions] = useState([]);
@@ -28,6 +29,13 @@ export const NeedsAttention = ({ overdueList = [], urgentList = [], loading = fa
     setActions(Array.from(itemMap.values()));
   }, [overdueList, urgentList]);
 
+  const handleViewAction = (item) => {
+    if (item.meeting_id) {
+      navigate(`/meetings/${item.meeting_id}`);
+    } else {
+      navigate(`/my-actions?search=${encodeURIComponent(item.title)}`);
+    }
+  };
 
   const filteredActions = React.useMemo(() => {
     const today = dayjs().format('YYYY-MM-DD');
@@ -74,14 +82,15 @@ export const NeedsAttention = ({ overdueList = [], urgentList = [], loading = fa
     const assigneesList = Array.isArray(item.assigned_to_detail)
       ? item.assigned_to_detail
       : (item.assigned_to_detail ? [item.assigned_to_detail] : []);
-    const assigneeName = assigneesList.length > 0
+    const rawName = assigneesList.length > 0
       ? assigneesList.map(u => u.full_name || u.username).join(', ')
-      : (typeof item.assigned_to_name === 'string' ? item.assigned_to_name : 'Unassigned');
+      : (item.assigned_to_name && item.assigned_to_name !== 'Unassigned' ? item.assigned_to_name : '');
+    const assigneeName = rawName || (user ? (user.full_name || user.username) : 'Team Member');
 
     return (
       <div
         key={item.id}
-        className="p-2.5 rounded-lg bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 hover:border-rose-300 dark:hover:border-rose-800 transition-all flex items-center justify-between gap-2 group"
+        className="p-2.5 rounded-lg bg-slate-50/70 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-600 transition-all flex items-center justify-between gap-2 group"
       >
         <div className="flex items-center space-x-2.5 min-w-0 flex-1">
           <div
@@ -96,7 +105,7 @@ export const NeedsAttention = ({ overdueList = [], urgentList = [], loading = fa
 
           <div className="min-w-0 space-y-0.5">
             <div className="flex items-center space-x-1.5 flex-wrap">
-              <h4 className="font-bold text-xs text-slate-900 dark:text-slate-100 m-0 truncate group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors">
+              <h4 className="font-bold text-xs text-slate-900 dark:text-slate-100 m-0 truncate group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
                 {item.title}
               </h4>
               {isOverdue ? (
@@ -130,16 +139,15 @@ export const NeedsAttention = ({ overdueList = [], urgentList = [], loading = fa
         </div>
 
         <div className="shrink-0 flex items-center justify-end">
-          <Link to="/my-actions" className="no-underline">
-            <Button
-              type="primary"
-              size="small"
-              className="bg-rose-600 hover:bg-rose-700 font-semibold rounded-md text-[10px] border-none px-2 py-0.5 h-6 flex items-center gap-1 text-white"
-            >
-              <span>View</span>
-              <ArrowRightOutlined className="text-[8px]" />
-            </Button>
-          </Link>
+          <Button
+            type="primary"
+            size="small"
+            onClick={() => handleViewAction(item)}
+            className="bg-slate-900 hover:bg-slate-800 font-semibold rounded-md text-[10px] border-none px-2 py-0.5 h-6 flex items-center gap-1 text-white cursor-pointer"
+          >
+            <span>View</span>
+            <ArrowRightOutlined className="text-[8px]" />
+          </Button>
         </div>
       </div>
     );

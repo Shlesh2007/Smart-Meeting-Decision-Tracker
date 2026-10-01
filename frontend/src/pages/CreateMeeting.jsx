@@ -109,6 +109,12 @@ export default function CreateMeeting() {
       } else if (values.recurrence_duration === '30_DAYS') {
         recurrenceEndDate = values.meeting_date.add(30, 'day').format('YYYY-MM-DD');
       } else if (values.recurrence_duration === 'CUSTOM' && values.recurrence_end_date) {
+        const minEndDate = values.meeting_date.add(7, 'day').startOf('day');
+        if (values.recurrence_end_date.startOf('day').isBefore(minEndDate)) {
+          message.error('Repeat Until Date must be at least 1 week (7 days) after the meeting start date.');
+          setSubmitting(false);
+          return;
+        }
         recurrenceEndDate = values.recurrence_end_date.format('YYYY-MM-DD');
       } else {
         recurrenceEndDate = values.meeting_date.add(14, 'day').format('YYYY-MM-DD');
@@ -522,19 +528,28 @@ export default function CreateMeeting() {
                       </div>
 
                       {recurrenceDuration === 'CUSTOM' && (
-                        <Form.Item
-                          name="recurrence_end_date"
-                          label="Repeat Until Date"
-                          rules={[{ required: true, message: 'Please select end date' }]}
-                          className="m-0"
-                        >
-                          <DatePicker
-                            id="recurrence_end_date"
+                        <div>
+                          <Form.Item
                             name="recurrence_end_date"
-                            style={{ width: '100%' }}
-                            disabledDate={(current) => current && current <= dayjs().endOf('day')}
-                          />
-                        </Form.Item>
+                            label="Repeat Until Date (At least 1 week after start date)"
+                            rules={[{ required: true, message: 'Please select an end date at least 7 days after meeting start date' }]}
+                            className="m-0"
+                          >
+                            <DatePicker
+                              id="recurrence_end_date"
+                              name="recurrence_end_date"
+                              style={{ width: '100%' }}
+                              disabledDate={(current) => {
+                                const startDate = form.getFieldValue('meeting_date') || dayjs();
+                                const minEndDate = startDate.add(7, 'day').startOf('day');
+                                return current && current < minEndDate;
+                              }}
+                            />
+                          </Form.Item>
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 m-0">
+                            Custom end date must be at least 7 days (1 week) after the meeting start date to allow recurring occurrences.
+                          </p>
+                        </div>
                       )}
 
                       <div className="text-[11px] text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/30 p-2 rounded-lg border border-purple-200 dark:border-purple-800">

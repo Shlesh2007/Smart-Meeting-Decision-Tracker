@@ -15,6 +15,8 @@ export const MeetingActivityChart = ({
     if (activityPeriod === '7d' || activityPeriod === 7) return 7;
     if (activityPeriod === '14d' || activityPeriod === 14) return 14;
     if (activityPeriod === 'all' || activityPeriod === 0) return 0;
+    if (activityPeriod === 'last_week') return 'last_week';
+    if (activityPeriod === 'last_month') return 'last_month';
     return 30;
   });
   const [containerRef, isInView] = useScrollAnimation();
@@ -24,6 +26,8 @@ export const MeetingActivityChart = ({
     if (activityPeriod === '7d' || activityPeriod === 7) setFilterDays(7);
     else if (activityPeriod === '14d' || activityPeriod === 14) setFilterDays(14);
     else if (activityPeriod === 'all' || activityPeriod === 0) setFilterDays(0);
+    else if (activityPeriod === 'last_week') setFilterDays('last_week');
+    else if (activityPeriod === 'last_month') setFilterDays('last_month');
     else setFilterDays(30);
   }, [activityPeriod]);
 
@@ -66,6 +70,47 @@ export const MeetingActivityChart = ({
     });
 
     const today = dayjs().startOf('day');
+
+    if (filterDays === 'last_week') {
+      const dayOfWeek = today.day();
+      const daysSinceMonday = (dayOfWeek + 6) % 7;
+      const startOfThisWeek = today.subtract(daysSinceMonday, 'day');
+      const startOfLastWeek = startOfThisWeek.subtract(7, 'day');
+      const endOfLastWeek = startOfThisWeek.subtract(1, 'day');
+
+      const result = [];
+      let curr = startOfLastWeek;
+
+      while (curr.isBefore(endOfLastWeek) || curr.isSame(endOfLastWeek, 'day')) {
+        const key = curr.format('YYYY-MM-DD');
+        result.push({
+          date: curr.format('MMM DD'),
+          count: activityMap[key] || 0,
+          fullDate: key,
+        });
+        curr = curr.add(1, 'day');
+      }
+      return result;
+    }
+
+    if (filterDays === 'last_month') {
+      const startOfLastMonth = today.subtract(1, 'month').startOf('month');
+      const endOfLastMonth = today.subtract(1, 'month').endOf('month');
+
+      const result = [];
+      let curr = startOfLastMonth;
+
+      while (curr.isBefore(endOfLastMonth) || curr.isSame(endOfLastMonth, 'day')) {
+        const key = curr.format('YYYY-MM-DD');
+        result.push({
+          date: curr.format('MMM DD'),
+          count: activityMap[key] || 0,
+          fullDate: key,
+        });
+        curr = curr.add(1, 'day');
+      }
+      return result;
+    }
 
     if (filterDays === 7 || filterDays === 14 || filterDays === 30) {
       const startDate = today.subtract(filterDays - 1, 'day');

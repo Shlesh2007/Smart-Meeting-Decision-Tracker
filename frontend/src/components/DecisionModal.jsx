@@ -1,51 +1,53 @@
 import React, { useEffect, useState } from 'react';
-import { Modal, Form, Input, Select, message, Alert } from 'antd';
+import { Modal, Form, Input, message, Alert } from 'antd';
 import { decisionService } from '../services/api.js';
 import { getErrorMessage } from '../utils/errorHandler.js';
+import { StatusBadge } from './StatusBadge.jsx';
 
 export const DecisionModal = ({
-  open, onClose, discussionId, existingDecision, onSuccess
+  open, onClose, discussionId, existingDecision, onSuccess, initialStatus = 'DECISION_MADE'
 }) => {
   const [form] = Form.useForm();
   const [submitting, setSubmitting] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState(
-    existingDecision?.status || 'DECISION_MADE'
+    existingDecision?.status || initialStatus
   );
 
   useEffect(() => {
     if (open) {
       if (existingDecision) {
+        const stat = existingDecision.status || initialStatus;
         form.setFieldsValue({
-          status: existingDecision.status,
+          status: stat,
           decision: existingDecision.decision,
           reason: existingDecision.reason
         });
-        setSelectedStatus(existingDecision.status);
+        setSelectedStatus(stat);
       } else {
+        const defaultStat = initialStatus || 'DECISION_MADE';
         form.resetFields();
-        setSelectedStatus('DECISION_MADE');
+        form.setFieldsValue({ status: defaultStat });
+        setSelectedStatus(defaultStat);
       }
     }
-  }, [open, existingDecision, form]);
+  }, [open, existingDecision, initialStatus, form]);
 
   const handleSubmit = async (values) => {
     setSubmitting(true);
     try {
+      const activeStat = values.status || selectedStatus || initialStatus;
+      const payload = {
+        discussion: discussionId,
+        status: activeStat,
+        decision: values.decision || (activeStat === 'DEFERRED' ? 'Decision Deferred' : activeStat === 'REJECTED' ? 'Proposal Rejected' : ''),
+        reason: values.reason || ''
+      };
+
       if (existingDecision) {
-        await decisionService.updateDecision(existingDecision.id, {
-          discussion: discussionId,
-          status: values.status,
-          decision: values.decision,
-          reason: values.reason
-        });
+        await decisionService.updateDecision(existingDecision.id, payload);
         message.success(`Decision updated (Version ${existingDecision.version + 1} saved to audit history)!`);
       } else {
-        await decisionService.createDecision({
-          discussion: discussionId,
-          status: values.status,
-          decision: values.decision,
-          reason: values.reason
-        });
+        await decisionService.createDecision(payload);
         message.success('Decision recorded successfully!');
       }
       onSuccess();
@@ -57,16 +59,45 @@ export const DecisionModal = ({
     }
   };
 
+  const getModalTitle = () => {
+    if (existingDecision) {
+      return `Update Decision (Current Version ${existingDecision.version})`;
+    }
+    if (selectedStatus === 'REJECTED') return 'Reject Proposal';
+    if (selectedStatus === 'DEFERRED') return 'Defer Decision';
+    if (selectedStatus === 'NO_DECISION') return 'Skip Decision';
+    return 'Add Decision';
+  };
+
   return (
     <Modal
-      title={existingDecision ? `Update Decision (Current Version ${existingDecision.version})` : 'Record Decision'}
+      title={getModalTitle()}
       open={open}
       onCancel={onClose}
       onOk={() => form.submit()}
       confirmLoading={submitting}
-      okText={existingDecision ? 'Save & Snapshot New Version' : 'Save Decision'}
-      okButtonProps={{ className: 'bg-slate-900 hover:bg-slate-800 font-semibold text-white' }}
-      width={550}
+      cancelText="Cancel"
+      cancelButtonProps={{
+        className: 'rounded-xl font-bold text-xs h-8.5 px-4 text-slate-600 hover:text-slate-800 border-slate-200'
+      }}
+      okText={
+        existingDecision
+          ? 'Update Decision'
+          : selectedStatus === 'REJECTED'
+          ? 'Confirm Rejection'
+          : selectedStatus === 'DEFERRED'
+          ? 'Confirm Deferral'
+          : 'Save Decision'
+      }
+      okButtonProps={{
+        className:
+          selectedStatus === 'REJECTED'
+            ? 'bg-rose-600 hover:bg-rose-700 font-bold text-xs h-8.5 px-4 text-white border-none rounded-xl shadow-xs'
+            : selectedStatus === 'DEFERRED'
+            ? 'bg-amber-600 hover:bg-amber-700 font-bold text-xs h-8.5 px-4 text-white border-none rounded-xl shadow-xs'
+            : 'bg-slate-900 hover:bg-slate-800 font-bold text-xs h-8.5 px-4 text-white border-none rounded-xl shadow-xs'
+      }}
+      width={480}
       style={{ maxWidth: '95vw' }}
     >
       {existingDecision && (
@@ -74,29 +105,20 @@ export const DecisionModal = ({
           type="info"
           showIcon
           message="Decision History Preserved"
-          description="Updating this decision will automatically snapshot the previous version in the Decision History log (Rule 3)."
-          className="mb-4"
+          description="Updating this decision will automatically snapshot the previous version in the Decision History log."
+          className="mb-4 rounded-xl"
         />
       )}
 
-      <Form form={form} layout="vertical" onFinish={handleSubmit} disabled={submitting} initialValues={{ status: 'DECISION_MADE' }}>
-        <Form.Item
-          name="status"
-          label="Decision Outcome / Status"
-          rules={[{ required: true, message: 'Please select outcome status' }]}
-        >
-          <Select
-            id="status"
-            name="status"
-            onChange={(val) => setSelectedStatus(val)}
-            options={[
-              { label: 'Decision Made', value: 'DECISION_MADE' },
-              { label: 'Deferred', value: 'DEFERRED' },
-              { label: 'Rejected', value: 'REJECTED' },
-              { label: 'No Decision', value: 'NO_DECISION' }
-            ]}
-          />
+      <Form form={form} layout="vertical" onFinish={handleSubmit} disabled={submitting}>
+        <Form.Item name="status" hidden initialValue={selectedStatus}>
+          <Input />
         </Form.Item>
+
+        <div className="mb-4 flex items-center justify-between bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
+          <span className="text-xs font-bold uppercase text-slate-500">Outcome Action:</span>
+          <StatusBadge type="decisionStatus" value={selectedStatus} />
+        </div>
 
         {selectedStatus === 'DECISION_MADE' && (
           <Form.Item
@@ -107,10 +129,6 @@ export const DecisionModal = ({
             <Input.TextArea id="decision" name="decision" rows={3} placeholder="e.g. Introduce Redis caching for search query results" />
           </Form.Item>
         )}
-
-        <Form.Item name="reason" label="Reason">
-          <Input.TextArea id="reason" name="reason" rows={2} placeholder="e.g. Reduces database load and response latency by 80%" />
-        </Form.Item>
       </Form>
     </Modal>
   );

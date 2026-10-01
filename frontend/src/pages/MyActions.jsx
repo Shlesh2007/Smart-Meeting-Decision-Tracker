@@ -154,18 +154,21 @@ export default function MyActions() {
     {
       title: 'Action Item & Delivered Outcome',
       key: 'title',
-      width: '35%',
-      minWidth: 320,
+      width: 380,
       render: (_, record) => (
-        <div className="space-y-1">
-          <span className="font-bold text-slate-900 dark:text-slate-100 block">{record.title}</span>
+        <div className="space-y-1 min-w-0">
+          <span className="font-bold text-slate-900 dark:text-slate-100 block text-xs sm:text-sm leading-snug">
+            {record.title}
+          </span>
           {record.description && (
-            <span className="text-xs text-slate-500 dark:text-slate-400 block line-clamp-2">{record.description}</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400 block leading-relaxed">
+              {record.description}
+            </span>
           )}
           {record.completion_notes && (
-            <div className="mt-1 p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60 text-xs text-emerald-900 dark:text-emerald-200">
-              <strong className="font-bold block text-emerald-700 dark:text-emerald-300">✅ Work Done / Delivered Outcome:</strong>
-              <span>{record.completion_notes}</span>
+            <div className="mt-1 p-1.5 rounded-lg bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-900/60 text-xs text-emerald-900 dark:text-emerald-200">
+              <strong className="font-bold block text-emerald-700 dark:text-emerald-300 mb-0.5">✅ Work Done / Delivered Outcome:</strong>
+              <span className="leading-relaxed">{record.completion_notes}</span>
             </div>
           )}
         </div>
@@ -174,7 +177,7 @@ export default function MyActions() {
     {
       title: 'Assignee(s)',
       key: 'assigned_to_detail',
-      width: 150,
+      width: 140,
       render: (_, record) => {
         const assignees = Array.isArray(record.assigned_to_detail)
           ? record.assigned_to_detail
@@ -188,17 +191,17 @@ export default function MyActions() {
         const isCreatedByUser = record.created_by === user?.id || record.created_by_detail?.id === user?.id;
 
         return (
-          <div className="text-xs space-y-1">
-            <span className="font-semibold text-slate-800 dark:text-slate-200 block">
+          <div className="text-xs space-y-0.5">
+            <span className="font-semibold text-slate-800 dark:text-slate-200 block truncate max-w-[130px]" title={assignees.map(u => u.full_name || u.username).join(', ')}>
               {assignees.length > 0
                 ? assignees.map(u => u.full_name || u.username).join(', ')
                 : '—'}
             </span>
             {isAssignedToUser && (
-              <Tag color="blue" className="text-[10px] m-0 font-bold">Assigned to You</Tag>
+              <Tag color="blue" className="text-[9.5px] m-0 px-1 font-bold inline-block">Assigned to You</Tag>
             )}
             {!isAssignedToUser && isCreatedByUser && (
-              <Tag color="purple" className="text-[10px] m-0 font-bold">Created by You</Tag>
+              <Tag color="purple" className="text-[9.5px] m-0 px-1 font-bold inline-block">Created by You</Tag>
             )}
           </div>
         );
@@ -208,20 +211,20 @@ export default function MyActions() {
       title: 'Priority',
       dataIndex: 'priority',
       key: 'priority',
-      width: 110,
+      width: 100,
       render: (val) => <StatusBadge type="priority" value={val} />,
     },
     {
       title: 'Deadline',
       key: 'due_date',
-      width: 120,
+      width: 110,
       render: (_, record) => (
         <div className="text-xs">
-          <span className={`font-semibold ${record.is_overdue ? 'text-rose-600' : 'text-slate-700'}`}>
+          <span className={`font-semibold ${record.is_overdue ? 'text-rose-600' : 'text-slate-700 dark:text-slate-300'}`}>
             {dayjs(record.due_date).format('MMM DD, YYYY')}
           </span>
           {record.is_overdue && (
-            <span className="block text-[10px] text-rose-500 font-bold uppercase">Overdue</span>
+            <span className="block text-[9.5px] text-rose-500 font-bold uppercase">Overdue</span>
           )}
         </div>
       ),
@@ -229,23 +232,25 @@ export default function MyActions() {
     {
       title: 'Prerequisite Dependencies',
       key: 'dependencies',
-      width: 220,
+      width: 180,
       render: (_, record) => {
         const deps = record.dependency_details || [];
-        if (deps.length === 0) return <span className="text-xs text-slate-400">None</span>;
+        if (deps.length === 0) return <span className="text-xs text-slate-400 font-medium">None</span>;
 
         const hasIncomplete = deps.some(d => !d.is_completed);
 
         return (
-          <div className="space-y-1">
-            {deps.map((dep) => (
-              <Tag key={dep.id} color={dep.is_completed ? 'success' : 'error'} className="text-[11px]">
-                {dep.is_completed ? '✓ ' : '🔒 '}{dep.title} ({dep.status})
-              </Tag>
-            ))}
+          <div className="space-y-0.5 max-w-[170px]">
+            <div className="flex flex-wrap gap-1">
+              {deps.map((dep) => (
+                <Tag key={dep.id} color={dep.is_completed ? 'success' : 'error'} className="text-[10px] font-bold m-0 px-1 py-0 truncate max-w-[160px]" title={dep.title}>
+                  {dep.is_completed ? '✓ ' : '🔒 '}{dep.title}
+                </Tag>
+              ))}
+            </div>
             {hasIncomplete && (
-              <p className="text-[10px] text-amber-600 font-medium m-0 flex items-center">
-                <LockOutlined className="mr-1" /> Completion locked until prerequisites finish
+              <p className="text-[9.5px] text-amber-600 dark:text-amber-400 font-medium m-0 flex items-center leading-tight">
+                <LockOutlined className="mr-0.5 text-[9px]" /> Locked until prerequisites finish
               </p>
             )}
           </div>
@@ -253,23 +258,12 @@ export default function MyActions() {
       },
     },
     {
-      title: 'Status',
-      key: 'status',
-      width: 130,
-      render: (_, record) => (
-        <div className="flex items-center space-x-2">
-          <StatusBadge type="actionStatus" value={record.status} />
-        </div>
-      ),
-    },
-    {
-      title: 'Update Status',
-      key: 'action',
+      title: 'Status & Action',
+      key: 'status_action',
       width: 150,
       render: (_, record) => {
         const hasIncompleteDeps = record.dependency_details?.some(d => !d.is_completed);
         const isTerminal = record.status === 'COMPLETED' || record.status === 'CANCELLED';
-        const isDisabled = isTerminal;
 
         const selectNode = (
           <Select
@@ -278,14 +272,15 @@ export default function MyActions() {
             value={record.status}
             loading={updatingId === record.id}
             onChange={(val) => handleStatusChange(record, val)}
-            disabled={isDisabled}
-            className="w-36 font-medium text-xs"
+            disabled={isTerminal}
+            size="small"
+            className="w-34 font-semibold text-xs rounded-lg"
             options={[
               { label: 'Todo', value: 'TODO' },
               { label: 'In Progress', value: 'IN_PROGRESS' },
               { label: 'Blocked', value: 'BLOCKED' },
               {
-                label: hasIncompleteDeps ? '🔒 Completed (Locked)' : 'Completed',
+                label: hasIncompleteDeps ? '🔒 Completed' : 'Completed',
                 value: 'COMPLETED',
                 disabled: hasIncompleteDeps
               },
@@ -294,9 +289,9 @@ export default function MyActions() {
           />
         );
 
-        if (isDisabled) {
+        if (isTerminal) {
           return (
-            <Tooltip title="Completed or Cancelled action items are locked and cannot be changed back to another status.">
+            <Tooltip title="Completed or Cancelled action items are locked.">
               <span>{selectNode}</span>
             </Tooltip>
           );
@@ -346,15 +341,23 @@ export default function MyActions() {
         </div>
         <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto justify-between sm:justify-end">
           <Segmented
+            size="middle"
             value={viewMode}
             onChange={(val) => setViewMode(val)}
             options={[
               { label: 'Card Grid', value: 'cards', icon: <AppstoreOutlined /> },
               { label: 'Table View', value: 'table', icon: <UnorderedListOutlined /> },
             ]}
-            className="p-1 rounded-xl bg-slate-100 dark:bg-slate-700 font-bold shrink-0 [&_.ant-segmented-item]:!rounded-xl [&_.ant-segmented-thumb]:!rounded-xl text-xs"
+            className="rounded-xl bg-slate-100 dark:bg-slate-700 font-bold shrink-0 text-xs h-9 flex items-center"
           />
-          <Button icon={<ReloadOutlined />} onClick={fetchMyActions} size="middle" className="h-9 px-3.5 text-xs font-bold rounded-xl shrink-0">Refresh Board</Button>
+          <Button
+            icon={<ReloadOutlined />}
+            onClick={fetchMyActions}
+            size="middle"
+            className="h-9 px-3.5 text-xs font-bold rounded-xl shrink-0 flex items-center justify-center border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700"
+          >
+            Refresh Board
+          </Button>
         </div>
       </div>
 
@@ -465,6 +468,7 @@ export default function MyActions() {
         ) : viewMode === 'table' ? (
           <div className="w-full overflow-x-auto">
             <Table
+              size="middle"
               columns={columns}
               dataSource={filteredActions}
               rowKey="id"

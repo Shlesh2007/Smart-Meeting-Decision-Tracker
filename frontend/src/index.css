@@ -36,6 +36,48 @@ html, body, #root, header {
   border-radius: 12px !important;
 }
 
+/* Ant Design Avatar circular shape & 1:1 aspect-ratio lock */
+.ant-avatar,
+.ant-avatar-circle,
+.ant-avatar-string {
+  border-radius: 50% !important;
+  aspect-ratio: 1 / 1 !important;
+  object-fit: cover !important;
+}
+
+/* Ensure uniform 36px (h-9) height, alignment & padding for Segmented view toggles and adjacent buttons */
+.ant-segmented {
+  min-height: 36px !important;
+  height: 36px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  padding: 3px !important;
+  border-radius: 12px !important;
+}
+
+.ant-segmented-item,
+.ant-segmented-thumb {
+  border-radius: 9px !important;
+  min-height: 30px !important;
+  height: 30px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+}
+
+.ant-segmented-item-label {
+  min-height: 30px !important;
+  height: 30px !important;
+  line-height: 30px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 6px !important;
+  padding: 0 10px !important;
+}
+
 *, ::before, ::after {
   box-sizing: border-box;
 }
@@ -46,11 +88,13 @@ html, body, #root, header {
 }
 
 .ant-picker-range, .ant-picker, .ant-select {
-  max-width: 100%;
+  width: 100% !important;
+  max-width: 100% !important;
 }
 
 .ant-picker-range {
-  min-width: 300px;
+  width: 100% !important;
+  min-width: 0 !important;
 }
 
 .ant-picker-range .ant-picker-input {
@@ -499,6 +543,103 @@ a:focus, a:focus-visible, a:active,
 .item-card-zoom:hover {
   transform: scale(1.015);
 }
+
+/* Prevent Ant Design Menu horizontal overflow indicators (arrows & rest pill) in collapsed sidebar */
+.ant-menu-overflow,
+.ant-menu-overflow-item-rest,
+.ant-menu-overflow-suffix {
+  display: none !important;
+}
+
+/* Strict prevention of horizontal scrollbars & overflow sliding in navigation sidebar */
+aside,
+aside *,
+.ant-menu-inline-collapsed,
+.ant-menu-inline-collapsed * {
+  max-width: 100% !important;
+}
+
+aside .ant-menu-inline-collapsed {
+  width: 100% !important;
+  overflow-x: hidden !important;
+}
+
+aside .ant-menu-inline-collapsed > .ant-menu-item,
+aside .ant-menu-inline-collapsed > .ant-menu-submenu > .ant-menu-submenu-title {
+  padding: 0 !important;
+  margin: 4px 0 !important;
+  width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: hidden !important;
+}
+
+aside .ant-menu-inline-collapsed .ant-menu-title-content {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+
+/* Remove Ant Design Menu default right border (border-inline-end / border-right) */
+.ant-menu,
+.ant-menu-root,
+.ant-menu-inline,
+.ant-menu-vertical,
+.ant-menu-inline-collapsed {
+  border-inline-end: none !important;
+  border-right: none !important;
+  border-right-color: transparent !important;
+  border-inline-end-color: transparent !important;
+}
+
+/* Ant Design Custom Calendar Grid Styling for Continuous Multi-Day Spans */
+.meeting-calendar-custom .ant-picker-calendar-date {
+  padding: 4px 0 !important;
+  margin: 0 !important;
+  border-top: 1px solid #e2e8f0 !important;
+  overflow: visible !important;
+}
+
+.dark .meeting-calendar-custom .ant-picker-calendar-date {
+  border-top: 1px solid #334155 !important;
+}
+
+.meeting-calendar-custom .ant-picker-calendar-date-content {
+  overflow: visible !important;
+  position: relative;
+  z-index: 1;
+}
+
+.meeting-calendar-custom .ant-picker-cell-inner {
+  overflow: visible !important;
+}
+
+.meeting-calendar-custom .ant-picker-cell {
+  padding: 0 !important;
+  border-right: 1px solid #f1f5f9;
+}
+
+.dark .meeting-calendar-custom .ant-picker-cell {
+  border-right: 1px solid #1e293b;
+}
+
+.meeting-calendar-custom .ant-picker-calendar-date-value {
+  padding-right: 8px;
+  font-weight: 700;
+  font-size: 12px;
+  color: #475569;
+}
+
+.dark .meeting-calendar-custom .ant-picker-calendar-date-value {
+  color: #94a3b8;
+}
+
+
+
+
 
 
 

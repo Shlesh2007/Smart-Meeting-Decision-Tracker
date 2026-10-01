@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { ProfileModal } from './ProfileModal.jsx';
+import { ActionFormModal } from './ActionFormModal.jsx';
 import { Logo } from './Logo.jsx';
 import { notificationService } from '../services/api.js';
 import {
@@ -37,6 +38,8 @@ import {
   MenuUnfoldOutlined,
   PlusOutlined,
   SafetyOutlined,
+  ThunderboltOutlined,
+  FormOutlined,
 } from '@ant-design/icons';
 
 const { useBreakpoint } = Grid;
@@ -50,6 +53,40 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
 
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showAddActionModal, setShowAddActionModal] = useState(false);
+
+  const quickActionItems = [
+    {
+      key: 'schedule_meeting',
+      icon: <PlusOutlined className="text-blue-500 font-bold" />,
+      label: (
+        <div onClick={() => navigate('/meetings/new')} className="py-1 px-0.5 cursor-pointer">
+          <p className="font-bold text-xs text-slate-900 dark:text-white m-0">Schedule Meeting</p>
+          <p className="text-[10px] text-slate-400 m-0">Create session & set agenda</p>
+        </div>
+      ),
+    },
+    {
+      key: 'add_action_item',
+      icon: <FormOutlined className="text-amber-500 font-bold" />,
+      label: (
+        <div onClick={() => setShowAddActionModal(true)} className="py-1 px-0.5 cursor-pointer">
+          <p className="font-bold text-xs text-slate-900 dark:text-white m-0">Add Action Item</p>
+          <p className="text-[10px] text-slate-400 m-0">Log task & assign team member</p>
+        </div>
+      ),
+    },
+    {
+      key: 'view_calendar',
+      icon: <CalendarOutlined className="text-indigo-500 font-bold" />,
+      label: (
+        <div onClick={() => navigate('/meetings?view=calendar')} className="py-1 px-0.5 cursor-pointer">
+          <p className="font-bold text-xs text-slate-900 dark:text-white m-0">View Calendar</p>
+          <p className="text-[10px] text-slate-400 m-0">Monthly schedule overview</p>
+        </div>
+      ),
+    },
+  ];
 
   // Notification state & controlled popover visibility
   const [notifications, setNotifications] = useState([]);
@@ -167,6 +204,12 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
       },
     ] : []),
   ];
+
+  const formattedMenuItems = menuItems.map((item) => ({
+    ...item,
+    title: item.label,
+    label: collapsed ? undefined : item.label,
+  }));
 
   const notificationPopoverContent = (
     <div className="w-80 max-w-[calc(100vw-32px)] sm:w-80 select-none">
@@ -329,10 +372,10 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
   return (
     <>
       {/* Desktop Left Sidebar powered by AntD Menu & Grid */}
-      <aside className={`hidden lg:flex flex-col fixed top-0 left-0 bottom-0 z-40 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 border-r border-slate-200 dark:border-slate-700 shadow-xs transition-all duration-300 select-none ${collapsed ? 'w-16' : 'w-64'}`}>
+      <aside className={`hidden lg:flex flex-col fixed top-0 left-0 bottom-0 z-40 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 border-r border-slate-200 dark:border-slate-700 shadow-xs transition-all duration-300 select-none overflow-x-hidden ${collapsed ? 'w-16' : 'w-64'}`}>
         
         {/* Sidebar Brand Header */}
-        <Flex align="center" justify={collapsed ? 'center' : 'space-between'} className="h-11 px-3.5 border-b border-slate-200/80 dark:border-slate-700/80 shrink-0">
+        <Flex align="center" justify={collapsed ? 'center' : 'space-between'} className="h-11 px-3.5 border-b border-slate-200/80 dark:border-slate-700/80 shrink-0 overflow-x-hidden">
           {!collapsed && (
             <Link to="/dashboard" className="no-underline flex items-center">
               <Logo variant="full" height={32} />
@@ -351,7 +394,7 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
         </Flex>
 
         {/* AntD Navigation Menu */}
-        <div className="flex-1 px-1.5 pt-2 pb-4 overflow-y-auto">
+        <div className="flex-1 px-1.5 pt-2 pb-4 overflow-y-auto overflow-x-hidden">
           {!collapsed && (
             <div className="px-3 pb-2 text-[10px] uppercase font-extrabold tracking-wider text-slate-400">
               Navigation
@@ -362,18 +405,19 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
             inlineCollapsed={collapsed}
             selectedKeys={[getActiveKey()]}
             items={menuItems}
-            className="border-none bg-transparent font-bold text-xs"
+            overflowedIndicator={null}
+            className="border-none bg-transparent font-bold text-xs w-full max-w-full overflow-x-hidden"
           />
         </div>
 
         {/* Bottom Sidebar User Profile Card */}
-        <div className={`p-2 border-t border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-800/80 m-2 rounded-xl space-y-2 ${collapsed ? 'flex flex-col items-center' : ''}`}>
+        <div className={`p-2 border-t border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-800/80 m-2 rounded-xl space-y-2 overflow-x-hidden ${collapsed ? 'flex flex-col items-center' : ''}`}>
           <Tooltip title={user.email} placement="right">
             <div
               onClick={() => setShowProfileModal(true)}
               className={`flex items-center cursor-pointer p-1 rounded-lg hover:bg-slate-200/60 dark:hover:bg-slate-700/60 transition-colors ${collapsed ? 'justify-center' : 'space-x-2'}`}
             >
-              <Avatar className="bg-blue-600 font-extrabold text-[11px] text-white shrink-0 flex items-center justify-center w-7 h-7">
+              <Avatar size={28} shape="circle" className="bg-blue-600 font-extrabold text-[11px] text-white shrink-0 flex items-center justify-center !w-7 !h-7 !min-w-[28px] !min-h-[28px] !rounded-full !aspect-square">
                 {(user?.first_name || user?.username || 'U')[0].toUpperCase()}
               </Avatar>
               {!collapsed && (
@@ -422,7 +466,7 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
       </aside>
 
       {/* Top Navigation Header Bar */}
-      <header className={`sticky top-0 z-30 w-full max-w-full bg-white/95 dark:bg-slate-800/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-700/80 shadow-xs transition-all duration-300 ${collapsed ? 'lg:pl-16' : 'lg:pl-64'}`}>
+      <header className={`sticky top-0 z-3F0 w-full max-w-full bg-white/95 dark:bg-slate-800/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-700/80 shadow-xs transition-all duration-300 ${collapsed ? 'lg:pl-16' : 'lg:pl-64'}`}>
         <Flex align="center" justify="space-between" className="w-full max-w-[1600px] mx-auto px-3 sm:px-6 lg:px-8 h-11 gap-2 sm:gap-4">
 
           {/* Logo Brand Header */}
@@ -436,6 +480,18 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
 
           {/* Right Controls: Date Badge, Notifications & Profile */}
           <Space size={screens.md ? 10 : 6} className="ml-auto shrink-0">
+            {/* Quick Actions Header Dropdown Button */}
+            <Dropdown menu={{ items: quickActionItems }} placement="bottomRight" trigger={['click']}>
+              <Button
+                type="default"
+                icon={<FormOutlined className="text-amber-500 text-xs font-bold" />}
+                size="small"
+                className="h-8 px-2.5 font-bold rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800/80 flex items-center justify-center gap-1 shadow-xs cursor-pointer"
+              >
+                <span className="hidden xs:inline text-xs font-bold">Quick Actions</span>
+              </Button>
+            </Dropdown>
+
             {/* Live Date Badge */}
             <span className="hidden sm:inline-flex items-center space-x-1 text-[10px] sm:text-xs font-bold text-slate-600 dark:text-slate-300 bg-slate-100/80 dark:bg-slate-800/80 px-2 py-0.5 rounded-md border border-slate-200/80 dark:border-slate-700 shrink-0">
               <CalendarOutlined className="text-blue-500 text-[11px] shrink-0" />
@@ -443,19 +499,21 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
               <span className="hidden sm:inline">{fullDateStr}</span>
             </span>
 
-            {/* Admin Panel Quick Access Button */}
+            {/* Admin Panel Quick Access Button (Mobile/Tablet screens only, hidden on lg laptop/desktop screens where left sidebar navigation is active) */}
             {isAdmin && (
-              <Tooltip title="Admin Management Panel">
-                <Button
-                  type={pathname === '/admin' ? 'primary' : 'default'}
-                  icon={<SafetyOutlined className={pathname === '/admin' ? 'text-white' : 'text-blue-600 dark:text-blue-400'} />}
-                  onClick={() => navigate('/admin')}
-                  size="small"
-                  className={`h-8 px-2.5 font-bold rounded-lg ${pathname === '/admin' ? 'bg-blue-600' : 'bg-slate-100/70 dark:bg-slate-700/50'}`}
-                >
-                  <span className="hidden sm:inline text-xs font-bold">Admin Panel</span>
-                </Button>
-              </Tooltip>
+              <span className="lg:hidden">
+                <Tooltip title="Admin Management Panel">
+                  <Button
+                    type={pathname === '/admin' ? 'primary' : 'default'}
+                    icon={<SafetyOutlined className={pathname === '/admin' ? 'text-white dark:text-slate-900' : 'text-slate-700 dark:text-slate-300'} />}
+                    onClick={() => navigate('/admin')}
+                    size="small"
+                    className={`h-8 px-2.5 font-bold rounded-lg border-none ${pathname === '/admin' ? 'bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-100 dark:hover:bg-slate-200 dark:text-slate-900' : 'bg-slate-100/70 dark:bg-slate-700/50'}`}
+                  >
+                    <span className="hidden sm:inline text-xs font-bold">Admin Panel</span>
+                  </Button>
+                </Tooltip>
+              </span>
             )}
 
             {/* Interactive Notification Bell Popover */}
@@ -486,7 +544,7 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
             {/* User Profile Dropdown */}
             <Dropdown menu={{ items: userMenuItems }} placement="bottomRight" trigger={['click']}>
               <Flex align="center" size={6} className="cursor-pointer p-0.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700/70 transition-all border border-transparent hover:border-slate-200 dark:hover:border-slate-700 shrink-0">
-                <Avatar className="bg-blue-600 font-extrabold text-[11px] text-white shadow-xs ring-2 ring-blue-500/20 shrink-0 flex items-center justify-center w-7 h-7">
+                <Avatar size={28} shape="circle" className="bg-blue-600 font-extrabold text-[11px] text-white shadow-xs ring-2 ring-blue-500/20 shrink-0 flex items-center justify-center !w-7 !h-7 !min-w-[28px] !min-h-[28px] !rounded-full !aspect-square">
                    {(user?.first_name || user?.username || 'U')[0].toUpperCase()}
                 </Avatar>
                 <span className="hidden md:inline-block text-xs font-bold text-slate-800 dark:text-slate-200" style={{padding:'7px'}}>
@@ -728,6 +786,13 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
         open={showProfileModal}
         onClose={() => setShowProfileModal(false)}
         user={user}
+      />
+
+      {/* Global Quick Actions Add Action Item Modal */}
+      <ActionFormModal
+        open={showAddActionModal}
+        onClose={() => setShowAddActionModal(false)}
+        onSuccess={() => setShowAddActionModal(false)}
       />
     </>
   );

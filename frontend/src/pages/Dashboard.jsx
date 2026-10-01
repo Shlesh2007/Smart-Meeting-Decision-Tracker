@@ -80,7 +80,12 @@ export default function Dashboard() {
   const [period, setPeriod] = useState(() => {
     return sessionStorage.getItem('dashboard_period') || 'today';
   });
-  const [activityPeriod, setActivityPeriod] = useState('30d');
+  const [activityPeriod, setActivityPeriod] = useState(() => {
+    const savedPeriod = sessionStorage.getItem('dashboard_period');
+    if (savedPeriod === 'last_week') return 'last_week';
+    if (savedPeriod === 'last_month') return 'last_month';
+    return '30d';
+  });
   const [startDate, setStartDate] = useState(() => {
     return sessionStorage.getItem('dashboard_start_date') || '';
   });
@@ -92,8 +97,11 @@ export default function Dashboard() {
   const handlePeriodChange = (val) => {
     setPeriod(val);
     sessionStorage.setItem('dashboard_period', val);
-    if (val === 'last_7_days' || val === 'last_week') setActivityPeriod('7d');
-    else if (val === 'last_30_days' || val === 'last_month' || val === 'last_year') setActivityPeriod('30d');
+    if (val === 'last_7_days') setActivityPeriod('7d');
+    else if (val === 'last_week') setActivityPeriod('last_week');
+    else if (val === 'last_30_days') setActivityPeriod('30d');
+    else if (val === 'last_month') setActivityPeriod('last_month');
+    else if (val === 'last_year') setActivityPeriod('30d');
     else if (val === 'all_time') setActivityPeriod('all');
     else if (val === 'today' || val === 'yesterday') setActivityPeriod('7d');
   };

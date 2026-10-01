@@ -173,17 +173,29 @@ class DashboardAnalyticsView(APIView):
             priority_counts = actions_qs.values('priority').annotate(count=Count('id', distinct=True))
             priority_distribution = {item['priority'].upper(): item['count'] for item in priority_counts if item['priority']}
 
-            # Meeting Activity filtering (7D, 14D, 30D, All)
+            # Meeting Activity filtering (7D, 14D, 30D, Last Week, Last Month, All)
             activity_qs = base_meetings_qs
-            if activity_period_param in ['7d', '7', '7d', 'last_7_days']:
+            if activity_period_param == 'last_week' or (period == 'last_week' and activity_period_param in ['7d', 'last_week']):
+                activity_period_clean = 'last_week'
+                start_of_this_week = today - timedelta(days=today.weekday())
+                activity_start_date = start_of_this_week - timedelta(days=7)
+                activity_end_date = start_of_this_week - timedelta(days=1)
+                activity_qs = activity_qs.filter(meeting_date__gte=activity_start_date, meeting_date__lte=activity_end_date)
+            elif activity_period_param == 'last_month' or (period == 'last_month' and activity_period_param in ['30d', 'last_month']):
+                activity_period_clean = 'last_month'
+                first_of_this_month = today.replace(day=1)
+                activity_end_date = first_of_this_month - timedelta(days=1)
+                activity_start_date = activity_end_date.replace(day=1)
+                activity_qs = activity_qs.filter(meeting_date__gte=activity_start_date, meeting_date__lte=activity_end_date)
+            elif activity_period_param in ['7d', '7', 'last_7_days']:
                 activity_period_clean = '7d'
                 activity_start_date = today - timedelta(days=6)
                 activity_qs = activity_qs.filter(meeting_date__gte=activity_start_date, meeting_date__lte=today)
-            elif activity_period_param in ['14d', '14', '14d', 'last_14_days']:
+            elif activity_period_param in ['14d', '14', 'last_14_days']:
                 activity_period_clean = '14d'
                 activity_start_date = today - timedelta(days=13)
                 activity_qs = activity_qs.filter(meeting_date__gte=activity_start_date, meeting_date__lte=today)
-            elif activity_period_param in ['30d', '30', '30d', 'last_30_days', '30_days']:
+            elif activity_period_param in ['30d', '30', 'last_30_days', '30_days']:
                 activity_period_clean = '30d'
                 activity_start_date = today - timedelta(days=29)
                 activity_qs = activity_qs.filter(meeting_date__gte=activity_start_date, meeting_date__lte=today)
@@ -210,7 +222,7 @@ class DashboardAnalyticsView(APIView):
                     Q(priority__iexact=ActionItem.Priority.HIGH)
                 ).exclude(
                     Q(status__iexact=ActionItem.Status.COMPLETED) | Q(status__iexact=ActionItem.Status.CANCELLED)
-                ).prefetch_related('assigned_to').order_by('due_date', '-priority')[:30])
+                ).select_related('created_by', 'decision__discussion__meeting').prefetch_related('assigned_to').order_by('due_date', '-priority')[:30])
             except Exception:
                 urgent_items = list(target_actions_qs.filter(
                     Q(due_date__lt=today) |
@@ -226,12 +238,40 @@ class DashboardAnalyticsView(APIView):
                 except Exception:
                     assigned_users = []
 
-                assigned_name = ', '.join([u.get_full_name() or u.username for u in assigned_users]) if assigned_users else 'Unassigned'
-                assigned_detail = [
-                    {'id': u.id, 'full_name': u.get_full_name() or u.username, 'username': u.username}
-                    for u in assigned_users
-                ]
-                assigned_ids = [u.id for u in assigned_users]
+                if not assigned_users:
+                    fallback_user = getattr(item, 'created_by', None) or user
+                    if fallback_user and getattr(fallback_user, 'id', None):
+                        try:
+                            item.assigned_to.add(fallback_user)
+                            assigned_users = [fallback_user]
+                        except Exception:
+                            assigned_users = [fallback_user]
+
+                if assigned_users:
+                    assigned_name = ', '.join([u.get_full_name() or u.username for u in assigned_users])
+                    assigned_detail = [
+                        {'id': u.id, 'full_name': u.get_full_name() or u.username, 'username': u.username}
+                        for u in assigned_users
+                    ]
+                    assigned_ids = [u.id for u in assigned_users]
+                else:
+                    fallback_name = user.get_full_name() or user.username if user else 'Assigned Member'
+                    assigned_name = fallback_name
+                    assigned_detail = [{'id': user.id, 'full_name': fallback_name, 'username': user.username}] if user else []
+                    assigned_ids = [user.id] if user else []
+
+                meeting_id = None
+                meeting_title = None
+                try:
+                    if hasattr(item, 'decision') and item.decision:
+                        discussion = getattr(item.decision, 'discussion', None)
+                        if discussion:
+                            meeting = getattr(discussion, 'meeting', None)
+                            if meeting:
+                                meeting_id = meeting.id
+                                meeting_title = meeting.title
+                except Exception:
+                    pass
 
                 return {
                     'id': item.id,
@@ -243,6 +283,8 @@ class DashboardAnalyticsView(APIView):
                     'assigned_to': assigned_ids,
                     'assigned_to_name': assigned_name,
                     'assigned_to_detail': assigned_detail,
+                    'meeting_id': meeting_id,
+                    'meeting_title': meeting_title,
                     'created_at': item.created_at.strftime('%Y-%m-%d') if hasattr(item.created_at, 'strftime') else str(item.created_at)
                 }
 
@@ -253,7 +295,7 @@ class DashboardAnalyticsView(APIView):
                     due_date__lt=today
                 ).exclude(
                     Q(status__iexact=ActionItem.Status.COMPLETED) | Q(status__iexact=ActionItem.Status.CANCELLED)
-                ).prefetch_related('assigned_to').order_by('due_date')[:15])
+                ).select_related('created_by', 'decision__discussion__meeting').prefetch_related('assigned_to').order_by('due_date')[:15])
             except Exception:
                 overdue_items = list(target_actions_qs.filter(
                     due_date__lt=today

@@ -405,16 +405,17 @@ export default function Admin() {
       <div className="bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 shadow-xs flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 transition-colors duration-200">
         <div>
           <h1 className="text-lg sm:text-2xl font-bold text-slate-900 dark:text-white m-0 flex items-center space-x-2">
-            <SafetyOutlined className="text-blue-600 dark:text-blue-400" />
+            <SafetyOutlined className="text-slate-900 dark:text-slate-100" />
             <span>Admin & Role Management Portal</span>
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 m-0 mt-1">Manage organization users, role hierarchy (Owner, Admin, Manager, Member), and teams.</p>
         </div>
         <Button
           type="primary"
+          size="middle"
           icon={<PlusOutlined />}
           onClick={openCreateTeam}
-          className="bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl border-none shadow-xs w-full sm:w-auto shrink-0"
+          className="h-9 px-4 text-xs font-bold rounded-xl border-none bg-slate-900 hover:bg-slate-800 text-white shadow-xs w-full sm:w-auto shrink-0 flex items-center justify-center"
         >
           Create New Team
         </Button>
@@ -482,7 +483,7 @@ export default function Admin() {
                 <div className="py-12 text-center text-slate-400">
                   <TeamOutlined className="text-4xl mb-2 text-slate-300" />
                   <p className="font-medium text-slate-700 dark:text-slate-300 m-0">No teams created yet.</p>
-                  <Button type="primary" icon={<PlusOutlined />} onClick={openCreateTeam} className="mt-3 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl border-none">
+                  <Button type="primary" size="middle" icon={<PlusOutlined />} onClick={openCreateTeam} className="mt-3 h-9 px-4 text-xs font-bold rounded-xl border-none bg-slate-900 hover:bg-slate-800 text-white flex items-center justify-center mx-auto">
                     Create First Team
                   </Button>
                 </div>
@@ -494,7 +495,7 @@ export default function Admin() {
                       className="shadow-xs border border-slate-200 dark:border-slate-700 rounded-2xl dark:bg-slate-900 hover:shadow-md transition-all"
                       title={
                         <div className="flex items-center space-x-2">
-                          <TeamOutlined className="text-blue-600 dark:text-blue-400" />
+                          <TeamOutlined className="text-slate-900 dark:text-slate-100" />
                           <span className="font-bold text-slate-900 dark:text-white text-base">{team.name}</span>
                         </div>
                       }
@@ -529,7 +530,7 @@ export default function Admin() {
                         <div>
                           <div className="flex justify-between items-center mb-2">
                             <span className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400 flex items-center">
-                              <UsergroupAddOutlined className="mr-1 text-blue-600 dark:text-blue-400" />
+                              <UsergroupAddOutlined className="mr-1 text-slate-700 dark:text-slate-300" />
                               Team Members ({team.members_detail?.length || 0})
                             </span>
                           </div>
@@ -539,7 +540,7 @@ export default function Admin() {
                               {team.members_detail.map((m) => (
                                 <div key={m.id} className="flex justify-between items-center text-xs bg-white dark:bg-slate-900 p-2 rounded border border-slate-100 dark:border-slate-700">
                                   <div className="flex items-center space-x-2">
-                                    <Avatar size="small" icon={<UserOutlined />} className="bg-blue-600" />
+                                    <Avatar size="small" icon={<UserOutlined />} className="bg-slate-900 dark:bg-slate-700" />
                                     <div>
                                       <span className="font-semibold text-slate-800 dark:text-slate-200 block">{m.full_name}</span>
                                       <span className="text-slate-400">{m.email}</span>

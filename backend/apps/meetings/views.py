@@ -98,12 +98,12 @@ class MeetingViewSet(viewsets.ModelViewSet):
         updated_fields = set(serializer.validated_data.keys())
         is_only_status_update = updated_fields == {'status'} or updated_fields == set()
 
-        if not user.is_admin_role and meeting.status != Meeting.Status.SCHEDULED and not is_only_status_update:
+        if meeting.status in [Meeting.Status.COMPLETED, Meeting.Status.CANCELLED, Meeting.Status.IN_PROGRESS] and not is_only_status_update:
             raise permissions.PermissionDenied(
-                "Meeting details cannot be edited once the meeting is In Progress, Completed, or Cancelled."
+                "Completed, In Progress, or Cancelled meetings cannot be edited by anyone."
             )
         
-        # OWNER / ADMIN can update any meeting
+        # OWNER / ADMIN can update any scheduled meeting
         if user.is_admin_role:
             serializer.save()
             return

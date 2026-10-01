@@ -257,8 +257,8 @@ export default function Login() {
 
       {/* Radial Gradient Overlay & Ambient Glowing Blobs */}
       <div className="absolute inset-0 bg-gradient-to-b from-slate-900/60 via-slate-900/80 to-slate-950 pointer-events-none" />
-      <div className="absolute top-1/4 -left-20 w-96 h-96 bg-blue-600/25 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-indigo-600/25 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-1/4 -left-20 w-96 h-96 bg-slate-700/20 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-slate-800/20 rounded-full blur-3xl pointer-events-none" />
 
       {/* Brand Logo & Title Header */}
       <div className="relative z-10 w-full text-center mb-6 max-w-md flex flex-col items-center">
@@ -330,7 +330,7 @@ export default function Login() {
                   closeResetModal();
                   setIsForgotModalOpen(true);
                 }}
-                className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-500 focus:outline-none cursor-pointer bg-transparent border-0 p-0 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white focus:outline-none cursor-pointer bg-transparent border-0 p-0 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Forgot password?
               </button>
@@ -343,7 +343,7 @@ export default function Login() {
                 loading={submitting}
                 disabled={submitting || Boolean(oauthLoading)}
                 block
-                className="font-semibold rounded-xl border-none bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/30"
+                className="font-semibold rounded-xl border-none bg-slate-900 hover:bg-slate-800 text-white shadow-lg shadow-slate-900/40 dark:bg-slate-800 dark:hover:bg-slate-700 dark:shadow-slate-950/50"
               >
                 Sign In
               </Button>
@@ -379,7 +379,7 @@ export default function Login() {
 
           <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700/80 text-center text-sm text-slate-600 dark:text-slate-400">
             Don't have an account?{' '}
-            <Link to="/register" className="font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-500 no-underline">
+            <Link to="/register" className="font-semibold text-slate-900 dark:text-slate-200 hover:text-slate-700 dark:hover:text-white no-underline">
               Register now
             </Link>
           </div>

@@ -65,7 +65,7 @@ export default function Meetings() {
       status: status || undefined,
     };
 
-    if (dateRange && dateRange[0] && dateRange[1]) {
+    if (viewMode !== 'calendar' && dateRange && dateRange[0] && dateRange[1]) {
       params.start_date = dateRange[0];
       params.end_date = dateRange[1];
     }
@@ -201,6 +201,7 @@ export default function Meetings() {
         
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2.5 w-full md:w-auto justify-between md:justify-end">
           <Segmented
+            size="middle"
             value={viewMode}
             onChange={(val) => {
               setViewMode(val);
@@ -224,7 +225,7 @@ export default function Meetings() {
                 icon: <CalendarOutlined />,
               },
             ]}
-            className="p-1 rounded-xl bg-slate-100 dark:bg-slate-700 font-bold w-fit shrink-0 [&_.ant-segmented-item]:!rounded-xl [&_.ant-segmented-thumb]:!rounded-xl"
+            className="rounded-xl bg-slate-100 dark:bg-slate-700 font-bold w-fit shrink-0 text-xs h-9 flex items-center"
           />
 
           <Link to="/meetings/new" className="no-underline w-full sm:w-auto">
@@ -236,7 +237,7 @@ export default function Meetings() {
       </div>
 
       <Card className="shadow-xs rounded-2xl dark:bg-slate-800 dark:border-slate-700/80">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-3 items-center w-full">
           <Input
             id="meetings_search"
             name="search"
@@ -245,6 +246,8 @@ export default function Meetings() {
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             allowClear
+            className="w-full"
+            style={{ width: '100%' }}
           />
 
           <Select
@@ -254,6 +257,8 @@ export default function Meetings() {
             value={meetingType || undefined}
             onChange={(val) => { setMeetingType(val); setPage(1); }}
             allowClear
+            className="w-full"
+            style={{ width: '100%' }}
             options={[
               { label: 'Internal', value: 'INTERNAL' },
               { label: 'Client', value: 'CLIENT' },
@@ -271,6 +276,8 @@ export default function Meetings() {
             value={status || undefined}
             onChange={(val) => { setStatus(val); setPage(1); }}
             allowClear
+            className="w-full"
+            style={{ width: '100%' }}
             options={[
               { label: 'Scheduled', value: 'SCHEDULED' },
               { label: 'In Progress', value: 'IN_PROGRESS' },
@@ -279,25 +286,33 @@ export default function Meetings() {
             ]}
           />
 
-          <RangePicker
-            id="meetings_date_range"
-            name="date_range"
-            format="YYYY-MM-DD"
-            placeholder={['Start Date', 'End Date']}
-            value={
-              dateRange && dateRange[0] && dateRange[1]
-                ? [dayjs(dateRange[0]), dayjs(dateRange[1])]
-                : null
-            }
-            onChange={(dates, dateStrings) => {
-              if (dates && dates[0] && dates[1]) {
-                setDateRange([dateStrings[0], dateStrings[1]]);
-              } else {
-                setDateRange(null);
-              }
-              setPage(1);
-            }}
-          />
+          <Tooltip title={viewMode === 'calendar' ? 'Date range filter is disabled in Calendar View' : ''}>
+            <div className="w-full">
+              <RangePicker
+                id="meetings_date_range"
+                name="date_range"
+                format="YYYY-MM-DD"
+                placeholder={['Start Date', 'End Date']}
+                disabled={viewMode === 'calendar'}
+                value={
+                  dateRange && dateRange[0] && dateRange[1]
+                    ? [dayjs(dateRange[0]), dayjs(dateRange[1])]
+                    : null
+                }
+                onChange={(dates, dateStrings) => {
+                  if (dates && dates[0] && dates[1]) {
+                    setDateRange([dateStrings[0], dateStrings[1]]);
+                  } else {
+                    setDateRange(null);
+                  }
+                  setPage(1);
+                }}
+                className="w-full"
+                style={{ width: '100%' }}
+              />
+            </div>
+          </Tooltip>
+
         </div>
 
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pt-2 text-xs text-slate-500 dark:text-slate-400">

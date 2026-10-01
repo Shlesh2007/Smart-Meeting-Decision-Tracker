@@ -56,7 +56,7 @@ export const DashboardMetrics = ({ metrics = {}, onCardClick, period = 'today' }
     },
     {
       key: 'completed_actions',
-      title: 'Completed',
+      title: 'Completed Actions',
       value: metrics.completed_actions ?? 0,
       subtitle: 'Done',
       theme: 'green',
