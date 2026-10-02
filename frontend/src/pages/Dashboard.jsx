@@ -61,9 +61,10 @@ const getDateRangeForPeriod = (selectedPeriod, customStart = '', customEnd = '')
     };
   }
   if (selectedPeriod === 'last_year' || selectedPeriod === 'past_year') {
+    const lastYear = today.subtract(1, 'year');
     return {
-      start_date: today.subtract(365, 'day').format('YYYY-MM-DD'),
-      end_date: today.format('YYYY-MM-DD'),
+      start_date: lastYear.startOf('year').format('YYYY-MM-DD'),
+      end_date: lastYear.endOf('year').format('YYYY-MM-DD'),
     };
   }
   if (selectedPeriod === 'custom' && customStart && customEnd) {
@@ -85,6 +86,7 @@ export default function Dashboard() {
     const savedPeriod = sessionStorage.getItem('dashboard_period');
     if (savedPeriod === 'last_week') return 'last_week';
     if (savedPeriod === 'last_month') return 'last_month';
+    if (savedPeriod === 'last_year') return 'last_year';
     return '30d';
   });
   const [startDate, setStartDate] = useState(() => {
@@ -102,7 +104,7 @@ export default function Dashboard() {
     else if (val === 'last_week') setActivityPeriod('last_week');
     else if (val === 'last_30_days') setActivityPeriod('30d');
     else if (val === 'last_month') setActivityPeriod('last_month');
-    else if (val === 'last_year') setActivityPeriod('30d');
+    else if (val === 'last_year') setActivityPeriod('last_year');
     else if (val === 'all_time') setActivityPeriod('all');
     else if (val === 'today' || val === 'yesterday') setActivityPeriod('7d');
   };
@@ -268,6 +270,7 @@ export default function Dashboard() {
             meetingActivity={meeting_activity}
             activityPeriod={activityPeriod}
             onActivityPeriodChange={(val) => setActivityPeriod(val)}
+            globalPeriod={period}
           />
         </div>
         <div className="lg:col-span-5">

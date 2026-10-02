@@ -227,13 +227,6 @@ export const ActionFormModal = ({
       cancelButtonProps={{ className: 'font-semibold border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 h-9 px-4 rounded-lg' }}
       width={600}
     >
-      <Alert
-        type="info"
-        showIcon
-        message="Meeting Specific Action Items & Prerequisites"
-        description="Action items are associated with a specific meeting. Prerequisite dependencies and assignees are strictly filtered to participants of this meeting."
-        className="mb-4 rounded-lg"
-      />
 
       <Form
         form={form}

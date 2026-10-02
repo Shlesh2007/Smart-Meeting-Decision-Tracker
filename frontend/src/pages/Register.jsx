@@ -151,6 +151,7 @@ export default function Register() {
             layout="vertical"
             onFinish={onFormSubmit}
             size="middle"
+            initialValues={{ department: 'General Team' }}
             disabled={submitting || otpRequesting}
           >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4">

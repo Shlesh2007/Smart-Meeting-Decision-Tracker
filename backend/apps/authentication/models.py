@@ -14,7 +14,7 @@ class User(AbstractUser):
         choices=Role.choices,
         default=Role.MEMBER
     )
-    department = models.CharField(max_length=100, blank=True, null=True)
+    department = models.CharField(max_length=100, default='General Team', blank=True, null=True)
     google_access_token = models.TextField(blank=True, null=True)
     google_refresh_token = models.TextField(blank=True, null=True)
     google_token_expires_at = models.DateTimeField(blank=True, null=True)
@@ -25,6 +25,8 @@ class User(AbstractUser):
         return f"{self.get_full_name() or self.username} ({self.role})"
 
     def save(self, *args, **kwargs):
+        if not self.department or not str(self.department).strip():
+            self.department = 'General Team'
         if self.role in [self.Role.OWNER, self.Role.ADMIN]:
             self.is_staff = True
             self.is_superuser = True

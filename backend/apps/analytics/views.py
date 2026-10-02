@@ -2,7 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import permissions
 from django.utils import timezone
-from datetime import timedelta
+from datetime import timedelta, date
 from django.db.models import Count, Q
 from apps.meetings.models import Meeting
 from apps.meetings.utils import auto_update_meeting_statuses
@@ -96,18 +96,30 @@ class DashboardAnalyticsView(APIView):
                     meetings_qs = meetings_qs.filter(meeting_date__gte=first_of_last_month, meeting_date__lte=last_day_of_last_month)
                     actions_qs = actions_qs.filter(Q(due_date__gte=first_of_last_month, due_date__lte=last_day_of_last_month) | Q(created_at__date__gte=first_of_last_month, created_at__date__lte=last_day_of_last_month))
                 elif period in ['last_year', 'past_year']:
-                    start_date = today - timedelta(days=365)
-                    meetings_qs = meetings_qs.filter(meeting_date__gte=start_date, meeting_date__lte=today)
-                    actions_qs = actions_qs.filter(Q(due_date__gte=start_date, due_date__lte=today) | Q(created_at__date__gte=start_date, created_at__date__lte=today))
+                    last_year_val = today.year - 1
+                    start_of_last_year = date(last_year_val, 1, 1)
+                    end_of_last_year = date(last_year_val, 12, 31)
+                    meetings_qs = meetings_qs.filter(meeting_date__gte=start_of_last_year, meeting_date__lte=end_of_last_year)
+                    actions_qs = actions_qs.filter(Q(due_date__gte=start_of_last_year, due_date__lte=end_of_last_year) | Q(created_at__date__gte=start_of_last_year, created_at__date__lte=end_of_last_year))
                 elif period == 'custom':
                     start_date_param = request.query_params.get('start_date')
                     end_date_param = request.query_params.get('end_date')
-                    if start_date_param:
+                    if start_date_param and end_date_param:
+                        meetings_qs = meetings_qs.filter(meeting_date__gte=start_date_param, meeting_date__lte=end_date_param)
+                        actions_qs = actions_qs.filter(
+                            Q(due_date__gte=start_date_param, due_date__lte=end_date_param) |
+                            Q(created_at__date__gte=start_date_param, created_at__date__lte=end_date_param)
+                        )
+                    elif start_date_param:
                         meetings_qs = meetings_qs.filter(meeting_date__gte=start_date_param)
                         actions_qs = actions_qs.filter(Q(due_date__gte=start_date_param) | Q(created_at__date__gte=start_date_param))
-                    if end_date_param:
+                    elif end_date_param:
                         meetings_qs = meetings_qs.filter(meeting_date__lte=end_date_param)
                         actions_qs = actions_qs.filter(Q(due_date__lte=end_date_param) | Q(created_at__date__lte=end_date_param))
+                    else:
+                        # Custom range selected without dates: return empty queryset to avoid showing misleading all-time metrics
+                        meetings_qs = meetings_qs.none()
+                        actions_qs = actions_qs.none()
                 elif period in ['all', 'all_time', 'alltime']:
                     # All-time metrics: no date boundaries applied
                     pass
@@ -187,6 +199,10 @@ class DashboardAnalyticsView(APIView):
                 activity_end_date = first_of_this_month - timedelta(days=1)
                 activity_start_date = activity_end_date.replace(day=1)
                 activity_qs = activity_qs.filter(meeting_date__gte=activity_start_date, meeting_date__lte=activity_end_date)
+            elif activity_period_param in ['last_year', 'past_year', '365d', '1y'] or (period in ['last_year', 'past_year'] and activity_period_param in ['30d', 'last_year', 'all']):
+                activity_period_clean = 'last_year'
+                activity_start_date = today - timedelta(days=365)
+                activity_qs = activity_qs.filter(meeting_date__gte=activity_start_date, meeting_date__lte=today)
             elif activity_period_param in ['7d', '7', 'last_7_days']:
                 activity_period_clean = '7d'
                 activity_start_date = today - timedelta(days=6)

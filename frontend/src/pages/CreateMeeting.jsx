@@ -416,6 +416,7 @@ export default function CreateMeeting() {
                       name="time_range" 
                       className="custom-range-picker"
                       format="HH:mm"
+                      hideDisabledOptions={true}
                       disabledTime={() => {
                         const selectedDate = form.getFieldValue('meeting_date');
                         if (!selectedDate || !selectedDate.isSame(dayjs(), 'day')) {

@@ -219,12 +219,11 @@ export default function Admin() {
           <Select
             id={`user_dept_${u.id}`}
             name={`user_dept_${u.id}`}
-            value={u.department || undefined}
+            value={u.department || 'General Team'}
             placeholder="Assign Department..."
             onChange={(newDept) => handleDepartmentChange(u, newDept)}
             disabled={isDisabled}
             className="w-40 sm:w-44 text-xs font-medium"
-            allowClear
             options={[
               { label: 'Executive & Strategy', value: 'Executive & Strategy' },
               { label: 'Engineering & Tech Lead', value: 'Engineering & Tech Lead' },
@@ -478,12 +477,11 @@ export default function Admin() {
                                 id={`card_user_dept_${u.id}`}
                                 name={`card_user_dept_${u.id}`}
                                 size="small"
-                                value={u.department || undefined}
+                                value={u.department || 'General Team'}
                                 placeholder="Dept..."
                                 onChange={(newDept) => handleDepartmentChange(u, newDept)}
                                 disabled={isDisabled}
                                 className="w-full text-[11px]"
-                                allowClear
                                 options={[
                                   { label: 'Executive & Strategy', value: 'Executive & Strategy' },
                                   { label: 'Engineering & Tech Lead', value: 'Engineering & Tech Lead' },

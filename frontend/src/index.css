@@ -87,18 +87,36 @@ html, body, #root, header {
   overflow-wrap: break-word;
 }
 
-.ant-picker-range, .ant-picker, .ant-select {
+.ant-picker, .ant-select {
+  width: 100%;
+  max-width: 100%;
+}
+
+.ant-form-item .ant-picker-range,
+.ant-form-item .ant-picker,
+.ant-form-item .ant-select {
   width: 100% !important;
-  max-width: 100% !important;
 }
 
 .ant-picker-range {
-  width: 100% !important;
-  min-width: 0 !important;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.dashboard-range-picker.ant-picker-range {
+  width: 280px !important;
+  max-width: 100% !important;
+  border-radius: 12px !important;
+}
+
+@media (max-width: 480px) {
+  .dashboard-range-picker.ant-picker-range {
+    width: 100% !important;
+  }
 }
 
 .ant-picker-range .ant-picker-input {
-  min-width: 105px;
+  min-width: 80px;
 }
 
 .ant-picker-range .ant-picker-input > input {
@@ -153,7 +171,7 @@ html, body, #root, header {
   color: #cbd5e1 !important;
 }
 
-/* Site-wide Required Form Field Star Asterisk Placement (Position star AFTER label: e.g. Username *) */
+/* Site-wide Required Form Field Star Asterisk Placement (Position star AFTER label with superscript top alignment) */
 .ant-form-item-required::before {
   display: none !important;
   content: "" !important;
@@ -161,11 +179,14 @@ html, body, #root, header {
 
 .ant-form-item-required::after {
   display: inline-block !important;
-  margin-inline-start: 4px !important;
+  margin-inline-start: 3px !important;
   color: #ef4444 !important;
-  font-size: 14px !important;
-  font-family: SimSun, sans-serif !important;
+  font-size: 13px !important;
+  font-family: inherit, -apple-system, BlinkMacSystemFont, sans-serif !important;
   line-height: 1 !important;
+  vertical-align: super !important;
+  position: relative !important;
+  top: -1px !important;
   content: "*" !important;
   visibility: visible !important;
 }

@@ -85,17 +85,21 @@ class NotificationViewSet(viewsets.ModelViewSet):
 
             due_str = item.due_date.strftime('%Y-%m-%d') if hasattr(item.due_date, 'strftime') else str(item.due_date)
             
-            Notification.objects.get_or_create(
+            target_link = f"/my-actions?action_id={item.id}"
+            notif, created = Notification.objects.get_or_create(
                 user=user,
                 source_id=source_id,
                 defaults={
                     'title': f"Overdue Action: {item.title}",
                     'subtitle': f"Assigned to {assigned_name} • Due {due_str}",
-                    'link': '/my-actions?tab=OVERDUE',
+                    'link': target_link,
                     'notification_type': Notification.NotificationType.OVERDUE,
                     'is_read': False
                 }
             )
+            if not created and notif.link != target_link:
+                notif.link = target_link
+                notif.save(update_fields=['link'])
 
         # Sync Critical Actions Summary
         critical_count = actions_qs.filter(

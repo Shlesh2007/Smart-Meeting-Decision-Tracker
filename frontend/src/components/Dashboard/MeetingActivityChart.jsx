@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { BarChartOutlined } from '@ant-design/icons';
-import { Segmented } from 'antd';
+import { Segmented, Select } from 'antd';
 import dayjs from 'dayjs';
 import { useScrollAnimation } from '../../hooks/useScrollAnimation.js';
 
@@ -10,8 +10,10 @@ export const MeetingActivityChart = ({
   meetingActivity = [],
   activityPeriod = '30d',
   onActivityPeriodChange,
+  globalPeriod,
 }) => {
   const [filterDays, setFilterDays] = useState(() => {
+    if (activityPeriod === 'last_year' || globalPeriod === 'last_year') return 'last_year';
     if (activityPeriod === '7d' || activityPeriod === 7) return 7;
     if (activityPeriod === '14d' || activityPeriod === 14) return 14;
     if (activityPeriod === 'all' || activityPeriod === 0) return 0;
@@ -19,17 +21,35 @@ export const MeetingActivityChart = ({
     if (activityPeriod === 'last_month') return 'last_month';
     return 30;
   });
+  const [selectedMonth, setSelectedMonth] = useState('all');
   const [containerRef, isInView] = useScrollAnimation();
   const [activePointIndex, setActivePointIndex] = useState(null);
 
   React.useEffect(() => {
-    if (activityPeriod === '7d' || activityPeriod === 7) setFilterDays(7);
+    if (activityPeriod === 'last_year' || globalPeriod === 'last_year') {
+      setFilterDays('last_year');
+    } else if (activityPeriod === '7d' || activityPeriod === 7) setFilterDays(7);
     else if (activityPeriod === '14d' || activityPeriod === 14) setFilterDays(14);
     else if (activityPeriod === 'all' || activityPeriod === 0) setFilterDays(0);
     else if (activityPeriod === 'last_week') setFilterDays('last_week');
     else if (activityPeriod === 'last_month') setFilterDays('last_month');
     else setFilterDays(30);
-  }, [activityPeriod]);
+  }, [activityPeriod, globalPeriod]);
+
+  // Options for Last Year month selection dropdown
+  const monthOptions = React.useMemo(() => {
+    const options = [{ label: 'All Months (Monthly View)', value: 'all' }];
+    const lastYearNum = dayjs().year() - 1;
+    
+    for (let m = 0; m < 12; m++) {
+      const targetMonth = dayjs(`${lastYearNum}-${String(m + 1).padStart(2, '0')}-01`);
+      options.push({
+        label: targetMonth.format('MMMM YYYY'),
+        value: targetMonth.format('YYYY-MM'),
+      });
+    }
+    return options;
+  }, []);
 
   // Auto-dismiss timer after 4 seconds
   React.useEffect(() => {
@@ -70,6 +90,50 @@ export const MeetingActivityChart = ({
     });
 
     const today = dayjs().startOf('day');
+
+    if (filterDays === 'last_year') {
+      if (selectedMonth === 'all') {
+        // Group activity by Month for the 12 months of Last Year (Jan to Dec)
+        const lastYearNum = dayjs().year() - 1;
+        const result = [];
+        
+        for (let m = 0; m < 12; m++) {
+          const targetMonth = dayjs(`${lastYearNum}-${String(m + 1).padStart(2, '0')}-01`);
+          const monthPrefix = targetMonth.format('YYYY-MM');
+          
+          let monthTotal = 0;
+          Object.keys(activityMap).forEach((dateKey) => {
+            if (dateKey.startsWith(monthPrefix)) {
+              monthTotal += activityMap[dateKey];
+            }
+          });
+
+          result.push({
+            date: targetMonth.format('MMM YYYY'),
+            count: monthTotal,
+            fullDate: targetMonth.format('MMMM YYYY'),
+          });
+        }
+        return result;
+      } else {
+        // Show daily activity breakdown for the specific selected month
+        const startOfMonth = dayjs(`${selectedMonth}-01`).startOf('month');
+        const endOfMonth = startOfMonth.endOf('month');
+        const result = [];
+        let curr = startOfMonth;
+
+        while (curr.isBefore(endOfMonth) || curr.isSame(endOfMonth, 'day')) {
+          const key = curr.format('YYYY-MM-DD');
+          result.push({
+            date: curr.format('MMM DD'),
+            count: activityMap[key] || 0,
+            fullDate: key,
+          });
+          curr = curr.add(1, 'day');
+        }
+        return result;
+      }
+    }
 
     if (filterDays === 'last_week') {
       const dayOfWeek = today.day();
@@ -142,7 +206,7 @@ export const MeetingActivityChart = ({
         fullDate: key,
       };
     });
-  }, [meetingActivity, filterDays]);
+  }, [meetingActivity, filterDays, selectedMonth]);
 
   const totalMeetingsInPeriod = chartFormattedData.reduce((acc, curr) => acc + curr.count, 0);
 
@@ -173,22 +237,36 @@ export const MeetingActivityChart = ({
           </div>
         </div>
 
-        {/* Ant Design Segmented Control */}
-        <Segmented
-          size="small"
-          value={filterDays}
-          onChange={(val) => {
-            const apiKeys = { 7: '7d', 14: '14d', 30: '30d', 0: 'all' };
-            handleFilterClick(val, apiKeys[val] || '30d');
-          }}
-          options={[
-            { label: '7D', value: 7 },
-            { label: '14D', value: 14 },
-            { label: '30D', value: 30 },
-            { label: 'All', value: 0 },
-          ]}
-          className="bg-slate-100 dark:bg-slate-800 text-[10px] font-bold"
-        />
+        {/* Dynamic Filter Controls: Month Select Dropdown for Last Year, Segmented for Standard */}
+        {filterDays === 'last_year' ? (
+          <div className="flex items-center space-x-1.5">
+            <span className="text-[10px] text-slate-400 font-bold hidden xs:inline">Month:</span>
+            <Select
+              size="small"
+              value={selectedMonth}
+              onChange={(val) => setSelectedMonth(val)}
+              options={monthOptions}
+              className="w-48 text-[10px] font-bold"
+              popupMatchSelectWidth={false}
+            />
+          </div>
+        ) : (
+          <Segmented
+            size="small"
+            value={filterDays}
+            onChange={(val) => {
+              const apiKeys = { 7: '7d', 14: '14d', 30: '30d', 0: 'all' };
+              handleFilterClick(val, apiKeys[val] || '30d');
+            }}
+            options={[
+              { label: '7D', value: 7 },
+              { label: '14D', value: 14 },
+              { label: '30D', value: 30 },
+              { label: 'All', value: 0 },
+            ]}
+            className="bg-slate-100 dark:bg-slate-800 text-[10px] font-bold"
+          />
+        )}
       </div>
 
       {/* Chart Body */}

@@ -14,6 +14,12 @@ class UserSerializer(serializers.ModelSerializer):
     def get_full_name(self, obj):
         return f"{obj.first_name} {obj.last_name}".strip() or obj.username
 
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        if not ret.get('department') or not str(ret.get('department')).strip():
+            ret['department'] = 'General Team'
+        return ret
+
     def validate_role(self, value):
         request = self.context.get('request')
         # If someone is attempting to assign OWNER role, verify requesting user is OWNER or superuser

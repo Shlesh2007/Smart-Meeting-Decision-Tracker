@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Button, Input, Select, AutoComplete, Tag, Spin, DatePicker } from 'antd';
+import { Button, Input, Select, AutoComplete, Tag, Spin, DatePicker, Alert } from 'antd';
 import { PlusOutlined, SyncOutlined, CalendarOutlined, ThunderboltOutlined, SearchOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { meetingService, actionService, discussionService } from '../../services/api.js';
@@ -264,30 +264,40 @@ export const DashboardHeader = ({
         </div>
 
         {period === 'custom' && (
-          <div className="animate-fadeIn pt-1 flex justify-end">
-            <RangePicker
-              size="middle"
-              format="YYYY-MM-DD"
-              placeholder={['From Date', 'To Date']}
-              placement="bottomRight"
-              value={
-                startDate && endDate
-                  ? [dayjs(startDate), dayjs(endDate)]
-                  : startDate
-                  ? [dayjs(startDate), null]
-                  : endDate
-                  ? [null, dayjs(endDate)]
-                  : null
-              }
-              onChange={(dates, dateStrings) => {
-                if (dates && dates[0] && dates[1]) {
-                  onCustomDateChange && onCustomDateChange(dateStrings[0], dateStrings[1]);
-                } else {
-                  onCustomDateChange && onCustomDateChange('', '');
+          <div className="animate-fadeIn space-y-2 pt-1.5">
+            <div className="flex justify-end">
+              <RangePicker
+                size="middle"
+                format="YYYY-MM-DD"
+                placeholder={['From Date', 'To Date']}
+                placement="bottomRight"
+                value={
+                  startDate && endDate
+                    ? [dayjs(startDate), dayjs(endDate)]
+                    : startDate
+                    ? [dayjs(startDate), null]
+                    : endDate
+                    ? [null, dayjs(endDate)]
+                    : null
                 }
-              }}
-              className="w-full sm:w-auto rounded-xl h-9 text-xs font-medium"
-            />
+                onChange={(dates, dateStrings) => {
+                  if (dates && dates[0] && dates[1]) {
+                    onCustomDateChange && onCustomDateChange(dateStrings[0], dateStrings[1]);
+                  } else {
+                    onCustomDateChange && onCustomDateChange('', '');
+                  }
+                }}
+                className="dashboard-range-picker rounded-xl h-9 text-xs font-medium border-slate-200 dark:border-slate-700 dark:bg-slate-800 shadow-xs"
+              />
+            </div>
+            {(!startDate || !endDate) && (
+              <Alert
+                type="info"
+                showIcon
+                message="Custom Range Selected: Please select both a 'From Date' and 'To Date' using the picker above to load analytics for your custom date range."
+                className="rounded-xl border-blue-200 bg-blue-50/80 dark:bg-blue-950/40 dark:border-blue-900/50 text-xs font-semibold py-1.5 px-3"
+              />
+            )}
           </div>
         )}
       </div>
