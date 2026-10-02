@@ -172,7 +172,6 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
     if (pathname === '/dashboard') {
       return {
         title: 'Dashboard',
-        subtitle: 'Your meeting workspace · 12 active action items · 4 upcoming meetings',
       };
     }
     if (pathname === '/meetings') {
@@ -207,7 +206,7 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
     }
     return {
       title: 'Dashboard',
-      subtitle: 'Your meeting workspace · 12 active action items · 4 upcoming meetings',
+      
     };
   };
 
