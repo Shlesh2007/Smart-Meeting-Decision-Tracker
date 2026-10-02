@@ -124,7 +124,7 @@ html, body {
 }
 
 .ant-picker-range .ant-picker-input {
-  min-width: 80px;
+  min-width: 0 !important;
 }
 
 .ant-picker-range .ant-picker-input > input {

@@ -416,77 +416,75 @@ export default function MyActions() {
       )}
 
       <Card className="shadow-xs rounded-xl dark:bg-slate-800 dark:border-slate-700" styles={{ body: { padding: '16px' } }}>
-        <div className="space-y-3 mb-4">
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+        <div className="space-y-2.5 mb-4 w-full max-w-full overflow-hidden">
+          <div className="flex items-center gap-1.5 sm:gap-2 w-full max-w-full">
             <Input
               id="my_actions_search"
               name="search"
-              prefix={<SearchOutlined className="text-slate-400" />}
-              placeholder="Search action items..."
+              prefix={<SearchOutlined className="text-slate-400 text-xs shrink-0" />}
+              placeholder="Search..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="flex-1 min-w-0 h-9 rounded-xl text-xs"
               allowClear
             />
 
-            <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
-              <RangePicker
-                size="middle"
-                format="YYYY-MM-DD"
-                placeholder={['Due From', 'Due To']}
-                value={
-                  dateRange && dateRange[0] && dateRange[1]
-                    ? [dayjs(dateRange[0]), dayjs(dateRange[1])]
-                    : null
-                }
-                onChange={handleDateRangeChange}
-                className="flex-1 min-w-0 sm:w-[220px] rounded-xl text-xs h-9"
-                allowClear
-              />
+            <RangePicker
+              size="middle"
+              format="YYYY-MM-DD"
+              placeholder={['Due From', 'Due To']}
+              value={
+                dateRange && dateRange[0] && dateRange[1]
+                  ? [dayjs(dateRange[0]), dayjs(dateRange[1])]
+                  : null
+              }
+              onChange={handleDateRangeChange}
+              className="flex-1 min-w-0 sm:w-[210px] sm:flex-initial rounded-xl text-xs h-9"
+              allowClear
+            />
 
-              <Dropdown
-                menu={{
-                  items: [
-                    { key: 'ALL', label: `All (${counts.total})` },
-                    { type: 'divider' },
-                    { key: 'OPEN', label: `Open (${counts.open})` },
-                    { key: 'TODO', label: `Todo (${counts.todo})` },
-                    { key: 'IN_PROGRESS', label: `In Progress (${counts.inProgress})` },
-                    { key: 'BLOCKED', label: `Blocked (${counts.blocked})` },
-                    { key: 'COMPLETED', label: `Completed (${counts.completed})` },
-                    { key: 'CANCELLED', label: `Cancelled (${counts.cancelled})` },
-                    { type: 'divider' },
-                    {
-                      key: 'OVERDUE',
-                      label: (
-                        <span className={counts.overdue > 0 ? 'text-rose-600 font-bold' : ''}>
-                          Overdue ({counts.overdue})
-                        </span>
-                      )
-                    },
-                    {
-                      key: 'CRITICAL',
-                      label: `Critical (${counts.critical})`
-                    },
-                  ],
-                  selectedKeys: [activeTab],
-                  onClick: ({ key }) => setActiveTab(key),
-                }}
-                trigger={['click']}
-                placement="bottomRight"
+            <Dropdown
+              menu={{
+                items: [
+                  { key: 'ALL', label: `All (${counts.total})` },
+                  { type: 'divider' },
+                  { key: 'OPEN', label: `Open (${counts.open})` },
+                  { key: 'TODO', label: `Todo (${counts.todo})` },
+                  { key: 'IN_PROGRESS', label: `In Progress (${counts.inProgress})` },
+                  { key: 'BLOCKED', label: `Blocked (${counts.blocked})` },
+                  { key: 'COMPLETED', label: `Completed (${counts.completed})` },
+                  { key: 'CANCELLED', label: `Cancelled (${counts.cancelled})` },
+                  { type: 'divider' },
+                  {
+                    key: 'OVERDUE',
+                    label: (
+                      <span className={counts.overdue > 0 ? 'text-rose-600 font-bold' : ''}>
+                        Overdue ({counts.overdue})
+                      </span>
+                    )
+                  },
+                  {
+                    key: 'CRITICAL',
+                    label: `Critical (${counts.critical})`
+                  },
+                ],
+                selectedKeys: [activeTab],
+                onClick: ({ key }) => setActiveTab(key),
+              }}
+              trigger={['click']}
+              placement="bottomRight"
+            >
+              <Button
+                id="my_actions_filter_3dot_btn"
+                name="filter_3dot_btn"
+                className="shrink-0 flex items-center justify-center w-9 h-9 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-blue-500 relative"
+                icon={<EllipsisOutlined className="text-base text-slate-700 dark:text-slate-200" />}
               >
-                <Button
-                  id="my_actions_filter_3dot_btn"
-                  name="filter_3dot_btn"
-                  className="shrink-0 flex items-center justify-center w-9 h-9 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-blue-500 relative"
-                  icon={<EllipsisOutlined className="text-lg text-slate-700 dark:text-slate-200" />}
-                >
-                  {(activeTab !== 'ALL' || dateRange) && (
-                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-blue-500 rounded-full" />
-                  )}
-                </Button>
-              </Dropdown>
-            </div>
+                {(activeTab !== 'ALL' || dateRange) && (
+                  <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-blue-500 rounded-full" />
+                )}
+              </Button>
+            </Dropdown>
           </div>
 
           {(activeTab !== 'ALL' || (dateRange && dateRange[0] && dateRange[1])) && (
