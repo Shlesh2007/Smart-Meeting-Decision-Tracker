@@ -375,11 +375,15 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
       <aside className={`hidden lg:flex flex-col fixed top-0 left-0 bottom-0 z-40 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 border-r border-slate-200 dark:border-slate-700 shadow-xs transition-[width] duration-300 ease-in-out select-none overflow-x-hidden ${collapsed ? 'w-16' : 'w-64'}`}>
         
         {/* Sidebar Brand Header */}
-        <Flex align="center" justify="space-between" className="h-16 px-3.5 border-b border-slate-200/80 dark:border-slate-700/80 shrink-0 overflow-hidden whitespace-nowrap">
+        <Flex
+          align="center"
+          justify="space-between"
+          className={`h-16 border-b border-slate-200/80 dark:border-slate-700/80 shrink-0 overflow-hidden whitespace-nowrap transition-all duration-300 ease-in-out ${collapsed ? 'px-2' : 'px-4'}`}
+        >
           <Link to="/dashboard" className="no-underline flex items-center shrink-0 overflow-hidden" title="Smart Meeting Decision Tracker">
-            <div className={`transition-all duration-300 ease-in-out overflow-hidden flex items-center ${collapsed ? 'w-8' : 'w-44'}`}>
+            <div className={`transition-all duration-300 ease-in-out overflow-hidden flex items-center ${collapsed ? 'w-7' : 'w-44'}`}>
               {collapsed ? (
-                <Logo variant="icon" height={30} />
+                <Logo variant="icon" height={26} />
               ) : (
                 <Logo variant="full" height={46} />
               )}
@@ -389,10 +393,10 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
             <Button
               type="text"
               size="small"
-              icon={collapsed ? <MenuUnfoldOutlined className="text-slate-500 text-base" /> : <MenuFoldOutlined className="text-slate-500 text-base" />}
+              icon={collapsed ? <MenuUnfoldOutlined className="text-slate-500 text-sm" /> : <MenuFoldOutlined className="text-slate-500 text-base" />}
               onClick={onToggleSidebar}
               title={collapsed ? "Expand Sidebar" : "Collapse Sidebar"}
-              className="p-1 rounded-lg shrink-0"
+              className={`!p-0 !min-w-0 !h-7 flex items-center justify-center rounded-lg shrink-0 ${collapsed ? '!w-6' : '!w-7'}`}
             />
           )}
         </Flex>
