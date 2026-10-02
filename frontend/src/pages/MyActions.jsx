@@ -416,98 +416,103 @@ export default function MyActions() {
       )}
 
       <Card className="shadow-xs rounded-xl dark:bg-slate-800 dark:border-slate-700" styles={{ body: { padding: '16px' } }}>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mb-4">
-          <Input
-            id="my_actions_search"
-            name="search"
-            prefix={<SearchOutlined className="text-slate-400" />}
-            placeholder="Search action items..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="flex-1 min-w-0"
-            allowClear
-          />
-
-          <div className="flex items-center gap-2 shrink-0 flex-wrap sm:flex-nowrap">
-            <RangePicker
-              size="middle"
-              format="YYYY-MM-DD"
-              placeholder={['Due From', 'Due To']}
-              value={
-                dateRange && dateRange[0] && dateRange[1]
-                  ? [dayjs(dateRange[0]), dayjs(dateRange[1])]
-                  : null
-              }
-              onChange={handleDateRangeChange}
-              className="w-full sm:w-[230px] rounded-xl text-xs"
+        <div className="space-y-3 mb-4">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+            <Input
+              id="my_actions_search"
+              name="search"
+              prefix={<SearchOutlined className="text-slate-400" />}
+              placeholder="Search action items..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="flex-1 min-w-0 h-9 rounded-xl text-xs"
               allowClear
             />
 
-            {activeTab !== 'ALL' && (
-              <Tag
-                color={activeTab === 'OVERDUE' ? 'error' : activeTab === 'CRITICAL' ? 'red' : 'blue'}
-                closable
-                onClose={() => setActiveTab('ALL')}
-                className="text-xs font-bold shrink-0 m-0 py-1 px-2 flex items-center gap-1 cursor-pointer"
-              >
-                Filter: {activeTab.replace('_', ' ')}
-              </Tag>
-            )}
+            <div className="flex items-center gap-2 w-full sm:w-auto shrink-0">
+              <RangePicker
+                size="middle"
+                format="YYYY-MM-DD"
+                placeholder={['Due From', 'Due To']}
+                value={
+                  dateRange && dateRange[0] && dateRange[1]
+                    ? [dayjs(dateRange[0]), dayjs(dateRange[1])]
+                    : null
+                }
+                onChange={handleDateRangeChange}
+                className="flex-1 min-w-0 sm:w-[220px] rounded-xl text-xs h-9"
+                allowClear
+              />
 
-            {dateRange && dateRange[0] && dateRange[1] && (
-              <Tag
-                color="purple"
-                closable
-                onClose={() => handleDateRangeChange(null, ['', ''])}
-                className="text-xs font-bold shrink-0 m-0 py-1 px-2 flex items-center gap-1 cursor-pointer"
+              <Dropdown
+                menu={{
+                  items: [
+                    { key: 'ALL', label: `All (${counts.total})` },
+                    { type: 'divider' },
+                    { key: 'OPEN', label: `Open (${counts.open})` },
+                    { key: 'TODO', label: `Todo (${counts.todo})` },
+                    { key: 'IN_PROGRESS', label: `In Progress (${counts.inProgress})` },
+                    { key: 'BLOCKED', label: `Blocked (${counts.blocked})` },
+                    { key: 'COMPLETED', label: `Completed (${counts.completed})` },
+                    { key: 'CANCELLED', label: `Cancelled (${counts.cancelled})` },
+                    { type: 'divider' },
+                    {
+                      key: 'OVERDUE',
+                      label: (
+                        <span className={counts.overdue > 0 ? 'text-rose-600 font-bold' : ''}>
+                          Overdue ({counts.overdue})
+                        </span>
+                      )
+                    },
+                    {
+                      key: 'CRITICAL',
+                      label: `Critical (${counts.critical})`
+                    },
+                  ],
+                  selectedKeys: [activeTab],
+                  onClick: ({ key }) => setActiveTab(key),
+                }}
+                trigger={['click']}
+                placement="bottomRight"
               >
-                Date: {dateRange[0]} to {dateRange[1]}
-              </Tag>
-            )}
-
-            <Dropdown
-              menu={{
-                items: [
-                  { key: 'ALL', label: `All (${counts.total})` },
-                  { type: 'divider' },
-                  { key: 'OPEN', label: `Open (${counts.open})` },
-                  { key: 'TODO', label: `Todo (${counts.todo})` },
-                  { key: 'IN_PROGRESS', label: `In Progress (${counts.inProgress})` },
-                  { key: 'BLOCKED', label: `Blocked (${counts.blocked})` },
-                  { key: 'COMPLETED', label: `Completed (${counts.completed})` },
-                  { key: 'CANCELLED', label: `Cancelled (${counts.cancelled})` },
-                  { type: 'divider' },
-                  {
-                    key: 'OVERDUE',
-                    label: (
-                      <span className={counts.overdue > 0 ? 'text-rose-600 font-bold' : ''}>
-                        Overdue ({counts.overdue})
-                      </span>
-                    )
-                  },
-                  {
-                    key: 'CRITICAL',
-                    label: `Critical (${counts.critical})`
-                  },
-                ],
-                selectedKeys: [activeTab],
-                onClick: ({ key }) => setActiveTab(key),
-              }}
-              trigger={['click']}
-              placement="bottomRight"
-            >
-              <Button
-                id="my_actions_filter_3dot_btn"
-                name="filter_3dot_btn"
-                className="shrink-0 flex items-center justify-center w-8 h-8 rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-800 hover:border-blue-500 relative"
-                icon={<EllipsisOutlined className="text-base text-slate-700 dark:text-slate-200" />}
-              >
-                {(activeTab !== 'ALL' || dateRange) && (
-                  <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-blue-500 rounded-full" />
-                )}
-              </Button>
-            </Dropdown>
+                <Button
+                  id="my_actions_filter_3dot_btn"
+                  name="filter_3dot_btn"
+                  className="shrink-0 flex items-center justify-center w-9 h-9 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-blue-500 relative"
+                  icon={<EllipsisOutlined className="text-lg text-slate-700 dark:text-slate-200" />}
+                >
+                  {(activeTab !== 'ALL' || dateRange) && (
+                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-blue-500 rounded-full" />
+                  )}
+                </Button>
+              </Dropdown>
+            </div>
           </div>
+
+          {(activeTab !== 'ALL' || (dateRange && dateRange[0] && dateRange[1])) && (
+            <div className="flex flex-wrap items-center gap-1.5 pt-1">
+              {activeTab !== 'ALL' && (
+                <Tag
+                  color={activeTab === 'OVERDUE' ? 'error' : activeTab === 'CRITICAL' ? 'red' : 'blue'}
+                  closable
+                  onClose={() => setActiveTab('ALL')}
+                  className="text-xs font-bold shrink-0 m-0 py-1 px-2.5 flex items-center gap-1 cursor-pointer rounded-lg"
+                >
+                  Filter: {activeTab.replace('_', ' ')}
+                </Tag>
+              )}
+              {dateRange && dateRange[0] && dateRange[1] && (
+                <Tag
+                  color="purple"
+                  closable
+                  onClose={() => handleDateRangeChange(null, ['', ''])}
+                  className="text-xs font-bold shrink-0 m-0 py-1 px-2.5 flex items-center gap-1 cursor-pointer rounded-lg"
+                >
+                  Date: {dateRange[0]} to {dateRange[1]}
+                </Tag>
+              )}
+            </div>
+          )}
         </div>
 
         {loading ? (

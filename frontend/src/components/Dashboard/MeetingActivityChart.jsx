@@ -313,9 +313,9 @@ export const MeetingActivityChart = ({
       </div>
 
       {/* Chart Body */}
-      <div className="my-1 flex-1 min-h-[220px] w-full flex items-center justify-center">
+      <div className="my-1 w-full h-[220px] flex items-center justify-center shrink-0">
         {chartFormattedData.length > 0 ? (
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height={220}>
             <AreaChart
               key={isInView ? 'area-active' : 'area-idle'}
               data={chartFormattedData}
