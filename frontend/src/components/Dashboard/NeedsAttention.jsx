@@ -76,6 +76,9 @@ export const NeedsAttention = ({ overdueList = [], urgentList = [], loading = fa
       ? dayjs(item.due_date).format('YYYY-MM-DD')
       : null;
     const isOverdue = Boolean(dueDateFormatted && dueDateFormatted < today && item.status !== 'COMPLETED' && item.status !== 'CANCELLED');
+    const itemPriority = (item.priority || 'MEDIUM').toUpperCase();
+    const isCritical = itemPriority === 'CRITICAL';
+    const isHigh = itemPriority === 'HIGH';
     const dueDateStr = item.due_date
       ? dayjs(item.due_date).format('MMM D')
       : 'No deadline';
@@ -96,12 +99,16 @@ export const NeedsAttention = ({ overdueList = [], urgentList = [], loading = fa
         <div className="flex items-center space-x-2.5 min-w-0 flex-1">
           <div
             className={`w-8 h-8 rounded-lg flex flex-col items-center justify-center shrink-0 font-bold text-xs ${
-              isOverdue
+              isCritical
                 ? 'bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/60'
-                : 'bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-900/60'
+                : isHigh
+                ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-900/60'
+                : isOverdue
+                ? 'bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/60'
+                : 'bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-900/60'
             }`}
           >
-            {isOverdue ? <ExclamationCircleOutlined /> : <FireOutlined />}
+            {isCritical || (isOverdue && !isHigh) ? <ExclamationCircleOutlined /> : <FireOutlined />}
           </div>
 
           <div className="min-w-0 space-y-0.5">
@@ -109,16 +116,15 @@ export const NeedsAttention = ({ overdueList = [], urgentList = [], loading = fa
               <h4 className="font-bold text-xs text-slate-900 dark:text-slate-100 m-0 truncate group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
                 {item.title}
               </h4>
-              {isOverdue ? (
+              <Tag
+                color={isCritical ? 'red' : isHigh ? 'orange' : 'blue'}
+                className="text-[9px] uppercase font-bold rounded m-0 border-none px-1 py-0"
+              >
+                {itemPriority}
+              </Tag>
+              {isOverdue && (
                 <Tag color="error" className="text-[9px] uppercase font-bold rounded m-0 border-none px-1 py-0">
                   Overdue
-                </Tag>
-              ) : (
-                <Tag
-                  color={item.priority === 'CRITICAL' ? 'red' : 'orange'}
-                  className="text-[9px] uppercase font-bold rounded m-0 border-none px-1 py-0"
-                >
-                  {item.priority || 'MEDIUM'}
                 </Tag>
               )}
             </div>

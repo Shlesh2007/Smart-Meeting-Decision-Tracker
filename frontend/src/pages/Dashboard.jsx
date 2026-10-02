@@ -84,6 +84,8 @@ export default function Dashboard() {
   });
   const [activityPeriod, setActivityPeriod] = useState(() => {
     const savedPeriod = sessionStorage.getItem('dashboard_period');
+    if (savedPeriod === 'today' || !savedPeriod) return 'today';
+    if (savedPeriod === 'yesterday') return 'yesterday';
     if (savedPeriod === 'last_week') return 'last_week';
     if (savedPeriod === 'last_month') return 'last_month';
     if (savedPeriod === 'last_year') return 'last_year';
@@ -106,7 +108,8 @@ export default function Dashboard() {
     else if (val === 'last_month') setActivityPeriod('last_month');
     else if (val === 'last_year') setActivityPeriod('last_year');
     else if (val === 'all_time') setActivityPeriod('all');
-    else if (val === 'today' || val === 'yesterday') setActivityPeriod('7d');
+    else if (val === 'today') setActivityPeriod('today');
+    else if (val === 'yesterday') setActivityPeriod('yesterday');
   };
 
   const fetchDashboard = useCallback((selectedPeriod = 'today', searchQuery = '', sDate = '', eDate = '', actPeriod = '30d') => {

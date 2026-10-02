@@ -375,12 +375,14 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
       <aside className={`hidden lg:flex flex-col fixed top-0 left-0 bottom-0 z-40 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 border-r border-slate-200 dark:border-slate-700 shadow-xs transition-all duration-300 select-none overflow-x-hidden ${collapsed ? 'w-16' : 'w-64'}`}>
         
         {/* Sidebar Brand Header */}
-        <Flex align="center" justify={collapsed ? 'center' : 'space-between'} className="h-16 px-4 border-b border-slate-200/80 dark:border-slate-700/80 shrink-0 overflow-x-hidden">
-          {!collapsed && (
-            <Link to="/dashboard" className="no-underline flex items-center">
+        <Flex align="center" justify={collapsed ? 'space-between' : 'space-between'} className={`h-16 border-b border-slate-200/80 dark:border-slate-700/80 shrink-0 overflow-x-hidden ${collapsed ? 'px-2' : 'px-4'}`}>
+          <Link to="/dashboard" className="no-underline flex items-center shrink-0" title="Smart Meeting Decision Tracker">
+            {collapsed ? (
+              <Logo variant="icon" height={30} />
+            ) : (
               <Logo variant="full" height={46} />
-            </Link>
-          )}
+            )}
+          </Link>
           {onToggleSidebar && (
             <Button
               type="text"
@@ -388,7 +390,7 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
               icon={collapsed ? <MenuUnfoldOutlined className="text-slate-500 text-base" /> : <MenuFoldOutlined className="text-slate-500 text-base" />}
               onClick={onToggleSidebar}
               title={collapsed ? "Expand Sidebar" : "Collapse Sidebar"}
-              className="p-1 rounded-lg"
+              className="p-1 rounded-lg shrink-0"
             />
           )}
         </Flex>
@@ -396,8 +398,7 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
         {/* AntD Navigation Menu */}
         <div className="flex-1 px-1.5 pt-2 pb-4 overflow-y-auto overflow-x-hidden">
           {!collapsed && (
-            <div className="px-3 pb-2 text-[10px] uppercase font-extrabold tracking-wider text-slate-400">
-              Navigation
+            <div>
             </div>
           )}
           <Menu
@@ -470,8 +471,8 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
         <Flex align="center" justify="space-between" className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 h-16 gap-2 sm:gap-4">
 
           {/* Logo Brand Header */}
-          <Flex align="center" size={8} className="shrink-0">
-            <div className={`items-center shrink-0 ${collapsed ? 'flex' : 'flex lg:hidden'}`}>
+          <Flex align="center" size={8} className="shrink-0 lg:hidden">
+            <div className="flex items-center shrink-0">
               <Link to="/dashboard" className="no-underline flex items-center">
                 <div className="sm:hidden flex items-center">
                   <Logo variant="full" height={34} />

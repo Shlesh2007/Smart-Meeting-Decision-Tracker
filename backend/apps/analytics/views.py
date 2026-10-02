@@ -185,9 +185,16 @@ class DashboardAnalyticsView(APIView):
             priority_counts = actions_qs.values('priority').annotate(count=Count('id', distinct=True))
             priority_distribution = {item['priority'].upper(): item['count'] for item in priority_counts if item['priority']}
 
-            # Meeting Activity filtering (7D, 14D, 30D, Last Week, Last Month, All)
+            # Meeting Activity filtering (Today, Yesterday, 7D, 14D, 30D, Last Week, Last Month, Last Year, All)
             activity_qs = base_meetings_qs
-            if activity_period_param == 'last_week' or (period == 'last_week' and activity_period_param in ['7d', 'last_week']):
+            if activity_period_param in ['today', 'this_day'] or (period in ['today', 'this_day'] and activity_period_param in ['today', '7d', '30d']):
+                activity_period_clean = 'today'
+                activity_qs = activity_qs.filter(meeting_date=today)
+            elif activity_period_param == 'yesterday' or (period == 'yesterday' and activity_period_param in ['yesterday', '7d', '30d']):
+                activity_period_clean = 'yesterday'
+                y_date = today - timedelta(days=1)
+                activity_qs = activity_qs.filter(meeting_date=y_date)
+            elif activity_period_param == 'last_week' or (period == 'last_week' and activity_period_param in ['7d', 'last_week']):
                 activity_period_clean = 'last_week'
                 start_of_this_week = today - timedelta(days=today.weekday())
                 activity_start_date = start_of_this_week - timedelta(days=7)

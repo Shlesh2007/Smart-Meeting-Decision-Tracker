@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { BarChartOutlined } from '@ant-design/icons';
-import { Segmented, Select } from 'antd';
+import { Segmented, Select, Tag } from 'antd';
 import dayjs from 'dayjs';
 import { useScrollAnimation } from '../../hooks/useScrollAnimation.js';
 
@@ -13,6 +13,8 @@ export const MeetingActivityChart = ({
   globalPeriod,
 }) => {
   const [filterDays, setFilterDays] = useState(() => {
+    if (activityPeriod === 'today' || globalPeriod === 'today') return 'today';
+    if (activityPeriod === 'yesterday' || globalPeriod === 'yesterday') return 'yesterday';
     if (activityPeriod === 'last_year' || globalPeriod === 'last_year') return 'last_year';
     if (activityPeriod === '7d' || activityPeriod === 7) return 7;
     if (activityPeriod === '14d' || activityPeriod === 14) return 14;
@@ -26,7 +28,11 @@ export const MeetingActivityChart = ({
   const [activePointIndex, setActivePointIndex] = useState(null);
 
   React.useEffect(() => {
-    if (activityPeriod === 'last_year' || globalPeriod === 'last_year') {
+    if (activityPeriod === 'today' || globalPeriod === 'today') {
+      setFilterDays('today');
+    } else if (activityPeriod === 'yesterday' || globalPeriod === 'yesterday') {
+      setFilterDays('yesterday');
+    } else if (activityPeriod === 'last_year' || globalPeriod === 'last_year') {
       setFilterDays('last_year');
     } else if (activityPeriod === '7d' || activityPeriod === 7) setFilterDays(7);
     else if (activityPeriod === '14d' || activityPeriod === 14) setFilterDays(14);
@@ -90,6 +96,25 @@ export const MeetingActivityChart = ({
     });
 
     const today = dayjs().startOf('day');
+
+    if (filterDays === 'today') {
+      const key = today.format('YYYY-MM-DD');
+      return [{
+        date: `Today (${today.format('MMM DD')})`,
+        count: activityMap[key] || 0,
+        fullDate: key,
+      }];
+    }
+
+    if (filterDays === 'yesterday') {
+      const yDate = today.subtract(1, 'day');
+      const key = yDate.format('YYYY-MM-DD');
+      return [{
+        date: `Yesterday (${yDate.format('MMM DD')})`,
+        count: activityMap[key] || 0,
+        fullDate: key,
+      }];
+    }
 
     if (filterDays === 'last_year') {
       if (selectedMonth === 'all') {
@@ -225,7 +250,7 @@ export const MeetingActivityChart = ({
       }`}
     >
       {/* Top Header & Range Filters */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-slate-100 dark:border-slate-800">
+      <div className="flex flex-row items-center justify-between gap-2 pb-2.5 border-b border-slate-100 dark:border-slate-800">
         <div className="flex items-center space-x-2">
           <div className="w-6.5 h-6.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-xs">
             <BarChartOutlined />
@@ -237,8 +262,16 @@ export const MeetingActivityChart = ({
           </div>
         </div>
 
-        {/* Dynamic Filter Controls: Month Select Dropdown for Last Year, Segmented for Standard */}
-        {filterDays === 'last_year' ? (
+        {/* Dynamic Filter Controls: Single-Day Tags, Month Select Dropdown for Last Year, Segmented for Standard */}
+        {filterDays === 'today' ? (
+          <Tag color="blue" className="font-bold text-xs m-0 px-2 py-0.5 rounded-lg border-blue-200">
+            Today Only (1 Day)
+          </Tag>
+        ) : filterDays === 'yesterday' ? (
+          <Tag color="purple" className="font-bold text-xs m-0 px-2 py-0.5 rounded-lg border-purple-200">
+            Yesterday Only (1 Day)
+          </Tag>
+        ) : filterDays === 'last_year' ? (
           <div className="flex items-center space-x-1.5">
             <span className="text-[10px] text-slate-400 font-bold hidden xs:inline">Month:</span>
             <Select
