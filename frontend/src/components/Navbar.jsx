@@ -60,7 +60,6 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showAddActionModal, setShowAddActionModal] = useState(false);
   const [showSearchModal, setShowSearchModal] = useState(false);
-  const [showHelpModal, setShowHelpModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
   const quickActionItems = [
@@ -533,7 +532,7 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
                 type="button"
                 className="h-8 px-2.5 rounded-lg bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200/70 dark:hover:bg-slate-700/80 text-slate-800 dark:text-slate-200 font-semibold text-xs flex items-center gap-1.5 border-none cursor-pointer"
               >
-                <FormOutlined className="text-amber-600 text-xs font-bold" />
+                <FormOutlined className="text-blue-600 text-xs font-bold" />
                 <span className="hidden sm:inline font-semibold text-xs">Quick Actions</span>
                 <DownOutlined className="text-[9px] text-slate-400" />
               </button>
@@ -560,21 +559,13 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
               >
                 <BellOutlined className="text-base" />
                 {hasUnread && (
-                  <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-amber-500" />
+                  <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500" />
                 )}
               </button>
             </Popover>
 
             {/* 3. Help Button */}
-            <Tooltip title="Help & Information">
-              <button
-                type="button"
-                onClick={() => setShowHelpModal(true)}
-                className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800 border-none cursor-pointer"
-              >
-                <QuestionCircleOutlined className="text-base" />
-              </button>
-            </Tooltip>
+            
 
             {/* 4. User Profile Component */}
             <Dropdown menu={{ items: userMenuItems }} placement="bottomRight" trigger={['click']}>
@@ -903,48 +894,6 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
                   <p className="font-bold text-xs text-slate-900 m-0">Schedule Meeting</p>
                   <p className="text-[10px] text-slate-500 m-0">Create new session</p>
                 </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </Modal>
-
-      {/* Help & Information Modal */}
-      <Modal
-        title={
-          <div className="flex items-center gap-2 text-[#202124] font-bold text-sm">
-            <QuestionCircleOutlined className="text-[#B98232]" />
-            <span>Smart Meeting Decision Tracker Guide</span>
-          </div>
-        }
-        open={showHelpModal}
-        onCancel={() => setShowHelpModal(false)}
-        footer={null}
-        width={480}
-        className="rounded-2xl"
-      >
-        <div className="py-2 space-y-3 text-xs text-slate-700 dark:text-slate-300">
-          <div className="p-3 bg-amber-50/60 rounded-xl border border-amber-200/80 space-y-1">
-            <p className="font-bold text-amber-900 m-0">Need assistance?</p>
-            <p className="m-0 text-amber-800 text-[11px]">
-              Use Smart Meeting Decision Tracker to schedule meetings, record key decisions, and assign action items with tracked deadlines.
-            </p>
-          </div>
-
-          <div className="space-y-2 pt-1">
-            <div className="flex items-start gap-2">
-              <span className="w-5 h-5 rounded-full bg-[#202124] text-[#B98232] font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">1</span>
-              <div>
-                <p className="font-bold m-0">Quick Actions</p>
-                <p className="text-[11px] text-slate-500 m-0">Click "Quick Actions" in the header to schedule a meeting or add an action item from anywhere.</p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-2">
-              <span className="w-5 h-5 rounded-full bg-[#202124] text-[#B98232] font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">2</span>
-              <div>
-                <p className="font-bold m-0">Action Items & Deliverables</p>
-                <p className="text-[11px] text-slate-500 m-0">Track pending tasks in My Actions to update statuses and mark items complete.</p>
               </div>
             </div>
           </div>

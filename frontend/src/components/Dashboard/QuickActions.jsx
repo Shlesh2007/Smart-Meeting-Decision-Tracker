@@ -55,9 +55,9 @@ export const QuickActions = () => {
               shape="square"
               size={26}
               icon={<FormOutlined />}
-              className="bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border-none rounded-lg flex items-center justify-center text-xs"
+              className="bg-slate-50 dark:bg-slate-950/60 text-slate-600 dark:text-slate-400 border-none rounded-lg flex items-center justify-center text-xs"
             />
-            <Title level={5} className="!m-0 !text-xs !font-extrabold text-slate-900 dark:text-slate-100">
+            <Title level={5} className="!m-0 !text-xs !font-extrabold text-blue-900 dark:text-blue-100">
               Quick Actions
             </Title>
           </Space>
