@@ -300,7 +300,7 @@ class ValidateGoogleMeetUrlView(APIView):
         if not access_token:
             return Response({
                 'valid': False,
-                'message': 'Google OAuth access token not found for authenticated user. Please sign in with Google.'
+                'message': 'Google OAuth access token not found for authenticated user. Please Login with Google.'
             }, status=status.HTTP_401_UNAUTHORIZED)
 
         # 6-7. Query Google Meet REST API v2 and interpret response

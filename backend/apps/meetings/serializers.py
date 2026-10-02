@@ -1,5 +1,5 @@
 import uuid
-from datetime import timedelta
+from datetime import date, datetime, timedelta
 from django.utils import timezone
 from rest_framework import serializers
 from .models import Meeting
@@ -56,7 +56,6 @@ class MeetingSerializer(serializers.ModelSerializer):
 
         # Validate that meeting date and start time cannot be in the past for new meetings
         if not self.instance and meeting_date and start_time:
-            from datetime import datetime
             combined_dt = datetime.combine(meeting_date, start_time)
             if timezone.is_naive(combined_dt):
                 combined_dt = timezone.make_aware(combined_dt)
@@ -97,7 +96,6 @@ class MeetingSerializer(serializers.ModelSerializer):
             recurrence_end_date = attrs.get('recurrence_end_date', self.instance.recurrence_end_date if self.instance else None)
 
             if recurrence_end_date and meeting_date:
-                from datetime import date, timedelta
                 rec_end = date.fromisoformat(recurrence_end_date) if isinstance(recurrence_end_date, str) else recurrence_end_date
                 m_date = date.fromisoformat(meeting_date) if isinstance(meeting_date, str) else meeting_date
 
@@ -138,7 +136,6 @@ class MeetingSerializer(serializers.ModelSerializer):
 
         # Generate recurring series instances if enabled
         if is_recurring and recurrence_pattern:
-            from datetime import date
             start_date = meeting.meeting_date
             if isinstance(start_date, str):
                 start_date = date.fromisoformat(start_date)

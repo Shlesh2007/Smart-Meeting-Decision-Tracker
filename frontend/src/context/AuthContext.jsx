@@ -121,7 +121,7 @@ export const AuthProvider = ({ children }) => {
   if (!user && !isPublicRoute(pathname)) {
     return (
       <div className="min-h-screen flex flex-col justify-center items-center bg-slate-50 dark:bg-slate-900">
-        <Spin size="large" tip="Redirecting to Sign In..."><div className="p-6" /></Spin>
+        <Spin size="large" tip="Redirecting to Login..."><div className="p-6" /></Spin>
       </div>
     );
   }

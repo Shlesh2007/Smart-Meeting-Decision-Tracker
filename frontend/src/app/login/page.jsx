@@ -255,7 +255,7 @@ export default function LoginPage() {
       <div className="relative z-10 w-full text-center mb-6 max-w-md flex flex-col items-center">
         <Logo variant="full" height={44} isDark={true} className="mx-auto mb-3 drop-shadow-md" />
         <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight m-0">
-          Sign In to Your Account
+          Login to Your Account
         </h1>
         <p className="text-xs sm:text-sm text-slate-300 max-w-xs mx-auto mt-1.5 leading-relaxed">
           Access your team meetings, action items, and decision logs
@@ -334,7 +334,7 @@ export default function LoginPage() {
                 block
                 className="font-semibold rounded-xl border-none bg-slate-800 hover:bg-slate-900 text-white shadow-lg shadow-blue-600/30"
               >
-                Sign In
+                Login
               </Button>
             </Form.Item>
           </Form>
@@ -495,11 +495,11 @@ export default function LoginPage() {
               </div>
               <h3 className="font-semibold text-slate-900 dark:text-white text-base m-0">Password Reset Complete!</h3>
               <p className="text-sm text-slate-600 dark:text-slate-300 m-0 max-w-xs mx-auto">
-                Your password has been updated successfully. You can now sign in with your new password.
+                Your password has been updated successfully. You can now Login with your new password.
               </p>
               <div className="pt-3">
                 <Button type="primary" onClick={closeResetModal} className="bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl border-none px-6">
-                  Sign In Now
+                  Login Now
                 </Button>
               </div>
             </div >

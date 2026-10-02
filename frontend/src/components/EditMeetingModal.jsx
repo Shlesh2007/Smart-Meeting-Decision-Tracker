@@ -269,16 +269,78 @@ export const EditMeetingModal = ({ open, onClose, meeting, onSuccess }) => {
                   allowClear
                   optionLabelProp="label"
                 >
-                  {teams.map((t) => (
-                    <Select.Option key={t.id} value={t.id} label={t.name}>
-                      <div className="flex items-center justify-between w-full py-0.5">
-                        <span className="font-medium text-xs text-slate-800 dark:text-slate-200">{t.name}</span>
-                        <span className="text-[10px] text-blue-600 dark:text-blue-400 font-semibold bg-blue-50 dark:bg-slate-800 px-2 py-0.5 rounded-full flex items-center ml-2 shrink-0">
-                          {t.members_detail?.length || (t.members ? t.members.length : 0)} members
-                        </span>
+                  {teams.map((t) => {
+                    const mList = t.members_detail && t.members_detail.length > 0
+                      ? t.members_detail
+                      : (t.members && users.length > 0 ? users.filter(u => t.members.includes(u.id)) : []);
+
+                    const popoverContent = (
+                      <div className="p-1 space-y-2 max-w-xs min-w-[220px]">
+                        <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-1.5">
+                          <span className="font-bold text-xs text-slate-900 dark:text-white flex items-center gap-1.5">
+                            <TeamOutlined className="text-blue-600 dark:text-blue-400" />
+                            {t.name}
+                          </span>
+                          <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-slate-800 px-2 py-0.5 rounded-full">
+                            {mList.length} members
+                          </span>
+                        </div>
+
+                        {t.description && (
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 italic m-0 line-clamp-2 leading-tight">
+                            "{t.description}"
+                          </p>
+                        )}
+
+                        <div className="space-y-1 max-h-48 overflow-y-auto pt-1">
+                          <span className="text-[10px] font-bold uppercase text-slate-400 block mb-1">
+                            Team Members List:
+                          </span>
+                          {mList.length > 0 ? (
+                            mList.map((m) => (
+                              <div key={m.id || m.email} className="flex items-center justify-between text-xs py-1 px-2 rounded-lg bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-700/60">
+                                <div className="min-w-0 flex-1 mr-2">
+                                  <span className="font-semibold text-slate-800 dark:text-slate-200 block truncate text-[11px]">
+                                    {m.full_name || m.username}
+                                  </span>
+                                  <span className="text-[10px] text-slate-400 block truncate">
+                                    {m.email}
+                                  </span>
+                                </div>
+                                <Tag color="blue" className="text-[9px] font-bold m-0 px-1.5 py-0 shrink-0 uppercase border-0">
+                                  {m.role || 'Member'}
+                                </Tag>
+                              </div>
+                            ))
+                          ) : (
+                            <span className="text-xs text-slate-400 italic block py-1">No members assigned to this team.</span>
+                          )}
+                        </div>
                       </div>
-                    </Select.Option>
-                  ))}
+                    );
+
+                    return (
+                      <Select.Option key={t.id} value={t.id} label={t.name}>
+                        <Popover
+                          placement="right"
+                          trigger="hover"
+                          mouseEnterDelay={0.1}
+                          content={popoverContent}
+                          overlayInnerStyle={{ padding: '10px 12px', borderRadius: '12px' }}
+                        >
+                          <div className="flex items-center justify-between w-full py-0.5 cursor-pointer">
+                            <span className="font-medium text-xs text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                              <TeamOutlined className="text-blue-500 text-xs" />
+                              {t.name}
+                            </span>
+                            <span className="text-[10px] text-blue-600 dark:text-blue-400 font-semibold bg-blue-50 dark:bg-slate-800 px-2 py-0.5 rounded-full flex items-center ml-2 shrink-0">
+                              {mList.length} members
+                            </span>
+                          </div>
+                        </Popover>
+                      </Select.Option>
+                    );
+                  })}
                 </Select>
               </Form.Item>
 

@@ -155,7 +155,7 @@ export default function RegisterPage() {
           <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700 text-center text-sm text-slate-600 dark:text-slate-400">
             Already have an account?{' '}
             <Link to="/login" className="font-semibold text-blue-600 hover:text-blue-500 no-underline">
-              Sign in
+              Login
             </Link>
           </div>
         </Card>

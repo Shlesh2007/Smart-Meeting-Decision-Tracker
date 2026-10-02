@@ -464,8 +464,8 @@ export const ProfileModal = ({ open, onClose, user }) => {
 
           {emailStep === 1 ? (
             /* STEP 1: Enter New Email */
-            <div className="space-y-4">
-              <div className="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-xl border border-slate-200 dark:border-slate-700">
+            <Form form={form} layout="vertical" onFinish={handleRequestEmailOTP}>
+              <div className="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 mb-3">
                 <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1">Current Registered Email</span>
                 <span className="font-bold text-slate-900 dark:text-white text-sm flex items-center">
                   <MailOutlined className="mr-2 text-blue-500" />
@@ -473,25 +473,29 @@ export const ProfileModal = ({ open, onClose, user }) => {
                 </span>
               </div>
 
-              <div>
-                <label htmlFor="profile_new_email" className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
-                  Enter New Email Address
-                </label>
+              <Form.Item
+                name="new_email"
+                label="Enter New Email Address"
+                rules={[
+                  { required: true, message: 'Please enter new email address' },
+                  { type: 'email', message: 'Invalid email address format' }
+                ]}
+                className="mb-1"
+              >
                 <Input
                   id="profile_new_email"
                   name="new_email"
                   prefix={<MailOutlined className="text-slate-400" />}
                   placeholder="e.g. new.email@company.com"
                   size="large"
-                  value={newEmail}
                   onChange={(e) => setNewEmail(e.target.value)}
                   className="rounded-lg"
                   autoFocus
                 />
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5">
-                  A 6-digit verification code will be sent to this new email inbox.
-                </p>
-              </div>
+              </Form.Item>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
+                A 6-digit verification code will be sent to this new email inbox.
+              </p>
 
               <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
                 <Button id="email_step1_cancel_btn" name="email_step1_cancel_btn" icon={<CloseOutlined />} onClick={resetEmailFlow}>Cancel</Button>
@@ -499,19 +503,19 @@ export const ProfileModal = ({ open, onClose, user }) => {
                   id="email_step1_send_btn"
                   name="email_step1_send_btn"
                   type="primary"
+                  htmlType="submit"
                   icon={<MailOutlined />}
                   loading={emailLoading}
-                  onClick={handleRequestEmailOTP}
                   className="bg-slate-900 hover:bg-slate-800 font-semibold text-white text-xs"
                 >
                   Send Verification Code
                 </Button>
               </div>
-            </div>
+            </Form>
           ) : (
             /* STEP 2: Enter 6-Digit OTP */
-            <div className="space-y-4">
-              <div className="bg-blue-50 dark:bg-blue-950/40 p-3.5 rounded-xl border border-blue-100 dark:border-blue-900/50">
+            <Form layout="vertical" onFinish={handleVerifyEmailOTP}>
+              <div className="bg-blue-50 dark:bg-blue-950/40 p-3.5 rounded-xl border border-blue-100 dark:border-blue-900/50 mb-3">
                 <div className="flex items-center space-x-2 text-blue-800 dark:text-blue-300 font-semibold text-xs mb-1">
                   <MailOutlined />
                   <span>Verification Code Sent To:</span>
@@ -521,10 +525,15 @@ export const ProfileModal = ({ open, onClose, user }) => {
                 </div>
               </div>
 
-              <div>
-                <label htmlFor="profile_email_otp" className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
-                  Enter 6-Digit Verification Code
-                </label>
+              <Form.Item
+                name="otp_code"
+                label="Enter 6-Digit Verification Code"
+                rules={[
+                  { required: true, message: 'Please enter OTP code' },
+                  { len: 6, message: 'OTP code must be exactly 6 digits' }
+                ]}
+                className="mb-1"
+              >
                 <Input
                   id="profile_email_otp"
                   name="email_otp"
@@ -537,19 +546,19 @@ export const ProfileModal = ({ open, onClose, user }) => {
                   className="text-center font-mono font-bold tracking-widest text-xl rounded-lg"
                   autoFocus
                 />
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 flex items-center justify-between">
-                  <span>Code valid for 10 minutes.</span>
-                  <button
-                    type="button"
-                    id="profile_resend_otp_btn"
-                    name="profile_resend_otp_btn"
-                    onClick={handleRequestEmailOTP}
-                    disabled={emailLoading}
-                    className="text-blue-600 dark:text-blue-400 font-semibold hover:underline bg-transparent border-0 p-0 cursor-pointer"
-                  >
-                    Resend Code
-                  </button>
-                </p>
+              </Form.Item>
+              <div className="text-xs text-slate-500 dark:text-slate-400 mb-3 flex items-center justify-between">
+                <span>Code valid for 10 minutes.</span>
+                <button
+                  type="button"
+                  id="profile_resend_otp_btn"
+                  name="profile_resend_otp_btn"
+                  onClick={() => handleRequestEmailOTP({ new_email: newEmail })}
+                  disabled={emailLoading}
+                  className="text-blue-600 dark:text-blue-400 font-semibold hover:underline bg-transparent border-0 p-0 cursor-pointer"
+                >
+                  Resend Code
+                </button>
               </div>
 
               <div className="flex flex-col xs:flex-row items-stretch xs:items-center justify-between gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
@@ -569,16 +578,16 @@ export const ProfileModal = ({ open, onClose, user }) => {
                     id="email_step2_verify_btn"
                     name="email_step2_verify_btn"
                     type="primary"
+                    htmlType="submit"
                     icon={<CheckOutlined />}
                     loading={emailLoading}
-                    onClick={handleVerifyEmailOTP}
                     className="bg-slate-900 hover:bg-slate-800 font-semibold text-white text-xs"
                   >
                     Verify & Change Email
                   </Button>
                 </div>
               </div>
-            </div>
+            </Form>
           )}
         </div>
       </Modal>

@@ -468,7 +468,7 @@ class ConfirmPasswordResetView(APIView):
         # Delete used OTP record
         otp_record.delete()
 
-        return Response({'message': 'Password has been reset successfully! You can now sign in.'}, status=status.HTTP_200_OK)
+        return Response({'message': 'Password has been reset successfully! You can now Login.'}, status=status.HTTP_200_OK)
 
 
 # --- OAUTH 2.0 VIEWS ---

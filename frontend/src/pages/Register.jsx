@@ -3,27 +3,34 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { Logo } from '../components/Logo.jsx';
 import { getErrorMessage } from '../utils/errorHandler.js';
-import { Form, Input, Button, Card, Modal, App } from 'antd';
-import { UserOutlined, MailOutlined, LockOutlined, SafetyCertificateOutlined, SendOutlined } from '@ant-design/icons';
+import { Form, Input, Button, Card, App } from 'antd';
+import { UserOutlined, MailOutlined, LockOutlined, SafetyCertificateOutlined, SendOutlined, CheckCircleOutlined } from '@ant-design/icons';
 
 export default function Register() {
   const { message } = App.useApp();
   const { requestRegisterOTP, confirmRegister } = useAuth();
 
   const [submitting, setSubmitting] = useState(false);
-  const [verifying, setVerifying] = useState(false);
-  const [showOtpModal, setShowOtpModal] = useState(false);
-  const [formData, setFormData] = useState(null);
-  const [otpCode, setOtpCode] = useState('');
+  const [otpRequesting, setOtpRequesting] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpEmail, setOtpEmail] = useState('');
   const [form] = Form.useForm();
 
-  // Step 1: Submit signup details & request email OTP
-  const onFinishStep1 = async (values) => {
-    setSubmitting(true);
+  // Send OTP inline to the specified email address
+  const handleSendOtpInline = async () => {
+    try {
+      await form.validateFields(['email']);
+    } catch {
+      message.error('Please enter a valid email address first.');
+      return;
+    }
+
+    const values = form.getFieldsValue();
+    setOtpRequesting(true);
     try {
       const res = await requestRegisterOTP(values);
-      setFormData(values);
-      setShowOtpModal(true);
+      setOtpSent(true);
+      setOtpEmail(values.email);
       message.success(res.message || `6-digit verification code sent to ${values.email}`);
     } catch (err) {
       console.error('Registration OTP Request Error:', err);
@@ -43,40 +50,80 @@ export default function Register() {
       }
       form.setFields([{ name: 'email', errors: [getErrorMessage(err, 'Failed to send verification code.')] }]);
     } finally {
-      setSubmitting(false);
-    }
-  };
-
-  // Step 2: Confirm OTP & Complete Registration
-  const handleConfirmOtp = async () => {
-    if (!otpCode || otpCode.trim().length !== 6) {
-      message.error('Please enter the 6-digit verification code sent to your email.');
-      return;
-    }
-
-    setVerifying(true);
-    try {
-      const payload = {
-        ...formData,
-        otp_code: otpCode.trim()
-      };
-      await confirmRegister(payload);
-      message.success('Email verified! Welcome to SmartMeeting Tracker.');
-      setShowOtpModal(false);
-    } catch (err) {
-      message.error(getErrorMessage(err, 'OTP verification failed. Please check the code entered.'));
-    } finally {
-      setVerifying(false);
+      setOtpRequesting(false);
     }
   };
 
   const handleResendOtp = async () => {
-    if (!formData) return;
+    const currentEmail = form.getFieldValue('email') || otpEmail;
+    if (!currentEmail) {
+      message.error('Please enter an email address.');
+      return;
+    }
+    setOtpRequesting(true);
     try {
-      await requestRegisterOTP(formData);
-      message.success(`A new verification code has been sent to ${formData.email}`);
+      const values = form.getFieldsValue();
+      await requestRegisterOTP(values);
+      message.success(`A new verification code has been sent to ${currentEmail}`);
     } catch (err) {
       message.error(getErrorMessage(err, 'Failed to resend verification code.'));
+    } finally {
+      setOtpRequesting(false);
+    }
+  };
+
+  // Main Form Submit Handler
+  const onFormSubmit = async (values) => {
+    // If OTP has not been sent yet, request OTP first
+    if (!otpSent) {
+      setSubmitting(true);
+      try {
+        const res = await requestRegisterOTP(values);
+        setOtpSent(true);
+        setOtpEmail(values.email);
+        message.success(res.message || `6-digit verification code sent to ${values.email}. Please enter the OTP below.`);
+      } catch (err) {
+        console.error('Registration OTP Request Error:', err);
+        const resData = err.response?.data;
+        if (resData && typeof resData === 'object' && !Array.isArray(resData)) {
+          const fieldErrors = [];
+          Object.entries(resData).forEach(([key, val]) => {
+            if (['username', 'email', 'password', 'first_name', 'last_name', 'department'].includes(key)) {
+              const msg = Array.isArray(val) ? val.join(', ') : String(val);
+              fieldErrors.push({ name: key, errors: [msg] });
+            }
+          });
+          if (fieldErrors.length > 0) {
+            form.setFields(fieldErrors);
+            return;
+          }
+        }
+        form.setFields([{ name: 'email', errors: [getErrorMessage(err, 'Failed to send verification code.')] }]);
+      } finally {
+        setSubmitting(false);
+      }
+      return;
+    }
+
+    // If OTP was sent, confirm OTP and complete registration
+    if (!values.otp_code || values.otp_code.trim().length !== 6) {
+      form.setFields([{ name: 'otp_code', errors: ['Please enter the 6-digit OTP code sent to your email'] }]);
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const payload = {
+        ...values,
+        otp_code: values.otp_code.trim()
+      };
+      await confirmRegister(payload);
+      message.success('Email verified! Welcome to SmartMeeting Tracker.');
+    } catch (err) {
+      const msg = getErrorMessage(err, 'OTP verification failed. Please check the code entered.');
+      form.setFields([{ name: 'otp_code', errors: [msg] }]);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -102,15 +149,15 @@ export default function Register() {
             form={form}
             name="register_form"
             layout="vertical"
-            onFinish={onFinishStep1}
+            onFinish={onFormSubmit}
             size="middle"
-            disabled={submitting || verifying}
+            disabled={submitting || otpRequesting}
           >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4">
               <Form.Item
                 name="first_name"
                 label="First Name"
-                rules={[{ required: true, message: 'First name is required' }]}
+                rules={[{ required: true, message: 'Please enter first name' }]}
               >
                 <Input id="first_name" name="first_name" placeholder="John" />
               </Form.Item>
@@ -118,7 +165,7 @@ export default function Register() {
               <Form.Item
                 name="last_name"
                 label="Last Name"
-                rules={[{ required: true, message: 'Last name is required' }]}
+                rules={[{ required: true, message: 'Please enter last name' }]}
               >
                 <Input id="last_name" name="last_name" placeholder="Doe" />
               </Form.Item>
@@ -128,7 +175,7 @@ export default function Register() {
               <Form.Item
                 name="username"
                 label="Username"
-                rules={[{ required: true, message: 'Username is required' }]}
+                rules={[{ required: true, message: 'Please enter username' }]}
               >
                 <Input id="username" name="username" prefix={<UserOutlined className="text-slate-400" />} placeholder="john_doe" />
               </Form.Item>
@@ -142,19 +189,78 @@ export default function Register() {
               name="email"
               label="Email Address"
               rules={[
-                { required: true, message: 'Email is required' },
-                { type: 'email', message: 'Enter a valid email address' }
+                { required: true, message: 'Please enter email address' },
+                { type: 'email', message: 'Invalid email address format' }
               ]}
-              help="A 6-digit verification code will be sent to this email address."
+              help={!otpSent ? "A 6-digit verification code will be sent to this email address." : undefined}
+              className={otpSent ? 'mb-2' : ''}
             >
-              <Input id="email" name="email" prefix={<MailOutlined className="text-slate-400" />} placeholder="john@example.com" />
+              <Input
+                id="email"
+                name="email"
+                prefix={<MailOutlined className="text-slate-400" />}
+                placeholder="john@example.com"
+                suffix={
+                  <Button
+                    type="link"
+                    size="small"
+                    loading={otpRequesting}
+                    onClick={handleSendOtpInline}
+                    className="text-xs font-semibold text-blue-600 dark:text-blue-400 p-0 h-auto"
+                  >
+                    {otpSent ? 'Resend OTP' : 'Send OTP'}
+                  </Button>
+                }
+              />
             </Form.Item>
+
+            {/* INLINE EMAIL OTP INPUT FIELD (Renders directly below Email field) */}
+            {otpSent && (
+              <div className="mb-4 p-3 bg-blue-50/90 dark:bg-slate-800/90 rounded-xl border border-blue-200 dark:border-slate-700 space-y-2">
+                <div className="flex items-center justify-between text-xs text-slate-700 dark:text-slate-300">
+                  <span className="font-semibold text-blue-700 dark:text-blue-300 flex items-center gap-1">
+                    <SafetyCertificateOutlined className="text-blue-600 text-sm" />
+                    Verification code sent to <strong>{otpEmail || form.getFieldValue('email')}</strong>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleResendOtp}
+                    className="text-blue-600 dark:text-blue-400 font-bold hover:underline bg-transparent border-none p-0 cursor-pointer text-xs shrink-0"
+                  >
+                    Resend Code
+                  </button>
+                </div>
+
+                <Form.Item
+                  name="otp_code"
+                  label="Enter 6-Digit OTP Verification Code"
+                  rules={[
+                    { required: true, message: 'Please enter OTP code' },
+                    { len: 6, message: 'OTP code must be exactly 6 digits' }
+                  ]}
+                  className="!mb-0"
+                >
+                  <Input
+                    id="otp_code"
+                    name="otp_code"
+                    size="large"
+                    prefix={<SafetyCertificateOutlined className="text-blue-500" />}
+                    placeholder="123456"
+                    maxLength={6}
+                    className="text-center font-mono text-lg tracking-widest rounded-xl border-slate-300 focus:border-blue-500"
+                  />
+                </Form.Item>
+              </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4">
               <Form.Item
                 name="password"
                 label="Password"
-                rules={[{ required: true, min: 6, message: 'Password must be at least 6 characters' }]}
+                rules={[
+                  { required: true, message: 'Please enter password' },
+                  { min: 6, message: 'Password must be at least 6 characters' }
+                ]}
               >
                 <Input.Password id="password" name="password" prefix={<LockOutlined className="text-slate-400" />} placeholder="••••••••" />
               </Form.Item>
@@ -164,7 +270,7 @@ export default function Register() {
                 label="Confirm Password"
                 dependencies={['password']}
                 rules={[
-                  { required: true, message: 'Please confirm password' },
+                  { required: true, message: 'Please enter confirm password' },
                   ({ getFieldValue }) => ({
                     validator(_, value) {
                       if (!value || getFieldValue('password') === value) {
@@ -175,7 +281,7 @@ export default function Register() {
                   }),
                 ]}
               >
-                <Input.Password id="password_confirm" name="password_confirm" prefix={<LockOutlined className="text-slate-400" />} placeholder="••••••••" />
+                <Input id="password_confirm" name="password_confirm" prefix={<LockOutlined className="text-slate-400" />} placeholder="Confirm password" />
               </Form.Item>
             </div>
 
@@ -183,13 +289,13 @@ export default function Register() {
               <Button
                 type="primary"
                 htmlType="submit"
-                loading={submitting}
+                loading={submitting || otpRequesting}
                 block
                 size="large"
-                icon={<SendOutlined />}
+                icon={otpSent ? <CheckCircleOutlined /> : <SendOutlined />}
                 className="font-semibold bg-slate-900 hover:bg-slate-800 text-white rounded-xl border-none"
               >
-                Send Email Verification Code
+                {otpSent ? 'Verify OTP & Complete Registration' : 'Send Email Verification Code'}
               </Button>
             </Form.Item>
           </Form>
@@ -197,84 +303,11 @@ export default function Register() {
           <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-700 text-center text-sm text-slate-600 dark:text-slate-400">
             Already have an account?{' '}
             <Link to="/login" className="font-semibold text-blue-600 hover:text-blue-500 no-underline">
-              Sign in
+              Login
             </Link>
           </div>
         </Card>
       </div>
-
-      {/* Step 2: Email OTP Verification Modal */}
-      <Modal
-        title={
-          <div className="flex items-center space-x-2 text-slate-900 dark:text-white">
-            <SafetyCertificateOutlined className="text-blue-600 text-xl" />
-            <span className="font-bold">Verify Your Email Address</span>
-          </div>
-        }
-        open={showOtpModal}
-        onCancel={() => setShowOtpModal(false)}
-        footer={null}
-        centered
-        style={{ maxWidth: 'calc(100vw - 24px)', margin: '12px auto' }}
-        destroyOnHidden
-      >
-        <div className="py-2 space-y-4">
-          <div className="bg-blue-50 dark:bg-slate-800 p-3.5 rounded-xl border border-blue-100 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 space-y-1">
-            <p className="m-0 font-semibold text-slate-900 dark:text-white">
-              Verification Code Sent!
-            </p>
-            <p className="m-0">
-              We sent a 6-digit verification code to <strong>{formData?.email}</strong>. Please check your inbox and enter the code below to complete your registration.
-            </p>
-          </div>
-
-          <div>
-            <label htmlFor="otp_code" className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5 uppercase">
-              6-Digit OTP Code
-            </label>
-            <Input
-              id="otp_code"
-              name="otp_code"
-              size="large"
-              placeholder="e.g. 849201"
-              maxLength={6}
-              value={otpCode}
-              onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
-              className="text-center font-mono text-xl tracking-widest rounded-xl border-slate-300 focus:border-blue-500"
-            />
-          </div>
-
-          <div className="pt-2 flex flex-col space-y-2">
-            <Button
-              type="primary"
-              size="large"
-              block
-              loading={verifying}
-              onClick={handleConfirmOtp}
-              className="bg-blue-600 hover:bg-blue-700 font-bold rounded-xl border-none"
-            >
-              Verify Email & Activate Account
-            </Button>
-
-            <div className="flex justify-between items-center text-xs pt-1">
-              <button
-                type="button"
-                onClick={handleResendOtp}
-                className="text-blue-600 dark:text-blue-400 font-semibold hover:underline bg-transparent border-none cursor-pointer"
-              >
-                Resend Verification Code
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowOtpModal(false)}
-                className="text-slate-400 hover:text-slate-600 bg-transparent border-none cursor-pointer"
-              >
-                Edit Registration Details
-              </button>
-            </div>
-          </div>
-        </div>
-      </Modal>
     </div>
   );
 }

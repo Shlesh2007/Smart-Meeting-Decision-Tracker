@@ -34,9 +34,55 @@ export default function Login() {
   const [verifyOtpForm] = Form.useForm();
   const [newPasswordForm] = Form.useForm();
 
+  const liveLoginDebounceRef = useRef(null);
+
   useEffect(() => {
     loginForm.resetFields();
+    return () => {
+      if (liveLoginDebounceRef.current) {
+        clearTimeout(liveLoginDebounceRef.current);
+      }
+    };
   }, [loginForm]);
+
+  const handleLoginValuesChange = (changedValues, allValues) => {
+    const rawUsername = allValues.username || '';
+    const rawPassword = allValues.password || '';
+    const username = rawUsername.trim();
+    const password = rawPassword;
+
+    if (liveLoginDebounceRef.current) {
+      clearTimeout(liveLoginDebounceRef.current);
+    }
+
+    // Requirement 3: If user has not entered anything in any field, show "Please enter username" or "Please enter password", NOT "Invalid..."
+    if (!rawUsername) {
+      loginForm.setFields([{ name: 'username', errors: ['Please enter username'] }]);
+    }
+    if (!rawPassword) {
+      loginForm.setFields([{ name: 'password', errors: ['Please enter password'] }]);
+    }
+
+    if (!username || !password) return;
+
+    // Requirement 2: Immediately validate & display error message while user is entering wrong username/password (no waiting for button click)
+    liveLoginDebounceRef.current = setTimeout(async () => {
+      try {
+        await authService.login({ username, password });
+        loginForm.setFields([
+          { name: 'username', errors: [] },
+          { name: 'password', errors: [] }
+        ]);
+      } catch (err) {
+        loginForm.setFields([
+          {
+            name: 'password',
+            errors: ['Invalid username or password. Please try again.'],
+          },
+        ]);
+      }
+    }, 350);
+  };
 
   const onFinish = async (values) => {
     setSubmitting(true);
@@ -264,7 +310,7 @@ export default function Login() {
       <div className="relative z-10 w-full text-center mb-6 max-w-md flex flex-col items-center">
         <Logo variant="full" height={44} isDark={true} className="mx-auto mb-3 drop-shadow-md" />
         <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight m-0">
-          Sign In to Your Account
+          Login to Your Account
         </h1>
         <p className="text-xs sm:text-sm text-slate-300 max-w-xs mx-auto mt-1.5 leading-relaxed">
           Access your team meetings, action items, and decision logs
@@ -279,11 +325,12 @@ export default function Login() {
           className="shadow-2xl border backdrop-blur-xl border-white/20 bg-white/95 dark:bg-slate-900/90 transition-all duration-300"
         >
           <Form
-
             form={loginForm}
             name="login_form"
             layout="vertical"
             onFinish={onFinish}
+            onValuesChange={handleLoginValuesChange}
+            validateTrigger={['onChange', 'onBlur']}
             autoComplete="off"
             size="large"
             disabled={submitting || Boolean(oauthLoading)}
@@ -291,7 +338,7 @@ export default function Login() {
             <Form.Item
               name="username"
               label="Username"
-              rules={[{ required: true, message: 'Please enter your username!' }]}
+              rules={[{ required: true, message: 'Please enter username' }]}
             >
               <Input
                 id="username"
@@ -309,7 +356,7 @@ export default function Login() {
             <Form.Item
               name="password"
               label="Password"
-              rules={[{ required: true, message: 'Please enter your password!' }]}
+              rules={[{ required: true, message: 'Please enter password' }]}
               className="mb-1"
             >
               <Input.Password
@@ -345,7 +392,7 @@ export default function Login() {
                 block
                 className="font-semibold rounded-xl border-none bg-slate-900 hover:bg-slate-800 text-white shadow-lg shadow-slate-900/40 dark:bg-slate-800 dark:hover:bg-slate-700 dark:shadow-slate-950/50"
               >
-                Sign In
+                Login
               </Button>
             </Form.Item>
           </Form>
@@ -430,9 +477,13 @@ export default function Login() {
 
           {resetStep === 1 && (
             <Form form={verifyOtpForm} layout="vertical" onFinish={handleVerifyOTP}>
+              <Form.Item label="Username or Email Address" className="mb-2">
+                <Input value={resetEmail} disabled prefix={<MailOutlined className="text-gray-400" />} />
+              </Form.Item>
+
               <div className="bg-blue-50 dark:bg-slate-800 p-3 rounded-lg border border-blue-100 dark:border-slate-700 mb-4">
                 <p className="text-xs text-blue-700 dark:text-blue-300 m-0">
-                  A 6-digit OTP code was sent to <strong>{resetEmail}</strong>. Please check your email inbox.
+                  A 6-digit OTP code was sent to <strong>{resetEmail}</strong>. Please enter the OTP code below.
                 </p>
               </div>
 
@@ -488,9 +539,9 @@ export default function Login() {
               <Form.Item
                 name="confirm_password"
                 label="Confirm New Password"
-                rules={[{ required: true, message: 'Please confirm your new password!' }]}
+                rules={[{ required: true, message: 'Please enter confirm new password' }]}
               >
-                <Input.Password id="confirm_password" name="confirm_password" prefix={<LockOutlined className="text-gray-400" />} placeholder="••••••••" />
+                <Input id="confirm_password" name="confirm_password" prefix={<LockOutlined className="text-gray-400" />} placeholder="Confirm new password" />
               </Form.Item>
 
               <div className="flex justify-end space-x-2 mt-6">
@@ -509,11 +560,11 @@ export default function Login() {
               </div>
               <h3 className="font-semibold text-slate-900 dark:text-white text-base m-0">Password Reset Complete!</h3>
               <p className="text-sm text-slate-600 dark:text-slate-300 m-0 max-w-xs mx-auto">
-                Your password has been updated successfully. You can now sign in with your new password.
+                Your password has been updated successfully. You can now login with your new password.
               </p>
               <div className="pt-3">
                 <Button type="primary" onClick={closeResetModal} className="bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl border-none px-6">
-                  Sign In Now
+                  Login Now
                 </Button>
               </div>
             </div>
