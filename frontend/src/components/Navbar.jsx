@@ -18,7 +18,9 @@ import {
   Segmented,
   Space,
   Flex,
-  Grid
+  Grid,
+  Modal,
+  Input,
 } from 'antd';
 import {
   DashboardOutlined,
@@ -40,6 +42,9 @@ import {
   SafetyOutlined,
   ThunderboltOutlined,
   FormOutlined,
+  SearchOutlined,
+  DownOutlined,
+  QuestionCircleOutlined,
 } from '@ant-design/icons';
 
 const { useBreakpoint } = Grid;
@@ -54,6 +59,9 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showAddActionModal, setShowAddActionModal] = useState(false);
+  const [showSearchModal, setShowSearchModal] = useState(false);
+  const [showHelpModal, setShowHelpModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const quickActionItems = [
     {
@@ -153,10 +161,6 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
   const isAuthPage = pathname === '/login' || pathname === '/register';
   if (!user || isAuthPage) return null;
 
-  const now = new Date();
-  const fullDateStr = now.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' });
-  const shortDateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-
   const getActiveKey = () => {
     if (pathname === '/dashboard') return '/dashboard';
     if (pathname.startsWith('/meetings')) return '/meetings';
@@ -164,6 +168,51 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
     if (pathname.startsWith('/admin')) return '/admin';
     return pathname;
   };
+
+  const getHeaderInfo = () => {
+    if (pathname === '/dashboard') {
+      return {
+        title: 'Dashboard',
+        subtitle: 'Your meeting workspace · 12 active action items · 4 upcoming meetings',
+      };
+    }
+    if (pathname === '/meetings') {
+      return {
+        title: 'Meetings',
+        subtitle: 'Collaborate, schedule & view decision history',
+      };
+    }
+    if (pathname === '/meetings/new') {
+      return {
+        title: 'Schedule Meeting',
+        subtitle: 'Create a new meeting session & set agenda',
+      };
+    }
+    if (pathname.startsWith('/meetings/')) {
+      return {
+        title: 'Meeting Details',
+        subtitle: 'View agenda, decisions, and action items',
+      };
+    }
+    if (pathname === '/my-actions') {
+      return {
+        title: 'Action Items',
+        subtitle: 'Track & manage your assigned deliverables',
+      };
+    }
+    if (pathname === '/admin') {
+      return {
+        title: 'Admin Management',
+        subtitle: 'Manage users, roles & system configuration',
+      };
+    }
+    return {
+      title: 'Dashboard',
+      subtitle: 'Your meeting workspace · 12 active action items · 4 upcoming meetings',
+    };
+  };
+
+  const headerInfo = getHeaderInfo();
 
   const handleNavigation = (path) => {
     if (document.activeElement && typeof document.activeElement.blur === 'function') {
@@ -205,17 +254,11 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
     ] : []),
   ];
 
-  const formattedMenuItems = menuItems.map((item) => ({
-    ...item,
-    title: item.label,
-    label: collapsed ? undefined : item.label,
-  }));
-
   const notificationPopoverContent = (
     <div className="w-80 max-w-[calc(100vw-32px)] sm:w-80 select-none">
       <Flex align="center" justify="space-between" className="pb-2.5 border-b border-slate-100 dark:border-slate-800">
         <Space size={6}>
-          <BellOutlined className="text-blue-600 font-bold" />
+          <BellOutlined className="text-amber-600 font-bold" />
           <h4 className="font-extrabold text-xs text-slate-900 dark:text-white m-0">Notifications</h4>
           {hasUnread && <Badge count={unreadNotifications.length} size="small" />}
         </Space>
@@ -225,7 +268,7 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
               type="link"
               size="small"
               onClick={markAllAsRead}
-              className="p-0 text-[10px] font-bold text-blue-600 hover:text-blue-700 h-auto border-none"
+              className="p-0 text-[10px] font-bold text-amber-600 hover:text-amber-700 h-auto border-none"
             >
               Mark all read
             </Button>
@@ -276,16 +319,6 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
                 ? 'No new unread notifications at this time.'
                 : 'No notification records found.'}
             </p>
-            {notificationTab === 'unread' && notifications.length > 0 && (
-              <Button
-                type="link"
-                size="small"
-                onClick={() => setNotificationTab('all')}
-                className="text-xs text-blue-600 dark:text-blue-400 font-bold p-0 h-auto"
-              >
-                View All Notifications ({notifications.length}) →
-              </Button>
-            )}
           </div>
         ) : (
           displayedNotifications.map((n) => (
@@ -294,22 +327,18 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
               onClick={() => handleNotificationClick(n)}
               className={`p-2.5 rounded-lg border transition-all cursor-pointer flex items-start space-x-2.5 group ${
                 !n.is_read
-                  ? 'bg-blue-50/70 dark:bg-blue-950/40 border-blue-200 dark:border-blue-800 hover:border-blue-400 dark:hover:border-blue-500'
-                  : 'bg-slate-50 dark:bg-slate-800/80 border-slate-100 dark:border-slate-700 opacity-75 hover:opacity-100 hover:border-slate-300 dark:hover:border-slate-600'
+                  ? 'bg-amber-50/70 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800'
+                  : 'bg-slate-50 dark:bg-slate-800/80 border-slate-100 dark:border-slate-700 opacity-75'
               }`}
             >
               <div className="mt-0.5 shrink-0 text-sm">{n.icon}</div>
               <div className="min-w-0 flex-1 space-y-0.5">
                 <div className="flex items-center justify-between gap-1">
-                  <p className={`font-bold text-xs m-0 leading-tight transition-colors ${
-                    !n.is_read
-                      ? 'text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400'
-                      : 'text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white'
-                  }`}>
+                  <p className="font-bold text-xs m-0 leading-tight text-slate-900 dark:text-white">
                     {n.title}
                   </p>
                   {!n.is_read && (
-                    <span className="w-1.5 h-1.5 rounded-full bg-blue-600 shrink-0" title="Unread" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-600 shrink-0" title="Unread" />
                   )}
                 </div>
                 <p className="text-[10px] text-slate-500 dark:text-slate-400 m-0 truncate">
@@ -329,7 +358,7 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
             setPopoverOpen(false);
             navigate('/my-actions');
           }}
-          className="text-blue-600 dark:text-blue-400 font-bold p-0 text-[10px] h-auto"
+          className="text-amber-700 dark:text-amber-400 font-bold p-0 text-[10px] h-auto"
         >
           View Actions →
         </Button>
@@ -341,11 +370,11 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
     {
       key: 'profile_info',
       label: (
-        <div onClick={() => setShowProfileModal(true)} className="py-1 px-0.5 cursor-pointer">
-          <p className="font-bold text-slate-900 dark:text-white m-0">{user.full_name || user.username}</p>
-          <p className="text-xs text-slate-500 dark:text-slate-400 m-0">{user.email}</p>
-          <span className="text-[11px] text-blue-600 font-semibold block mt-1 hover:underline">
-            View Profile Details <RightOutlined className="text-[9px]" />
+        <div onClick={() => setShowProfileModal(true)} className="py-1.5 px-1 cursor-pointer">
+          <p className="font-bold text-slate-900 dark:text-white m-0 text-xs">{user.full_name || user.username}</p>
+          <p className="text-[11px] text-slate-500 dark:text-slate-400 m-0">{user.email}</p>
+          <span className="text-[10px] text-amber-600 font-semibold block mt-1 hover:underline">
+            View Profile Details <RightOutlined className="text-[8px]" />
           </span>
         </div>
       ),
@@ -354,7 +383,7 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
       { type: 'divider' },
       {
         key: 'admin_portal',
-        icon: <TeamOutlined className="text-blue-600" />,
+        icon: <TeamOutlined className="text-amber-600" />,
         label: <span className="font-bold text-slate-800 dark:text-slate-200">Admin Management Portal</span>,
         onClick: () => navigate('/admin'),
       },
@@ -368,6 +397,9 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
       onClick: logout,
     },
   ];
+
+  const userFirstName = user?.first_name || user?.username || 'Priya';
+  const userInitial = (userFirstName[0] || 'P').toUpperCase();
 
   return (
     <>
@@ -421,12 +453,12 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
               className="flex items-center cursor-pointer p-1 rounded-lg hover:bg-slate-200/60 dark:hover:bg-slate-700/60 transition-colors space-x-2 overflow-hidden"
             >
               <Avatar size={28} shape="circle" className="bg-blue-600 font-extrabold text-[11px] text-white shrink-0 flex items-center justify-center !w-7 !h-7 !min-w-[28px] !min-h-[28px] !rounded-full !aspect-square">
-                {(user?.first_name || user?.username || 'U')[0].toUpperCase()}
+                {userInitial}
               </Avatar>
               <div className={`min-w-0 flex-1 transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap ${collapsed ? 'max-w-0 opacity-0' : 'max-w-[160px] opacity-100'}`}>
                 <div className="flex items-center space-x-1.5 min-w-0">
                   <span className="font-bold text-xs text-slate-900 dark:text-slate-100 truncate">
-                    {user.first_name || user.username}
+                    {userFirstName}
                   </span>
                   <Tag color={isAdmin ? 'volcano' : 'blue'} className="text-[9px] uppercase font-bold m-0 px-1 shrink-0">
                     {user.role}
@@ -466,61 +498,48 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
         </div>
       </aside>
 
-      {/* Top Navigation Header Bar */}
-      <header className={`sticky top-0 lg:relative z-30 w-full max-w-full bg-white/95 dark:bg-slate-800/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-700/80 shadow-xs transition-[padding-left] duration-300 ease-in-out ${collapsed ? 'lg:pl-16' : 'lg:pl-64'}`}>
-        <Flex align="center" justify="space-between" className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 h-16 gap-2 sm:gap-4">
+      {/* Top Navigation Header Bar (Matching Site Theme & Reference Composition) */}
+      <header className={`sticky top-0 lg:relative z-30 w-full max-w-full bg-white dark:bg-slate-800 border-b border-slate-200/80 dark:border-slate-700/80 transition-[padding-left] duration-300 ease-in-out ${collapsed ? 'lg:pl-16' : 'lg:pl-64'}`}>
+        <Flex align="center" justify="space-between" className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 h-16 gap-3 sm:gap-4 select-none">
 
-          {/* Logo Brand Header */}
-          <Flex align="center" size={8} className="shrink-0 lg:hidden">
-            <div className="flex items-center shrink-0">
-              <Link to="/dashboard" className="no-underline flex items-center">
-                <div className="sm:hidden flex items-center">
-                  <Logo variant="full" height={34} />
-                </div>
-                <div className="hidden sm:flex items-center">
-                  <Logo variant="full" height={46} />
-                </div>
-              </Link>
-            </div>
-          </Flex>
-
-          {/* Right Controls: Date Badge, Notifications & Profile */}
-          <Space size={screens.md ? 12 : 6} className="ml-auto shrink-0">
-            {/* Quick Actions Header Dropdown Button */}
-            <Dropdown menu={{ items: quickActionItems }} placement="bottomRight" trigger={['click']}>
+          {/* LEFT SIDE: Page Title & Subtitle (Exact Match to Reference Image) */}
+          <div className="flex items-center min-w-0 pr-2">
+            {/* Mobile Menu Drawer Toggle / Logo */}
+            <div className="flex items-center lg:hidden mr-2 shrink-0">
               <Button
-                type="default"
-                icon={<FormOutlined className="text-amber-500 text-xs font-bold" />}
-                className="h-9 px-3 font-bold rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800/80 flex items-center justify-center gap-1.5 shadow-xs cursor-pointer"
+                type="text"
+                icon={<MenuUnfoldOutlined className="text-slate-700 dark:text-slate-200 text-base" />}
+                onClick={() => setDrawerOpen(true)}
+                className="p-1 h-9 w-9 flex items-center justify-center rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
+              />
+            </div>
+
+            <div className="flex flex-col justify-center min-w-0">
+              <h1 className="font-bold text-slate-900 dark:text-slate-100 text-base sm:text-lg md:text-[19px] m-0 leading-tight truncate">
+                {headerInfo.title}
+              </h1>
+              <p className="text-xs font-normal text-slate-500 dark:text-slate-400 m-0 leading-tight pt-0.5 truncate hidden xs:block">
+                {headerInfo.subtitle}
+              </p>
+            </div>
+          </div>
+
+          {/* RIGHT SIDE: Quick Actions, Notifications, Help & Profile (Clean Minimalist Layout) */}
+          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0 ml-auto select-none">
+
+            {/* 1. Quick Actions Dropdown Button */}
+            <Dropdown menu={{ items: quickActionItems }} placement="bottomRight" trigger={['click']}>
+              <button
+                type="button"
+                className="h-8 px-2.5 rounded-lg bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200/70 dark:hover:bg-slate-700/80 text-slate-800 dark:text-slate-200 font-semibold text-xs flex items-center gap-1.5 border-none cursor-pointer"
               >
-                <span className="hidden xs:inline text-xs font-bold">Quick Actions</span>
-              </Button>
+                <FormOutlined className="text-amber-600 text-xs font-bold" />
+                <span className="hidden sm:inline font-semibold text-xs">Quick Actions</span>
+                <DownOutlined className="text-[9px] text-slate-400" />
+              </button>
             </Dropdown>
 
-            {/* Live Date Badge */}
-            <span className="hidden sm:inline-flex items-center space-x-1.5 text-xs font-bold text-slate-600 dark:text-slate-300 bg-slate-100/80 dark:bg-slate-800/80 px-2.5 py-1.5 rounded-xl border border-slate-200/80 dark:border-slate-700 shrink-0">
-              <CalendarOutlined className="text-blue-500 text-xs shrink-0" />
-              <span className="sm:hidden">{shortDateStr}</span>
-              <span className="hidden sm:inline">{fullDateStr}</span>
-            </span>
-
-            {/* Admin Panel Quick Access Button (Mobile/Tablet screens only) */}
-            {isAdmin && (
-              <span className="lg:hidden">
-                <Tooltip title="Admin Management Panel">
-                  <Button
-                    type={pathname === '/admin' ? 'primary' : 'default'}
-                    icon={<SafetyOutlined className={pathname === '/admin' ? 'text-white dark:text-slate-900' : 'text-slate-700 dark:text-slate-300'} />}
-                    onClick={() => navigate('/admin')}
-                    className={`h-9 px-3 font-bold rounded-xl border-none ${pathname === '/admin' ? 'bg-slate-900 hover:bg-slate-800 text-white dark:bg-slate-100 dark:hover:bg-slate-200 dark:text-slate-900' : 'bg-slate-100/70 dark:bg-slate-700/50'}`}
-                  >
-                    <span className="hidden sm:inline text-xs font-bold">Admin Panel</span>
-                  </Button>
-                </Tooltip>
-              </span>
-            )}
-
-            {/* Interactive Notification Bell Popover */}
+            {/* 2. Notification Bell Button */}
             <Popover
               content={notificationPopoverContent}
               trigger="click"
@@ -535,28 +554,46 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
               }}
               overlayClassName="notification-popover"
             >
-              <Button
-                type="text"
-                className="w-9 h-9 p-0 flex items-center justify-center rounded-xl bg-slate-100/70 dark:bg-slate-700/50 border border-slate-200/60 dark:border-slate-700/60"
+              <button
+                type="button"
+                className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800 border-none relative cursor-pointer"
               >
-                <Badge dot={hasUnread} offset={[-1, 1]}>
-                  <BellOutlined className="text-base text-slate-700 dark:text-slate-200" />
-                </Badge>
-              </Button>
+                <BellOutlined className="text-base" />
+                {hasUnread && (
+                  <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-amber-500" />
+                )}
+              </button>
             </Popover>
 
-            {/* User Profile Dropdown */}
+            {/* 3. Help Button */}
+            <Tooltip title="Help & Information">
+              <button
+                type="button"
+                onClick={() => setShowHelpModal(true)}
+                className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800 border-none cursor-pointer"
+              >
+                <QuestionCircleOutlined className="text-base" />
+              </button>
+            </Tooltip>
+
+            {/* 4. User Profile Component */}
             <Dropdown menu={{ items: userMenuItems }} placement="bottomRight" trigger={['click']}>
-              <Flex align="center" size={8} className="cursor-pointer p-1 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700/70 transition-all border border-transparent hover:border-slate-200 dark:hover:border-slate-700 shrink-0">
-                <Avatar size={32} shape="circle" className="bg-blue-600 font-extrabold text-xs text-white shadow-xs ring-2 ring-blue-500/20 shrink-0 flex items-center justify-center !w-8 !h-8 !min-w-[32px] !min-h-[32px] !rounded-full !aspect-square">
-                   {(user?.first_name || user?.username || 'U')[0].toUpperCase()}
+              <div className="h-8 px-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-1.5 cursor-pointer border-none select-none">
+                <Avatar
+                  size={28}
+                  shape="circle"
+                  className="bg-blue-600 font-bold text-xs text-white shrink-0 flex items-center justify-center !w-7 !h-7 !min-w-[28px] !min-h-[28px] !rounded-full !aspect-square"
+                >
+                  {userInitial}
                 </Avatar>
-                <span className="hidden md:inline-block text-xs font-bold text-slate-800 dark:text-slate-200 px-1">
-                   {user.first_name || user.username}
+                <span className="hidden sm:inline-block text-xs font-semibold text-slate-800 dark:text-slate-200">
+                  {userFirstName}
                 </span>
-              </Flex>
+                <DownOutlined className="text-[9px] text-slate-400" />
+              </div>
             </Dropdown>
-          </Space>
+
+          </div>
 
         </Flex>
       </header>
@@ -616,12 +653,12 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
             className="cursor-pointer p-1.5 rounded-xl bg-slate-50 border border-slate-200 hover:bg-slate-100 transition-colors"
           >
             <Avatar className="bg-blue-600 font-extrabold text-[11px] text-white shrink-0 flex items-center justify-center w-7 h-7">
-              {(user?.first_name || user?.username || 'U')[0].toUpperCase()}
+              {userInitial}
             </Avatar>
             <div className="min-w-0 flex-1">
               <div className="flex items-center space-x-1.5 min-w-0">
                 <span className="font-bold text-xs text-slate-900 truncate">
-                  {user.first_name || user.username || user.full_name}
+                  {userFirstName}
                 </span>
                 <Tag color={isAdmin ? 'volcano' : 'blue'} className="text-[9px] uppercase font-bold m-0 px-1 shrink-0">
                   {user.role}
@@ -651,7 +688,7 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
         </div>
       </Drawer>
 
-      {/* Bottom Navigation Bar for Mobile / Responsive Screens powered by AntD Buttons & Badge */}
+      {/* Bottom Navigation Bar for Mobile / Responsive Screens */}
       <nav className="mobile-bottom-nav lg:hidden fixed bottom-0 left-0 right-0 w-full z-50 select-none !overflow-visible pointer-events-none">
         <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-200/90 dark:border-slate-800 shadow-2xl rounded-t-2xl px-3 pt-1.5 pb-2.5 flex items-center justify-between relative z-10 pointer-events-auto !overflow-visible">
           
@@ -784,6 +821,135 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
           }`}
         />
       </nav>
+
+      {/* Global Search Modal */}
+      <Modal
+        title={
+          <div className="flex items-center gap-2 text-[#202124] font-bold text-sm">
+            <SearchOutlined className="text-[#B98232]" />
+            <span>Search Smart Meeting Workspace</span>
+          </div>
+        }
+        open={showSearchModal}
+        onCancel={() => setShowSearchModal(false)}
+        footer={null}
+        width={540}
+        className="rounded-2xl overflow-hidden"
+      >
+        <div className="py-2 space-y-4">
+          <Input
+            prefix={<SearchOutlined className="text-slate-400" />}
+            placeholder="Type page name, meeting title, or decision..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="h-10 rounded-xl text-sm"
+            autoFocus
+          />
+
+          <div className="space-y-1 pt-1">
+            <p className="text-[11px] uppercase font-bold text-slate-400 tracking-wider m-0 px-1">Quick Navigation</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+              <div
+                onClick={() => {
+                  setShowSearchModal(false);
+                  navigate('/dashboard');
+                }}
+                className="p-2.5 rounded-xl border border-slate-200/80 hover:border-[#B98232] bg-slate-50/60 hover:bg-white cursor-pointer transition-all flex items-center gap-2.5"
+              >
+                <DashboardOutlined className="text-[#B98232]" />
+                <div>
+                  <p className="font-bold text-xs text-slate-900 m-0">Dashboard</p>
+                  <p className="text-[10px] text-slate-500 m-0">Overview & Key Metrics</p>
+                </div>
+              </div>
+
+              <div
+                onClick={() => {
+                  setShowSearchModal(false);
+                  navigate('/meetings');
+                }}
+                className="p-2.5 rounded-xl border border-slate-200/80 hover:border-[#B98232] bg-slate-50/60 hover:bg-white cursor-pointer transition-all flex items-center gap-2.5"
+              >
+                <CalendarOutlined className="text-[#B98232]" />
+                <div>
+                  <p className="font-bold text-xs text-slate-900 m-0">Meetings</p>
+                  <p className="text-[10px] text-slate-500 m-0">Schedule & Decision Log</p>
+                </div>
+              </div>
+
+              <div
+                onClick={() => {
+                  setShowSearchModal(false);
+                  navigate('/my-actions');
+                }}
+                className="p-2.5 rounded-xl border border-slate-200/80 hover:border-[#B98232] bg-slate-50/60 hover:bg-white cursor-pointer transition-all flex items-center gap-2.5"
+              >
+                <CheckSquareOutlined className="text-[#B98232]" />
+                <div>
+                  <p className="font-bold text-xs text-slate-900 m-0">Action Items</p>
+                  <p className="text-[10px] text-slate-500 m-0">Deliverables & Tasks</p>
+                </div>
+              </div>
+
+              <div
+                onClick={() => {
+                  setShowSearchModal(false);
+                  navigate('/meetings/new');
+                }}
+                className="p-2.5 rounded-xl border border-slate-200/80 hover:border-[#B98232] bg-slate-50/60 hover:bg-white cursor-pointer transition-all flex items-center gap-2.5"
+              >
+                <PlusOutlined className="text-[#B98232]" />
+                <div>
+                  <p className="font-bold text-xs text-slate-900 m-0">Schedule Meeting</p>
+                  <p className="text-[10px] text-slate-500 m-0">Create new session</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Help & Information Modal */}
+      <Modal
+        title={
+          <div className="flex items-center gap-2 text-[#202124] font-bold text-sm">
+            <QuestionCircleOutlined className="text-[#B98232]" />
+            <span>Smart Meeting Decision Tracker Guide</span>
+          </div>
+        }
+        open={showHelpModal}
+        onCancel={() => setShowHelpModal(false)}
+        footer={null}
+        width={480}
+        className="rounded-2xl"
+      >
+        <div className="py-2 space-y-3 text-xs text-slate-700 dark:text-slate-300">
+          <div className="p-3 bg-amber-50/60 rounded-xl border border-amber-200/80 space-y-1">
+            <p className="font-bold text-amber-900 m-0">Need assistance?</p>
+            <p className="m-0 text-amber-800 text-[11px]">
+              Use Smart Meeting Decision Tracker to schedule meetings, record key decisions, and assign action items with tracked deadlines.
+            </p>
+          </div>
+
+          <div className="space-y-2 pt-1">
+            <div className="flex items-start gap-2">
+              <span className="w-5 h-5 rounded-full bg-[#202124] text-[#B98232] font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">1</span>
+              <div>
+                <p className="font-bold m-0">Quick Actions</p>
+                <p className="text-[11px] text-slate-500 m-0">Click "Quick Actions" in the header to schedule a meeting or add an action item from anywhere.</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-2">
+              <span className="w-5 h-5 rounded-full bg-[#202124] text-[#B98232] font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5">2</span>
+              <div>
+                <p className="font-bold m-0">Action Items & Deliverables</p>
+                <p className="text-[11px] text-slate-500 m-0">Track pending tasks in My Actions to update statuses and mark items complete.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Modal>
 
       {/* User Profile Modal */}
       <ProfileModal

@@ -706,3 +706,99 @@ aside .ant-menu-inline-collapsed .ant-menu-title-content {
 .dark .meeting-calendar-custom .ant-picker-calendar-date-value {
   color: #94a3b8;
 }
+
+/* Smart Meeting Splash Screen Warm Theme & Animations */
+@keyframes warmFloatSlow {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-6px) rotate(0deg); }
+}
+
+@keyframes warmWidgetFloat1 {
+  0%, 100% { transform: translateY(0px) rotate(-1.5deg); }
+  50% { transform: translateY(-8px) rotate(1.5deg); }
+}
+
+@keyframes warmWidgetFloat2 {
+  0%, 100% { transform: translateY(0px) rotate(1.5deg); }
+  50% { transform: translateY(-7px) rotate(-1.5deg); }
+}
+
+@keyframes warmWidgetFloat3 {
+  0%, 100% { transform: translateY(0px) rotate(-2deg); }
+  50% { transform: translateY(-9px) rotate(1deg); }
+}
+
+@keyframes warmWidgetFloat4 {
+  0%, 100% { transform: translateY(0px) rotate(2deg); }
+  50% { transform: translateY(-8px) rotate(-2deg); }
+}
+
+@keyframes warmProgressSheen {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+
+@keyframes warmSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes warmDashMove {
+  0% { stroke-dashoffset: 24; }
+  100% { stroke-dashoffset: 0; }
+}
+
+@keyframes warmPulseGlow {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 0.85; transform: scale(1.05); }
+}
+
+.animate-warm-float {
+  animation: warmFloatSlow 3.5s ease-in-out infinite;
+}
+
+.animate-warm-widget-1 {
+  animation: warmWidgetFloat1 5s ease-in-out infinite;
+}
+
+.animate-warm-widget-2 {
+  animation: warmWidgetFloat2 6s ease-in-out infinite;
+}
+
+.animate-warm-widget-3 {
+  animation: warmWidgetFloat3 5.5s ease-in-out infinite;
+}
+
+.animate-warm-widget-4 {
+  animation: warmWidgetFloat4 6.5s ease-in-out infinite;
+}
+
+.animate-warm-sheen {
+  animation: warmProgressSheen 2.2s ease-in-out infinite;
+}
+
+.animate-warm-spin {
+  animation: warmSpin 1.2s linear infinite;
+}
+
+.animate-warm-dash {
+  animation: warmDashMove 24s linear infinite;
+}
+
+.animate-warm-pulse {
+  animation: warmPulseGlow 4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-warm-float,
+  .animate-warm-widget-1,
+  .animate-warm-widget-2,
+  .animate-warm-widget-3,
+  .animate-warm-widget-4,
+  .animate-warm-sheen,
+  .animate-warm-spin,
+  .animate-warm-dash,
+  .animate-warm-pulse {
+    animation: none !important;
+  }
+}
