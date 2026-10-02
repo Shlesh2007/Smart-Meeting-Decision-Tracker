@@ -52,11 +52,12 @@ export const ActionDetailModal = ({
   const handleSelectStatus = async (newStatus) => {
     if (newStatus === actionItem.status) return;
 
+    if (hasIncompleteDeps && ['TODO', 'IN_PROGRESS', 'COMPLETED'].includes(newStatus)) {
+      message.error(`Status update to ${newStatus.replace('_', ' ')} is locked until all prerequisites finish.`);
+      return;
+    }
+
     if (newStatus === 'COMPLETED') {
-      if (hasIncompleteDeps) {
-        message.error('Status update to Completed is locked until all prerequisites finish.');
-        return;
-      }
       if (onCompleteRequest) {
         onCompleteRequest(actionItem);
         return;
@@ -337,8 +338,16 @@ export const ActionDetailModal = ({
             disabled={actionItem.status === 'COMPLETED' || actionItem.status === 'CANCELLED'}
             className="w-40 font-bold text-xs rounded-lg transition-all duration-300"
             options={[
-              { label: 'Todo', value: 'TODO' },
-              { label: 'In Progress', value: 'IN_PROGRESS' },
+              {
+                label: hasIncompleteDeps ? '🔒 Todo (Locked)' : 'Todo',
+                value: 'TODO',
+                disabled: hasIncompleteDeps
+              },
+              {
+                label: hasIncompleteDeps ? '🔒 In Progress (Locked)' : 'In Progress',
+                value: 'IN_PROGRESS',
+                disabled: hasIncompleteDeps
+              },
               { label: 'Blocked', value: 'BLOCKED' },
               {
                 label: hasIncompleteDeps ? '🔒 Completed (Locked)' : 'Completed',

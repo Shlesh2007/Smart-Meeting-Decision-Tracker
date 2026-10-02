@@ -668,8 +668,16 @@ export default function MyActions() {
                           disabled={record.status === 'COMPLETED' || record.status === 'CANCELLED'}
                           className="w-full text-xs font-medium"
                           options={[
-                            { label: 'Todo', value: 'TODO' },
-                            { label: 'In Progress', value: 'IN_PROGRESS' },
+                            {
+                              label: hasIncompleteDeps ? '🔒 Todo (Locked)' : 'Todo',
+                              value: 'TODO',
+                              disabled: hasIncompleteDeps
+                            },
+                            {
+                              label: hasIncompleteDeps ? '🔒 In Progress (Locked)' : 'In Progress',
+                              value: 'IN_PROGRESS',
+                              disabled: hasIncompleteDeps
+                            },
                             { label: 'Blocked', value: 'BLOCKED' },
                             {
                               label: hasIncompleteDeps ? '🔒 Completed (Locked)' : 'Completed',
