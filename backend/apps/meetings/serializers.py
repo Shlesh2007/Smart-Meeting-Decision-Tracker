@@ -111,6 +111,7 @@ class MeetingSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data):
+        validated_data.pop('update_series', None)
         participants = validated_data.pop('participants', [])
         team = validated_data.get('team')
         user = self.context['request'].user

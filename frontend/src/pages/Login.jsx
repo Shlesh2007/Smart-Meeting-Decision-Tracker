@@ -34,54 +34,27 @@ export default function Login() {
   const [verifyOtpForm] = Form.useForm();
   const [newPasswordForm] = Form.useForm();
 
-  const liveLoginDebounceRef = useRef(null);
-
   useEffect(() => {
     loginForm.resetFields();
-    return () => {
-      if (liveLoginDebounceRef.current) {
-        clearTimeout(liveLoginDebounceRef.current);
-      }
-    };
   }, [loginForm]);
 
   const handleLoginValuesChange = (changedValues, allValues) => {
-    const rawUsername = allValues.username || '';
-    const rawPassword = allValues.password || '';
-    const username = rawUsername.trim();
-    const password = rawPassword;
+    const rawUsername = allValues.username ?? '';
+    const rawPassword = allValues.password ?? '';
 
-    if (liveLoginDebounceRef.current) {
-      clearTimeout(liveLoginDebounceRef.current);
+    // Clear server "Invalid..." error as soon as user modifies any field
+    const passwordErrors = loginForm.getFieldError('password') || [];
+    if (passwordErrors.some((e) => e.includes('Invalid username or password'))) {
+      loginForm.setFields([{ name: 'password', errors: [] }]);
     }
 
-    // Requirement 3: If user has not entered anything in any field, show "Please enter username" or "Please enter password", NOT "Invalid..."
-    if (!rawUsername) {
+    // Live validation: show field error if user clears username or password while typing
+    if ('username' in changedValues && !rawUsername.trim()) {
       loginForm.setFields([{ name: 'username', errors: ['Please enter username'] }]);
     }
-    if (!rawPassword) {
+    if ('password' in changedValues && !rawPassword) {
       loginForm.setFields([{ name: 'password', errors: ['Please enter password'] }]);
     }
-
-    if (!username || !password) return;
-
-    // Requirement 2: Immediately validate & display error message while user is entering wrong username/password (no waiting for button click)
-    liveLoginDebounceRef.current = setTimeout(async () => {
-      try {
-        await authService.login({ username, password });
-        loginForm.setFields([
-          { name: 'username', errors: [] },
-          { name: 'password', errors: [] }
-        ]);
-      } catch (err) {
-        loginForm.setFields([
-          {
-            name: 'password',
-            errors: ['Invalid username or password. Please try again.'],
-          },
-        ]);
-      }
-    }, 350);
   };
 
   const onFinish = async (values) => {
