@@ -382,7 +382,7 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
       { type: 'divider' },
       {
         key: 'admin_portal',
-        icon: <TeamOutlined className="text-amber-600" />,
+        icon: <TeamOutlined className="text-blue-600" />,
         label: <span className="font-bold text-slate-800 dark:text-slate-200">Admin Management Portal</span>,
         onClick: () => navigate('/admin'),
       },
@@ -539,16 +539,16 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
               </button>
             </Dropdown>
 
-            {/* 2. Admin Portal Button (Restored for Admin Users) */}
+            {/* 2. Admin Portal Button */}
             {isAdmin && (
               <button
                 type="button"
                 onClick={() => navigate('/admin')}
-                className="h-8 px-2.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 font-bold text-xs flex items-center gap-1.5 border border-amber-300/60 dark:border-amber-700/60 cursor-pointer transition-colors"
+                className="h-8 px-2.5 rounded-lg bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200/70 dark:hover:bg-slate-700/80 text-slate-800 dark:text-slate-200 font-semibold text-xs flex items-center gap-1.5 border-none cursor-pointer"
                 title="Admin Management Portal"
               >
-                <TeamOutlined className="text-amber-600 dark:text-amber-400 text-xs" />
-                <span className="hidden sm:inline font-bold text-xs">Admin Portal</span>
+                <TeamOutlined className="text-amber-600 dark:text-amber-400 text-xs font-bold" />
+                <span className="hidden sm:inline font-semibold text-xs">Admin Portal</span>
               </button>
             )}
 
