@@ -372,7 +372,7 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
         <div onClick={() => setShowProfileModal(true)} className="py-1.5 px-1 cursor-pointer">
           <p className="font-bold text-slate-900 dark:text-white m-0 text-xs">{user.full_name || user.username}</p>
           <p className="text-[11px] text-slate-500 dark:text-slate-400 m-0">{user.email}</p>
-          <span className="text-[10px] text-amber-600 font-semibold block mt-1 hover:underline">
+          <span className="text-[10px] text-blue-600 font-semibold block mt-1 hover:underline">
             View Profile Details <RightOutlined className="text-[8px]" />
           </span>
         </div>
