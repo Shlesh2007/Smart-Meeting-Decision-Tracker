@@ -502,25 +502,23 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
 
       {/* Top Navigation Header Bar (Matching Site Theme & Reference Composition) */}
       <header className={`fixed top-0 left-0 right-0 z-30 w-full max-w-full bg-white dark:bg-slate-800 border-b border-slate-200/80 dark:border-slate-700/80 transition-[padding-left] duration-300 ease-in-out ${collapsed ? 'lg:pl-16' : 'lg:pl-64'}`}>
-        <Flex align="center" justify="space-between" className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 h-16 gap-3 sm:gap-4 select-none">
+        <Flex align="center" justify="space-between" className="w-full max-w-[1600px] mx-auto px-3 sm:px-6 lg:px-8 h-12 sm:h-14 lg:h-16 gap-2 sm:gap-4 select-none">
 
-          {/* LEFT SIDE: Page Title & Subtitle (Exact Match to Reference Image) */}
+          {/* LEFT SIDE: Brand Logo on Responsive Screens, Page Title on Desktop */}
           <div className="flex items-center min-w-0 pr-2">
-            {/* Mobile Menu Drawer Toggle / Logo */}
-            <div className="flex items-center lg:hidden mr-2 shrink-0">
-              <Button
-                type="text"
-                icon={<MenuUnfoldOutlined className="text-slate-700 dark:text-slate-200 text-base" />}
-                onClick={() => setDrawerOpen(true)}
-                className="p-1 h-9 w-9 flex items-center justify-center rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800"
-              />
+            {/* Logo for Responsive / Mobile screens (< lg) */}
+            <div className="flex items-center lg:hidden shrink-0">
+              <Link to="/dashboard" className="no-underline flex items-center" title="Smart Meeting Decision Tracker">
+                <Logo variant="full" height={32} />
+              </Link>
             </div>
 
-            <div className="flex flex-col justify-center min-w-0">
-              <h1 className="font-bold text-slate-900 dark:text-slate-100 text-base sm:text-lg md:text-[19px] m-0 leading-tight truncate">
+            {/* Page Title & Subtitle for Desktop screens (>= lg) */}
+            <div className="hidden lg:flex flex-col justify-center min-w-0">
+              <h1 className="font-bold text-slate-900 dark:text-slate-100 text-lg md:text-[19px] m-0 leading-tight truncate">
                 {headerInfo.title}
               </h1>
-              <p className="text-xs font-normal text-slate-500 dark:text-slate-400 m-0 leading-tight pt-0.5 truncate hidden xs:block">
+              <p className="text-xs font-normal text-slate-500 dark:text-slate-400 m-0 leading-tight pt-0.5 truncate">
                 {headerInfo.subtitle}
               </p>
             </div>
@@ -540,6 +538,19 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
                 <DownOutlined className="text-[9px] text-slate-400" />
               </button>
             </Dropdown>
+
+            {/* 2. Admin Portal Button (Restored for Admin Users) */}
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={() => navigate('/admin')}
+                className="h-8 px-2.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 font-bold text-xs flex items-center gap-1.5 border border-amber-300/60 dark:border-amber-700/60 cursor-pointer transition-colors"
+                title="Admin Management Portal"
+              >
+                <TeamOutlined className="text-amber-600 dark:text-amber-400 text-xs" />
+                <span className="hidden sm:inline font-bold text-xs">Admin Portal</span>
+              </button>
+            )}
 
             {/* 2. Notification Bell Button */}
             <Popover
@@ -684,22 +695,22 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
 
       {/* Bottom Navigation Bar for Mobile / Responsive Screens */}
       <nav className="mobile-bottom-nav lg:hidden fixed bottom-0 left-0 right-0 w-full z-50 select-none !overflow-visible pointer-events-none">
-        <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-200/90 dark:border-slate-800 shadow-2xl rounded-t-2xl px-3 pt-1.5 pb-2.5 flex items-center justify-between relative z-10 pointer-events-auto !overflow-visible">
+        <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border-t border-slate-200/90 dark:border-slate-800 shadow-2xl rounded-t-xl px-2 pt-1 pb-1.5 flex items-center justify-between relative z-10 pointer-events-auto !overflow-visible">
           
           {/* Item 1: Home (Dashboard) */}
           <Button
             type="text"
             onClick={() => handleNavigation('/dashboard')}
-            className="flex-1 flex flex-col items-center justify-center h-auto py-1 border-none hover:bg-transparent"
+            className="flex-1 flex flex-col items-center justify-center h-auto py-0.5 border-none hover:bg-transparent"
           >
-            <div className={`p-1.5 rounded-xl transition-all ${
+            <div className={`p-1 rounded-lg transition-all ${
               pathname === '/dashboard'
-                ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-bold scale-110'
+                ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-bold scale-105'
                 : 'text-slate-400 dark:text-slate-500'
             }`}>
-              <DashboardOutlined className="text-lg" />
+              <DashboardOutlined className="text-base" />
             </div>
-            <span className={`text-[10px] font-semibold mt-0.5 transition-colors ${
+            <span className={`text-[9px] font-semibold mt-0.5 transition-colors ${
               pathname === '/dashboard'
                 ? 'text-slate-900 dark:text-white font-extrabold'
                 : 'text-slate-500 dark:text-slate-400'
@@ -712,16 +723,16 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
           <Button
             type="text"
             onClick={() => handleNavigation('/meetings')}
-            className="flex-1 flex flex-col items-center justify-center h-auto py-1 border-none hover:bg-transparent"
+            className="flex-1 flex flex-col items-center justify-center h-auto py-0.5 border-none hover:bg-transparent"
           >
-            <div className={`p-1.5 rounded-xl transition-all ${
+            <div className={`p-1 rounded-lg transition-all ${
               pathname === '/meetings' || (pathname.startsWith('/meetings/') && pathname !== '/meetings/new')
-                ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-bold scale-110'
+                ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-bold scale-105'
                 : 'text-slate-400 dark:text-slate-500'
             }`}>
-              <CalendarOutlined className="text-lg" />
+              <CalendarOutlined className="text-base" />
             </div>
-            <span className={`text-[10px] font-semibold mt-0.5 transition-colors ${
+            <span className={`text-[9px] font-semibold mt-0.5 transition-colors ${
               pathname === '/meetings' || (pathname.startsWith('/meetings/') && pathname !== '/meetings/new')
                 ? 'text-slate-900 dark:text-white font-extrabold'
                 : 'text-slate-500 dark:text-slate-400'
@@ -733,10 +744,10 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
           {/* Item 3 Center Spacer & Create Button Label */}
           <div
             onClick={() => handleNavigation('/meetings/new')}
-            className="flex-1 flex flex-col items-center justify-center py-1 cursor-pointer group"
+            className="flex-1 flex flex-col items-center justify-center py-0.5 cursor-pointer group"
           >
-            <div className="w-10 h-7 pointer-events-none" />
-            <span className={`text-[9.5px] font-extrabold mt-0.5 uppercase tracking-tight transition-colors ${
+            <div className="w-8 h-5 pointer-events-none" />
+            <span className={`text-[8.5px] font-extrabold mt-0.5 uppercase tracking-tight transition-colors ${
               pathname === '/meetings/new'
                 ? 'text-slate-900 dark:text-white font-black'
                 : 'text-slate-500 dark:text-slate-400'
@@ -749,16 +760,16 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
           <Button
             type="text"
             onClick={() => handleNavigation('/my-actions')}
-            className="flex-1 flex flex-col items-center justify-center h-auto py-1 border-none hover:bg-transparent"
+            className="flex-1 flex flex-col items-center justify-center h-auto py-0.5 border-none hover:bg-transparent"
           >
-            <div className={`p-1.5 rounded-xl transition-all ${
+            <div className={`p-1 rounded-lg transition-all ${
               pathname === '/my-actions'
-                ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-bold scale-110'
+                ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-bold scale-105'
                 : 'text-slate-400 dark:text-slate-500'
             }`}>
-              <CheckSquareOutlined className="text-lg" />
+              <CheckSquareOutlined className="text-base" />
             </div>
-            <span className={`text-[10px] font-semibold mt-0.5 transition-colors ${
+            <span className={`text-[9px] font-semibold mt-0.5 transition-colors ${
               pathname === '/my-actions'
                 ? 'text-slate-900 dark:text-white font-extrabold'
                 : 'text-slate-500 dark:text-slate-400'
@@ -771,16 +782,16 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
           <Button
             type="text"
             onClick={() => setShowProfileModal(true)}
-            className="flex-1 flex flex-col items-center justify-center h-auto py-1 border-none hover:bg-transparent"
+            className="flex-1 flex flex-col items-center justify-center h-auto py-0.5 border-none hover:bg-transparent"
           >
-            <div className={`p-1.5 rounded-xl transition-all ${
+            <div className={`p-1 rounded-lg transition-all ${
               showProfileModal
                 ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-bold scale-110'
                 : 'text-slate-400 dark:text-slate-500'
             }`}>
-              <UserOutlined className="text-lg" />
+              <UserOutlined className="text-base" />
             </div>
-            <span className={`text-[10px] font-semibold mt-0.5 transition-colors ${
+            <span className={`text-[9px] font-semibold mt-0.5 transition-colors ${
               showProfileModal
                 ? 'text-slate-900 dark:text-white font-extrabold'
                 : 'text-slate-500 dark:text-slate-400'
@@ -795,20 +806,20 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
         <Button
           type="primary"
           shape="circle"
-          icon={<PlusOutlined className="text-xl font-black" />}
+          icon={<PlusOutlined className="text-lg font-black" />}
           onClick={() => handleNavigation('/meetings/new')}
           title="Create Meeting"
           style={{
-            width: '52px',
-            height: '52px',
+            width: '44px',
+            height: '44px',
             position: 'absolute',
             left: '50%',
-            top: '-26px',
+            top: '-22px',
             transform: 'translateX(-50%)',
             zIndex: 50,
             pointerEvents: 'auto',
           }}
-          className={`border-none flex items-center justify-center shadow-lg pointer-events-auto cursor-pointer ${
+          className={`border-none flex items-center justify-center shadow-md pointer-events-auto cursor-pointer ${
             pathname === '/meetings/new'
               ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 ring-4 ring-slate-400/50 scale-105'
               : 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 active:scale-95'
