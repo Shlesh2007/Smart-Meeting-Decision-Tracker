@@ -390,9 +390,26 @@ export default function CreateMeeting() {
               <Form.Item name="description" label="Meeting Agenda & Description" className="m-0">
                 <Input.TextArea id="description" name="description" rows={3} placeholder="Outline key topics to discuss..." />
               </Form.Item>
+
+              <div className="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-700 [&_.ant-form-item-control-input]:!min-h-0">
+                <Form.Item name="needs_reminder" valuePropName="checked" className="!m-0" style={{ marginBottom: 0 }}>
+                  <Checkbox className="font-bold text-slate-800 dark:text-slate-200 text-xs">
+                    Needs to send reminder when scheduling meeting
+                  </Checkbox>
+                </Form.Item>
+
+                {needsReminder && (
+                  <div className="mt-1 pt-1 text-[11px] text-slate-600 dark:text-slate-400 flex items-center space-x-1.5 border-t border-slate-200 dark:border-slate-700">
+                    <MailOutlined className="text-blue-500" />
+                    <span>
+                      Automated email reminder & Send Password option will be initialized.
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
 
-            {/* RIGHT COLUMN (6 cols): Date, Time, Team & Participants, Reminder */}
+            {/* RIGHT COLUMN (6 cols): Date, Time, Team & Participants, Recurring */}
             <div className="lg:col-span-6 space-y-4">
               <div className="bg-slate-50 dark:bg-slate-900/50 p-3.5 rounded-xl border border-slate-200 dark:border-slate-700">
                 <div className="grid grid-cols-1 gap-3">
@@ -641,23 +658,6 @@ export default function CreateMeeting() {
                       <div className="text-[11px] text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/30 p-2 rounded-lg border border-purple-200 dark:border-purple-800">
                         ✨ SMDT will automatically generate daily meeting instances for each day so you can record decisions and action items per session.
                       </div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-700 [&_.ant-form-item-control-input]:!min-h-0">
-                  <Form.Item name="needs_reminder" valuePropName="checked" className="!m-0" style={{ marginBottom: 0 }}>
-                    <Checkbox className="font-bold text-slate-800 dark:text-slate-200 text-xs">
-                      Needs to send reminder when scheduling meeting
-                    </Checkbox>
-                  </Form.Item>
-
-                  {needsReminder && (
-                    <div className="mt-1 pt-1 text-[11px] text-slate-600 dark:text-slate-400 flex items-center space-x-1.5 border-t border-slate-200 dark:border-slate-700">
-                      <MailOutlined className="text-blue-500" />
-                      <span>
-                        Automated email reminder & Send Password option will be initialized.
-                      </span>
                     </div>
                   )}
                 </div>

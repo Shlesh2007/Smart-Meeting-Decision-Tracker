@@ -17,4 +17,9 @@ class DiscussionViewSet(viewsets.ModelViewSet):
         user = self.request.user
         if not user or not user.is_authenticated:
             raise permissions.PermissionDenied("Authentication required to create a discussion topic.")
-        serializer.save(created_by=user)
+        discussion = serializer.save(created_by=user)
+        try:
+            from apps.decisions.models import Decision
+            Decision.objects.get_or_create(discussion=discussion, defaults={'decided_by': user, 'status': 'NO_DECISION'})
+        except Exception:
+            pass

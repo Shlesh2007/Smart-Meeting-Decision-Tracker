@@ -98,6 +98,12 @@ export const ActionDetailModal = ({
     actionItem.meeting_date ||
     (actionItem.meeting_detail && actionItem.meeting_detail.meeting_date);
 
+  const discussionTitleStr =
+    actionItem.discussion_title ||
+    (actionItem.decision_detail && actionItem.decision_detail.discussion_title) ||
+    (actionItem.decision_detail && actionItem.decision_detail.discussion && actionItem.decision_detail.discussion.title) ||
+    (actionItem.decision && typeof actionItem.decision === 'object' && actionItem.decision.discussion ? actionItem.decision.discussion.title : null);
+
   return (
     <Modal
       open={open}
@@ -171,12 +177,33 @@ export const ActionDetailModal = ({
                 {onNavigateMeeting && meetingId && <ArrowRightOutlined className="text-[9px]" />}
               </Tag>
             )}
+
+            {discussionTitleStr && (
+              <Tag
+                color="cyan"
+                className="text-[11px] font-bold m-0 px-2.5 py-0.5 rounded-lg border-cyan-200 dark:border-cyan-900 flex items-center gap-1"
+              >
+                <span>Topic: <strong>{discussionTitleStr}</strong></span>
+              </Tag>
+            )}
           </div>
 
           <h1 className="text-base sm:text-lg font-black text-slate-900 dark:text-white m-0 leading-snug tracking-tight">
             {actionItem.title}
           </h1>
         </div>
+
+        {/* Discussion Topic Box */}
+        {discussionTitleStr && (
+          <div className="p-3 bg-cyan-50/60 dark:bg-cyan-950/40 border border-cyan-200/80 dark:border-cyan-900/60 rounded-xl space-y-1">
+            <span className="text-[10px] font-bold text-cyan-800 dark:text-cyan-300 uppercase tracking-wider block">
+              Associated Discussion Topic / Decision Point
+            </span>
+            <p className="text-xs font-bold text-slate-900 dark:text-white m-0 leading-relaxed">
+              💬 {discussionTitleStr}
+            </p>
+          </div>
+        )}
 
         {/* Description Section */}
         {actionItem.description && (

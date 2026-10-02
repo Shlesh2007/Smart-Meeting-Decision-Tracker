@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Modal, Form, Input, Select, DatePicker, message as staticMessage, Alert, App } from 'antd';
+import { useNavigate } from 'react-router-dom';
+import { Modal, Form, Input, Select, DatePicker, message as staticMessage, Alert, App, Button } from 'antd';
 import dayjs from 'dayjs';
 import { actionService, userService, meetingService, discussionService, decisionService } from '../services/api.js';
 import { getErrorMessage } from '../utils/errorHandler.js';
@@ -7,6 +8,7 @@ import { getErrorMessage } from '../utils/errorHandler.js';
 export const ActionFormModal = ({
   open, onClose, decisionId, meetingId, existingAction, availableActions = [], onSuccess
 }) => {
+  const navigate = useNavigate();
   const staticApp = App.useApp ? App.useApp() : null;
   const message = staticApp?.message || staticMessage;
   const [form] = Form.useForm();
@@ -20,19 +22,22 @@ export const ActionFormModal = ({
 
   useEffect(() => {
     if (open) {
+      const targetMId = meetingId || existingAction?.meeting_id || null;
+      setSelectedMeetingId(targetMId);
+      setDecisionsList([]);
+      setMeetingParticipants([]);
+      setPrereqActions([]);
+
       userService.getUsers()
         .then((res) => {
           const list = res.results || res || [];
-          // Deduplicate by id / email to prevent duplicate entries
           const uniqueMap = new Map();
           list.forEach(u => uniqueMap.set(u.id, u));
           setUsers(Array.from(uniqueMap.values()));
         })
         .catch(() => setUsers([]));
 
-      const targetMId = meetingId || existingAction?.meeting_id;
       if (targetMId) {
-        setSelectedMeetingId(targetMId);
         loadMeetingPrereqs(targetMId);
       } else {
         meetingService.getMeetings()
@@ -69,6 +74,11 @@ export const ActionFormModal = ({
           form.setFieldsValue({ decision: decisionId });
         }
       }
+    } else {
+      setSelectedMeetingId(null);
+      setDecisionsList([]);
+      setMeetingParticipants([]);
+      setPrereqActions([]);
     }
   }, [open, existingAction, meetingId, decisionId, form]);
 
@@ -95,14 +105,18 @@ export const ActionFormModal = ({
       const decs = [];
       const discussions = discRes.results || discRes || [];
       discussions.forEach((disc) => {
-        if (disc.decision) {
-          decs.push({
-            id: disc.decision.id,
-            title: `${disc.title} (Decision #${disc.decision.id})`
-          });
-        }
+        const dId = disc.decision?.id ? String(disc.decision.id) : `disc_${disc.id}`;
+        decs.push({
+          id: dId,
+          discId: disc.id,
+          decisionId: disc.decision?.id || null,
+          title: disc.decision?.decision ? `${disc.title} (${disc.decision.decision})` : disc.title
+        });
       });
       setDecisionsList(decs);
+      if (decs.length === 1 && !form.getFieldValue('decision')) {
+        form.setFieldsValue({ decision: decs[0].id });
+      }
     } catch (err) {
       console.error('Failed to load meeting context', err);
     }
@@ -110,47 +124,49 @@ export const ActionFormModal = ({
 
   const handleMeetingChange = (mId) => {
     setSelectedMeetingId(mId);
+    setDecisionsList([]);
     form.setFieldsValue({ decision: undefined, dependency_ids: [], assigned_to: [] });
-    loadMeetingPrereqs(mId);
+    if (mId) {
+      loadMeetingPrereqs(mId);
+    }
   };
 
   const handleSubmit = async (values) => {
     setSubmitting(true);
     let finalDecisionId = decisionId || values.decision;
 
-    if (!finalDecisionId && (values.meeting_id || selectedMeetingId)) {
-      const mId = values.meeting_id || selectedMeetingId;
-      try {
-        const discRes = await discussionService.getDiscussions(mId);
-        const discussions = discRes.results || discRes || [];
-        const existingDiscWithDecision = discussions.find(d => d.decision && d.decision.id);
-        
-        if (existingDiscWithDecision) {
-          finalDecisionId = existingDiscWithDecision.decision.id;
-        } else {
-          const newDisc = await discussionService.createDiscussion({
-            meeting: mId,
-            title: 'General Action Items',
-            description: 'Action items logged for meeting'
-          });
-          const newDec = await decisionService.createDecision({
-            discussion: newDisc.id,
-            status: 'DECISION_MADE',
-            decision: 'Action items recorded'
-          });
-          finalDecisionId = newDec.id;
-        }
-      } catch (e) {
-        message.error(getErrorMessage(e, 'Failed to attach action item to meeting.'));
-        setSubmitting(false);
-        return;
-      }
+    if (!finalDecisionId && decisionsList.length === 1) {
+      finalDecisionId = decisionsList[0].id;
     }
 
     if (!finalDecisionId) {
-      message.error('Please select an associated meeting for this action item.');
+      message.error('Please select a Discussion Topic / Decision Point for this action item.');
       setSubmitting(false);
       return;
+    }
+
+    if (typeof finalDecisionId === 'string' && finalDecisionId.startsWith('disc_')) {
+      const discId = Number(finalDecisionId.replace('disc_', ''));
+      try {
+        const newDec = await decisionService.createDecision({
+          discussion: discId,
+          status: 'NO_DECISION',
+          decision: 'Action item recorded'
+        });
+        finalDecisionId = newDec.id;
+      } catch (e) {
+        const mId = values.meeting_id || selectedMeetingId || meetingId;
+        const discRes = await discussionService.getDiscussions(mId);
+        const discussions = discRes.results || discRes || [];
+        const found = discussions.find(d => Number(d.id) === Number(discId));
+        if (found && found.decision && found.decision.id) {
+          finalDecisionId = found.decision.id;
+        } else {
+          message.error(getErrorMessage(e, 'Failed to link action item to discussion topic.'));
+          setSubmitting(false);
+          return;
+        }
+      }
     }
 
     const payload = {
@@ -185,7 +201,9 @@ export const ActionFormModal = ({
     }
   };
 
-  const currentMeetingId = meetingId || selectedMeetingId || existingAction?.meeting_id;
+  const formMeetingId = Form.useWatch('meeting_id', form);
+  const currentMeetingId = formMeetingId || meetingId || selectedMeetingId || existingAction?.meeting_id;
+  const hasSelectedMeeting = Boolean(formMeetingId || meetingId || existingAction?.meeting_id);
   const actionsPool = prereqActions.length > 0 ? prereqActions : availableActions;
   
   const filterableDeps = actionsPool.filter(a => {
@@ -222,9 +240,9 @@ export const ActionFormModal = ({
       onCancel={onClose}
       onOk={() => form.submit()}
       confirmLoading={submitting}
-      okText={existingAction ? 'Update Action' : 'Create Action'}
       okButtonProps={{ className: 'bg-slate-900 hover:bg-slate-800 font-semibold text-white border-none h-9 px-4 rounded-lg shadow-xs' }}
       cancelButtonProps={{ className: 'font-semibold border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 h-9 px-4 rounded-lg' }}
+      okText={existingAction ? 'Update Action' : 'Create Action'}
       width={600}
     >
 
@@ -237,41 +255,67 @@ export const ActionFormModal = ({
         className="space-y-4"
       >
         {!meetingId && !decisionId && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Form.Item
+          <Form.Item
+            name="meeting_id"
+            label="Associated Meeting"
+            rules={[{ required: true, message: 'Please select a meeting' }]}
+            className="!mb-0"
+          >
+            <Select
+              id="meeting_id"
               name="meeting_id"
-              label="Associated Meeting"
-              rules={[{ required: true, message: 'Please select a meeting' }]}
-              className="!mb-0"
-            >
-              <Select
-                id="meeting_id"
-                name="meeting_id"
-                showSearch
-                placeholder="Select meeting"
-                optionFilterProp="children"
-                onChange={handleMeetingChange}
-                options={meetings.map(m => ({ label: `${m.title} (${m.meeting_date})`, value: m.id }))}
-                className="w-full"
-              />
-            </Form.Item>
+              showSearch
+              placeholder="Select meeting"
+              optionFilterProp="children"
+              onChange={handleMeetingChange}
+              options={meetings.map(m => ({ label: `${m.title} (${m.meeting_date})`, value: m.id }))}
+              className="w-full"
+            />
+          </Form.Item>
+        )}
 
-            {decisionsList.length > 0 && (
-              <Form.Item
-                name="decision"
-                label="Topic / Decision Point"
-                className="!mb-0"
-              >
-                <Select
-                  id="decision"
-                  name="decision"
-                  placeholder="Select decision topic"
-                  options={decisionsList.map(d => ({ label: d.title, value: d.id }))}
-                  className="w-full"
-                />
-              </Form.Item>
-            )}
-          </div>
+        {hasSelectedMeeting && decisionsList.length === 0 && (
+          <Alert
+            type="warning"
+            showIcon
+            message="No Discussion Topics Found"
+            description={
+              <div className="space-y-2 mt-1">
+                <p className="m-0 text-xs text-slate-700 dark:text-slate-300">
+                  This meeting does not have any discussion topics recorded yet. Action items must be linked to a discussion topic.
+                </p>
+                <Button
+                  type="primary"
+                  size="small"
+                  onClick={() => {
+                    onClose();
+                    navigate(`/meetings/${currentMeetingId}`);
+                  }}
+                  className="bg-blue-600 font-bold text-xs rounded-lg mt-1"
+                >
+                  Go to Meeting to Add Discussion Topic
+                </Button>
+              </div>
+            }
+            className="rounded-xl border-amber-200 bg-amber-50/80 dark:bg-amber-950/40"
+          />
+        )}
+
+        {hasSelectedMeeting && decisionsList.length > 0 && !decisionId && (
+          <Form.Item
+            name="decision"
+            label="Associated Discussion Topic / Decision Point"
+            rules={[{ required: true, message: 'Please select a discussion topic / decision point' }]}
+            className="!mb-0"
+          >
+            <Select
+              id="decision"
+              name="decision"
+              placeholder="Select discussion topic / decision point"
+              options={decisionsList.map(d => ({ label: d.title, value: d.id }))}
+              className="w-full"
+            />
+          </Form.Item>
         )}
 
         <Form.Item

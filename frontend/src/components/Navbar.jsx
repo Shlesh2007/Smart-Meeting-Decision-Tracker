@@ -172,36 +172,37 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
     if (pathname === '/dashboard') {
       return {
         title: 'Dashboard',
+        
       };
     }
     if (pathname === '/meetings') {
       return {
         title: 'Meetings',
-        subtitle: 'Collaborate, schedule & view decision history',
+        subtitle:'',
       };
     }
     if (pathname === '/meetings/new') {
       return {
         title: 'Schedule Meeting',
-        subtitle: 'Create a new meeting session & set agenda',
+        subtitle: '',
       };
     }
     if (pathname.startsWith('/meetings/')) {
       return {
         title: 'Meeting Details',
-        subtitle: 'View agenda, decisions, and action items',
+        subtitle: '',
       };
     }
     if (pathname === '/my-actions') {
       return {
         title: 'Action Items',
-        subtitle: 'Track & manage your assigned deliverables',
+        subtitle: '',
       };
     }
     if (pathname === '/admin') {
       return {
         title: 'Admin Management',
-        subtitle: 'Manage users, roles & system configuration',
+        subtitle: '',
       };
     }
     return {

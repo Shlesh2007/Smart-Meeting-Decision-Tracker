@@ -25,16 +25,18 @@ class ActionItemSerializer(serializers.ModelSerializer):
 
     meeting_id = serializers.SerializerMethodField()
     meeting_title = serializers.SerializerMethodField()
+    discussion_id = serializers.SerializerMethodField()
+    discussion_title = serializers.SerializerMethodField()
     completion_notes = serializers.CharField(allow_blank=True, allow_null=True, required=False)
 
     class Meta:
         model = ActionItem
         fields = (
-            'id', 'decision', 'meeting_id', 'meeting_title', 'title', 'description', 'completion_notes', 'assigned_to', 'assigned_to_detail',
+            'id', 'decision', 'meeting_id', 'meeting_title', 'discussion_id', 'discussion_title', 'title', 'description', 'completion_notes', 'assigned_to', 'assigned_to_detail',
             'priority', 'due_date', 'status', 'is_overdue', 'dependencies', 'dependency_details',
             'dependency_ids', 'created_by', 'created_by_detail', 'created_at', 'updated_at'
         )
-        read_only_fields = ('id', 'meeting_id', 'meeting_title', 'dependencies', 'created_by', 'created_at', 'updated_at')
+        read_only_fields = ('id', 'meeting_id', 'meeting_title', 'discussion_id', 'discussion_title', 'dependencies', 'created_by', 'created_at', 'updated_at')
 
     def get_meeting_id(self, obj):
         try:
@@ -56,6 +58,26 @@ class ActionItemSerializer(serializers.ModelSerializer):
                     meeting = getattr(discussion, 'meeting', None)
                     if meeting:
                         return meeting.title
+        except Exception:
+            return ''
+        return ''
+
+    def get_discussion_id(self, obj):
+        try:
+            if obj and hasattr(obj, 'decision') and obj.decision:
+                discussion = getattr(obj.decision, 'discussion', None)
+                if discussion:
+                    return discussion.id
+        except Exception:
+            return None
+        return None
+
+    def get_discussion_title(self, obj):
+        try:
+            if obj and hasattr(obj, 'decision') and obj.decision:
+                discussion = getattr(obj.decision, 'discussion', None)
+                if discussion:
+                    return discussion.title
         except Exception:
             return ''
         return ''
