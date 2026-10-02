@@ -634,11 +634,22 @@ aside .ant-menu-inline-collapsed > .ant-menu-submenu > .ant-menu-submenu-title {
   overflow: hidden !important;
 }
 
+/* Ant Design Menu item text smooth collapse/expand animation */
+aside .ant-menu-title-content {
+  transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1), max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  display: inline-block !important;
+  max-width: 180px;
+  vertical-align: middle;
+  opacity: 1;
+}
+
 aside .ant-menu-inline-collapsed .ant-menu-title-content {
-  display: none !important;
-  width: 0 !important;
-  height: 0 !important;
   opacity: 0 !important;
+  max-width: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
   visibility: hidden !important;
 }
 

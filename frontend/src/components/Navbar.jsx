@@ -372,16 +372,18 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
   return (
     <>
       {/* Desktop Left Sidebar powered by AntD Menu & Grid */}
-      <aside className={`hidden lg:flex flex-col fixed top-0 left-0 bottom-0 z-40 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 border-r border-slate-200 dark:border-slate-700 shadow-xs transition-all duration-300 select-none overflow-x-hidden ${collapsed ? 'w-16' : 'w-64'}`}>
+      <aside className={`hidden lg:flex flex-col fixed top-0 left-0 bottom-0 z-40 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 border-r border-slate-200 dark:border-slate-700 shadow-xs transition-[width] duration-300 ease-in-out select-none overflow-x-hidden ${collapsed ? 'w-16' : 'w-64'}`}>
         
         {/* Sidebar Brand Header */}
-        <Flex align="center" justify={collapsed ? 'space-between' : 'space-between'} className={`h-16 border-b border-slate-200/80 dark:border-slate-700/80 shrink-0 overflow-x-hidden ${collapsed ? 'px-2' : 'px-4'}`}>
-          <Link to="/dashboard" className="no-underline flex items-center shrink-0" title="Smart Meeting Decision Tracker">
-            {collapsed ? (
-              <Logo variant="icon" height={30} />
-            ) : (
-              <Logo variant="full" height={46} />
-            )}
+        <Flex align="center" justify="space-between" className="h-16 px-3.5 border-b border-slate-200/80 dark:border-slate-700/80 shrink-0 overflow-hidden whitespace-nowrap">
+          <Link to="/dashboard" className="no-underline flex items-center shrink-0 overflow-hidden" title="Smart Meeting Decision Tracker">
+            <div className={`transition-all duration-300 ease-in-out overflow-hidden flex items-center ${collapsed ? 'w-8' : 'w-44'}`}>
+              {collapsed ? (
+                <Logo variant="icon" height={30} />
+              ) : (
+                <Logo variant="full" height={46} />
+              )}
+            </div>
           </Link>
           {onToggleSidebar && (
             <Button
@@ -397,10 +399,6 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
 
         {/* AntD Navigation Menu */}
         <div className="flex-1 px-1.5 pt-2 pb-4 overflow-y-auto overflow-x-hidden">
-          {!collapsed && (
-            <div>
-            </div>
-          )}
           <Menu
             mode="inline"
             inlineCollapsed={collapsed}
@@ -412,34 +410,32 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
         </div>
 
         {/* Bottom Sidebar User Profile Card */}
-        <div className={`p-2 border-t border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-800/80 m-2 rounded-xl space-y-2 overflow-x-hidden ${collapsed ? 'flex flex-col items-center' : ''}`}>
+        <div className="p-2 border-t border-slate-200 dark:border-slate-700 bg-slate-50/80 dark:bg-slate-800/80 m-2 rounded-xl space-y-2 overflow-hidden">
           <Tooltip title={user.email} placement="right">
             <div
               onClick={() => setShowProfileModal(true)}
-              className={`flex items-center cursor-pointer p-1 rounded-lg hover:bg-slate-200/60 dark:hover:bg-slate-700/60 transition-colors ${collapsed ? 'justify-center' : 'space-x-2'}`}
+              className="flex items-center cursor-pointer p-1 rounded-lg hover:bg-slate-200/60 dark:hover:bg-slate-700/60 transition-colors space-x-2 overflow-hidden"
             >
               <Avatar size={28} shape="circle" className="bg-blue-600 font-extrabold text-[11px] text-white shrink-0 flex items-center justify-center !w-7 !h-7 !min-w-[28px] !min-h-[28px] !rounded-full !aspect-square">
                 {(user?.first_name || user?.username || 'U')[0].toUpperCase()}
               </Avatar>
-              {!collapsed && (
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center space-x-1.5 min-w-0">
-                    <span className="font-bold text-xs text-slate-900 dark:text-slate-100 truncate">
-                      {user.first_name || user.username}
-                    </span>
-                    <Tag color={isAdmin ? 'volcano' : 'blue'} className="text-[9px] uppercase font-bold m-0 px-1 shrink-0">
-                      {user.role}
-                    </Tag>
-                  </div>
-                  <p className="text-[9.5px] tracking-tight text-slate-600 dark:text-slate-400 m-0 font-medium whitespace-nowrap leading-tight mt-0.5 truncate">
-                    {user.email}
-                  </p>
+              <div className={`min-w-0 flex-1 transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap ${collapsed ? 'max-w-0 opacity-0' : 'max-w-[160px] opacity-100'}`}>
+                <div className="flex items-center space-x-1.5 min-w-0">
+                  <span className="font-bold text-xs text-slate-900 dark:text-slate-100 truncate">
+                    {user.first_name || user.username}
+                  </span>
+                  <Tag color={isAdmin ? 'volcano' : 'blue'} className="text-[9px] uppercase font-bold m-0 px-1 shrink-0">
+                    {user.role}
+                  </Tag>
                 </div>
-              )}
+                <p className="text-[9.5px] tracking-tight text-slate-600 dark:text-slate-400 m-0 font-medium whitespace-nowrap leading-tight mt-0.5 truncate">
+                  {user.email}
+                </p>
+              </div>
             </div>
           </Tooltip>
 
-          <div className="pt-1 w-full flex justify-center">
+          <div className="pt-1 w-full flex justify-center overflow-hidden">
             {collapsed ? (
               <Tooltip title="Logout" placement="right">
                 <Button
@@ -457,7 +453,7 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
                 icon={<LogoutOutlined />}
                 onClick={logout}
                 block
-                className="rounded-lg bg-rose-500/10 text-rose-600 hover:bg-rose-500 hover:text-white border-rose-200 text-xs font-bold"
+                className="rounded-lg bg-rose-500/10 text-rose-600 hover:bg-rose-500 hover:text-white border-rose-200 text-xs font-bold whitespace-nowrap overflow-hidden"
               >
                 Logout
               </Button>
@@ -467,7 +463,7 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
       </aside>
 
       {/* Top Navigation Header Bar */}
-      <header className={`sticky top-0 lg:relative z-30 w-full max-w-full bg-white/95 dark:bg-slate-800/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-700/80 shadow-xs transition-all duration-300 ${collapsed ? 'lg:pl-16' : 'lg:pl-64'}`}>
+      <header className={`sticky top-0 lg:relative z-30 w-full max-w-full bg-white/95 dark:bg-slate-800/95 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-700/80 shadow-xs transition-[padding-left] duration-300 ease-in-out ${collapsed ? 'lg:pl-16' : 'lg:pl-64'}`}>
         <Flex align="center" justify="space-between" className="w-full max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 h-16 gap-2 sm:gap-4">
 
           {/* Logo Brand Header */}

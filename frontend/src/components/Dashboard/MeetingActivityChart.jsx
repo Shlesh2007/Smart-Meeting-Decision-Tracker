@@ -13,14 +13,15 @@ export const MeetingActivityChart = ({
   globalPeriod,
 }) => {
   const [filterDays, setFilterDays] = useState(() => {
-    if (activityPeriod === 'today' || globalPeriod === 'today') return 'today';
-    if (activityPeriod === 'yesterday' || globalPeriod === 'yesterday') return 'yesterday';
-    if (activityPeriod === 'last_year' || globalPeriod === 'last_year') return 'last_year';
-    if (activityPeriod === '7d' || activityPeriod === 7) return 7;
+    if (globalPeriod === 'today' || activityPeriod === 'today') return 'today';
+    if (globalPeriod === 'yesterday' || activityPeriod === 'yesterday') return 'yesterday';
+    if (globalPeriod === 'last_year' || activityPeriod === 'last_year') return 'last_year';
+    if (globalPeriod === 'last_7_days' || activityPeriod === '7d' || activityPeriod === 7) return 7;
     if (activityPeriod === '14d' || activityPeriod === 14) return 14;
-    if (activityPeriod === 'all' || activityPeriod === 0) return 0;
-    if (activityPeriod === 'last_week') return 'last_week';
-    if (activityPeriod === 'last_month') return 'last_month';
+    if (globalPeriod === 'all_time' || activityPeriod === 'all' || activityPeriod === 0) return 0;
+    if (globalPeriod === 'last_week' || activityPeriod === 'last_week') return 'last_week';
+    if (globalPeriod === 'last_month' || activityPeriod === 'last_month') return 'last_month';
+    if (globalPeriod === 'last_30_days' || activityPeriod === '30d' || activityPeriod === 30) return 30;
     return 30;
   });
   const [selectedMonth, setSelectedMonth] = useState('all');
@@ -28,18 +29,27 @@ export const MeetingActivityChart = ({
   const [activePointIndex, setActivePointIndex] = useState(null);
 
   React.useEffect(() => {
-    if (activityPeriod === 'today' || globalPeriod === 'today') {
+    if (globalPeriod === 'today' || activityPeriod === 'today') {
       setFilterDays('today');
-    } else if (activityPeriod === 'yesterday' || globalPeriod === 'yesterday') {
+    } else if (globalPeriod === 'yesterday' || activityPeriod === 'yesterday') {
       setFilterDays('yesterday');
-    } else if (activityPeriod === 'last_year' || globalPeriod === 'last_year') {
+    } else if (globalPeriod === 'last_year' || activityPeriod === 'last_year') {
       setFilterDays('last_year');
-    } else if (activityPeriod === '7d' || activityPeriod === 7) setFilterDays(7);
-    else if (activityPeriod === '14d' || activityPeriod === 14) setFilterDays(14);
-    else if (activityPeriod === 'all' || activityPeriod === 0) setFilterDays(0);
-    else if (activityPeriod === 'last_week') setFilterDays('last_week');
-    else if (activityPeriod === 'last_month') setFilterDays('last_month');
-    else setFilterDays(30);
+    } else if (globalPeriod === 'last_7_days' || activityPeriod === '7d' || activityPeriod === 7) {
+      setFilterDays(7);
+    } else if (activityPeriod === '14d' || activityPeriod === 14) {
+      setFilterDays(14);
+    } else if (globalPeriod === 'all_time' || activityPeriod === 'all' || activityPeriod === 0) {
+      setFilterDays(0);
+    } else if (globalPeriod === 'last_week' || activityPeriod === 'last_week') {
+      setFilterDays('last_week');
+    } else if (globalPeriod === 'last_month' || activityPeriod === 'last_month') {
+      setFilterDays('last_month');
+    } else if (globalPeriod === 'last_30_days' || activityPeriod === '30d' || activityPeriod === 30) {
+      setFilterDays(30);
+    } else {
+      setFilterDays(30);
+    }
   }, [activityPeriod, globalPeriod]);
 
   // Options for Last Year month selection dropdown

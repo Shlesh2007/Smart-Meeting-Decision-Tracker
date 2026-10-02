@@ -86,6 +86,9 @@ export default function Dashboard() {
     const savedPeriod = sessionStorage.getItem('dashboard_period');
     if (savedPeriod === 'today' || !savedPeriod) return 'today';
     if (savedPeriod === 'yesterday') return 'yesterday';
+    if (savedPeriod === 'last_7_days') return '7d';
+    if (savedPeriod === 'last_30_days') return '30d';
+    if (savedPeriod === 'all_time') return 'all';
     if (savedPeriod === 'last_week') return 'last_week';
     if (savedPeriod === 'last_month') return 'last_month';
     if (savedPeriod === 'last_year') return 'last_year';
@@ -110,6 +113,24 @@ export default function Dashboard() {
     else if (val === 'all_time') setActivityPeriod('all');
     else if (val === 'today') setActivityPeriod('today');
     else if (val === 'yesterday') setActivityPeriod('yesterday');
+  };
+
+  const handleActivityPeriodChange = (val) => {
+    setActivityPeriod(val);
+    let syncedPeriod = null;
+    if (val === '7d' || val === 7) syncedPeriod = 'last_7_days';
+    else if (val === '30d' || val === 30) syncedPeriod = 'last_30_days';
+    else if (val === 'all' || val === 0) syncedPeriod = 'all_time';
+    else if (val === 'today') syncedPeriod = 'today';
+    else if (val === 'yesterday') syncedPeriod = 'yesterday';
+    else if (val === 'last_week') syncedPeriod = 'last_week';
+    else if (val === 'last_month') syncedPeriod = 'last_month';
+    else if (val === 'last_year') syncedPeriod = 'last_year';
+
+    if (syncedPeriod && syncedPeriod !== period) {
+      setPeriod(syncedPeriod);
+      sessionStorage.setItem('dashboard_period', syncedPeriod);
+    }
   };
 
   const fetchDashboard = useCallback((selectedPeriod = 'today', searchQuery = '', sDate = '', eDate = '', actPeriod = '30d') => {
@@ -272,7 +293,7 @@ export default function Dashboard() {
           <MeetingActivityChart
             meetingActivity={meeting_activity}
             activityPeriod={activityPeriod}
-            onActivityPeriodChange={(val) => setActivityPeriod(val)}
+            onActivityPeriodChange={handleActivityPeriodChange}
             globalPeriod={period}
           />
         </div>
