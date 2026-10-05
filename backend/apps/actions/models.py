@@ -55,7 +55,7 @@ class ActionItem(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['due_date', '-priority']
+        ordering = ['due_date', 'created_at']
 
     def __str__(self):
         return f"{self.title} ({self.status})"

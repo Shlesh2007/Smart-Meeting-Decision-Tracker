@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { meetingService, discussionService, actionService } from '../services/api.js';
 import { StatusBadge } from '../components/StatusBadge.jsx';
@@ -22,6 +22,7 @@ import {
 import dayjs from 'dayjs';
 
 export default function MeetingDetail() {
+  const navigate = useNavigate();
   const params = useParams();
   const meetingId = Number(params.id);
   const { user, isAdmin } = useAuth();
@@ -96,12 +97,6 @@ export default function MeetingDetail() {
             map.set(item.id, item);
           }
         });
-
-        if (map.size === 0 && listAll.length > 0) {
-          listAll.forEach(item => {
-            if (item && item.id) map.set(item.id, item);
-          });
-        }
 
         setAllActions(Array.from(map.values()));
       } catch (err) {
@@ -845,6 +840,13 @@ export default function MeetingDetail() {
         open={Boolean(viewingDetailAction)}
         onClose={() => setViewingDetailAction(null)}
         actionItem={viewingDetailAction}
+        onNavigateMeeting={(mId) => {
+          const targetId = typeof mId === 'object' ? mId?.id : mId;
+          if (targetId) {
+            setViewingDetailAction(null);
+            navigate(`/meetings/${targetId}`);
+          }
+        }}
         onStatusChange={async (item, newStatus) => {
           await actionService.updateActionStatus(item.id, newStatus);
           setViewingDetailAction((prev) => (prev ? { ...prev, status: newStatus } : null));

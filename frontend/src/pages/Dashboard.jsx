@@ -119,6 +119,7 @@ export default function Dashboard() {
     setActivityPeriod(val);
     let syncedPeriod = null;
     if (val === '7d' || val === 7) syncedPeriod = 'last_7_days';
+    else if (val === '14d' || val === 14) syncedPeriod = 'last_14_days';
     else if (val === '30d' || val === 30) syncedPeriod = 'last_30_days';
     else if (val === 'all' || val === 0) syncedPeriod = 'all_time';
     else if (val === 'today') syncedPeriod = 'today';

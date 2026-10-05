@@ -98,7 +98,7 @@ export const RecentCompletedActions = () => {
                 <List.Item
                   onClick={() => {
                     if (item && item.id) {
-                      navigate(`/my-actions?tab=COMPLETED&action_id=${item.id}&search=${encodeURIComponent(item.title || '')}`);
+                      navigate(`/my-actions?tab=COMPLETED&action_id=${item.id}`);
                     } else {
                       navigate('/my-actions?tab=COMPLETED');
                     }

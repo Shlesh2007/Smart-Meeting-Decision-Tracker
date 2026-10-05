@@ -213,7 +213,7 @@ export default function Admin() {
       render: (_, u) => {
         const isTargetOwner = u.role === 'OWNER';
         const isSelf = u.id === user?.id;
-        const isDisabled = isSelf || (isTargetOwner && !isOwner) || (!isOwner && u.role === 'ADMIN');
+        const isDisabled = isSelf || isTargetOwner || (!isOwner && u.role === 'ADMIN');
 
         return (
           <Select
@@ -260,11 +260,11 @@ export default function Admin() {
       render: (_, u) => {
         const isTargetOwner = u.role === 'OWNER';
         const isSelf = u.id === user?.id;
-        const isDisabled = isSelf || (isTargetOwner && !isOwner) || (!isOwner && u.role === 'ADMIN');
+        const isDisabled = isSelf || isTargetOwner || (!isOwner && u.role === 'ADMIN');
 
-        if (isTargetOwner && !isOwner) {
+        if (isTargetOwner) {
           return (
-            <Tooltip title="Organization Owner account is protected and cannot be modified by Admins">
+            <Tooltip title="Organization Owner accounts are protected and cannot be modified or demoted by anyone">
               <span className="text-xs text-slate-400 italic flex items-center gap-1 font-semibold">
                 <LockOutlined className="text-amber-600" /> Protected Owner
               </span>
@@ -446,7 +446,7 @@ export default function Admin() {
                     {users.map((u) => {
                       const isTargetOwner = u.role === 'OWNER';
                       const isSelf = u.id === user?.id;
-                      const isDisabled = isSelf || (isTargetOwner && !isOwner) || (!isOwner && u.role === 'ADMIN');
+                      const isDisabled = isSelf || isTargetOwner || (!isOwner && u.role === 'ADMIN');
 
                       return (
                         <Card
@@ -498,7 +498,7 @@ export default function Admin() {
 
                             <div className="min-w-0">
                               <span className="text-[9.5px] uppercase font-bold text-slate-400 block mb-0.5">Manage Role</span>
-                              {isTargetOwner && !isOwner ? (
+                              {isTargetOwner ? (
                                 <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold block pt-1 truncate">
                                   🔒 Protected Owner
                                 </span>

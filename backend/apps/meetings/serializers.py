@@ -89,6 +89,50 @@ class MeetingSerializer(serializers.ModelSerializer):
                 "participant_ids": "Please select a team or invite at least one individual participant."
             })
 
+        # Strict Overlap / Double-Booking Conflict Validation
+        if meeting_date and start_time and end_time:
+            all_user_ids = set()
+
+            request = self.context.get('request')
+            if request and request.user and request.user.id:
+                all_user_ids.add(request.user.id)
+
+            if self.instance and self.instance.created_by_id:
+                all_user_ids.add(self.instance.created_by_id)
+
+            if participants:
+                for p in participants:
+                    p_id = p.id if hasattr(p, 'id') else p
+                    if p_id:
+                        all_user_ids.add(p_id)
+
+            if team:
+                all_user_ids.update(team.members.values_list('id', flat=True))
+
+            if all_user_ids:
+                overlapping_qs = Meeting.objects.filter(
+                    meeting_date=meeting_date,
+                    status__in=[Meeting.Status.SCHEDULED, Meeting.Status.IN_PROGRESS],
+                    start_time__lt=end_time,
+                    end_time__gt=start_time,
+                    participants__id__in=all_user_ids
+                ).distinct()
+
+                if self.instance and self.instance.pk:
+                    overlapping_qs = overlapping_qs.exclude(pk=self.instance.pk)
+
+                if overlapping_qs.exists():
+                    conflict_meeting = overlapping_qs.first()
+                    conflicting_user = conflict_meeting.participants.filter(id__in=all_user_ids).first()
+                    conflicting_name = (conflicting_user.get_full_name() or conflicting_user.username) if conflicting_user else "A participant"
+                    
+                    s_str = conflict_meeting.start_time.strftime('%H:%M') if hasattr(conflict_meeting.start_time, 'strftime') else str(conflict_meeting.start_time)
+                    e_str = conflict_meeting.end_time.strftime('%H:%M') if hasattr(conflict_meeting.end_time, 'strftime') else str(conflict_meeting.end_time)
+
+                    raise serializers.ValidationError({
+                        "start_time": f"Schedule Conflict: {conflicting_name} is already booked for meeting '{conflict_meeting.title}' ({s_str} - {e_str}) on {meeting_date}."
+                    })
+
         # Validate recurring meeting end date
         is_recurring = attrs.get('is_recurring', self.instance.is_recurring if self.instance else False)
         if is_recurring:

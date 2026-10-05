@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Modal, Tag, Select, Button, Tooltip, message as staticMessage, App } from 'antd';
 import {
   CheckSquareOutlined, LockOutlined, ClockCircleOutlined, ExclamationCircleOutlined,
@@ -17,6 +18,7 @@ export const ActionDetailModal = ({
   onNavigateMeeting,
   onCompleteRequest
 }) => {
+  const navigate = useNavigate();
   const staticApp = App.useApp ? App.useApp() : null;
   const message = staticApp?.message || staticMessage;
   const { user } = useAuth();
@@ -89,10 +91,18 @@ export const ActionDetailModal = ({
     (actionItem.meeting_detail && actionItem.meeting_detail.title) ||
     (actionItem.meeting && typeof actionItem.meeting === 'object' ? actionItem.meeting.title : null);
 
-  const meetingId =
-    actionItem.meeting_id ||
-    actionItem.meeting ||
-    (actionItem.meeting_detail && actionItem.meeting_detail.id);
+  const getRawMeetingId = () => {
+    if (actionItem.meeting_id) return actionItem.meeting_id;
+    if (actionItem.meeting) {
+      if (typeof actionItem.meeting === 'object') return actionItem.meeting.id;
+      if (typeof actionItem.meeting === 'number' || typeof actionItem.meeting === 'string') return actionItem.meeting;
+    }
+    if (actionItem.meeting_detail?.id) return actionItem.meeting_detail.id;
+    if (actionItem.decision_detail?.discussion?.meeting) return actionItem.decision_detail.discussion.meeting;
+    if (actionItem.decision?.discussion?.meeting?.id) return actionItem.decision.discussion.meeting.id;
+    return null;
+  };
+  const meetingId = getRawMeetingId();
 
   const meetingDateStr =
     actionItem.meeting_date ||
@@ -103,6 +113,17 @@ export const ActionDetailModal = ({
     (actionItem.decision_detail && actionItem.decision_detail.discussion_title) ||
     (actionItem.decision_detail && actionItem.decision_detail.discussion && actionItem.decision_detail.discussion.title) ||
     (actionItem.decision && typeof actionItem.decision === 'object' && actionItem.decision.discussion ? actionItem.decision.discussion.title : null);
+
+  const handleNavigateToSingleMeeting = () => {
+    if (meetingId) {
+      if (onNavigateMeeting) {
+        onNavigateMeeting(meetingId);
+      } else {
+        onClose();
+        navigate(`/meetings/${meetingId}`);
+      }
+    }
+  };
 
   return (
     <Modal
@@ -157,24 +178,19 @@ export const ActionDetailModal = ({
             {meetingTitleStr && (
               <Tag
                 color="purple"
-                onClick={() => {
-                  if (onNavigateMeeting && meetingId) {
-                    onNavigateMeeting(meetingId);
-                    onClose();
-                  }
-                }}
+                onClick={handleNavigateToSingleMeeting}
                 className={`text-[11px] font-bold m-0 px-2.5 py-0.5 rounded-lg border-purple-200 dark:border-purple-900 flex items-center gap-1.5 ${
-                  onNavigateMeeting && meetingId
+                  meetingId
                     ? 'cursor-pointer hover:bg-purple-100 dark:hover:bg-purple-900/80 transition-all hover:scale-105'
                     : ''
                 }`}
-                title={onNavigateMeeting && meetingId ? 'Open this meeting in background' : undefined}
+                title={meetingId ? 'Open this specific meeting details' : undefined}
               >
                 <span>
                   Meeting: <strong>{meetingTitleStr}</strong>
                   {meetingDateStr ? ` (${dayjs(meetingDateStr).format('MMM DD')})` : ''}
                 </span>
-                {onNavigateMeeting && meetingId && <ArrowRightOutlined className="text-[9px]" />}
+                {meetingId && <ArrowRightOutlined className="text-[9px]" />}
               </Tag>
             )}
 

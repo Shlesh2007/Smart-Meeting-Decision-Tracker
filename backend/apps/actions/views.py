@@ -43,7 +43,7 @@ class ActionItemFilter(django_filters.FilterSet):
 from smart_meeting_tracker.filters import ExactPhraseSearchFilter
 
 class ActionItemViewSet(viewsets.ModelViewSet):
-    queryset = ActionItem.objects.all().select_related('created_by', 'decision').prefetch_related('assigned_to', 'dependencies')
+    queryset = ActionItem.objects.all().select_related('created_by', 'decision__discussion__meeting').prefetch_related('assigned_to', 'dependencies')
     serializer_class = ActionItemSerializer
     permission_classes = (permissions.IsAuthenticated,)
     filter_backends = (DjangoFilterBackend, ExactPhraseSearchFilter, filters.OrderingFilter)
@@ -80,15 +80,15 @@ class ActionItemViewSet(viewsets.ModelViewSet):
                 ).distinct()
 
             # Execute query to test if assigned_to table exists
-            _ = list(qs.select_related('created_by', 'decision').prefetch_related('assigned_to', 'dependencies')[:1])
-            return qs.select_related('created_by', 'decision').prefetch_related('assigned_to', 'dependencies')
+            _ = list(qs.select_related('created_by', 'decision__discussion__meeting').prefetch_related('assigned_to', 'dependencies')[:1])
+            return qs.select_related('created_by', 'decision__discussion__meeting').prefetch_related('assigned_to', 'dependencies')
         except Exception:
             # Fallback if assigned_to ManyToMany table has not been migrated yet in database
             if user.is_admin_role:
                 qs = ActionItem.objects.all()
             else:
                 qs = ActionItem.objects.filter(created_by=user).distinct()
-            return qs.select_related('created_by', 'decision').prefetch_related('dependencies')
+            return qs.select_related('created_by', 'decision__discussion__meeting').prefetch_related('dependencies')
 
     def perform_create(self, serializer):
         user = self.request.user

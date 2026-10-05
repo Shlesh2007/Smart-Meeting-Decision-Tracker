@@ -471,8 +471,8 @@ export function MeetingCalendar({ meetings = [], loading = false }) {
       )}
 
       {/* Header Toolbar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 p-3 mb-4 bg-slate-50 dark:bg-slate-800/80 rounded-xl border border-slate-200/80 dark:border-slate-700">
-        <div className="flex items-center space-x-3">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3 mb-4 bg-slate-50 dark:bg-slate-800/80 rounded-xl border border-slate-200/80 dark:border-slate-700">
+        <div className="flex items-center justify-between sm:justify-start space-x-3">
           <Button
             size="small"
             onClick={() => {
@@ -483,31 +483,31 @@ export function MeetingCalendar({ meetings = [], loading = false }) {
           >
             Today
           </Button>
-          <span className="font-extrabold text-base text-slate-800 dark:text-slate-100">
+          <span className="font-extrabold text-sm sm:text-base text-slate-800 dark:text-slate-100">
             {viewLevel === 'date' && selectedDate.format('MMMM YYYY')}
             {viewLevel === 'month' && `Months View (${selectedDate.format('YYYY')})`}
             {viewLevel === 'year' && `Years Overview (${currentYear - 3} - ${currentYear + 4})`}
           </span>
         </div>
 
-        <div className="flex items-center space-x-2">
+        <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
           {viewLevel === 'date' && (
-            <>
+            <div className="flex items-center gap-2">
               <Select
                 size="small"
                 value={currentYear}
                 onChange={(y) => setSelectedDate(selectedDate.year(y))}
                 options={yearOptions}
-                className="w-24"
+                className="w-24 min-w-[76px]"
               />
               <Select
                 size="small"
                 value={currentMonth}
                 onChange={(m) => setSelectedDate(selectedDate.month(m))}
                 options={monthOptions}
-                className="w-32"
+                className="w-32 min-w-[100px]"
               />
-            </>
+            </div>
           )}
 
           {viewLevel === 'month' && (
@@ -529,6 +529,7 @@ export function MeetingCalendar({ meetings = [], loading = false }) {
               { label: 'Month', value: 'month' },
               { label: 'Year', value: 'year' },
             ]}
+            className="shrink-0"
           />
         </div>
       </div>

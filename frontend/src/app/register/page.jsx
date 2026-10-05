@@ -57,7 +57,6 @@ export default function RegisterPage() {
           className="shadow-xs border border-slate-200/80 dark:border-slate-700/80 dark:bg-slate-800"
         >
         <Form
-          <Form
             name="register_form"
             layout="vertical"
             onFinish={onFinish}

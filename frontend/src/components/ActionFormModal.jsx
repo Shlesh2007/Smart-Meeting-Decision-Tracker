@@ -252,26 +252,68 @@ export const ActionFormModal = ({
         onFinish={handleSubmit}
         disabled={submitting}
         initialValues={{ priority: 'MEDIUM', status: 'TODO' }}
-        className="space-y-4"
+        validateTrigger={['onBlur', 'onSubmit']}
+        className="space-y-3"
       >
-        {!meetingId && !decisionId && (
-          <Form.Item
-            name="meeting_id"
-            label="Associated Meeting"
-            rules={[{ required: true, message: 'Please select a meeting' }]}
-            className="!mb-0"
-          >
-            <Select
-              id="meeting_id"
+        {!meetingId && !decisionId ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Form.Item
               name="meeting_id"
-              showSearch
-              placeholder="Select meeting"
-              optionFilterProp="children"
-              onChange={handleMeetingChange}
-              options={meetings.map(m => ({ label: `${m.title} (${m.meeting_date})`, value: m.id }))}
-              className="w-full"
-            />
-          </Form.Item>
+              label="Associated Meeting"
+              rules={[{ required: true, message: 'Please select a meeting' }]}
+              className="!mb-0"
+            >
+              <Select
+                id="meeting_id"
+                name="meeting_id"
+                showSearch
+                placeholder="Select meeting"
+                optionFilterProp="children"
+                onChange={handleMeetingChange}
+                options={meetings.map(m => ({ label: `${m.title} (${m.meeting_date})`, value: m.id }))}
+                className="w-full"
+              />
+            </Form.Item>
+
+            <Form.Item
+              name="decision"
+              label="Associated Topic / Decision"
+              rules={[{ required: hasSelectedMeeting && decisionsList.length > 0, message: 'Please select a topic / decision point' }]}
+              className="!mb-0"
+            >
+              <Select
+                id="decision"
+                name="decision"
+                placeholder={
+                  !hasSelectedMeeting
+                    ? "Select meeting first"
+                    : decisionsList.length === 0
+                    ? "No topics available"
+                    : "Select topic / decision point"
+                }
+                disabled={!hasSelectedMeeting || decisionsList.length === 0}
+                options={decisionsList.map(d => ({ label: d.title, value: d.id }))}
+                className="w-full"
+              />
+            </Form.Item>
+          </div>
+        ) : (
+          hasSelectedMeeting && decisionsList.length > 0 && !decisionId && (
+            <Form.Item
+              name="decision"
+              label="Associated Topic / Decision"
+              rules={[{ required: true, message: 'Please select a topic / decision point' }]}
+              className="!mb-0"
+            >
+              <Select
+                id="decision"
+                name="decision"
+                placeholder="Select topic / decision point"
+                options={decisionsList.map(d => ({ label: d.title, value: d.id }))}
+                className="w-full"
+              />
+            </Form.Item>
+          )
         )}
 
         {hasSelectedMeeting && decisionsList.length === 0 && (
@@ -301,49 +343,14 @@ export const ActionFormModal = ({
           />
         )}
 
-        {hasSelectedMeeting && decisionsList.length > 0 && !decisionId && (
-          <Form.Item
-            name="decision"
-            label="Associated Discussion Topic / Decision Point"
-            rules={[{ required: true, message: 'Please select a discussion topic / decision point' }]}
-            className="!mb-0"
-          >
-            <Select
-              id="decision"
-              name="decision"
-              placeholder="Select discussion topic / decision point"
-              options={decisionsList.map(d => ({ label: d.title, value: d.id }))}
-              className="w-full"
-            />
-          </Form.Item>
-        )}
-
-        <Form.Item
-          name="title"
-          label="Action Title"
-          rules={[{ required: true, message: 'Please enter action title' }]}
-          className="!mb-0"
-        >
-          <Input id="title" name="title" placeholder="e.g. Create proof of concept for Elasticsearch" className="w-full" />
-        </Form.Item>
-
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Form.Item
-            name="assigned_to"
-            label={currentMeetingId && meetingParticipants.length > 0 ? "Assignees / Participants (Meeting Participants)" : "Assignees / Participants"}
-            rules={[{ required: true, message: 'Please assign to at least one team member' }]}
+            name="title"
+            label="Action Title"
+            rules={[{ required: true, message: 'Please enter action title' }]}
             className="!mb-0"
           >
-            <Select
-              id="assigned_to"
-              name="assigned_to"
-              mode="multiple"
-              showSearch
-              placeholder={currentMeetingId && meetingParticipants.length > 0 ? "Select meeting participant(s)" : "Select team member(s)"}
-              optionFilterProp="children"
-              options={assigneeOptionsList.map(u => ({ label: `${u.full_name} • ${u.email} (${u.role})`, value: u.id }))}
-              className="w-full"
-            />
+            <Input id="title" name="title" placeholder="e.g. Create proof of concept for Elasticsearch" className="w-full" />
           </Form.Item>
 
           <Form.Item
@@ -361,8 +368,58 @@ export const ActionFormModal = ({
           </Form.Item>
         </div>
 
-        {existingAction ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Form.Item
+            name="assigned_to"
+            label="Assignees / Participants"
+            rules={[{ required: true, message: 'Please assign to at least one team member' }]}
+            className="!mb-0"
+          >
+            <Select
+              id="assigned_to"
+              name="assigned_to"
+              mode="multiple"
+              showSearch
+              placeholder={currentMeetingId && meetingParticipants.length > 0 ? "Select meeting participant(s)" : "Select team member(s)"}
+              optionFilterProp="children"
+              options={assigneeOptionsList.map(u => ({ label: `${u.full_name} • ${u.email} (${u.role})`, value: u.id }))}
+              className="w-full"
+            />
+          </Form.Item>
+
+          {existingAction ? (
+            <div className="grid grid-cols-2 gap-2">
+              <Form.Item name="priority" label="Priority" className="!mb-0">
+                <Select
+                  id="priority"
+                  name="priority"
+                  options={[
+                    { label: 'Low', value: 'LOW' },
+                    { label: 'Medium', value: 'MEDIUM' },
+                    { label: 'High', value: 'HIGH' },
+                    { label: 'Critical', value: 'CRITICAL' }
+                  ]}
+                  className="w-full"
+                />
+              </Form.Item>
+
+              <Form.Item name="status" label="Status" className="!mb-0">
+                <Select
+                  id="status"
+                  name="status"
+                  disabled={existingAction?.status === 'COMPLETED' || existingAction?.status === 'CANCELLED'}
+                  options={[
+                    { label: 'Todo', value: 'TODO' },
+                    { label: 'In Progress', value: 'IN_PROGRESS' },
+                    { label: 'Blocked', value: 'BLOCKED' },
+                    { label: 'Completed', value: 'COMPLETED' },
+                    { label: 'Cancelled', value: 'CANCELLED' }
+                  ]}
+                  className="w-full"
+                />
+              </Form.Item>
+            </div>
+          ) : (
             <Form.Item name="priority" label="Priority" className="!mb-0">
               <Select
                 id="priority"
@@ -376,38 +433,8 @@ export const ActionFormModal = ({
                 className="w-full"
               />
             </Form.Item>
-
-            <Form.Item name="status" label="Status" className="!mb-0">
-              <Select
-                id="status"
-                name="status"
-                disabled={existingAction?.status === 'COMPLETED' || existingAction?.status === 'CANCELLED'}
-                options={[
-                  { label: 'Todo', value: 'TODO' },
-                  { label: 'In Progress', value: 'IN_PROGRESS' },
-                  { label: 'Blocked', value: 'BLOCKED' },
-                  { label: 'Completed', value: 'COMPLETED' },
-                  { label: 'Cancelled', value: 'CANCELLED' }
-                ]}
-                className="w-full"
-              />
-            </Form.Item>
-          </div>
-        ) : (
-          <Form.Item name="priority" label="Priority" className="!mb-0">
-            <Select
-              id="priority"
-              name="priority"
-              options={[
-                { label: 'Low', value: 'LOW' },
-                { label: 'Medium', value: 'MEDIUM' },
-                { label: 'High', value: 'HIGH' },
-                { label: 'Critical', value: 'CRITICAL' }
-              ]}
-              className="w-full"
-            />
-          </Form.Item>
-        )}
+          )}
+        </div>
 
         {filterableDeps.length > 0 && (
           <Form.Item

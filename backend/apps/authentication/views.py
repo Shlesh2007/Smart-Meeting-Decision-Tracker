@@ -256,6 +256,10 @@ class UserViewSet(viewsets.ModelViewSet):
         if target_user.role == User.Role.OWNER and not caller.is_owner_role:
             raise permissions.PermissionDenied("ADMIN cannot modify the OWNER account.")
 
+        # An OWNER cannot modify another OWNER account
+        if target_user.role == User.Role.OWNER and caller.id != target_user.id:
+            raise permissions.PermissionDenied("An OWNER cannot modify or demote another OWNER's account.")
+
         # ADMIN cannot modify other ADMIN accounts
         if target_user.role == User.Role.ADMIN and not caller.is_owner_role and caller.id != target_user.id:
             raise permissions.PermissionDenied("ADMIN cannot modify another ADMIN account.")

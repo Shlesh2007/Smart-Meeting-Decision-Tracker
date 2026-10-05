@@ -72,7 +72,10 @@ class CanManageUsersPermission(permissions.BasePermission):
             # ADMIN cannot modify or delete OWNER
             if not request.user.is_owner_role:
                 return False
-            # OWNER cannot delete or demote themselves if they are the only OWNER
+            # An OWNER cannot modify or delete another OWNER account
+            if request.user.id != obj.id:
+                return False
+            # OWNER cannot delete themselves
             if request.user.id == obj.id:
                 if request.method == 'DELETE':
                     return False

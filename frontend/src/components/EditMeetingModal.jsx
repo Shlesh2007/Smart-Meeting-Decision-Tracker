@@ -70,10 +70,19 @@ export const EditMeetingModal = ({ open, onClose, meeting, onSuccess }) => {
         ? meeting.participants_detail.map(p => p.id)
         : [];
 
+      const mDate = dayjs(meeting.meeting_date);
+      let rEndDate = meeting.recurrence_end_date ? dayjs(meeting.recurrence_end_date) : null;
+
+      // Auto-correct stale or past recurrence_end_date relative to meeting_date
+      if (meeting.is_recurring && (!rEndDate || !rEndDate.isValid() || rEndDate.isSame(mDate, 'day') || rEndDate.isBefore(mDate, 'day'))) {
+        const pattern = meeting.recurrence_pattern || 'DAILY';
+        rEndDate = pattern === 'WEEKLY' ? mDate.add(7, 'day') : mDate.add(14, 'day');
+      }
+
       form.setFieldsValue({
         title: meeting.title,
         description: meeting.description,
-        meeting_date: dayjs(meeting.meeting_date),
+        meeting_date: mDate,
         time_range: [startTime, endTime],
         location: meeting.location,
         meeting_type: meeting.meeting_type,
@@ -81,7 +90,7 @@ export const EditMeetingModal = ({ open, onClose, meeting, onSuccess }) => {
         participant_ids: participantIds,
         is_recurring: meeting.is_recurring || false,
         recurrence_pattern: meeting.recurrence_pattern || 'DAILY',
-        recurrence_end_date: meeting.recurrence_end_date ? dayjs(meeting.recurrence_end_date) : null,
+        recurrence_end_date: rEndDate,
         update_series: false
       });
     }
@@ -96,22 +105,15 @@ export const EditMeetingModal = ({ open, onClose, meeting, onSuccess }) => {
       return;
     }
 
-    if (values.is_recurring && values.recurrence_end_date && values.meeting_date) {
+    if (values.is_recurring && values.meeting_date) {
       const pattern = values.recurrence_pattern || 'DAILY';
       const meetingDateStart = values.meeting_date.startOf('day');
-      const endDateStart = values.recurrence_end_date.startOf('day');
+      let rEndDate = values.recurrence_end_date;
 
-      if (endDateStart.isSame(meetingDateStart) || endDateStart.isBefore(meetingDateStart)) {
-        message.error('Repeat Until Date cannot be the same as or before the meeting start date.');
-        return;
-      }
-
-      if (pattern === 'WEEKLY') {
-        const minEndDate = values.meeting_date.add(7, 'day').startOf('day');
-        if (endDateStart.isBefore(minEndDate)) {
-          message.error('Repeat Until Date must be at least 1 week (7 days) after the meeting start date for weekly recurring meetings.');
-          return;
-        }
+      if (!rEndDate || !rEndDate.isValid() || rEndDate.startOf('day').isSame(meetingDateStart) || rEndDate.startOf('day').isBefore(meetingDateStart)) {
+        rEndDate = pattern === 'WEEKLY' ? values.meeting_date.add(7, 'day') : values.meeting_date.add(14, 'day');
+        values.recurrence_end_date = rEndDate;
+        form.setFieldsValue({ recurrence_end_date: rEndDate });
       }
     }
 
@@ -373,11 +375,12 @@ export const EditMeetingModal = ({ open, onClose, meeting, onSuccess }) => {
 
               {isRecurring && (
                 <div className="mt-1.5 space-y-1.5">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <Form.Item name="recurrence_pattern" label="Repeat Frequency (How Often)" className="!m-0" style={{ marginBottom: 0 }}>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-end">
+                    <Form.Item name="recurrence_pattern" label="Repeat Frequency" className="!m-0" style={{ marginBottom: 0 }}>
                       <Select
                         id="recurrence_pattern"
                         name="recurrence_pattern"
+                        className="w-full"
                         options={[
                           { label: 'Daily (Every day)', value: 'DAILY' },
                           { label: 'Weekdays (Mon - Fri)', value: 'WEEKDAYS' },

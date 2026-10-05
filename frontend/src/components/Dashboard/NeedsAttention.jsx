@@ -31,7 +31,7 @@ export const NeedsAttention = ({ overdueList = [], urgentList = [], loading = fa
 
   const handleViewAction = (item) => {
     if (item && item.id) {
-      navigate(`/my-actions?action_id=${item.id}&search=${encodeURIComponent(item.title || '')}`);
+      navigate(`/my-actions?action_id=${item.id}`);
     } else {
       navigate('/my-actions');
     }

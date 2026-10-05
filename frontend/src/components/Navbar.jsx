@@ -365,6 +365,20 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
     </div>
   );
 
+  const handleConfirmLogout = () => {
+    Modal.confirm({
+      title: 'Confirm Logout',
+      icon: <ExclamationCircleOutlined className="text-rose-500" />,
+      content: 'Are you sure you want to log out of your account?',
+      okText: 'Yes, Logout',
+      okButtonProps: { danger: true, className: 'bg-rose-600 font-semibold' },
+      cancelText: 'Cancel',
+      onOk() {
+        logout();
+      },
+    });
+  };
+
   const userMenuItems = [
     {
       key: 'profile_info',
@@ -393,7 +407,7 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
       icon: <LogoutOutlined />,
       label: 'Logout',
       danger: true,
-      onClick: logout,
+      onClick: handleConfirmLogout,
     },
   ];
 
@@ -453,7 +467,7 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
                 onClick={() => setShowProfileModal(true)}
                 className="flex items-center cursor-pointer p-1 rounded-lg hover:bg-slate-200/60 dark:hover:bg-slate-700/60 transition-colors space-x-2 overflow-hidden"
               >
-                <Avatar size={28} shape="circle" className="bg-blue-600 font-extrabold text-[11px] text-white shrink-0 flex items-center justify-center !w-7 !h-7 !min-w-[28px] !min-h-[28px] !rounded-full !aspect-square">
+                <Avatar size={28} shape="circle" className="bg-slate-600 font-extrabold text-[11px] text-white shrink-0 flex items-center justify-center !w-7 !h-7 !min-w-[28px] !min-h-[28px] !rounded-full !aspect-square">
                   {userInitial}
                 </Avatar>
                 <div className={`min-w-0 flex-1 transition-all duration-300 ease-in-out overflow-hidden whitespace-nowrap ${collapsed ? 'max-w-0 opacity-0' : 'max-w-[160px] opacity-100'}`}>
@@ -479,7 +493,7 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
                     type="text"
                     danger
                     icon={<LogoutOutlined />}
-                    onClick={logout}
+                    onClick={handleConfirmLogout}
                     className="w-8 h-8 rounded-lg bg-rose-500/10 text-rose-600 hover:bg-rose-500 hover:text-white border border-rose-200"
                   />
                 </Tooltip>
@@ -488,7 +502,7 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
                   type="default"
                   danger
                   icon={<LogoutOutlined />}
-                  onClick={logout}
+                  onClick={handleConfirmLogout}
                   block
                   className="rounded-lg bg-rose-500/10 text-rose-600 hover:bg-rose-500 hover:text-white border-rose-200 text-xs font-bold whitespace-nowrap overflow-hidden"
                 >
@@ -539,16 +553,16 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
               </button>
             </Dropdown>
 
-            {/* 2. Admin Portal Button */}
+            {/* 2. Admin Portal Button (Visible only on responsive / mobile screens < lg) */}
             {isAdmin && (
               <button
                 type="button"
                 onClick={() => navigate('/admin')}
-                className="h-8 px-2.5 rounded-lg bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200/70 dark:hover:bg-slate-700/80 text-slate-800 dark:text-slate-200 font-semibold text-xs flex items-center gap-1.5 border-none cursor-pointer"
+                className="flex lg:hidden h-8 px-2.5 rounded-lg bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200/70 dark:hover:bg-slate-700/80 text-slate-800 dark:text-slate-200 font-semibold text-xs items-center gap-1.5 border-none cursor-pointer"
                 title="Admin Management Portal"
               >
                 <TeamOutlined className="text-amber-600 dark:text-amber-400 text-xs font-bold" />
-                <span className="hidden sm:inline font-semibold text-xs">Admin Portal</span>
+                <span className="font-semibold text-xs">Admin Portal</span>
               </button>
             )}
 
@@ -587,7 +601,7 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
                 <Avatar
                   size={28}
                   shape="circle"
-                  className="bg-blue-600 font-bold text-xs text-white shrink-0 flex items-center justify-center !w-7 !h-7 !min-w-[28px] !min-h-[28px] !rounded-full !aspect-square"
+                  className="bg-slate-600 font-bold text-xs text-white shrink-0 flex items-center justify-center !w-7 !h-7 !min-w-[28px] !min-h-[28px] !rounded-full !aspect-square"
                 >
                   {userInitial}
                 </Avatar>

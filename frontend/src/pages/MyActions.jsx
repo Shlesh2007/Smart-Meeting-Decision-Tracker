@@ -76,7 +76,7 @@ export default function MyActions() {
 
   const fetchMyActions = useCallback(() => {
     setLoading(true);
-    const params = { page_size: 1000 };
+    const params = { page_size: 1000, ordering: 'due_date' };
 
     if (search && search.trim()) {
       params.search = search.trim();
@@ -97,7 +97,7 @@ export default function MyActions() {
           if (match) {
             setViewDetailActionItem(match);
           } else {
-            const fetcherAll = (isAdmin || isOwner) ? actionService.getActions({ page_size: 1000 }) : actionService.getMyActions({ page_size: 1000 });
+            const fetcherAll = (isAdmin || isOwner) ? actionService.getActions({ page_size: 1000, ordering: 'due_date' }) : actionService.getMyActions({ page_size: 1000, ordering: 'due_date' });
             fetcherAll
               .then((resAll) => {
                 const allList = resAll.results || resAll || [];
@@ -195,6 +195,12 @@ export default function MyActions() {
     return itemStatus === activeTab;
   });
 
+  const sortedActions = [...filteredActions].sort((a, b) => {
+    const dateA = a.due_date ? dayjs(a.due_date).valueOf() : Infinity;
+    const dateB = b.due_date ? dayjs(b.due_date).valueOf() : Infinity;
+    return dateA - dateB;
+  });
+
   const columns = [
     {
       title: 'Action Item & Delivered Outcome',
@@ -271,6 +277,10 @@ export default function MyActions() {
     {
       title: 'Deadline',
       key: 'due_date',
+      dataIndex: 'due_date',
+      sorter: (a, b) => dayjs(a.due_date).valueOf() - dayjs(b.due_date).valueOf(),
+      defaultSortOrder: 'ascend',
+      showSorterTooltip: false,
       width: 110,
       render: (_, record) => (
         <div className="text-xs">
@@ -544,7 +554,8 @@ export default function MyActions() {
               <Table
                 size="middle"
                 columns={columns}
-                dataSource={filteredActions}
+                dataSource={sortedActions}
+                showSorterTooltip={false}
                 rowKey="id"
                 pagination={{ pageSize: 10 }}
                 scroll={{ x: 1050 }}
@@ -554,7 +565,7 @@ export default function MyActions() {
 
             {/* Card Grid View for Responsive / Mobile screens (< 1024px) */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 block lg:hidden">
-              {filteredActions.map((record) => {
+              {sortedActions.map((record) => {
                 const assignees = Array.isArray(record.assigned_to_detail)
                   ? record.assigned_to_detail
                   : (record.assigned_to_detail ? [record.assigned_to_detail] : []);
@@ -705,7 +716,13 @@ export default function MyActions() {
         open={Boolean(viewDetailActionItem)}
         onClose={handleCloseDetailModal}
         actionItem={viewDetailActionItem}
-        onNavigateMeeting={(meetingId) => navigate(`/meetings/${meetingId}`)}
+        onNavigateMeeting={(mId) => {
+          const targetId = typeof mId === 'object' ? mId?.id : mId;
+          if (targetId) {
+            setViewDetailActionItem(null);
+            navigate(`/meetings/${targetId}`);
+          }
+        }}
         onStatusChange={async (item, newStatus) => {
           await handleStatusChange(item, newStatus);
           setViewDetailActionItem((prev) => (prev ? { ...prev, status: newStatus } : null));
