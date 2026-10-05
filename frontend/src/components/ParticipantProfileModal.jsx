@@ -34,7 +34,7 @@ export const ParticipantProfileModal = ({ open, onClose, user }) => {
         <div className="bg-slate-50 dark:bg-slate-800/80 p-3.5 sm:p-4 rounded-xl border border-slate-200 dark:border-slate-700/70 flex items-center space-x-3 sm:space-x-4 shadow-xs">
           <Avatar 
             size={56} 
-            className="bg-blue-600 font-extrabold text-xl sm:text-2xl shadow-md ring-2 ring-blue-500/20 text-white shrink-0 flex items-center justify-center"
+            className="bg-slate-600 font-extrabold text-xl sm:text-2xl shadow-md ring-2 ring-blue-500/20 text-white shrink-0 flex items-center justify-center"
           >
             {(user.first_name || user.full_name || user.username || 'P')[0].toUpperCase()}
           </Avatar>

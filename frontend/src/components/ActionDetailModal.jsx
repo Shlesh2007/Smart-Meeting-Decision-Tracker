@@ -130,14 +130,7 @@ export const ActionDetailModal = ({
       open={open}
       onCancel={onClose}
       footer={[
-        <Button
-          key="close"
-          type="primary"
-          onClick={onClose}
-          className="rounded-xl font-bold bg-slate-900 hover:bg-slate-800 text-white border-0 px-6 h-9"
-        >
-          Close
-        </Button>,
+        
       ]}
       title={
         <div className="flex items-center space-x-2.5 pr-6">

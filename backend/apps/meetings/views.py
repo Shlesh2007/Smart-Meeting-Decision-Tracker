@@ -65,7 +65,7 @@ class MeetingViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         meeting = serializer.save(created_by=self.request.user, status=Meeting.Status.SCHEDULED)
-        
+         
         try:
             # Automatically dispatch meeting invitation email with Google Meet link & entry OTP code
             organizer_email = [meeting.created_by.email] if (meeting.created_by and getattr(meeting.created_by, 'email', None)) else []

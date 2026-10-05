@@ -168,7 +168,7 @@ export default function Meetings() {
                   e.currentTarget.blur();
                   setSelectedParticipantUser(p);
                 }}
-                className="bg-blue-600 font-extrabold text-xs text-white cursor-pointer hover:opacity-85 hover:scale-110 transition-all"
+                className="bg-slate-600 font-extrabold text-xs text-white cursor-pointer hover:opacity-85 hover:scale-110 transition-all"
               >
                 {(p.first_name || p.full_name || p.username || 'U')[0].toUpperCase()}
               </Avatar>
@@ -434,7 +434,7 @@ export default function Meetings() {
                                   e.currentTarget.blur();
                                   setSelectedParticipantUser(p);
                                 }}
-                                className="bg-blue-600 font-extrabold text-xs text-white cursor-pointer hover:scale-110 transition-all"
+                                className="bg-slate-600 font-extrabold text-xs text-white cursor-pointer hover:scale-110 transition-all"
                               >
                                 {(p.first_name || p.full_name || p.username || 'U')[0].toUpperCase()}
                               </Avatar>

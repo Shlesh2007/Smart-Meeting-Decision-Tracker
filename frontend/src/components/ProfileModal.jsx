@@ -253,7 +253,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
         <div className="py-1 space-y-2.5">
           {/* Profile Card Banner */}
           <div className="bg-slate-50 dark:bg-slate-800/80 p-2.5 sm:p-3 rounded-xl border border-slate-200 dark:border-slate-700/70 flex items-center space-x-3 shadow-xs">
-            <Avatar size={44} className="bg-blue-600 font-extrabold text-lg shadow-md ring-2 ring-blue-500/20 text-white shrink-0 flex items-center justify-center">
+            <Avatar size={44} className="bg-slate-600 font-extrabold text-lg shadow-md ring-2 ring-blue-500/20 text-white shrink-0 flex items-center justify-center">
               {(user?.first_name || user?.full_name || user?.username || 'U')[0].toUpperCase()}
             </Avatar>
             <div className="flex-1 min-w-0">
