@@ -2,7 +2,7 @@ import React from 'react';
 import { Modal, Avatar, Tag, Descriptions, Button } from 'antd';
 import { 
   UserOutlined, MailOutlined, IdcardOutlined, CalendarOutlined, 
-  TeamOutlined, CloseOutlined
+  TeamOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 

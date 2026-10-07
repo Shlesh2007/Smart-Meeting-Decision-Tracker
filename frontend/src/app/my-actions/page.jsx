@@ -6,7 +6,7 @@ import { StatusBadge } from '../../components/StatusBadge.jsx';
 import { LoadingSkeleton } from '../../components/LoadingSkeleton.jsx';
 import { EmptyState } from '../../components/EmptyState.jsx';
 import {
-  Card, Table, Select, Button, Tag, message, Alert, Input, Modal, Tooltip, Dropdown, Badge
+  Card, Table, Select, Button, Tag, message, Alert, Input, Modal, Tooltip, Dropdown
 } from 'antd';
 import {
   CheckSquareOutlined, SearchOutlined, LockOutlined, ReloadOutlined, EllipsisOutlined

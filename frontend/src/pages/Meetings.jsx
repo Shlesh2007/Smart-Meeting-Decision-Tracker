@@ -10,7 +10,7 @@ import {
   Input, Select, DatePicker, Button, Table, Card, Tag, Avatar, Tooltip, Pagination, Segmented
 } from 'antd';
 import {
-  SearchOutlined, PlusOutlined, UserOutlined, ReloadOutlined, CalendarOutlined, UnorderedListOutlined
+  SearchOutlined, PlusOutlined, ReloadOutlined, CalendarOutlined, UnorderedListOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 

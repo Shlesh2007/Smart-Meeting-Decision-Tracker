@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { Logo } from '../../components/Logo.jsx';
-import { Form, Input, Button, Card, Select, App, Typography } from 'antd';
-import { UserOutlined, MailOutlined, LockOutlined, ThunderboltOutlined } from '@ant-design/icons';
+import { Form, Input, Button, Card, App, Typography } from 'antd';
+import { UserOutlined, MailOutlined, LockOutlined} from '@ant-design/icons';
 
 const { Title, Text } = Typography;
 

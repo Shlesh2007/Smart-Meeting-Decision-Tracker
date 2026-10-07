@@ -6,9 +6,9 @@ import { Logo } from '../components/Logo.jsx';
 import { getErrorMessage } from '../utils/errorHandler.js';
 import { Form, Input, Button, Card, Typography, Modal, Divider, Steps, Alert, Tag, App } from 'antd';
 import {
-  UserOutlined, LockOutlined, ThunderboltOutlined, InfoCircleOutlined,
+  UserOutlined, LockOutlined,
   GoogleOutlined, GithubOutlined, MailOutlined, SafetyCertificateOutlined,
-  CheckCircleOutlined, SafetyOutlined, TeamOutlined, CrownOutlined, KeyOutlined
+  CheckCircleOutlined
 } from '@ant-design/icons';
 
 const { Title, Text } = Typography;

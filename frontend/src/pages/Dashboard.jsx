@@ -295,8 +295,8 @@ export default function Dashboard() {
       </div>
 
       {/* 4. ROW 3: Meeting Activity Area Chart (7 cols) | Recent Completed Actions (5 cols) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
-        <div className="lg:col-span-7">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
+        <div className="lg:col-span-7 flex flex-col h-full">
           <MeetingActivityChart
             meetingActivity={meeting_activity}
             activityPeriod={activityPeriod}
@@ -304,17 +304,17 @@ export default function Dashboard() {
             globalPeriod={period}
           />
         </div>
-        <div className="lg:col-span-5">
+        <div className="lg:col-span-5 flex flex-col h-full">
           <RecentCompletedActions />
         </div>
       </div>
 
       {/* 5. ROW 4: Needs Attention Action Table (8 cols) | Recent Key Decisions Audit Feed (4 cols) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
-        <div className="lg:col-span-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
+        <div className="lg:col-span-8 flex flex-col h-full">
           <NeedsAttention overdueList={overdue_list} urgentList={urgent_list} loading={loading} />
         </div>
-        <div className="lg:col-span-4">
+        <div className="lg:col-span-4 flex flex-col h-full">
           <RecentDecisionsCard />
         </div>
       </div>

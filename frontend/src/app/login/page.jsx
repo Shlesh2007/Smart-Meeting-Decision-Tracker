@@ -1,14 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate, useParams, useLocation } from 'react-router-dom';
+import { Link, useNavigate} from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { authService } from '../../services/api.js';
 import { Logo } from '../../components/Logo.jsx';
-import { Form, Input, Button, Card, Typography, Modal, Divider, Steps, Alert, Tag, App } from 'antd';
+import { Form, Input, Button, Card, Typography, Modal, Divider, Steps, App } from 'antd';
 import {
-  UserOutlined, LockOutlined, ThunderboltOutlined, InfoCircleOutlined,
+  UserOutlined, LockOutlined,
   GoogleOutlined, GithubOutlined, MailOutlined, SafetyCertificateOutlined,
-  CheckCircleOutlined, SafetyOutlined, TeamOutlined, CrownOutlined, KeyOutlined
-} from '@ant-design/icons';
+  CheckCircleOutlined} from '@ant-design/icons';
 
 const { Title, Text } = Typography;
 

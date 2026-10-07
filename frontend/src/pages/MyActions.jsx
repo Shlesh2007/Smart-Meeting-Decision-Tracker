@@ -7,10 +7,10 @@ import { LoadingSkeleton } from '../components/LoadingSkeleton.jsx';
 import { EmptyState } from '../components/EmptyState.jsx';
 import { ActionDetailModal } from '../components/ActionDetailModal.jsx';
 import {
-  Card, Table, Select, Button, Tag, message, Alert, Input, Modal, Tooltip, Dropdown, Badge, DatePicker
+  Card, Table, Select, Button, Tag, message, Alert, Input, Modal, Tooltip, Dropdown, DatePicker
 } from 'antd';
 import {
-  CheckSquareOutlined, SearchOutlined, LockOutlined, ReloadOutlined, EllipsisOutlined, EyeOutlined, RightOutlined, CalendarOutlined
+  CheckSquareOutlined, SearchOutlined, LockOutlined, ReloadOutlined, EllipsisOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 

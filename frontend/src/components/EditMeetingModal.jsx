@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Modal, Form, Input, Select, DatePicker, TimePicker, message, Popover, Tag, Checkbox } from 'antd';
-import { TeamOutlined, UserOutlined, RightOutlined, SyncOutlined } from '@ant-design/icons';
+import { TeamOutlined, SyncOutlined } from '@ant-design/icons';
 import { meetingService, userService, teamService } from '../services/api.js';
 import { getErrorMessage } from '../utils/errorHandler.js';
 import dayjs from 'dayjs';

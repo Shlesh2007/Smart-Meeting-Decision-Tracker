@@ -10,8 +10,6 @@ import {
   CheckCircleOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
-import { actionService } from '../../services/api.js';
-
 import { useAuth } from '../../context/AuthContext.jsx';
 
 export const NeedsAttention = ({ overdueList = [], urgentList = [], loading = false }) => {

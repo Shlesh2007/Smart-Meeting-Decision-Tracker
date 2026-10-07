@@ -14,7 +14,7 @@ import {
   Button, Card, Tag, Avatar, Tooltip, Alert, message, Breadcrumb, Popconfirm
 } from 'antd';
 import {
-  CalendarOutlined, ClockCircleOutlined, EnvironmentOutlined, UserOutlined,
+  CalendarOutlined, ClockCircleOutlined, EnvironmentOutlined,
   PlusOutlined, HistoryOutlined, ArrowLeftOutlined, EditOutlined, MessageOutlined, FileTextOutlined,
   MailOutlined, SafetyCertificateOutlined, StopOutlined
 } from '@ant-design/icons';
@@ -95,6 +95,8 @@ export default function MeetingDetailPage() {
       setCancelling(false);
     }
   };
+
+  const isMeetingCancelled = Boolean(meeting && meeting.status === 'CANCELLED');
 
   const isMeetingPastOrEnded = Boolean(
     meeting && (
@@ -253,7 +255,7 @@ export default function MeetingDetailPage() {
                 </Button>
               </Tooltip>
 
-              <Tooltip title={isMeetingPastOrEnded ? 'OTP can only be sent for upcoming active meetings' : 'Dispatches 6-digit participant entry check-in OTP via email to invited attendees'}>
+              <Tooltip title={isMeetingPastOrEnded ? 'OTP can only be sent for upcoming active meetings' : ''}>
                 <Button
                   icon={<SafetyCertificateOutlined className={isMeetingPastOrEnded ? '' : 'text-blue-600 dark:text-blue-400'} />}
                   onClick={handleSendPassword}
@@ -265,14 +267,19 @@ export default function MeetingDetailPage() {
                 </Button>
               </Tooltip>
 
-              <Button
-                type="primary"
-                icon={<PlusOutlined />}
-                onClick={() => setShowDiscussionModal(true)}
-                className="bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl border-none shadow-xs whitespace-nowrap text-xs sm:text-sm px-2.5 sm:px-3 flex-1 sm:flex-initial text-center justify-center"
-              >
-                Add Discussion
-              </Button>
+              <Tooltip title={isMeetingCancelled ? 'Discussions cannot be added to a cancelled meeting' : ''}>
+                <span>
+                  <Button
+                    type="primary"
+                    icon={<PlusOutlined />}
+                    onClick={() => setShowDiscussionModal(true)}
+                    disabled={isMeetingCancelled}
+                    className="bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl border-none shadow-xs whitespace-nowrap text-xs sm:text-sm px-2.5 sm:px-3 flex-1 sm:flex-initial text-center justify-center disabled:opacity-50 disabled:bg-slate-300 dark:disabled:bg-slate-700 disabled:cursor-not-allowed"
+                  >
+                    Add Discussion
+                  </Button>
+                </span>
+              </Tooltip>
             </div>
           </div>
 
@@ -330,14 +337,21 @@ export default function MeetingDetailPage() {
               ))}
             </Avatar.Group>
           </div>
-          <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold">
-            Organized by:{' '}
-            <strong
-              onClick={() => meeting.created_by_detail && setSelectedParticipantUser(meeting.created_by_detail)}
-              className={`text-slate-900 dark:text-slate-200 ${meeting.created_by_detail ? 'cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 hover:underline' : ''}`}
-            >
-              {meeting.created_by_detail?.full_name || 'Admin'}
-            </strong>
+          <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold inline-flex items-center flex-wrap gap-1">
+            <span>
+              Organized by:{' '}
+              <strong
+                onClick={() => meeting.created_by_detail && setSelectedParticipantUser(meeting.created_by_detail)}
+                className={`text-slate-900 dark:text-slate-200 ${meeting.created_by_detail ? 'cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 hover:underline' : ''}`}
+              >
+                {meeting.created_by_detail?.full_name || 'Admin'}
+              </strong>
+            </span>
+            {isMeetingCancelled && (
+              <span className="text-xs font-semibold text-rose-500 dark:text-rose-400 ml-1.5 inline-flex items-center gap-1">
+                • (Meeting is cancelled)
+              </span>
+            )}
           </span>
         </div>
       </Card>
@@ -355,10 +369,16 @@ export default function MeetingDetailPage() {
           <Card className="text-center py-10 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 dark:bg-slate-800">
             <FileTextOutlined className="text-4xl text-slate-300 dark:text-slate-600 mb-2" />
             <p className="font-semibold text-slate-700 dark:text-slate-200 m-0">No discussion points recorded yet.</p>
-            <p className="text-xs text-slate-400 mb-4">Add discussions raised during the meeting to formulate decisions.</p>
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => setShowDiscussionModal(true)} className="bg-blue-600 hover:bg-blue-700 font-semibold rounded-xl border-none">
-              Add First Discussion
-            </Button>
+            <p className="text-xs text-slate-400 mb-4">
+              {isMeetingCancelled
+                ? 'This meeting is cancelled. New discussion points cannot be added.'
+                : 'Add discussions raised during the meeting to formulate decisions.'}
+            </p>
+            {!isMeetingCancelled && (
+              <Button type="primary" icon={<PlusOutlined />} onClick={() => setShowDiscussionModal(true)} className="bg-blue-600 hover:bg-blue-700 font-semibold rounded-xl border-none">
+                Add First Discussion
+              </Button>
+            )}
           </Card>
         ) : (
           discussions.map((disc, idx) => {

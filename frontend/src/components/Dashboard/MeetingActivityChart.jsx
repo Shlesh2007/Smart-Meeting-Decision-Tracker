@@ -338,9 +338,9 @@ export const MeetingActivityChart = ({
       </div>
 
       {/* Chart Body */}
-      <div className="my-1 w-full h-[220px] flex items-center justify-center shrink-0">
+      <div className="my-2 w-full flex-1 min-h-[220px] flex items-center justify-center">
         {chartFormattedData.length > 0 ? (
-          <ResponsiveContainer width="100%" height={220}>
+          <ResponsiveContainer width="100%" height="100%" minHeight={220}>
             <AreaChart
               key={isInView ? 'area-active' : 'area-idle'}
               data={chartFormattedData}
@@ -414,7 +414,7 @@ export const MeetingActivityChart = ({
       </div>
 
       {/* Footer Info */}
-      <div className="pt-2 border-t border-slate-100 dark:border-slate-800 text-[10px] text-slate-400 flex items-center justify-between">
+      <div className="pt-2 border-t border-slate-100 dark:border-slate-800 text-[10px] text-slate-400 flex items-center justify-between shrink-0">
         <span>Activity Log</span>
         <span className="font-semibold text-blue-600 dark:text-blue-400">
           {totalMeetingsInPeriod} Meetings in Period

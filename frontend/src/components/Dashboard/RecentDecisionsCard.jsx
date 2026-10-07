@@ -4,8 +4,6 @@ import { Card, List, Typography, Avatar, Flex, Space, Button, Spin, Empty, Tag, 
 import {
   FileTextOutlined,
   RightOutlined,
-  CheckCircleOutlined,
-  ClockCircleOutlined,
   HistoryOutlined,
   UserOutlined,
   UnorderedListOutlined,
@@ -222,7 +220,7 @@ export const RecentDecisionsCard = () => {
             key="close"
             type="primary"
             onClick={() => setSelectedDecision(null)}
-            className="bg-indigo-600 hover:bg-indigo-700 font-bold rounded-lg h-8 px-4 text-xs"
+            className="bg-slate-600 hover:bg-slate-700 font-bold rounded-lg h-8 px-4 text-xs"
           >
             Done
           </Button>,

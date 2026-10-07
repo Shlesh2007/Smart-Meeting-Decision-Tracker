@@ -14,6 +14,11 @@ class DiscussionSerializer(serializers.ModelSerializer):
         )
         read_only_fields = ('id', 'created_by', 'created_at', 'updated_at')
 
+    def validate_meeting(self, value):
+        if value and getattr(value, 'status', None) == 'CANCELLED':
+            raise serializers.ValidationError("Discussions cannot be added to a cancelled meeting.")
+        return value
+
     def get_decision(self, obj):
         try:
             if hasattr(obj, 'decision') and obj.decision:

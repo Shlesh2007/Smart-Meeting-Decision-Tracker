@@ -40,12 +40,9 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   PlusOutlined,
-  SafetyOutlined,
-  ThunderboltOutlined,
   FormOutlined,
   SearchOutlined,
   DownOutlined,
-  QuestionCircleOutlined,
   SunOutlined,
   MoonOutlined,
 } from '@ant-design/icons';
