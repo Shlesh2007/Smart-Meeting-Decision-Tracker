@@ -64,12 +64,13 @@ export function MeetingCalendar({ meetings = [], loading = false }) {
       .map((m) => {
         const sDate = m.meeting_date ? dayjs(m.meeting_date).startOf('day') : null;
         let eDate = sDate;
-        if (m.recurrence_end_date) {
+        if (m.recurrence_end_date && dayjs(m.recurrence_end_date).isValid()) {
           eDate = dayjs(m.recurrence_end_date).startOf('day');
-        } else if (m.end_date && m.end_date.length === 10) {
-          eDate = dayjs(m.end_date).startOf('day');
-        } else if (m.is_recurring) {
-          eDate = sDate ? sDate.add(4, 'day') : null;
+        } else if (m.end_date && dayjs(m.end_date).isValid()) {
+          const parsed = dayjs(m.end_date).startOf('day');
+          if (parsed.isAfter(sDate)) {
+            eDate = parsed;
+          }
         }
 
         if (sDate && eDate && eDate.isBefore(sDate)) {
@@ -171,6 +172,151 @@ export function MeetingCalendar({ meetings = [], loading = false }) {
     );
   };
 
+  const renderMorePopoverContent = (currentDate, activeSpans) => {
+    const sortedSpans = [...activeSpans].sort((a, b) => {
+      const timeA = a.meeting.start_time || '00:00';
+      const timeB = b.meeting.start_time || '00:00';
+      return timeA.localeCompare(timeB);
+    });
+
+    return (
+      <div className="w-80 max-h-[380px] flex flex-col p-1">
+        <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-100 dark:border-slate-700">
+          <div>
+            <div className="font-extrabold text-xs text-slate-900 dark:text-slate-100">
+              Meetings on {currentDate.format('MMM D, YYYY')}
+            </div>
+            <div className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">
+              {activeSpans.length} {activeSpans.length === 1 ? 'meeting' : 'meetings'} total on this day
+            </div>
+          </div>
+          <Tag color="blue" className="m-0 text-[10px] font-bold rounded-full border-0 px-2">
+            {currentDate.format('dddd')}
+          </Tag>
+        </div>
+
+        <div className="overflow-y-auto space-y-1.5 pr-1 max-h-[300px]">
+          {sortedSpans.map((span) => {
+            const m = span.meeting;
+            const catStyle = getCategoryStyle(m);
+            const isMultiDay = span.daysCount > 1;
+
+            return (
+              <div
+                key={`more-m-${m.id}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/meetings/${m.id}`);
+                }}
+                className="group p-2 rounded-xl border border-slate-100 dark:border-slate-700/80 bg-slate-50/70 dark:bg-slate-800/60 hover:bg-blue-50/80 dark:hover:bg-blue-950/40 hover:border-blue-300 dark:hover:border-blue-700 cursor-pointer transition-all duration-150 flex items-center justify-between gap-2.5 shadow-2xs"
+              >
+                <div className="space-y-1 min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5">
+                    <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${catStyle.bg} shadow-2xs`} />
+                    <span className="font-bold text-xs text-slate-800 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 truncate block">
+                      {m.title}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center flex-wrap gap-2 text-[10px] text-slate-500 dark:text-slate-400">
+                    <span className="flex items-center gap-1">
+                      <ClockCircleOutlined className="text-blue-500 text-[10px]" />
+                      {m.start_time?.slice(0, 5) || '09:00'} - {m.end_time?.slice(0, 5) || '10:00'}
+                    </span>
+                    {isMultiDay && (
+                      <span className="text-[9px] font-semibold text-purple-600 dark:text-purple-300 bg-purple-100/70 dark:bg-purple-900/50 px-1.5 py-0.2 rounded-full">
+                        {span.daysCount} days span
+                      </span>
+                    )}
+                    {m.location && (
+                      <span className="flex items-center gap-1 truncate max-w-[120px]">
+                        <EnvironmentOutlined className="text-slate-400 text-[9px]" />
+                        <span className="truncate">{m.location}</span>
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex flex-col items-end justify-between gap-1.5 shrink-0 self-stretch">
+                  <Tag color={catStyle.badgeColor} className="m-0 text-[9px] font-bold rounded-full border-0 px-2 py-0.5">
+                    {m.meeting_type || catStyle.tag}
+                  </Tag>
+                  <div className="flex items-center text-[10px] font-semibold text-blue-600 dark:text-blue-400 opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all">
+                    <span>Open</span>
+                    <RightOutlined className="text-[8px] ml-1" />
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  const renderMoreMonthPopoverContent = (monthObj, monthMeetings) => {
+    return (
+      <div className="w-80 max-h-[380px] flex flex-col p-1">
+        <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-100 dark:border-slate-700">
+          <div>
+            <div className="font-extrabold text-xs text-slate-900 dark:text-slate-100">
+              Meetings in {monthObj.format('MMMM YYYY')}
+            </div>
+            <div className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">
+              {monthMeetings.length} meetings scheduled
+            </div>
+          </div>
+        </div>
+
+        <div className="overflow-y-auto space-y-1.5 pr-1 max-h-[300px]">
+          {monthMeetings.map((m) => {
+            const catStyle = getCategoryStyle(m);
+            return (
+              <div
+                key={`month-m-${m.id}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/meetings/${m.id}`);
+                }}
+                className="group p-2 rounded-xl border border-slate-100 dark:border-slate-700/80 bg-slate-50/70 dark:bg-slate-800/60 hover:bg-blue-50/80 dark:hover:bg-blue-950/40 hover:border-blue-300 dark:hover:border-blue-700 cursor-pointer transition-all duration-150 flex items-center justify-between gap-2.5 shadow-2xs"
+              >
+                <div className="space-y-1 min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5">
+                    <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${catStyle.bg} shadow-2xs`} />
+                    <span className="font-bold text-xs text-slate-800 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 truncate block">
+                      {m.title}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2 text-[10px] text-slate-500 dark:text-slate-400">
+                    <span className="font-medium text-slate-600 dark:text-slate-300">
+                      {dayjs(m.meeting_date).format('MMM D')}
+                    </span>
+                    <span>•</span>
+                    <span className="flex items-center gap-1">
+                      <ClockCircleOutlined className="text-blue-500 text-[10px]" />
+                      {m.start_time?.slice(0, 5) || '09:00'} - {m.end_time?.slice(0, 5) || '10:00'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex flex-col items-end justify-between gap-1.5 shrink-0 self-stretch">
+                  <Tag color={catStyle.badgeColor} className="m-0 text-[9px] font-bold rounded-full border-0 px-2 py-0.5">
+                    {m.meeting_type || catStyle.tag}
+                  </Tag>
+                  <div className="flex items-center text-[10px] font-semibold text-blue-600 dark:text-blue-400 opacity-80 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all">
+                    <span>Open</span>
+                    <RightOutlined className="text-[8px] ml-1" />
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
   const dateCellRender = (value) => {
     const currentDate = value.startOf('day');
 
@@ -183,85 +329,82 @@ export function MeetingCalendar({ meetings = [], loading = false }) {
 
     if (activeSpans.length === 0) return null;
 
-    const maxTrackIndex = Math.max(...activeSpans.map((s) => s.trackIndex));
-    const activeTrackMap = {};
-    activeSpans.forEach((s) => {
-      activeTrackMap[s.trackIndex] = s;
-    });
-
     const visibleTrackLimit = 2;
-    const slotsToRender = Math.min(maxTrackIndex, visibleTrackLimit - 1);
-    const hiddenCount = activeSpans.filter((s) => s.trackIndex >= visibleTrackLimit).length;
+    const visibleSpans = activeSpans.slice(0, visibleTrackLimit);
+    const hiddenCount = Math.max(0, activeSpans.length - visibleTrackLimit);
 
-    const trackElements = [];
+    const trackElements = visibleSpans.map((span, idx) => {
+      const m = span.meeting;
+      const catStyle = getCategoryStyle(m);
 
-    for (let t = 0; t <= slotsToRender; t++) {
-      const span = activeTrackMap[t];
-      if (span) {
-        const m = span.meeting;
-        const catStyle = getCategoryStyle(m);
+      const isSpanStart = currentDate.isSame(span.startDate, 'day');
+      const isSpanEnd = currentDate.isSame(span.endDate, 'day');
+      const isWeekStart = currentDate.day() === 0;
+      const isWeekEnd = currentDate.day() === 6;
 
-        const isSpanStart = currentDate.isSame(span.startDate, 'day');
-        const isSpanEnd = currentDate.isSame(span.endDate, 'day');
-        const isWeekStart = currentDate.day() === 0;
-        const isWeekEnd = currentDate.day() === 6;
+      const isLeft = isSpanStart || isWeekStart;
+      const isRight = isSpanEnd || isWeekEnd;
 
-        const isLeft = isSpanStart || isWeekStart;
-        const isRight = isSpanEnd || isWeekEnd;
-
-        let shapeClasses = '';
-        if (isLeft && isRight) {
-          shapeClasses = 'rounded-full mx-1';
-        } else if (isLeft && !isRight) {
-          shapeClasses = 'rounded-l-full -mr-3.5 ml-0.5';
-        } else if (!isLeft && isRight) {
-          shapeClasses = 'rounded-r-full -ml-3.5 mr-0.5';
-        } else {
-          shapeClasses = 'rounded-none -mx-3.5';
-        }
-
-        const showText = isLeft;
-
-        trackElements.push(
-          <Popover
-            key={`track-${t}-${m.id}`}
-            content={renderPopoverContent(m, span)}
-            trigger={['hover', 'click']}
-            placement="top"
-            arrow={false}
-          >
-            <div
-              onClick={(e) => {
-                e.stopPropagation();
-                navigate(`/meetings/${m.id}`);
-              }}
-              className={`h-5 my-0.5 flex items-center px-1.5 text-[10px] font-bold cursor-pointer transition-all z-10 ${shapeClasses} ${catStyle.bg} hover:brightness-110 shadow-xs leading-none select-none`}
-              title={`${m.title} (${span.startDate.format('MMM D')} - ${span.endDate.format('MMM D')})`}
-            >
-              {showText ? (
-                <span className="truncate drop-shadow-xs font-semibold">
-                  {m.title}
-                </span>
-              ) : (
-                <span className="opacity-0 select-none">.</span>
-              )}
-            </div>
-          </Popover>
-        );
+      let shapeClasses = '';
+      if (isLeft && isRight) {
+        shapeClasses = 'rounded-full mx-1';
+      } else if (isLeft && !isRight) {
+        shapeClasses = 'rounded-l-full -mr-3.5 ml-0.5';
+      } else if (!isLeft && isRight) {
+        shapeClasses = 'rounded-r-full -ml-3.5 mr-0.5';
       } else {
-        trackElements.push(
-          <div key={`track-empty-${t}`} className="h-5 my-0.5 pointer-events-none" />
-        );
+        shapeClasses = 'rounded-none -mx-3.5';
       }
-    }
+
+      const showText = isLeft;
+
+      return (
+        <Popover
+          key={`track-${idx}-${m.id}`}
+          content={renderPopoverContent(m, span)}
+          trigger={['hover', 'click']}
+          placement="top"
+          arrow={false}
+        >
+          <div
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/meetings/${m.id}`);
+            }}
+            className={`h-5 my-0.5 flex items-center px-1.5 text-[10px] font-bold cursor-pointer transition-all z-10 ${shapeClasses} ${catStyle.bg} hover:brightness-110 shadow-xs leading-none select-none`}
+            title={`${m.title} (${span.startDate.format('MMM D')} - ${span.endDate.format('MMM D')})`}
+          >
+            {showText ? (
+              <span className="truncate drop-shadow-xs font-semibold">
+                {m.title}
+              </span>
+            ) : (
+              <span className="opacity-0 select-none">.</span>
+            )}
+          </div>
+        </Popover>
+      );
+    });
 
     return (
       <div className="relative mt-1 space-y-0.5 overflow-visible">
         {trackElements}
         {hiddenCount > 0 && (
-          <div className="text-[9px] font-bold text-blue-600 dark:text-blue-400 px-1 py-0.5 text-center truncate">
-            +{hiddenCount} more
-          </div>
+          <Popover
+            content={renderMorePopoverContent(currentDate, activeSpans)}
+            trigger={['hover', 'click']}
+            placement="bottom"
+            arrow={false}
+            mouseEnterDelay={0.05}
+            mouseLeaveDelay={0.15}
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="mt-1 text-[9px] font-extrabold text-blue-600 dark:text-blue-400 bg-blue-50/90 dark:bg-blue-950/60 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 dark:hover:text-white px-2 py-0.5 text-center truncate rounded-md cursor-pointer transition-all duration-150 shadow-2xs select-none border border-blue-200/60 dark:border-blue-800/60 hover:border-blue-600"
+            >
+              +{hiddenCount} more
+            </div>
+          </Popover>
         )}
       </div>
     );
@@ -346,9 +489,21 @@ export function MeetingCalendar({ meetings = [], loading = false }) {
                   </span>
                 )}
                 {monthMeetings.length > 2 && (
-                  <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 block pt-0.5">
-                    +{monthMeetings.length - 2} more meetings...
-                  </span>
+                  <Popover
+                    content={renderMoreMonthPopoverContent(monthObj, monthMeetings)}
+                    trigger={['hover', 'click']}
+                    placement="bottom"
+                    arrow={false}
+                    mouseEnterDelay={0.05}
+                    mouseLeaveDelay={0.15}
+                  >
+                    <span
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-[10px] font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline cursor-pointer block pt-0.5"
+                    >
+                      +{monthMeetings.length - 2} more meetings...
+                    </span>
+                  </Popover>
                 )}
               </div>
 

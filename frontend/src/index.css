@@ -810,3 +810,20 @@ aside .ant-menu-inline-collapsed .ant-menu-title-content {
     animation: none !important;
   }
 }
+
+/* Radial Theme Reveal Transition Styles */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none !important;
+  mix-blend-mode: normal !important;
+  height: 100% !important;
+  overflow: hidden !important;
+}
+
+::view-transition-old(root) {
+  z-index: 1 !important;
+}
+
+::view-transition-new(root) {
+  z-index: 9999 !important;
+}

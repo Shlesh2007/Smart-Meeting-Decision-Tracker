@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
+import { useTheme } from '../context/ThemeContext.jsx';
 import { ProfileModal } from './ProfileModal.jsx';
 import { ActionFormModal } from './ActionFormModal.jsx';
 import { Logo } from './Logo.jsx';
@@ -45,6 +46,8 @@ import {
   SearchOutlined,
   DownOutlined,
   QuestionCircleOutlined,
+  SunOutlined,
+  MoonOutlined,
 } from '@ant-design/icons';
 
 const { useBreakpoint } = Grid;
@@ -54,6 +57,7 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
   const pathname = location.pathname;
   const navigate = useNavigate();
   const { user, logout, isAdmin } = useAuth();
+  const { themeMode, toggleTheme } = useTheme();
   const screens = useBreakpoint();
 
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -592,12 +596,25 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
               </button>
             </Popover>
 
-            {/* 3. Help Button */}
-            
+            {/* 3. Theme Toggle Button (Radial Reveal) */}
+            <Tooltip>
+              <button
+                type="button"
+                onClick={(e) => toggleTheme(e)}
+                className="w-8 h-8 flex items-center justify-center rounded-lg text-amber-500 dark:text-blue-400 bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors border-none cursor-pointer select-none"
+                aria-label="Toggle Theme"
+              >
+                {themeMode === 'dark' ? (
+                  <SunOutlined className="text-base text-amber-400 hover:scale-110 transition-transform" />
+                ) : (
+                  <MoonOutlined className="text-base text-slate-700 dark:text-slate-300 hover:scale-110 transition-transform" />
+                )}
+              </button>
+            </Tooltip>
 
-            {/* 4. User Profile Component */}
+            {/* 4. User Profile Component (Desktop only) */}
             <Dropdown menu={{ items: userMenuItems }} placement="bottomRight" trigger={['click']}>
-              <div className="h-8 px-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-1.5 cursor-pointer border-none select-none">
+              <div className="hidden lg:flex h-8 px-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 items-center gap-1.5 cursor-pointer border-none select-none">
                 <Avatar
                   size={28}
                   shape="circle"
