@@ -428,13 +428,15 @@ export default function MeetingDetailPage() {
                     <div className="flex space-x-2">
                       {decision ? (
                         <>
-                          <Button
-                            size="small"
-                            icon={<EditOutlined />}
-                            onClick={() => setActiveDiscussionForDecision(disc)}
-                          >
-                            Update Decision
-                          </Button>
+                          {!isMeetingCancelled && (
+                            <Button
+                              size="small"
+                              icon={<EditOutlined />}
+                              onClick={() => setActiveDiscussionForDecision(disc)}
+                            >
+                              Update Decision
+                            </Button>
+                          )}
                           <Button
                             size="small"
                             icon={<HistoryOutlined />}
@@ -445,15 +447,17 @@ export default function MeetingDetailPage() {
                           </Button>
                         </>
                       ) : (
-                        <Button
-                          size="small"
-                          type="primary"
-                          icon={<PlusOutlined />}
-                          onClick={() => setActiveDiscussionForDecision(disc)}
-                          className="bg-blue-600 hover:bg-blue-700 font-medium rounded-lg border-none"
-                        >
-                          Record Decision
-                        </Button>
+                        !isMeetingCancelled && (
+                          <Button
+                            size="small"
+                            type="primary"
+                            icon={<PlusOutlined />}
+                            onClick={() => setActiveDiscussionForDecision(disc)}
+                            className="bg-blue-600 hover:bg-blue-700 font-medium rounded-lg border-none"
+                          >
+                            Record Decision
+                          </Button>
+                        )
                       )}
                     </div>
                   </div>
@@ -491,15 +495,17 @@ export default function MeetingDetailPage() {
                         <span className="font-bold text-sm text-slate-800 dark:text-slate-200">
                           Follow-Up Action Items ({decisionActions.length})
                         </span>
-                        <Button
-                          size="small"
-                          type="dashed"
-                          icon={<PlusOutlined />}
-                          onClick={() => setActiveDecisionForAction(decision)}
-                          className="text-blue-600 border-blue-400 dark:text-blue-400 dark:border-blue-500"
-                        >
-                          Add Action Item
-                        </Button>
+                        {!isMeetingCancelled && (
+                          <Button
+                            size="small"
+                            type="dashed"
+                            icon={<PlusOutlined />}
+                            onClick={() => setActiveDecisionForAction(decision)}
+                            className="text-blue-600 border-blue-400 dark:text-blue-400 dark:border-blue-500"
+                          >
+                            Add Action Item
+                          </Button>
+                        )}
                       </div>
 
                       {decisionActions.length === 0 ? (

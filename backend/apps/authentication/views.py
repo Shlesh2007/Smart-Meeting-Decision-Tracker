@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import get_user_model
-from django.core.mail import send_mail, get_connection, EmailMessage
+from django.core.mail import get_connection, EmailMessage
 from django.conf import settings
 from django.utils import timezone
 from datetime import timedelta
@@ -17,7 +17,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
 
 from .models import PasswordResetOTP
-from .permissions import IsAdminUserRole, CanManageUsersPermission, IsOwnerUserRole, IsManagerUserRole
+from .permissions import CanManageUsersPermission
 from smart_meeting_tracker.email_utils import send_brevo_transactional_email
 
 logger = logging.getLogger(__name__)
@@ -293,6 +293,27 @@ class UserViewSet(viewsets.ModelViewSet):
 
 # --- OTP PASSWORD RESET VIEWS ---
 
+class LookupAccountView(APIView):
+    permission_classes = (permissions.AllowAny,)
+
+    def post(self, request):
+        account = request.data.get('account', '').strip()
+        if not account:
+            return Response({'found': False}, status=status.HTTP_200_OK)
+
+        user = User.objects.filter(email__iexact=account).first() or User.objects.filter(username__iexact=account).first()
+        if not user:
+            return Response({'found': False}, status=status.HTTP_200_OK)
+
+        return Response({
+            'found': True,
+            'email': user.email,
+            'username': user.username,
+            'full_name': user.get_full_name() or user.username,
+            'role': user.role
+        }, status=status.HTTP_200_OK)
+
+
 class RequestPasswordResetOTPView(APIView):
     permission_classes = (permissions.AllowAny,)
 
@@ -400,14 +421,20 @@ class RequestPasswordResetOTPView(APIView):
                 return Response({
                     'message': f'6-digit OTP code generated for {user.email}. (Local Dev Mode: Code is {otp_code}). Delivery Note: {last_error}',
                     'otp_code': otp_code,
-                    'email': user.email
+                    'email': user.email,
+                    'username': user.username,
+                    'full_name': user.get_full_name() or user.username,
+                    'role': user.role
                 }, status=status.HTTP_200_OK)
 
             return Response({'error': f'Brevo Email Delivery Failed: {last_error}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return Response({
             'message': f'6-digit OTP code sent to {user.email}. Please check your email inbox.',
-            'email': user.email
+            'email': user.email,
+            'username': user.username,
+            'full_name': user.get_full_name() or user.username,
+            'role': user.role
         }, status=status.HTTP_200_OK)
 
 

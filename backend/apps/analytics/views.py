@@ -7,7 +7,6 @@ from django.db.models import Count, Q
 from apps.meetings.models import Meeting
 from apps.meetings.utils import auto_update_meeting_statuses
 from apps.actions.models import ActionItem
-from apps.decisions.models import Decision
 
 class DashboardAnalyticsView(APIView):
     permission_classes = (permissions.IsAuthenticated,)

@@ -1,4 +1,4 @@
-from rest_framework import viewsets, permissions
+from rest_framework import viewsets
 from .models import Team
 from .serializers import TeamSerializer
 from apps.authentication.permissions import IsAdminOrReadOnly

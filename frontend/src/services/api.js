@@ -121,6 +121,10 @@ export const authService = {
       localStorage.removeItem('refresh_token');
     }
   },
+  lookupAccount: async (account) => {
+    const res = await api.post('/auth/password-reset/lookup-account/', { account });
+    return res.data;
+  },
   requestResetOTP: async (account) => {
     const res = await api.post('/auth/password-reset/request-otp/', { account });
     return res.data;

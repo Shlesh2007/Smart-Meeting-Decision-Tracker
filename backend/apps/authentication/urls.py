@@ -2,7 +2,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
     RegisterView, RequestRegisterOTPView, ConfirmRegisterView, UserProfileView, UserViewSet,
-    RequestPasswordResetOTPView, VerifyPasswordResetOTPView, ConfirmPasswordResetView,
+    LookupAccountView, RequestPasswordResetOTPView, VerifyPasswordResetOTPView, ConfirmPasswordResetView,
     RequestEmailChangeOTPView, VerifyEmailChangeOTPView, DeleteAccountView,
     GoogleOAuthView, GitHubOAuthView, DepartmentChangeRequestViewSet
 )
@@ -24,6 +24,7 @@ urlpatterns = [
     path('profile/delete-account/', DeleteAccountView.as_view(), name='auth_delete_account'),
 
     # OTP Password Reset Endpoints
+    path('password-reset/lookup-account/', LookupAccountView.as_view(), name='auth_lookup_account'),
     path('password-reset/request-otp/', RequestPasswordResetOTPView.as_view(), name='auth_request_otp'),
     path('password-reset/verify-otp/', VerifyPasswordResetOTPView.as_view(), name='auth_verify_otp'),
     path('password-reset/confirm/', ConfirmPasswordResetView.as_view(), name='auth_confirm_password_reset'),

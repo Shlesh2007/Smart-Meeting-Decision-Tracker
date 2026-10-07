@@ -120,6 +120,14 @@ class ActionItemSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         target_status = attrs.get('status', self.instance.status if self.instance else ActionItem.Status.TODO)
         
+        decision = attrs.get('decision', self.instance.decision if self.instance else None)
+        if decision and hasattr(decision, 'discussion') and decision.discussion:
+            meeting = getattr(decision.discussion, 'meeting', None)
+            if meeting and getattr(meeting, 'status', None) == 'CANCELLED':
+                raise serializers.ValidationError({
+                    "non_field_errors": ["Action items cannot be created or updated for a cancelled meeting."]
+                })
+
         if self.instance and self.instance.status in [ActionItem.Status.COMPLETED, ActionItem.Status.CANCELLED]:
             if 'status' in attrs and attrs['status'] != self.instance.status:
                 raise serializers.ValidationError({

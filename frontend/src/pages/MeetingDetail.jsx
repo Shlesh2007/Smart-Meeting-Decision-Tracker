@@ -383,19 +383,20 @@ export default function MeetingDetail() {
           </div>
           <span className="text-xs text-slate-500 dark:text-slate-400 font-semibold shrink-0 inline-flex items-center flex-wrap gap-1">
             <span>
+              {isMeetingCancelled && (
+              <span className="text-xs font-semibold text-rose-500 dark:text-rose-400 mr-3 inline-flex items-center gap-1">
+                • (Meeting is cancelled)
+              </span>
+              )}
               Organized by:{' '}
               <strong
                 onClick={() => meeting.created_by_detail && setSelectedParticipantUser(meeting.created_by_detail)}
                 className={`text-slate-900 dark:text-slate-200 ${meeting.created_by_detail ? 'cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 hover:underline' : ''}`}
               >
+                
                 {meeting.created_by_detail?.full_name || 'Admin'}
               </strong>
             </span>
-            {isMeetingCancelled && (
-              <span className="text-xs font-semibold text-rose-500 dark:text-rose-400 ml-1.5 inline-flex items-center gap-1">
-                • (Meeting is cancelled)
-              </span>
-            )}
           </span>
         </div>
       </Card>
@@ -472,14 +473,16 @@ export default function MeetingDetail() {
                     <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                       {decision ? (
                         <>
-                          <Button
-                            size="small"
-                            icon={<EditOutlined />}
-                            onClick={() => handleOpenDecisionModal(disc, decision.status)}
-                            className="flex-1 sm:flex-initial text-xs h-8 px-2.5 flex items-center justify-center font-semibold"
-                          >
-                            Update Decision
-                          </Button>
+                          {!isMeetingCancelled && (
+                            <Button
+                              size="small"
+                              icon={<EditOutlined />}
+                              onClick={() => handleOpenDecisionModal(disc, decision.status)}
+                              className="flex-1 sm:flex-initial text-xs h-8 px-2.5 flex items-center justify-center font-semibold"
+                            >
+                              Update Decision
+                            </Button>
+                          )}
                           <Button
                             size="small"
                             icon={<HistoryOutlined />}
@@ -490,34 +493,36 @@ export default function MeetingDetail() {
                           </Button>
                         </>
                       ) : (
-                        <>
-                          <Button
-                            size="small"
-                            type="primary"
-                            icon={<PlusOutlined />}
-                            onClick={() => handleOpenDecisionModal(disc, 'DECISION_MADE')}
-                            className="bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-lg border-none text-xs h-8 px-3 flex items-center justify-center shadow-xs"
-                          >
-                            Add Decision
-                          </Button>
-                          <Button
-                            size="small"
-                            danger
-                            icon={<CloseCircleOutlined />}
-                            onClick={() => handleOpenDecisionModal(disc, 'REJECTED')}
-                            className="bg-rose-50 hover:bg-rose-100 text-rose-600 border-rose-200 dark:bg-rose-950/50 dark:border-rose-900 dark:text-rose-300 font-semibold rounded-lg text-xs h-8 px-3 flex items-center justify-center"
-                          >
-                            Reject
-                          </Button>
-                          <Button
-                            size="small"
-                            icon={<ClockCircleOutlined />}
-                            onClick={() => handleOpenDecisionModal(disc, 'DEFERRED')}
-                            className="bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-slate-200 font-semibold rounded-lg border border-slate-200 dark:border-slate-600 text-xs h-8 px-3 flex items-center justify-center"
-                          >
-                            Defer / Skip
-                          </Button>
-                        </>
+                        !isMeetingCancelled && (
+                          <>
+                            <Button
+                              size="small"
+                              type="primary"
+                              icon={<PlusOutlined />}
+                              onClick={() => handleOpenDecisionModal(disc, 'DECISION_MADE')}
+                              className="bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-lg border-none text-xs h-8 px-3 flex items-center justify-center shadow-xs"
+                            >
+                              Add Decision
+                            </Button>
+                            <Button
+                              size="small"
+                              danger
+                              icon={<CloseCircleOutlined />}
+                              onClick={() => handleOpenDecisionModal(disc, 'REJECTED')}
+                              className="bg-rose-50 hover:bg-rose-100 text-rose-600 border-rose-200 dark:bg-rose-950/50 dark:border-rose-900 dark:text-rose-300 font-semibold rounded-lg text-xs h-8 px-3 flex items-center justify-center"
+                            >
+                              Reject
+                            </Button>
+                            <Button
+                              size="small"
+                              icon={<ClockCircleOutlined />}
+                              onClick={() => handleOpenDecisionModal(disc, 'DEFERRED')}
+                              className="bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-slate-200 font-semibold rounded-lg border border-slate-200 dark:border-slate-600 text-xs h-8 px-3 flex items-center justify-center"
+                            >
+                              Defer / Skip
+                            </Button>
+                          </>
+                        )
                       )}
                     </div>
                   </div>
@@ -528,18 +533,22 @@ export default function MeetingDetail() {
                       <div className="flex items-center space-x-2">
                         <ClockCircleOutlined className="text-amber-600 dark:text-amber-400 text-sm shrink-0" />
                         <span className="text-xs text-amber-900 dark:text-amber-200 font-medium">
-                          Decision is currently {decision.status === 'DEFERRED' ? 'Deferred' : 'Skipped'}. Any meeting participant can open and record the final decision at any time.
+                          {isMeetingCancelled
+                            ? `Decision was ${decision.status === 'DEFERRED' ? 'Deferred' : 'Skipped'} before meeting cancellation. (Meeting is cancelled - read-only)`
+                            : `Decision is currently ${decision.status === 'DEFERRED' ? 'Deferred' : 'Skipped'}. Any meeting participant can open and record the final decision at any time.`}
                         </span>
                       </div>
-                      <Button
-                        size="small"
-                        type="primary"
-                        icon={<PlusOutlined />}
-                        onClick={() => handleOpenDecisionModal(disc, 'DECISION_MADE')}
-                        className="bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-lg text-xs h-7 px-3 shrink-0 flex items-center justify-center"
-                      >
-                        Add Decision
-                      </Button>
+                      {!isMeetingCancelled && (
+                        <Button
+                          size="small"
+                          type="primary"
+                          icon={<PlusOutlined />}
+                          onClick={() => handleOpenDecisionModal(disc, 'DECISION_MADE')}
+                          className="bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-lg text-xs h-7 px-3 shrink-0 flex items-center justify-center"
+                        >
+                          Add Decision
+                        </Button>
+                      )}
                     </div>
                   )}
 
@@ -554,14 +563,16 @@ export default function MeetingDetail() {
                           <p className="text-xs text-rose-800 dark:text-rose-300 m-0">Discussion proposal was rejected without additional notes.</p>
                         )}
                       </div>
-                      <Button
-                        size="small"
-                        icon={<EditOutlined />}
-                        onClick={() => handleOpenDecisionModal(disc, 'REJECTED')}
-                        className="text-rose-700 border-rose-300 bg-white hover:bg-rose-100 dark:bg-slate-800 dark:text-rose-300 dark:border-rose-800 font-semibold text-xs h-8 px-3 shrink-0 flex items-center justify-center"
-                      >
-                        Revisit Outcome
-                      </Button>
+                      {!isMeetingCancelled && (
+                        <Button
+                          size="small"
+                          icon={<EditOutlined />}
+                          onClick={() => handleOpenDecisionModal(disc, 'REJECTED')}
+                          className="text-rose-700 border-rose-300 bg-white hover:bg-rose-100 dark:bg-slate-800 dark:text-rose-300 dark:border-rose-800 font-semibold text-xs h-8 px-3 shrink-0 flex items-center justify-center"
+                        >
+                          Revisit Outcome
+                        </Button>
+                      )}
                     </div>
                   )}
 
@@ -596,15 +607,17 @@ export default function MeetingDetail() {
                         <span className="font-bold text-sm text-slate-800 dark:text-slate-200">
                           Follow-Up Action Items ({decisionActions.length})
                         </span>
-                        <Button
-                          size="small"
-                          type="dashed"
-                          icon={<PlusOutlined />}
-                          onClick={() => setActiveDecisionForAction(decision)}
-                          className="text-blue-600 border-blue-400 dark:text-blue-400 dark:border-blue-500 text-xs self-start sm:self-auto"
-                        >
-                          Add Action Item
-                        </Button>
+                        {!isMeetingCancelled && (
+                          <Button
+                            size="small"
+                            type="dashed"
+                            icon={<PlusOutlined />}
+                            onClick={() => setActiveDecisionForAction(decision)}
+                            className="text-blue-600 border-blue-400 dark:text-blue-400 dark:border-blue-500 text-xs self-start sm:self-auto"
+                          >
+                            Add Action Item
+                          </Button>
+                        )}
                       </div>
 
                       {decisionActions.length === 0 ? (

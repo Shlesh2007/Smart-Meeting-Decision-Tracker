@@ -35,6 +35,10 @@ class DecisionSerializer(serializers.ModelSerializer):
         reason_text = attrs.get('reason', self.instance.reason if self.instance else '')
         discussion = attrs.get('discussion', self.instance.discussion if self.instance else None)
 
+        if discussion and hasattr(discussion, 'meeting') and discussion.meeting:
+            if getattr(discussion.meeting, 'status', None) == 'CANCELLED':
+                raise serializers.ValidationError({"non_field_errors": ["Decisions cannot be created or updated for a cancelled meeting."]})
+
         if not self.instance and discussion:
             if hasattr(discussion, 'decision') and discussion.decision:
                 raise serializers.ValidationError({"discussion": "A decision record already exists for this discussion topic."})

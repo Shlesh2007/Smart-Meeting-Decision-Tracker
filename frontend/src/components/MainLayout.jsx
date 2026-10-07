@@ -27,7 +27,7 @@ export function MainLayout({ children }) {
 
   if (!showSidebar) {
     return (
-      <main className="min-h-screen w-full bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100">
+      <main className="min-h-screen w-full bg-slate-100 text-slate-900">
         {children}
       </main>
     );

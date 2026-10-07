@@ -98,7 +98,7 @@ export function Logo({ variant = 'full', height = 46, className = '', isDark = f
           <tspan fill="#2563eb">Meeting</tspan>
         </text>
 
-        <text x="2" y="68" fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" fontWeight="700" fontSize="14" className={isDark ? "fill-slate-300" : "fill-slate-500 dark:fill-slate-400"} fill={isDark ? "#94a3b8" : "#64748b"} letterSpacing="4">
+        <text x="2" y="68" fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" fontWeight="700" fontSize="14" className={isDark ? "fill-slate-300" : "fill-slate-700 dark:fill-slate-300"} fill={isDark ? "#94a3b8" : "#334155"} letterSpacing="4">
           DECISION TRACKER
         </text>
       </g>

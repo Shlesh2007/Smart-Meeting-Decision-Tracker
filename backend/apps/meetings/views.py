@@ -12,7 +12,6 @@ import logging
 from .models import Meeting
 from .serializers import MeetingSerializer
 from .utils import auto_update_meeting_statuses
-from apps.authentication.permissions import IsAdminOrReadOnly
 from smart_meeting_tracker.email_utils import send_brevo_transactional_email, build_meeting_email_html
 
 logger = logging.getLogger(__name__)
