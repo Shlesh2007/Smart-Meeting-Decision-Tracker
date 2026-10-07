@@ -166,6 +166,27 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
   const isAuthPage = pathname === '/login' || pathname === '/register';
   if (!user || isAuthPage) return null;
 
+  useEffect(() => {
+    // Dismiss any stuck AntD Tooltip popups on route changes or menu clicks
+    const hideStuckTooltips = () => {
+      const tooltips = document.querySelectorAll('.ant-tooltip');
+      tooltips.forEach((el) => {
+        el.style.display = 'none';
+      });
+    };
+
+    hideStuckTooltips();
+
+    const handleGlobalClick = (e) => {
+      if (e.target && (e.target.closest('.ant-menu-item') || e.target.closest('.ant-btn') || e.target.closest('a'))) {
+        setTimeout(hideStuckTooltips, 50);
+      }
+    };
+
+    window.addEventListener('click', handleGlobalClick);
+    return () => window.removeEventListener('click', handleGlobalClick);
+  }, [pathname]);
+
   const getActiveKey = () => {
     if (pathname === '/dashboard') return '/dashboard';
     if (pathname.startsWith('/meetings')) return '/meetings';
@@ -220,8 +241,14 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
   const headerInfo = getHeaderInfo();
 
   const handleNavigation = (path) => {
-    if (document.activeElement && typeof document.activeElement.blur === 'function') {
-      document.activeElement.blur();
+    if (typeof document !== 'undefined') {
+      if (document.activeElement && typeof document.activeElement.blur === 'function') {
+        document.activeElement.blur();
+      }
+      const tooltips = document.querySelectorAll('.ant-tooltip');
+      tooltips.forEach((el) => {
+        el.style.display = 'none';
+      });
     }
     setDrawerOpen(false);
     window.scrollTo(0, 0);
@@ -602,9 +629,9 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
               </button>
             </Tooltip>
 
-            {/* 4. User Profile Component */}
+            {/* 4. User Profile Component (Desktop only) */}
             <Dropdown menu={{ items: userMenuItems }} placement="bottomRight" trigger={['click']}>
-              <div className="flex h-8 px-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 items-center gap-1.5 cursor-pointer border-none select-none">
+              <div className="hidden lg:flex h-8 px-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 items-center gap-1.5 cursor-pointer border-none select-none">
                 <Avatar
                   size={28}
                   shape="circle"

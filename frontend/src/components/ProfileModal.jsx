@@ -271,13 +271,6 @@ export const ProfileModal = ({ open, onClose, user }) => {
               className="bg-rose-500/10 text-rose-600 hover:bg-rose-500 hover:text-white border-rose-200 font-bold text-xs"
             >
               Logout
-            </Button>,
-            <Button
-              key="close"
-              onClick={onClose}
-              className="font-semibold text-xs"
-            >
-              Close
             </Button>
           ]
         }
