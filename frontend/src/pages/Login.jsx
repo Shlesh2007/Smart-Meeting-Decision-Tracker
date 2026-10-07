@@ -74,6 +74,11 @@ export default function Login() {
 
   useEffect(() => {
     loginForm.resetFields();
+    if (typeof window !== 'undefined') {
+      document.documentElement.classList.remove('dark');
+      document.body.classList.remove('dark');
+      document.documentElement.style.colorScheme = 'light';
+    }
   }, [loginForm]);
 
   const handleLoginValuesChange = (changedValues, allValues) => {
@@ -325,6 +330,10 @@ export default function Login() {
           borderRadius: 16,
         },
         components: {
+          Form: {
+            labelColor: '#334155',
+            labelRequiredMarkColor: '#ef4444',
+          },
           Card: {
             colorBgContainer: '#ffffff',
           },
@@ -336,6 +345,7 @@ export default function Login() {
             colorBorder: '#cbd5e1',
             colorText: '#0f172a',
             colorTextPlaceholder: '#94a3b8',
+            activeBg: '#ffffff',
           },
           Button: {
             colorPrimary: '#2563eb',

@@ -528,8 +528,8 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
           <div className="flex items-center min-w-0 pr-2">
             {/* Logo for Responsive / Mobile screens (< lg) */}
             <div className="flex items-center lg:hidden shrink-0">
-              <Link to="/dashboard" className="no-underline flex items-center" title="Smart Meeting Decision Tracker">
-                <Logo variant="full" height={32} />
+              <Link to="/dashboard" className="no-underline flex items-center shrink-0" title="Smart Meeting Decision Tracker">
+                <Logo variant="full" height={28} />
               </Link>
             </div>
 
@@ -544,33 +544,21 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
             </div>
           </div>
 
-          {/* RIGHT SIDE: Quick Actions, Notifications, Help & Profile (Clean Minimalist Layout) */}
-          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0 ml-auto select-none">
+          {/* RIGHT SIDE: Quick Actions, Notifications, Theme & Profile */}
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0 ml-auto select-none">
 
             {/* 1. Quick Actions Dropdown Button */}
             <Dropdown menu={{ items: quickActionItems }} placement="bottomRight" trigger={['click']}>
               <button
                 type="button"
-                className="h-8 px-2.5 rounded-lg bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200/70 dark:hover:bg-slate-700/80 text-slate-800 dark:text-slate-200 font-semibold text-xs flex items-center gap-1.5 border-none cursor-pointer"
+                className="h-8 px-2 sm:px-2.5 rounded-lg bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200/70 dark:hover:bg-slate-700/80 text-slate-800 dark:text-slate-200 font-semibold text-xs flex items-center gap-1 border-none cursor-pointer"
+                title="Quick Actions"
               >
                 <FormOutlined className="text-blue-600 text-xs font-bold" />
-                <span className="hidden sm:inline font-semibold text-xs">Quick Actions</span>
+                <span className="hidden sm:inline font-semibold text-xs">Actions</span>
                 <DownOutlined className="text-[9px] text-slate-400" />
               </button>
             </Dropdown>
-
-            {/* 2. Admin Portal Button (Visible only on responsive / mobile screens < lg) */}
-            {isAdmin && (
-              <button
-                type="button"
-                onClick={() => navigate('/admin')}
-                className="flex lg:hidden h-8 px-2.5 rounded-lg bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200/70 dark:hover:bg-slate-700/80 text-slate-800 dark:text-slate-200 font-semibold text-xs items-center gap-1.5 border-none cursor-pointer"
-                title="Admin Management Portal"
-              >
-                <TeamOutlined className="text-amber-600 dark:text-amber-400 text-xs font-bold" />
-                <span className="font-semibold text-xs">Admin Portal</span>
-              </button>
-            )}
 
             {/* 2. Notification Bell Button */}
             <Popover
@@ -614,9 +602,9 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
               </button>
             </Tooltip>
 
-            {/* 4. User Profile Component (Desktop only) */}
+            {/* 4. User Profile Component */}
             <Dropdown menu={{ items: userMenuItems }} placement="bottomRight" trigger={['click']}>
-              <div className="hidden lg:flex h-8 px-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 items-center gap-1.5 cursor-pointer border-none select-none">
+              <div className="flex h-8 px-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 items-center gap-1.5 cursor-pointer border-none select-none">
                 <Avatar
                   size={28}
                   shape="circle"

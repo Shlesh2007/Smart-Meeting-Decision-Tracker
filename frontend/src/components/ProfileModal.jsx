@@ -5,7 +5,8 @@ import {
   UserOutlined, MailOutlined, IdcardOutlined, CalendarOutlined, 
   TeamOutlined, EditOutlined, SafetyCertificateOutlined, 
   LockOutlined, CheckOutlined, ArrowLeftOutlined, KeyOutlined,
-  DeleteOutlined, WarningOutlined, ExclamationCircleOutlined, CloseOutlined
+  DeleteOutlined, WarningOutlined, ExclamationCircleOutlined, CloseOutlined,
+  LogoutOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { useNavigate } from 'react-router-dom';
@@ -82,6 +83,22 @@ export const ProfileModal = ({ open, onClose, user }) => {
   }, [user, open, isEditing, form]);
 
   if (!user) return null;
+
+  const handleConfirmLogout = () => {
+    onClose();
+    Modal.confirm({
+      title: 'Sign Out Confirmation',
+      icon: <LogoutOutlined className="text-rose-500" />,
+      content: 'Are you sure you want to end your current session and log out?',
+      okText: 'Logout',
+      okType: 'danger',
+      cancelText: 'Cancel',
+      centered: true,
+      onOk() {
+        logout();
+      },
+    });
+  };
 
   const handleSaveProfile = async (values) => {
     setLoading(true);
@@ -244,7 +261,25 @@ export const ProfileModal = ({ open, onClose, user }) => {
             >
               Save Changes
             </Button>,
-          ] : null
+          ] : [
+            <Button
+              key="logout"
+              danger
+              type="default"
+              icon={<LogoutOutlined />}
+              onClick={handleConfirmLogout}
+              className="bg-rose-500/10 text-rose-600 hover:bg-rose-500 hover:text-white border-rose-200 font-bold text-xs"
+            >
+              Logout
+            </Button>,
+            <Button
+              key="close"
+              onClick={onClose}
+              className="font-semibold text-xs"
+            >
+              Close
+            </Button>
+          ]
         }
 
         width={560}

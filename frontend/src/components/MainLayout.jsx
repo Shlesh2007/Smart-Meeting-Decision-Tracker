@@ -25,6 +25,14 @@ export function MainLayout({ children }) {
     });
   };
 
+  useEffect(() => {
+    if (!showSidebar && typeof window !== 'undefined') {
+      document.documentElement.classList.remove('dark');
+      document.body.classList.remove('dark');
+      document.documentElement.style.colorScheme = 'light';
+    }
+  }, [showSidebar]);
+
   if (!showSidebar) {
     return (
       <main className="min-h-screen w-full bg-slate-100 text-slate-900">

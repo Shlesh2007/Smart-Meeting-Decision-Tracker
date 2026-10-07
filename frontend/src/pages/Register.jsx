@@ -16,6 +16,14 @@ export default function Register() {
   const [otpEmail, setOtpEmail] = useState('');
   const [form] = Form.useForm();
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      document.documentElement.classList.remove('dark');
+      document.body.classList.remove('dark');
+      document.documentElement.style.colorScheme = 'light';
+    }
+  }, []);
+
   // Send OTP inline to the specified email address
   const handleSendOtpInline = async () => {
     try {
@@ -142,6 +150,10 @@ export default function Register() {
           borderRadius: 16,
         },
         components: {
+          Form: {
+            labelColor: '#334155',
+            labelRequiredMarkColor: '#ef4444',
+          },
           Card: {
             colorBgContainer: '#ffffff',
           },
@@ -150,6 +162,7 @@ export default function Register() {
             colorBorder: '#cbd5e1',
             colorText: '#0f172a',
             colorTextPlaceholder: '#94a3b8',
+            activeBg: '#ffffff',
           },
           Button: {
             colorPrimary: '#2563eb',
