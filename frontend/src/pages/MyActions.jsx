@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { actionService } from '../services/api.js';
@@ -112,9 +112,15 @@ export default function MyActions() {
       .finally(() => setLoading(false));
   }, [isAdmin, isOwner, search, dateRange, searchParams]);
 
+  const prevParamsRef = useRef('');
+
   useEffect(() => {
-    fetchMyActions();
-  }, [fetchMyActions]);
+    const currentParamsKey = `${activeTab}-${search}-${dateRange ? dateRange.join(',') : ''}-${isAdmin}-${isOwner}`;
+    if (prevParamsRef.current !== currentParamsKey) {
+      prevParamsRef.current = currentParamsKey;
+      fetchMyActions();
+    }
+  }, [activeTab, search, dateRange, isAdmin, isOwner, fetchMyActions]);
 
 
   const handleStatusChange = async (actionItem, newStatus) => {

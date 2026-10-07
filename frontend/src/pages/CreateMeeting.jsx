@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { meetingService, userService, teamService } from '../services/api.js';
 import { getErrorMessage } from '../utils/errorHandler.js';
@@ -16,6 +16,7 @@ export default function CreateMeeting() {
   const [users, setUsers] = useState([]);
   const [teams, setTeams] = useState([]);
   const [submitting, setSubmitting] = useState(false);
+  const fetchedRef = useRef(false);
 
   // Form watch states
   const meetingType = Form.useWatch('meeting_type', form) || 'INTERNAL';
@@ -64,6 +65,9 @@ export default function CreateMeeting() {
   }, [selectedTeamId, teams, form]);
 
   useEffect(() => {
+    if (fetchedRef.current) return;
+    fetchedRef.current = true;
+
     Promise.all([
       userService.getUsers(),
       teamService.getTeams()

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { meetingService, discussionService, actionService } from '../services/api.js';
@@ -118,8 +118,13 @@ export default function MeetingDetail() {
     }
   }, [meetingId]);
 
+  const fetchedRef = useRef(null);
+
   useEffect(() => {
-    if (meetingId) loadData();
+    if (meetingId && fetchedRef.current !== meetingId) {
+      fetchedRef.current = meetingId;
+      loadData();
+    }
   }, [meetingId, loadData]);
 
   const handleCancelMeeting = async () => {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useTheme } from '../context/ThemeContext.jsx';
@@ -133,8 +133,13 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
       .finally(() => setLoadingNotifications(false));
   };
 
+  const notificationsFetchedRef = useRef(null);
+
   useEffect(() => {
-    fetchNotifications();
+    if (user && notificationsFetchedRef.current !== user.id) {
+      notificationsFetchedRef.current = user.id;
+      fetchNotifications();
+    }
   }, [user]);
 
   const unreadNotifications = notifications.filter((n) => !n.is_read);

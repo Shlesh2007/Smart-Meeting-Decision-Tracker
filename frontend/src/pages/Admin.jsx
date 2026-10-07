@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { userService, teamService, departmentRequestService } from '../services/api.js';
 import { LoadingSkeleton } from '../components/LoadingSkeleton.jsx';
@@ -38,6 +38,7 @@ export default function Admin() {
   const [editingTeam, setEditingTeam] = useState(null);
   const [selectedUserModal, setSelectedUserModal] = useState(null);
   const [teamForm] = Form.useForm();
+  const fetchedRef = useRef(false);
 
   const loadData = useCallback(() => {
     setLoading(true);
@@ -79,7 +80,10 @@ export default function Admin() {
   }, []);
 
   useEffect(() => {
-    if (isAdmin) loadData();
+    if (isAdmin && !fetchedRef.current) {
+      fetchedRef.current = true;
+      loadData();
+    }
   }, [isAdmin, loadData]);
 
 

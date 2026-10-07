@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { meetingService } from '../services/api.js';
 import { StatusBadge } from '../components/StatusBadge.jsx';
@@ -79,9 +79,15 @@ export default function Meetings() {
       .finally(() => setLoading(false));
   }, [page, pageSize, search, meetingType, status, dateRange, viewMode]);
 
+  const prevParamsRef = useRef('');
+
   useEffect(() => {
-    fetchMeetings();
-  }, [fetchMeetings]);
+    const currentParamsKey = `${page}-${pageSize}-${search}-${meetingType}-${status}-${dateRange ? dateRange.join(',') : ''}-${viewMode}`;
+    if (prevParamsRef.current !== currentParamsKey) {
+      prevParamsRef.current = currentParamsKey;
+      fetchMeetings();
+    }
+  }, [page, pageSize, search, meetingType, status, dateRange, viewMode, fetchMeetings]);
 
   const handleResetFilters = () => {
     setSearch('');
@@ -446,9 +452,10 @@ export default function Meetings() {
                   </div>
 
                   <div className="pt-1.5 text-[11px] text-slate-400 dark:text-slate-400 flex items-center justify-between border-t border-slate-100/60 dark:border-slate-700/40">
-                    <span>Created:</span>
+                    <span>CREATED AT: 
                     <span className="font-medium text-slate-600 dark:text-slate-300">
-                      {record.created_at ? dayjs(record.created_at).format('MMM D, YYYY [at] h:mm A') : '—'}
+                     <span></span> {record.created_at ? dayjs(record.created_at).format('MMM D, YYYY [at] h:mm A') : '—'}
+                    </span>
                     </span>
                   </div>
                 </div>

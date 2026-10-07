@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { analyticsService } from '../services/api.js';
@@ -158,8 +158,14 @@ export default function Dashboard() {
       .finally(() => setLoading(false));
   }, []);
 
+  const prevParamsRef = useRef('');
+
   useEffect(() => {
-    fetchDashboard(period, search, startDate, endDate, activityPeriod);
+    const currentParamsKey = `${period}-${search}-${startDate}-${endDate}-${activityPeriod}`;
+    if (prevParamsRef.current !== currentParamsKey) {
+      prevParamsRef.current = currentParamsKey;
+      fetchDashboard(period, search, startDate, endDate, activityPeriod);
+    }
   }, [period, search, startDate, endDate, activityPeriod, fetchDashboard]);
 
   const handleCardClick = (basePath) => {
