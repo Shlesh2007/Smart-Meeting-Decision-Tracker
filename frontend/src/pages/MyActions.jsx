@@ -213,10 +213,7 @@ export default function MyActions() {
       key: 'title',
       width: 380,
       render: (_, record) => (
-        <div
-          onClick={() => setViewDetailActionItem(record)}
-          className="space-y-1 min-w-0 cursor-pointer group"
-        >
+        <div className="space-y-1 min-w-0 group">
           <span className="font-bold text-slate-900 dark:text-slate-100 block text-xs sm:text-sm leading-snug">
             {record.title}
           </span>
@@ -566,6 +563,15 @@ export default function MyActions() {
                 pagination={{ pageSize: 10 }}
                 scroll={{ x: 1050 }}
                 className="w-full"
+                onRow={(record) => ({
+                  onClick: (e) => {
+                    if (e.target && (e.target.closest('.ant-select') || e.target.closest('.ant-btn') || e.target.closest('a'))) {
+                      return;
+                    }
+                    setViewDetailActionItem(record);
+                  },
+                  className: 'cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors',
+                })}
               />
             </div>
 

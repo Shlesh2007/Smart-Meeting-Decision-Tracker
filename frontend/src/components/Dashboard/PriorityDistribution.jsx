@@ -130,7 +130,7 @@ export const PriorityDistribution = ({ priorityDistribution = {} }) => {
             <span className="text-lg font-black text-slate-900 dark:text-white tracking-tight leading-none">
               {total}
             </span>
-            <span className="text-[8px] uppercase font-bold text-slate-400 mt-0.5">Total Items</span>
+            <span className="text-[8px] uppercase font-bold text-slate-500 dark:text-slate-300 mt-0.5">Total Items</span>
           </div>
 
           {/* Controlled HTML Popover */}
@@ -224,7 +224,7 @@ export const PriorityDistribution = ({ priorityDistribution = {} }) => {
                 </div>
                 <div className="flex items-center space-x-1 text-[10px] shrink-0 ml-1.5">
                   <span className="font-bold text-slate-900 dark:text-slate-100">{count}</span>
-                  <span className="text-slate-400 font-medium">({percentage}%)</span>
+                  <span className="text-slate-600 dark:text-slate-300 font-semibold">({percentage}%)</span>
                 </div>
               </button>
             );
@@ -233,9 +233,9 @@ export const PriorityDistribution = ({ priorityDistribution = {} }) => {
       </div>
 
       {/* Footer Summary */}
-      <div className="pt-2 border-t border-slate-100 dark:border-slate-800 text-[10px] text-slate-400 flex items-center justify-between">
-        <span>Urgent Priority</span>
-        <span className="font-bold text-red-600 dark:text-red-400">
+      <div className="pt-2 border-t border-slate-100 dark:border-slate-800 text-[10px] flex items-center justify-between">
+        <span className="font-semibold text-slate-600 dark:text-slate-300">Urgent Priority</span>
+        <span className="font-extrabold text-red-600 dark:text-rose-400">
           {(priorityDistribution.CRITICAL || 0) + (priorityDistribution.HIGH || 0)} Items
         </span>
       </div>

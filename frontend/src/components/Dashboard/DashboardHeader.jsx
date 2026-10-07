@@ -163,7 +163,7 @@ export const DashboardHeader = ({
             <h1 className="text-base sm:text-lg font-extrabold text-slate-900 dark:text-white m-0 tracking-tight leading-snug">
               {greetingTime}, {userName}! 👋
             </h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400 m-0">
+            <p className="text-xs text-slate-600 dark:text-slate-300 font-medium m-0">
               {user?.role === 'ADMIN' || user?.role === 'OWNER'
                 ? "Here's the organization-wide meeting & employee action item performance dashboard."
                 : "Here's your personal meeting & action item workspace overview."}
@@ -191,7 +191,7 @@ export const DashboardHeader = ({
               type="primary"
               size="middle"
               icon={<PlusOutlined />}
-              className="bg-slate-900 hover:bg-slate-800 text-white font-bold !rounded-xl border-none shadow-xs text-xs h-9 px-2.5 sm:px-3.5 w-full flex items-center justify-center truncate"
+              className="bg-blue-600 dark:bg-blue-600 hover:bg-blue-500 dark:hover:bg-blue-500 text-white font-bold !rounded-xl border-none shadow-xs text-xs h-9 px-2.5 sm:px-3.5 w-full flex items-center justify-center truncate"
             >
               <span className="text-xs font-bold">Schedule Meeting</span>
             </Button>

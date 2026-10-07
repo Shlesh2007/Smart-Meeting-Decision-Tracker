@@ -151,7 +151,7 @@ export const NeedsAttention = ({ overdueList = [], urgentList = [], loading = fa
               e.stopPropagation();
               handleViewAction(item);
             }}
-            className="bg-slate-900 hover:bg-slate-800 font-semibold rounded-md text-[10px] border-none px-2 py-0.5 h-6 flex items-center gap-1 text-white cursor-pointer"
+            className="bg-slate-800 dark:bg-slate-700/80 hover:bg-slate-700 dark:hover:bg-slate-600 font-semibold rounded-md text-[10px] border-none px-2 py-0.5 h-6 flex items-center gap-1 text-white cursor-pointer"
           >
             <span>View</span>
             <ArrowRightOutlined className="text-[8px]" />

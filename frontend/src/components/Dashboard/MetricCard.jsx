@@ -82,7 +82,7 @@ export const MetricCard = ({
         >
           {icon}
         </div>
-        <span className="text-[10px] sm:text-[11px] uppercase tracking-wider font-bold text-slate-600 dark:text-slate-300 truncate">
+        <span className="text-[10px] sm:text-[11px] uppercase tracking-wider font-extrabold text-slate-700 dark:text-slate-200 truncate">
           {title}
         </span>
       </div>
@@ -97,13 +97,13 @@ export const MetricCard = ({
         <div className="mt-1 pt-1.5 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-center space-x-1 text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 min-w-0">
           {subtitle && (
             <span
-              className={`font-bold px-2.5 py-0.5 rounded-full border shrink-0 leading-none text-[9px] sm:text-[10px] ${currentTheme.badge}`}
+              className={`font-bold px-2 py-0.5 rounded-full border shrink-0 leading-none text-[9px] sm:text-[10px] ${currentTheme.badge}`}
             >
               {subtitle}
             </span>
           )}
           {trend && (
-            <span className="hidden xl:inline-block truncate leading-none text-slate-400 dark:text-slate-500">
+            <span className="truncate leading-none text-slate-600 dark:text-slate-300 font-semibold">
               {trend}
             </span>
           )}

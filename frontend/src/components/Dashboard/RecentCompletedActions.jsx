@@ -116,7 +116,7 @@ export const RecentCompletedActions = () => {
                       />
                     }
                     title={
-                      <Text className="font-bold text-xs text-slate-900 dark:text-slate-100 truncate block group-hover:text-slate-900 dark:group-hover:text-slate-900 transition-colors">
+                      <Text className="font-bold text-xs text-slate-900 dark:text-slate-100 truncate block group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                         {item.title}
                       </Text>
                     }

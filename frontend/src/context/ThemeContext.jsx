@@ -147,9 +147,18 @@ export const ThemeProvider = ({ children }) => {
           algorithm: isDark ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
           token: {
             fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
-            colorPrimary: '#2563eb',
-            colorInfo: '#2563eb',
-            borderRadius: 12,
+            colorPrimary: '#3b82f6',
+            colorInfo: '#3b82f6',
+            colorBgBase: isDark ? '#0b0f19' : '#f8fafc',
+            colorBgContainer: isDark ? '#131c2e' : '#ffffff',
+            colorBgElevated: isDark ? '#1a263d' : '#ffffff',
+            colorBorder: isDark ? '#233044' : '#cbd5e1',
+            colorBorderSecondary: isDark ? '#1a2436' : '#e2e8f0',
+            colorText: isDark ? '#f1f5f9' : '#0f172a',
+            colorTextHeading: isDark ? '#ffffff' : '#0f172a',
+            colorTextSecondary: isDark ? '#94a3b8' : '#64748b',
+            colorTextDescription: isDark ? '#64748b' : '#94a3b8',
+            borderRadius: 14,
             controlHeight: 40,
             marginLG: 14,
             marginMD: 10,
@@ -158,10 +167,15 @@ export const ThemeProvider = ({ children }) => {
           },
           components: {
             Button: {
-              colorPrimary: isDark ? '#3b82f6' : '#0f172a',
-              colorPrimaryHover: isDark ? '#60a5fa' : '#1e293b',
-              colorPrimaryActive: isDark ? '#2563eb' : '#020617',
+              colorPrimary: isDark ? '#3b82f6' : '#2563eb',
+              colorPrimaryHover: isDark ? '#60a5fa' : '#1d4ed8',
+              colorPrimaryActive: isDark ? '#2563eb' : '#1e40af',
               algorithm: true,
+            },
+            Card: {
+              paddingLG: 20,
+              colorBgContainer: isDark ? '#131c2e' : '#ffffff',
+              colorBorderSecondary: isDark ? '#233044' : '#f1f5f9',
             },
             Form: {
               algorithm: true,
@@ -172,26 +186,48 @@ export const ThemeProvider = ({ children }) => {
               labelColor: isDark ? '#cbd5e1' : '#334155',
               labelRequiredMarkColor: '#ef4444',
             },
-            Space: {
-              algorithm: true,
-            },
-            Card: {
-              paddingLG: 20,
-            },
             Modal: {
               paddingContentHorizontalLG: 20,
+              colorBgElevated: isDark ? '#162032' : '#ffffff',
             },
             Table: {
               cellPaddingBlock: 12,
               cellPaddingInline: 14,
+              colorBgContainer: isDark ? '#131c2e' : '#ffffff',
+              headerBg: isDark ? '#1a263d' : '#f8fafc',
+              headerColor: isDark ? '#f8fafc' : '#0f172a',
+              rowHoverBg: isDark ? '#1a263d' : '#f1f5f9',
+            },
+            Input: {
+              colorBgContainer: isDark ? '#1a263d' : '#ffffff',
+              colorBorder: isDark ? '#2b394e' : '#cbd5e1',
+              colorText: isDark ? '#f1f5f9' : '#0f172a',
+            },
+            Select: {
+              colorBgContainer: isDark ? '#1a263d' : '#ffffff',
+              colorBorder: isDark ? '#2b394e' : '#cbd5e1',
+              colorText: isDark ? '#f1f5f9' : '#0f172a',
+            },
+            Dropdown: {
+              colorBgElevated: isDark ? '#162032' : '#ffffff',
             },
             Checkbox: {
-              colorPrimary: isDark ? '#3b82f6' : '#0f172a',
-              colorPrimaryHover: isDark ? '#60a5fa' : '#1e293b',
-              colorBorder: isDark ? '#64748b' : '#475569',
+              colorPrimary: isDark ? '#3b82f6' : '#2563eb',
+              colorPrimaryHover: isDark ? '#60a5fa' : '#1d4ed8',
+              colorBorder: isDark ? '#475569' : '#94a3b8',
             },
             Calendar: {
               algorithm: true,
+              colorBgContainer: isDark ? '#131c2e' : '#ffffff',
+            },
+            Menu: {
+              algorithm: true,
+              itemBg: 'transparent',
+              itemColor: isDark ? '#94a3b8' : '#475569',
+              itemHoverColor: isDark ? '#ffffff' : '#0f172a',
+              itemHoverBg: isDark ? '#1e293b' : '#f1f5f9',
+              itemSelectedColor: isDark ? '#ffffff' : '#1d4ed8',
+              itemSelectedBg: isDark ? '#1d4ed8' : '#e2e8f0',
             },
           },
         }}

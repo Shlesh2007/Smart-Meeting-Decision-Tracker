@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Modal, Avatar, Tag, Descriptions, Button, Form, Input, Alert, App } from 'antd';
+import { Modal, Avatar, Tag, Descriptions, Button, Form, Input, Alert, App, Grid } from 'antd';
 import { 
   UserOutlined, MailOutlined, IdcardOutlined, CalendarOutlined, 
   TeamOutlined, EditOutlined, SafetyCertificateOutlined, 
@@ -14,7 +14,11 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { authService, departmentRequestService } from '../services/api.js';
 import { getErrorMessage } from '../utils/errorHandler.js';
 
+const { useBreakpoint } = Grid;
+
 export const ProfileModal = ({ open, onClose, user }) => {
+  const screens = useBreakpoint();
+  const isDesktop = screens.md ?? (typeof window !== 'undefined' ? window.innerWidth >= 768 : true);
   const navigate = useNavigate();
   const { message } = App.useApp();
   const { logout, refreshUser } = useAuth();
@@ -261,7 +265,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
             >
               Save Changes
             </Button>,
-          ] : [
+          ] : (!isDesktop ? [
             <Button
               key="logout"
               danger
@@ -272,7 +276,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
             >
               Logout
             </Button>
-          ]
+          ] : null)
         }
 
         width={560}

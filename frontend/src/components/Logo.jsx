@@ -94,11 +94,22 @@ export function Logo({ variant = 'full', height = 46, className = '', isDark = f
 
       <g transform="translate(100, 0)">
         <text x="0" y="46" fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" fontWeight="800" fontSize="36" letterSpacing="-0.5">
-          <tspan className={isDark ? "fill-white" : "fill-slate-900"} fill={isDark ? "#ffffff" : "#0f172a"}>Smart </tspan>
+          <tspan fill="currentColor" className={isDark ? "text-white" : "text-slate-900 dark:text-white"}>
+            Smart{' '}
+          </tspan>
           <tspan fill="#2563eb">Meeting</tspan>
         </text>
 
-        <text x="2" y="68" fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" fontWeight="700" fontSize="14" className={isDark ? "fill-slate-300" : "fill-slate-700"} fill={isDark ? "#94a3b8" : "#334155"} letterSpacing="4">
+        <text
+          x="2"
+          y="68"
+          fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+          fontWeight="700"
+          fontSize="14"
+          fill="currentColor"
+          className={isDark ? "text-slate-300" : "text-slate-600 dark:text-slate-300"}
+          letterSpacing="4"
+        >
           DECISION TRACKER
         </text>
       </g>

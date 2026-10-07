@@ -537,7 +537,7 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
                   icon={<LogoutOutlined />}
                   onClick={handleConfirmLogout}
                   block
-                  className="rounded-lg bg-rose-500/10 text-rose-600 hover:bg-rose-500 hover:text-white border-rose-200 text-xs font-bold whitespace-nowrap overflow-hidden"
+                  className="rounded-lg bg-rose-500/10 text-rose-600 hover:bg-rose-500 hover:text-white border-rose-200 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-400 dark:hover:bg-rose-600 dark:hover:text-white text-xs font-bold whitespace-nowrap overflow-hidden"
                 >
                   Logout
                 </Button>

@@ -145,7 +145,7 @@ export const RecentDecisionsCard = () => {
                   >
                     <div className="w-full min-w-0 space-y-1">
                       <Flex justify="space-between" align="center" gap={6}>
-                        <Text className="font-bold text-xs text-slate-900 dark:text-slate-100 truncate block group-hover:text-black-600 dark:group-hover:text-indigo-400 transition-colors max-w-[170px]">
+                        <Text className="font-bold text-xs text-slate-900 dark:text-slate-100 truncate block group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors max-w-[170px]">
                           {item.decision || 'Untitled Decision Record'}
                         </Text>
                         <Tag color="geekblue" className="!mr-0 text-[9px] font-extrabold rounded-md px-1 py-0">

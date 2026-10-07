@@ -86,21 +86,21 @@ export const UpcomingMeetings = ({ meetings: initialMeetings }) => {
               )}
             </div>
 
-            <div className="flex items-center space-x-2 text-[10px] text-slate-500 dark:text-slate-400 flex-wrap">
+            <div className="flex items-center space-x-2 text-[10px] text-slate-500 dark:text-slate-300 font-medium flex-wrap">
               <span className="flex items-center space-x-1">
-                <CalendarOutlined className="text-slate-400 text-[9px]" />
-                <span>{dateStr}</span>
+                <CalendarOutlined className="text-slate-400 dark:text-slate-400 text-[9px]" />
+                <span className="dark:text-slate-300">{dateStr}</span>
               </span>
 
               {m.location && (
                 <span className="flex items-center space-x-1 truncate max-w-[120px]">
                   {isOnline ? <VideoCameraOutlined className="text-blue-500 text-[9px]" /> : <EnvironmentOutlined className="text-rose-500 text-[9px]" />}
-                  <span className="truncate">{m.location}</span>
+                  <span className="truncate dark:text-slate-300">{m.location}</span>
                 </span>
               )}
 
               {m.created_at && (
-                <span className="text-[9px] text-slate-400 font-medium">
+                <span className="text-[9px] text-slate-400 dark:text-slate-400 font-medium">
                   • Created: {dayjs(m.created_at).format('MMM D, h:mm A')}
                 </span>
               )}
@@ -113,7 +113,7 @@ export const UpcomingMeetings = ({ meetings: initialMeetings }) => {
             <Button
               type="primary"
               size="small"
-              className="bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-md text-[10px] border-none px-2 py-0.5 h-6 flex items-center gap-1"
+              className="bg-slate-800 dark:bg-slate-700/80 hover:bg-slate-700 dark:hover:bg-slate-600 text-white font-semibold rounded-md text-[10px] border-none px-2 py-0.5 h-6 flex items-center gap-1"
             >
               <span>View</span>
               <ArrowRightOutlined className="text-[8px]" />
@@ -197,7 +197,7 @@ export const UpcomingMeetings = ({ meetings: initialMeetings }) => {
               <div className="space-y-1">
                 <div className="flex items-center space-x-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
-                  <span className="text-[10px] uppercase tracking-wider font-extrabold text-slate-500">
+                  <span className="text-[10px] uppercase tracking-wider font-extrabold text-slate-500 dark:text-slate-400">
                     Upcoming ({groupedMeetings.future.length})
                   </span>
                 </div>
@@ -209,9 +209,9 @@ export const UpcomingMeetings = ({ meetings: initialMeetings }) => {
       </div>
 
       {/* Footer */}
-      <div className="pt-2 border-t border-slate-100 dark:border-slate-800 text-[10px] text-slate-400 flex items-center justify-between">
-        <span>Schedule</span>
-        <span className="font-semibold text-slate-700 dark:text-slate-300">
+      <div className="pt-2 border-t border-slate-100 dark:border-slate-800 text-[10px] flex items-center justify-between">
+        <span className="font-semibold text-slate-600 dark:text-slate-300">Schedule</span>
+        <span className="font-extrabold text-slate-900 dark:text-slate-100">
           {meetings.length} Total Upcoming
         </span>
       </div>

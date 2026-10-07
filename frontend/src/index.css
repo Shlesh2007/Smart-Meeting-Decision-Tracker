@@ -673,6 +673,27 @@ aside .ant-menu-inline-collapsed .ant-menu-title-content {
   border-inline-end-color: transparent !important;
 }
 
+/* Dark mode Ant Design Sidebar Active Menu Pill High-Contrast Readability */
+.dark .ant-menu-item-selected {
+  background-color: #1d4ed8 !important;
+  color: #ffffff !important;
+}
+
+.dark .ant-menu-item-selected .ant-menu-title-content,
+.dark .ant-menu-item-selected .anticon,
+.dark .ant-menu-item-selected a {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+
+/* Ant Design Disabled Select Dark Mode Solid Background */
+.dark .ant-select-disabled .ant-select-selector {
+  background-color: #1a263d !important;
+  color: #94a3b8 !important;
+  border-color: #2b394e !important;
+  opacity: 1 !important;
+}
+
 /* Ant Design Custom Calendar Grid Styling for Continuous Multi-Day Spans */
 .meeting-calendar-custom .ant-picker-calendar-date {
   padding: 4px 0 !important;
