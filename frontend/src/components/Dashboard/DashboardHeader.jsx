@@ -191,7 +191,7 @@ export const DashboardHeader = ({
               type="primary"
               size="middle"
               icon={<PlusOutlined className="text-white" />}
-              className="bg-slate-900 dark:bg-slate-700 hover:bg-slate-800 dark:hover:bg-slate-600 text-white dark:text-white font-bold !rounded-xl border-none shadow-xs text-xs h-9 px-2.5 sm:px-3.5 w-full flex items-center justify-center truncate"
+              className="bg-[#2563eb] hover:bg-[#3b82f6] active:bg-[#1d4ed8] text-white font-bold !rounded-xl border-none shadow-xs text-xs h-9 px-2.5 sm:px-3.5 w-full flex items-center justify-center truncate"
             >
               <span className="text-xs font-bold text-white">Schedule Meeting</span>
             </Button>

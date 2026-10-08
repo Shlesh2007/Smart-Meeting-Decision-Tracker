@@ -266,7 +266,7 @@ export default function Register() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3">
                   <Form.Item
                     name="first_name"
-                    label={<span className="font-semibold text-slate-700 dark:text-white text-xs uppercase tracking-wider">First Name</span>}
+                    label={<span className="font-semibold text-slate-700 text-xs uppercase tracking-wider">First Name</span>}
                     rules={[{ required: true, message: 'Please enter first name' }]}
                     className="mb-2"
                   >
@@ -275,7 +275,7 @@ export default function Register() {
 
                   <Form.Item
                     name="last_name"
-                    label={<span className="font-semibold text-slate-700 dark:text-white text-xs uppercase tracking-wider">Last Name</span>}
+                    label={<span className="font-semibold text-slate-700 text-xs uppercase tracking-wider">Last Name</span>}
                     rules={[{ required: true, message: 'Please enter last name' }]}
                     className="mb-2"
                   >
@@ -285,7 +285,7 @@ export default function Register() {
 
                 <Form.Item
                   name="username"
-                  label={<span className="font-semibold text-slate-700 dark:text-white text-xs uppercase tracking-wider">Username</span>}
+                  label={<span className="font-semibold text-slate-700 text-xs uppercase tracking-wider">Username</span>}
                   rules={[{ required: true, message: 'Please enter username' }]}
                   className="mb-2"
                 >
@@ -294,7 +294,7 @@ export default function Register() {
 
                 <Form.Item
                   name="email"
-                  label={<span className="font-semibold text-slate-700 dark:text-white text-xs uppercase tracking-wider">Email Address</span>}
+                  label={<span className="font-semibold text-slate-700 text-xs uppercase tracking-wider">Email Address</span>}
                   rules={[
                     { required: true, message: 'Please enter email address' },
                     { type: 'email', message: 'Invalid email address format' }
@@ -363,7 +363,7 @@ export default function Register() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3">
                   <Form.Item
                     name="password"
-                    label={<span className="font-semibold text-slate-700 dark:text-white text-xs uppercase tracking-wider">Password</span>}
+                    label={<span className="font-semibold text-slate-700 text-xs uppercase tracking-wider">Password</span>}
                     rules={[
                       { required: true, message: 'Please enter password' },
                       { min: 6, message: 'Password must be at least 6 characters' }
@@ -375,7 +375,7 @@ export default function Register() {
 
                   <Form.Item
                     name="password_confirm"
-                    label={<span className="font-semibold text-slate-700 dark:text-white text-xs uppercase tracking-wider">Confirm Password</span>}
+                    label={<span className="font-semibold text-slate-700 text-xs uppercase tracking-wider">Confirm Password</span>}
                     dependencies={['password']}
                     rules={[
                       { required: true, message: 'Please enter confirm password' },

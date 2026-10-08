@@ -1022,6 +1022,19 @@ aside .ant-menu-inline-collapsed .ant-menu-title-content {
 }
 
 /* Auth Page Inputs & Browser Autofill Override (Guarantees pure white inputs, uniform 14px font size & dark text across idle, focused, and autofill states) */
+.auth-card .ant-form-item .ant-form-item-label > label,
+.auth-card .ant-form-item .ant-form-item-label > label *,
+.auth-card .ant-form-item label,
+.auth-card .ant-form-item label *,
+.auth-card .ant-form-item .ant-form-item-label span,
+.dark .auth-card .ant-form-item .ant-form-item-label > label,
+.dark .auth-card .ant-form-item .ant-form-item-label > label *,
+.dark .auth-card .ant-form-item label,
+.dark .auth-card .ant-form-item label *,
+.dark .auth-card .ant-form-item .ant-form-item-label span {
+  color: #334155 !important;
+}
+
 .auth-card .ant-input-affix-wrapper,
 .auth-card .ant-input,
 .auth-card input,
@@ -1066,4 +1079,98 @@ input:-webkit-autofill:active,
   font-size: 14px !important;
   line-height: 1.5 !important;
   transition: background-color 5000s ease-in-out 0s !important;
+}
+
+/* ==================================================
+   SMART MEETING ENTERPRISE DARK MODE COLOR SYSTEM
+   ================================================== */
+html.dark, body.dark, .dark {
+  background-color: #080F1F !important;
+  color: #F8FAFC !important;
+}
+
+.dark aside,
+.dark .sidebar-container {
+  background-color: #0B1428 !important;
+  border-color: #22314D !important;
+}
+
+.dark header,
+.dark .navbar-container {
+  background-color: #111C31 !important;
+  border-color: #22314D !important;
+}
+
+.dark .ant-card,
+.dark .dashboard-card,
+.dark .bg-slate-900,
+.dark .bg-slate-800,
+.dark .bg-slate-800\/80,
+.dark .bg-slate-800\/90,
+.dark .bg-slate-800\/50,
+.dark .bg-slate-900\/50 {
+  background-color: #101A2E !important;
+  border-color: #22314D !important;
+}
+
+.dark .ant-card:hover,
+.dark .dashboard-card:hover,
+.dark .bg-slate-800:hover,
+.dark .hover\:bg-slate-800\/80:hover {
+  background-color: #16233D !important;
+}
+
+.dark .ant-input,
+.dark .ant-input-affix-wrapper,
+.dark .ant-select-selector,
+.dark .ant-picker,
+.dark input {
+  background-color: #111E35 !important;
+  border-color: #22314D !important;
+  color: #F8FAFC !important;
+}
+
+.dark .border-slate-800,
+.dark .border-slate-700,
+.dark .border-slate-800\/80,
+.dark .border-slate-700\/80 {
+  border-color: #22314D !important;
+}
+
+.dark .divide-slate-800 > :not([hidden]) ~ :not([hidden]),
+.dark .divide-slate-700 > :not([hidden]) ~ :not([hidden]) {
+  border-color: #1B2940 !important;
+}
+
+.dark .text-slate-100,
+.dark .text-slate-200,
+.dark .text-white {
+  color: #F8FAFC !important;
+}
+
+.dark .text-slate-300,
+.dark .text-slate-400 {
+  color: #CBD5E1 !important;
+}
+
+.dark .text-slate-500 {
+  color: #94A3B8 !important;
+}
+
+.dark .text-slate-600 {
+  color: #64748B !important;
+}
+
+/* Sidebar Active Navigation in Dark Mode */
+.dark .ant-menu-item-selected {
+  background-color: #16233D !important;
+  color: #F8FAFC !important;
+  border-left: 3px solid #2563EB !important;
+}
+
+.dark .ant-menu-item-selected .ant-menu-title-content,
+.dark .ant-menu-item-selected .anticon,
+.dark .ant-menu-item-selected a {
+  color: #F8FAFC !important;
+  font-weight: 700 !important;
 }

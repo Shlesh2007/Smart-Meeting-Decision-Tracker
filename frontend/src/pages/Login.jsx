@@ -415,7 +415,7 @@ export default function Login() {
               >
                 <Form.Item
                   name="username"
-                  label={<span className="font-semibold text-slate-700 dark:text-white text-xs uppercase tracking-wider">Username</span>}
+                  label={<span className="font-semibold text-slate-700 text-xs uppercase tracking-wider">Username</span>}
                   rules={[{ required: true, message: 'Please enter username' }]}
                   className="mb-4"
                 >
@@ -435,7 +435,7 @@ export default function Login() {
 
                 <Form.Item
                   name="password"
-                  label={<span className="font-semibold text-slate-700 dark:text-white text-xs uppercase tracking-wider">Password</span>}
+                  label={<span className="font-semibold text-slate-700 text-xs uppercase tracking-wider">Password</span>}
                   rules={[{ required: true, message: 'Please enter password' }]}
                   className="mb-1"
                 >

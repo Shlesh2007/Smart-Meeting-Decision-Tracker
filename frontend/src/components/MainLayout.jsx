@@ -36,7 +36,7 @@ export function MainLayout({ children }) {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#0b0f19] text-slate-900 dark:text-slate-100 flex flex-col antialiased selection:bg-blue-500 selection:text-white w-full max-w-full">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#080f1f] text-slate-900 dark:text-[#f8fafc] flex flex-col antialiased selection:bg-[#2563eb] selection:text-white w-full max-w-full">
       <Navbar collapsed={collapsed} onToggleSidebar={handleToggleSidebar} />
       <div className={`flex-1 w-full max-w-full pt-12 sm:pt-14 lg:pt-16 transition-[padding-left] duration-300 ease-in-out ${collapsed ? 'lg:pl-16' : 'lg:pl-64'}`}>
         <main className="w-full max-w-[1600px] mx-auto px-3 sm:px-6 lg:px-8 pt-3 sm:pt-5 lg:pt-6 pb-16 sm:pb-20 lg:pb-6 overflow-x-hidden">
