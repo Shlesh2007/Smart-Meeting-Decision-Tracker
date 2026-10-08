@@ -94,7 +94,7 @@ export function Logo({ variant = 'full', height = 46, className = '', isDark = f
 
       <g transform="translate(100, 0)">
         <text x="0" y="46" fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" fontWeight="800" fontSize="36" letterSpacing="-0.5">
-          <tspan className="fill-slate-900 dark:fill-white" fill={isDark ? "#ffffff" : undefined}>
+          <tspan fill={isDark ? "#ffffff" : "#0f172a"}>
             Smart{' '}
           </tspan>
           <tspan fill="#2563eb">Meeting</tspan>
@@ -106,8 +106,7 @@ export function Logo({ variant = 'full', height = 46, className = '', isDark = f
           fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
           fontWeight="700"
           fontSize="14"
-          className="fill-slate-600 dark:fill-slate-400"
-          fill={isDark ? "#94a3b8" : undefined}
+          fill={isDark ? "#94a3b8" : "#475569"}
           letterSpacing="4"
         >
           DECISION TRACKER
