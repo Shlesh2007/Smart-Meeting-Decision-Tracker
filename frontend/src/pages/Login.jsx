@@ -495,7 +495,7 @@ export default function Login() {
                   Google
                 </Button>
                 <Button
-                  icon={<GithubOutlined className="text-slate-800 text-base group-hover:text-white transition-colors" />}
+                  icon={<GithubOutlined className="text-slate-800 text-base group-hover:!text-white group-hover:!fill-white transition-colors" />}
                   onClick={handleGithubOAuth}
                   loading={oauthLoading === 'github'}
                   disabled={submitting || Boolean(oauthLoading)}
