@@ -390,7 +390,7 @@ export default function Register() {
                     ]}
                     className="mb-3"
                   >
-                    <Input.Password id="password_confirm" name="password_confirm" prefix={<LockOutlined className="text-slate-400 mr-1.5" />} placeholder="Confirm password" className="rounded-xl border-slate-300 h-10 text-sm" />
+                    <Input id="password_confirm" name="password_confirm" prefix={<LockOutlined className="text-slate-400 mr-1.5" />} placeholder="Confirm password" className="rounded-xl border-slate-300 h-10 text-sm" />
                   </Form.Item>
                 </div>
 
