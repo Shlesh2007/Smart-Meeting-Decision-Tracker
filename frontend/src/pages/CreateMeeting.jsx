@@ -671,7 +671,7 @@ export default function CreateMeeting() {
                 <Link to="/dashboard" className="no-underline">
                   <Button className="rounded-xl">Cancel</Button>
                 </Link>
-                <Button type="primary" htmlType="submit" loading={submitting} className="bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl border-none">
+                <Button type="primary" htmlType="submit" loading={submitting} className="bg-slate-900 hover:bg-slate-800 dark:bg-slate-100 dark:hover:bg-white text-white dark:text-slate-900 font-semibold rounded-xl border-none">
                   Schedule Meeting
                 </Button>
               </div>

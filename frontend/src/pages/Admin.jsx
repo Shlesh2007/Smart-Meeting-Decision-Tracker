@@ -1,16 +1,18 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
-import { userService, teamService, departmentRequestService } from '../services/api.js';
+import { userService, teamService, departmentRequestService, authService } from '../services/api.js';
 import { LoadingSkeleton } from '../components/LoadingSkeleton.jsx';
 import { ParticipantProfileModal } from '../components/ParticipantProfileModal.jsx';
 import { getErrorMessage } from '../utils/errorHandler.js';
 import {
-  Card, Table, Tag, Button, Select, Modal, Form, Input, message, Tabs, Alert, Avatar, Popconfirm, Tooltip
+  Card, Table, Tag, Button, Select, Modal, Form, Input, message, Tabs, Alert, Avatar, Popconfirm, Tooltip, App
 } from 'antd';
 import {
   TeamOutlined, UserOutlined, PlusOutlined, SafetyOutlined, LockOutlined,
-  EditOutlined, DeleteOutlined, UsergroupAddOutlined, CrownOutlined, CheckOutlined, CloseOutlined, SolutionOutlined, EyeOutlined
+  EditOutlined, DeleteOutlined, UsergroupAddOutlined, CrownOutlined, CheckOutlined, CloseOutlined, SolutionOutlined, EyeOutlined,
+  WarningOutlined, ExclamationCircleOutlined
 } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
 
 const getRoleTag = (role) => {
@@ -28,7 +30,9 @@ const getRoleTag = (role) => {
 };
 
 export default function Admin() {
-  const { user, isOwner, isAdmin } = useAuth();
+  const { user, isOwner, isAdmin, logout } = useAuth();
+  const { message: antMessage } = App.useApp();
+  const navigate = useNavigate();
   const [users, setUsers] = useState([]);
   const [teams, setTeams] = useState([]);
   const [deptRequests, setDeptRequests] = useState([]);
@@ -39,6 +43,39 @@ export default function Admin() {
   const [selectedUserModal, setSelectedUserModal] = useState(null);
   const [teamForm] = Form.useForm();
   const fetchedRef = useRef(false);
+
+  // Organization Deletion State
+  const [showOrgDeleteModal, setShowOrgDeleteModal] = useState(false);
+  const [orgDeleteConfirmText, setOrgDeleteConfirmText] = useState('');
+  const [orgDeletePassword, setOrgDeletePassword] = useState('');
+  const [orgDeleteLoading, setOrgDeleteLoading] = useState(false);
+  const [orgDeleteError, setOrgDeleteError] = useState('');
+
+  const resetOrgDeleteForm = () => {
+    setShowOrgDeleteModal(false);
+    setOrgDeleteConfirmText('');
+    setOrgDeletePassword('');
+    setOrgDeleteError('');
+  };
+
+  const handleDeleteOrganization = async () => {
+    setOrgDeleteError('');
+    setOrgDeleteLoading(true);
+    try {
+      await authService.deleteOrganization({
+        password: orgDeletePassword,
+        confirmation: orgDeleteConfirmText.trim().toUpperCase(),
+      });
+      antMessage.success('Your organization and all associated data have been permanently deleted.');
+      resetOrgDeleteForm();
+      logout();
+      navigate('/login');
+    } catch (err) {
+      setOrgDeleteError(getErrorMessage(err, 'Failed to delete organization.'));
+    } finally {
+      setOrgDeleteLoading(false);
+    }
+  };
 
   const loadData = useCallback(() => {
     setLoading(true);
@@ -798,6 +835,126 @@ export default function Admin() {
         onClose={() => setSelectedUserModal(null)}
         user={selectedUserModal}
       />
+
+      {/* Organization Danger Zone — Owner Only */}
+      {isOwner && (
+        <div className="mt-6 bg-red-50/80 dark:bg-red-950/20 border border-red-200 dark:border-red-900/50 rounded-2xl p-4 sm:p-5">
+          <div className="flex items-start sm:items-center justify-between gap-3 flex-col sm:flex-row">
+            <div className="flex items-start space-x-3">
+              <WarningOutlined className="text-red-600 dark:text-red-400 text-xl shrink-0 mt-0.5" />
+              <div>
+                <h3 className="font-bold text-red-900 dark:text-red-300 text-sm m-0 leading-tight">Organization Danger Zone</h3>
+                <p className="text-xs text-red-700 dark:text-red-400 m-0 mt-0.5 leading-relaxed max-w-md">
+                  Permanently delete the organization and all its shared data — meetings, decisions, action items, teams, and all members. <strong>This cannot be undone.</strong>
+                </p>
+              </div>
+            </div>
+            <Button
+              danger
+              type="primary"
+              icon={<DeleteOutlined />}
+              size="small"
+              className="font-bold shrink-0 px-3 h-8 rounded-lg"
+              onClick={() => {
+                setOrgDeleteConfirmText('');
+                setOrgDeletePassword('');
+                setOrgDeleteError('');
+                setShowOrgDeleteModal(true);
+              }}
+            >
+              Delete Organization
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Organization Deletion Confirmation Modal */}
+      <Modal
+        title={
+          <div className="flex items-center space-x-2 text-red-600 dark:text-red-400">
+            <ExclamationCircleOutlined className="text-xl" />
+            <span className="font-bold text-lg">Delete organization?</span>
+          </div>
+        }
+        open={showOrgDeleteModal}
+        onCancel={resetOrgDeleteForm}
+        footer={null}
+        width={520}
+        destroyOnHidden
+        closable={false}
+      >
+        <div className="py-3 space-y-4">
+          <Alert
+            message="This action is irreversible and permanent."
+            description="This permanently deletes the organization and all its shared data, including meetings, decisions, action items, teams, members, and related records. All users will lose access immediately."
+            type="error"
+            showIcon
+            icon={<WarningOutlined />}
+          />
+
+          {orgDeleteError && (
+            <Alert message={orgDeleteError} type="error" showIcon closable onClose={() => setOrgDeleteError('')} />
+          )}
+
+          <div className="space-y-3">
+            {!user?.is_oauth_user && (
+              <div>
+                <label htmlFor="org_delete_password" className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+                  Owner Password
+                </label>
+                <Input.Password
+                  id="org_delete_password"
+                  name="org_delete_password"
+                  prefix={<LockOutlined className="text-slate-400" />}
+                  placeholder="Enter your owner password"
+                  size="large"
+                  value={orgDeletePassword}
+                  onChange={(e) => setOrgDeletePassword(e.target.value)}
+                  className="rounded-lg"
+                  autoFocus
+                />
+              </div>
+            )}
+
+            <div>
+              <label htmlFor="org_delete_confirm" className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+                Type <strong className="text-red-600 dark:text-red-400">SMART MEETING</strong> to confirm
+              </label>
+              <Input
+                id="org_delete_confirm"
+                name="org_delete_confirm"
+                placeholder="SMART MEETING"
+                size="large"
+                value={orgDeleteConfirmText}
+                onChange={(e) => setOrgDeleteConfirmText(e.target.value)}
+                className="rounded-lg font-mono tracking-widest"
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end space-x-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+            <Button icon={<CloseOutlined />} onClick={resetOrgDeleteForm}>
+              Cancel
+            </Button>
+            <Button
+              type="primary"
+              danger
+              icon={<DeleteOutlined />}
+              loading={orgDeleteLoading}
+              disabled={
+                orgDeleteLoading ||
+                orgDeleteConfirmText.trim().toUpperCase() !== 'SMART MEETING' ||
+                (!user?.is_oauth_user && !orgDeletePassword)
+              }
+              onClick={handleDeleteOrganization}
+              className="font-bold"
+            >
+              Delete Organization
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
     </div>
   );
 }

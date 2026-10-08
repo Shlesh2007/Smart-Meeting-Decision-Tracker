@@ -25,13 +25,7 @@ export function MainLayout({ children }) {
     });
   };
 
-  useEffect(() => {
-    if (!showSidebar && typeof window !== 'undefined') {
-      document.documentElement.classList.remove('dark');
-      document.body.classList.remove('dark');
-      document.documentElement.style.colorScheme = 'light';
-    }
-  }, [showSidebar]);
+  // Theme is globally managed by ThemeContext
 
   if (!showSidebar) {
     return (

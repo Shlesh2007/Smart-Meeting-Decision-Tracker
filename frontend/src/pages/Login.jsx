@@ -3,12 +3,14 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { authService } from '../services/api.js';
 import { Logo } from '../components/Logo.jsx';
+import { AuthHero } from '../components/AuthHero.jsx';
 import { getErrorMessage } from '../utils/errorHandler.js';
 import { Form, Input, Button, Card, Typography, Modal, Divider, Steps, Alert, Tag, App, ConfigProvider, theme as antdTheme } from 'antd';
 import {
   UserOutlined, LockOutlined,
   GoogleOutlined, GithubOutlined, MailOutlined, SafetyCertificateOutlined,
-  CheckCircleOutlined, SyncOutlined
+  CheckCircleOutlined, SyncOutlined, CalendarOutlined, CheckSquareOutlined,
+  FileTextOutlined, ClockCircleOutlined, ThunderboltOutlined, TeamOutlined
 } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
@@ -74,11 +76,6 @@ export default function Login() {
 
   useEffect(() => {
     loginForm.resetFields();
-    if (typeof window !== 'undefined') {
-      document.documentElement.classList.remove('dark');
-      document.body.classList.remove('dark');
-      document.documentElement.style.colorScheme = 'light';
-    }
   }, [loginForm]);
 
   const handleLoginValuesChange = (changedValues, allValues) => {
@@ -200,7 +197,7 @@ export default function Login() {
     const rawRedirect = envRedirect || `${window.location.origin}/login`;
     const redirectUri = encodeURIComponent(rawRedirect);
     console.log(`🔑 Initiating Google OAuth with redirect_uri: ${rawRedirect}`);
-    const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&scope=email%20profile%20https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fmeetings.space.readonly&prompt=select_account`;
+    const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&scope=email%20profile%20openid&prompt=select_account`;
 
     const isWebView = typeof window !== 'undefined' && (
       window.WebToNative ||
@@ -321,178 +318,214 @@ export default function Login() {
         algorithm: antdTheme.defaultAlgorithm,
         token: {
           fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
-          colorPrimary: '#2563eb',
+          colorPrimary: '#0f172a',
           colorBgContainer: '#ffffff',
           colorBgElevated: '#ffffff',
           colorText: '#0f172a',
           colorTextSecondary: '#64748b',
           colorBorder: '#cbd5e1',
-          borderRadius: 16,
+          borderRadius: 12,
+          fontSize: 14,
+          fontSizeLG: 14,
         },
         components: {
           Form: {
             labelColor: '#334155',
             labelRequiredMarkColor: '#ef4444',
-          },
-          Card: {
-            colorBgContainer: '#ffffff',
-          },
-          Modal: {
-            colorBgElevated: '#ffffff',
+            itemMarginBottom: 16,
           },
           Input: {
-            colorBgContainer: '#f8fafc',
+            colorBgContainer: '#ffffff',
             colorBorder: '#cbd5e1',
             colorText: '#0f172a',
             colorTextPlaceholder: '#94a3b8',
             activeBg: '#ffffff',
+            activeBorderColor: '#0f172a',
+            hoverBorderColor: '#94a3b8',
+            controlHeight: 44,
+            borderRadius: 12,
+            fontSize: 14,
+            fontSizeLG: 14,
           },
           Button: {
-            colorPrimary: '#2563eb',
-            colorPrimaryHover: '#1d4ed8',
+            colorPrimary: '#0f172a',
+            colorPrimaryHover: '#1e293b',
+            colorPrimaryActive: '#020617',
+            controlHeight: 44,
+            borderRadius: 12,
           }
         }
       }}
     >
-      <div className="min-h-screen relative flex flex-col justify-center items-center w-full px-4 py-8 overflow-hidden select-none bg-gradient-to-br from-slate-100 via-blue-50/50 to-slate-200 text-slate-900">
-        {/* High Quality Enterprise Background Image Overlay */}
-        <div 
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-25 scale-105 pointer-events-none mix-blend-multiply"
-          style={{
-            backgroundImage: `url('https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1920&q=80')`
-          }}
-        />
-
-        {/* Radial Gradient Overlay & Ambient Glowing Blobs */}
-        <div className="absolute top-1/4 -left-20 w-96 h-96 bg-blue-400/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-indigo-400/10 rounded-full blur-3xl pointer-events-none" />
-
-        {/* Brand Logo & Title Header */}
-        <div className="relative z-10 w-full text-center mb-6 max-w-md flex flex-col items-center">
-          <Logo variant="full" height={44} isDark={false} className="mx-auto mb-3 drop-shadow-sm" />
-          <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight m-0">
-            Login to Your Account
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-800 font-semibold max-w-xs mx-auto mt-1.5 leading-relaxed">
-            Access your team meetings, action items, and decision logs
-          </p>
+      <div className="relative w-screen h-screen overflow-hidden lg:grid lg:grid-cols-[50vw_50vw] bg-slate-100/80 lg:bg-slate-50 text-slate-900 select-none">
+        
+        {/* ========================================== */}
+        {/* MOBILE BACKGROUND IMAGE OVERLAY (< lg)     */}
+        {/* ========================================== */}
+        <div className="lg:hidden absolute inset-0 z-0 overflow-hidden pointer-events-none">
+          <img
+            src="/auth-hero.png"
+            alt="Background Hero"
+            className="w-full h-full object-cover object-center filter brightness-[1.08] contrast-[0.85] opacity-25"
+          />
+          <div className="absolute inset-0 bg-slate-100/70 backdrop-blur-[2px]" />
         </div>
 
-        {/* Clean Light Form Card */}
-        <div className="relative z-10 w-full max-w-md">
-          <Card
-            style={{ width: '100%', borderRadius: '20px', boxSizing: 'border-box' }}
-            styles={{ body: { padding: '24px 24px' } }}
-            className="shadow-xl border border-slate-200/80 bg-white text-slate-900 transition-all duration-300"
-          >
-            <Form
-              form={loginForm}
-              name="login_form"
-              layout="vertical"
-              onFinish={onFinish}
-              onValuesChange={handleLoginValuesChange}
-              validateTrigger={['onChange', 'onBlur']}
-              autoComplete="off"
-              size="large"
-              disabled={submitting || Boolean(oauthLoading)}
-            >
-              <Form.Item
-                name="username"
-                label="Username"
-                rules={[{ required: true, message: 'Please enter username' }]}
+        {/* ========================================== */}
+        {/* DESKTOP LEFT SIDE HERO (50vw x 100vh)      */}
+        {/* ========================================== */}
+        <AuthHero />
+
+        {/* ========================================== */}
+        {/* RIGHT SIDE / MAIN FORM CONTAINER (50vw x 100vh) */}
+        {/* ========================================== */}
+        <div className="relative z-10 w-full lg:w-[50vw] h-screen overflow-y-auto overflow-x-hidden flex flex-col justify-center items-center p-3 sm:p-6 xl:p-8">
+          
+          <div className="w-[min(calc(100%-32px),480px)] mx-auto flex flex-col items-center justify-center my-auto py-2">
+            
+            {/* Brand Logo Header */}
+            <div className="mb-3 text-center">
+              <Logo variant="full" height={38} isDark={false} className="mx-auto" />
+            </div>
+
+            {/* Page Heading & Subtitle Above Card */}
+            <div className="text-center mb-4 px-2">
+              <h1 className="text-xl sm:text-2xl font-extrabold text-[#0f172a] tracking-tight m-0 leading-tight">
+                Login to Your Account
+              </h1>
+              <p className="text-xs text-slate-600 font-medium mt-1 leading-relaxed m-0 max-w-[340px] sm:max-w-md mx-auto">
+                Access your team meetings, action items, and decision logs
+              </p>
+            </div>
+
+            {/* Floating White Card */}
+            <div className="w-full bg-white shadow-xl shadow-slate-400/15 rounded-[24px] p-6 sm:p-7 border border-slate-100 auth-card">
+              
+              {/* Authentication Form */}
+              <Form
+                form={loginForm}
+                name="login_form"
+                layout="vertical"
+                onFinish={onFinish}
+                onValuesChange={handleLoginValuesChange}
+                validateTrigger={['onChange', 'onBlur']}
+                autoComplete="off"
+                size="large"
+                disabled={submitting || Boolean(oauthLoading)}
               >
-                <Input
-                  id="username"
+                <Form.Item
                   name="username"
-                  prefix={<UserOutlined className="text-slate-400" />}
-                  placeholder="Username or email"
-                  autoComplete="username"
-                  onPressEnter={(e) => {
-                    e.preventDefault();
-                    passwordInputRef.current?.focus();
-                  }}
-                />
-              </Form.Item>
-
-              <Form.Item
-                name="password"
-                label="Password"
-                rules={[{ required: true, message: 'Please enter password' }]}
-                className="mb-1"
-              >
-                <Input.Password
-                  id="password"
-                  name="password"
-                  ref={passwordInputRef}
-                  prefix={<LockOutlined className="text-slate-400" />}
-                  placeholder="••••••••"
-                  autoComplete="current-password"
-                />
-              </Form.Item>
-
-              <div className="text-right mb-5">
-                <button
-                  type="button"
-                  disabled={submitting || Boolean(oauthLoading)}
-                  onClick={() => {
-                    closeResetModal();
-                    setIsForgotModalOpen(true);
-                  }}
-                  className="text-xs font-semibold text-slate-500 hover:text-blue-600 focus:outline-none cursor-pointer bg-transparent border-0 p-0 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  label={<span className="font-semibold text-slate-700 dark:text-white text-xs uppercase tracking-wider">Username</span>}
+                  rules={[{ required: true, message: 'Please enter username' }]}
+                  className="mb-4"
                 >
-                  Forgot password?
-                </button>
+                  <Input
+                    id="username"
+                    name="username"
+                    prefix={<UserOutlined className="text-slate-400 mr-1.5" />}
+                    placeholder="Username"
+                    autoComplete="username"
+                    onPressEnter={(e) => {
+                      e.preventDefault();
+                      passwordInputRef.current?.focus();
+                    }}
+                    className="rounded-xl border-slate-300 focus:border-blue-600 transition-colors h-11"
+                  />
+                </Form.Item>
+
+                <Form.Item
+                  name="password"
+                  label={<span className="font-semibold text-slate-700 dark:text-white text-xs uppercase tracking-wider">Password</span>}
+                  rules={[{ required: true, message: 'Please enter password' }]}
+                  className="mb-1"
+                >
+                  <Input.Password
+                    id="password"
+                    name="password"
+                    ref={passwordInputRef}
+                    prefix={<LockOutlined className="text-slate-400 mr-1.5" />}
+                    placeholder="••••••••"
+                    autoComplete="current-password"
+                    className="rounded-xl border-slate-300 focus:border-blue-600 transition-colors h-11"
+                  />
+                </Form.Item>
+
+                <div className="text-right mb-4">
+                  <button
+                    type="button"
+                    disabled={submitting || Boolean(oauthLoading)}
+                    onClick={() => {
+                      closeResetModal();
+                      setIsForgotModalOpen(true);
+                    }}
+                    className="text-xs font-semibold text-slate-500 hover:text-slate-900 focus:outline-none cursor-pointer bg-transparent border-0 p-0 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Forgot password?
+                  </button>
+                </div>
+
+                <Form.Item className="mb-0">
+                  <Button
+                    type="primary"
+                    htmlType="submit"
+                    loading={submitting}
+                    disabled={submitting || Boolean(oauthLoading)}
+                    block
+                    className="font-bold rounded-xl border-none bg-slate-900 hover:bg-slate-800 active:bg-slate-950 text-white text-base h-11 shadow-lg shadow-slate-900/20 transition-all duration-200 active:scale-[0.99]"
+                  >
+                    Login
+                  </Button>
+                </Form.Item>
+              </Form>
+
+              <Divider style={{ margin: '16px 0 16px 0', fontSize: '12px', color: '#64748b', borderColor: '#cbd5e1' }}>
+                <span style={{ whiteSpace: 'nowrap' }}>Or continue with</span>
+              </Divider>
+
+              {/* Social OAuth Buttons */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', width: '100%', marginBottom: '16px' }}>
+                <Button
+                  icon={<GoogleOutlined className="text-red-500 text-base" />}
+                  onClick={handleGoogleOAuth}
+                  loading={oauthLoading === 'google'}
+                  disabled={submitting || Boolean(oauthLoading)}
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '12px', height: '42px' }}
+                  className="font-semibold border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-300 transition-all duration-150 shadow-none text-xs"
+                >
+                  Google
+                </Button>
+                <Button
+                  icon={<GithubOutlined className="text-slate-800 text-base group-hover:text-white transition-colors" />}
+                  onClick={handleGithubOAuth}
+                  loading={oauthLoading === 'github'}
+                  disabled={submitting || Boolean(oauthLoading)}
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '12px', height: '42px' }}
+                  className="group font-semibold border-slate-200 bg-white text-slate-700 hover:bg-[#181717] hover:text-white hover:border-[#181717] transition-all duration-150 shadow-none text-xs"
+                >
+                  GitHub
+                </Button>
               </div>
 
-              <Form.Item className="mt-4 mb-2">
-                <Button
-                  type="primary"
-                  htmlType="submit"
-                  loading={submitting}
-                  disabled={submitting || Boolean(oauthLoading)}
-                  block
-                  className="font-semibold rounded-xl border-none bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-600/20"
-                >
-                  Login
-                </Button>
-              </Form.Item>
-            </Form>
+              {/* Register Link Footer */}
+              <div className="text-center text-xs text-slate-500">
+                Don't have an account?{' '}
+                <Link to="/register" className="font-bold text-slate-900 hover:text-slate-700 no-underline transition-colors">
+                  Register now
+                </Link>
+              </div>
 
-            <Divider style={{ margin: '16px 0', fontSize: '12px', color: '#64748b' }}>
-              <span style={{ whiteSpace: 'nowrap' }}>Or continue with</span>
-            </Divider>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', width: '100%', marginBottom: '12px' }}>
-              <Button
-                icon={<GoogleOutlined className="text-red-500" />}
-                onClick={handleGoogleOAuth}
-                loading={oauthLoading === 'google'}
-                disabled={submitting || Boolean(oauthLoading)}
-                style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '12px' }}
-                className="font-medium border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-300 shadow-sm"
-              >
-                Google
-              </Button>
-              <Button
-                icon={<GithubOutlined className="text-slate-800" />}
-                onClick={handleGithubOAuth}
-                loading={oauthLoading === 'github'}
-                disabled={submitting || Boolean(oauthLoading)}
-                style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '12px' }}
-                className="font-medium border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-300 shadow-sm"
-              >
-                GitHub
-              </Button>
             </div>
 
-            <div className="mt-4 pt-4 border-t border-slate-100 text-center text-sm text-slate-500">
-              Don't have an account?{' '}
-              <Link to="/register" className="font-semibold text-blue-600 hover:text-blue-700 no-underline">
-                Register now
-              </Link>
+            {/* Bottom Footer Copyright */}
+            <div className="w-full text-center text-[11px] text-slate-400 mt-6">
+              © {new Date().getFullYear()} Smart Meeting Decision Tracker. All rights reserved.
             </div>
-          </Card>
+
+          </div>
+
         </div>
+
+      </div>
 
       <Modal
         title="Reset Password via OTP"
@@ -568,7 +601,7 @@ export default function Login() {
 
               <div className="flex justify-end space-x-2 mt-6">
                 <Button onClick={closeResetModal}>Cancel</Button>
-                <Button type="primary" htmlType="submit" loading={otpLoading} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl border-none">
+                <Button type="primary" htmlType="submit" loading={otpLoading} className="bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl border-none">
                   Send OTP Code
                 </Button>
               </div>
@@ -611,7 +644,7 @@ export default function Login() {
                 </Button>
                 <div className="space-x-2">
                   <Button onClick={closeResetModal}>Cancel</Button>
-                  <Button type="primary" htmlType="submit" loading={otpLoading} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl border-none">
+                  <Button type="primary" htmlType="submit" loading={otpLoading} className="bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl border-none">
                     Verify Code
                   </Button>
                 </div>
@@ -667,7 +700,7 @@ export default function Login() {
 
               <div className="flex justify-end space-x-2 mt-6">
                 <Button onClick={closeResetModal}>Cancel</Button>
-                <Button type="primary" htmlType="submit" loading={otpLoading} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl border-none">
+                <Button type="primary" htmlType="submit" loading={otpLoading} className="bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl border-none">
                   Update Password
                 </Button>
               </div>
@@ -684,7 +717,7 @@ export default function Login() {
                 Your password has been updated successfully. You can now login with your new password.
               </p>
               <div className="pt-3">
-                <Button type="primary" onClick={closeResetModal} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl border-none px-6">
+                <Button type="primary" onClick={closeResetModal} className="bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl border-none px-6">
                   Login Now
                 </Button>
               </div>
@@ -692,7 +725,6 @@ export default function Login() {
           )}
         </div>
       </Modal>
-    </div>
     </ConfigProvider>
   );
 }

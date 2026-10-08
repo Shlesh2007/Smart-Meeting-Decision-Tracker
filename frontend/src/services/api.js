@@ -111,8 +111,20 @@ export const authService = {
     const res = await api.post('/auth/profile/verify-email-change/', { new_email, otp_code });
     return res.data;
   },
+  checkDeleteAccount: async () => {
+    const res = await api.get('/auth/profile/delete-account/check/');
+    return res.data;
+  },
+  transferOwnership: async (target_user_id) => {
+    const res = await api.post('/auth/profile/transfer-ownership/', { target_user_id });
+    return res.data;
+  },
   deleteAccount: async (payload) => {
-    const res = await api.delete('/auth/profile/delete-account/', { data: payload });
+    const res = await api.post('/auth/profile/delete-account/', payload);
+    return res.data;
+  },
+  deleteOrganization: async (payload) => {
+    const res = await api.post('/auth/delete-organization/', payload);
     return res.data;
   },
   logout: () => {

@@ -48,6 +48,20 @@ class User(AbstractUser):
     def is_member_role(self):
         return self.role == self.Role.MEMBER
 
+    @property
+    def is_oauth_user(self):
+        if self.google_access_token or self.google_refresh_token:
+            return True
+        username_lower = (self.username or '').lower()
+        email_lower = (self.email or '').lower()
+        if username_lower.startswith('google_') or username_lower.startswith('github_'):
+            return True
+        if '@users.noreply.github.com' in email_lower:
+            return True
+        if not self.has_usable_password():
+            return True
+        return False
+
 
 class PasswordResetOTP(models.Model):
     email = models.EmailField()

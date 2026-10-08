@@ -41,7 +41,11 @@ export const ActionFormModal = ({
         loadMeetingPrereqs(targetMId);
       } else {
         meetingService.getMeetings()
-          .then((res) => setMeetings(res.results || res))
+          .then((res) => {
+            const list = res.results || res || [];
+            const activeMeetings = list.filter(m => String(m.status).toUpperCase() !== 'CANCELLED');
+            setMeetings(activeMeetings);
+          })
           .catch(() => setMeetings([]));
       }
 
@@ -270,7 +274,9 @@ export const ActionFormModal = ({
                 placeholder="Select meeting"
                 optionFilterProp="children"
                 onChange={handleMeetingChange}
-                options={meetings.map(m => ({ label: `${m.title} (${m.meeting_date})`, value: m.id }))}
+                options={meetings
+                  .filter(m => String(m.status).toUpperCase() !== 'CANCELLED')
+                  .map(m => ({ label: `${m.title} (${m.meeting_date})`, value: m.id }))}
                 className="w-full"
               />
             </Form.Item>

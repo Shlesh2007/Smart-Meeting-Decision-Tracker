@@ -287,7 +287,7 @@ export default function LoginPage() {
                 id="username"
                 name="username"
                 prefix={<UserOutlined className="text-gray-400" />}
-                placeholder="Username or email"
+                placeholder="Username"
                 autoComplete="username"
                 onPressEnter={(e) => {
                   e.preventDefault();

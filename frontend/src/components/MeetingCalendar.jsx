@@ -691,26 +691,16 @@ export function MeetingCalendar({ meetings = [], loading = false }) {
 
       {/* View Content based on viewLevel */}
       {viewLevel === 'date' && (
-        <ConfigProvider
-          theme={{
-            components: {
-              Calendar: {
-                algorithm: true,
-              },
-            },
-          }}
-        >
-          <div className="w-full overflow-x-auto min-w-0">
-            <Calendar
-              mode="month"
-              value={selectedDate}
-              onChange={(d) => setSelectedDate(d)}
-              headerRender={() => null}
-              cellRender={cellRender}
-              className="meeting-calendar-custom"
-            />
-          </div>
-        </ConfigProvider>
+        <div className="w-full overflow-x-auto min-w-0">
+          <Calendar
+            mode="month"
+            value={selectedDate}
+            onChange={(d) => setSelectedDate(d)}
+            headerRender={() => null}
+            cellRender={cellRender}
+            className="meeting-calendar-custom"
+          />
+        </div>
       )}
 
       {viewLevel === 'month' && renderMonthsView()}

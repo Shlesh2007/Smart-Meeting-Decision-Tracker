@@ -143,12 +143,13 @@ export const ThemeProvider = ({ children }) => {
   return (
     <ThemeContext.Provider value={{ themeMode, toggleTheme }}>
       <ConfigProvider
+        wave={{ disabled: true }}
         theme={{
           algorithm: isDark ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
           token: {
             fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
-            colorPrimary: '#3b82f6',
-            colorInfo: '#3b82f6',
+            colorPrimary: isDark ? '#38bdf8' : '#2563eb',
+            colorInfo: isDark ? '#38bdf8' : '#2563eb',
             colorBgBase: isDark ? '#0b0f19' : '#f8fafc',
             colorBgContainer: isDark ? '#131c2e' : '#ffffff',
             colorBgElevated: isDark ? '#1a263d' : '#ffffff',
@@ -167,9 +168,18 @@ export const ThemeProvider = ({ children }) => {
           },
           components: {
             Button: {
-              colorPrimary: isDark ? '#3b82f6' : '#2563eb',
+              colorPrimary: isDark ? '#38bdf8' : '#2563eb',
               colorPrimaryHover: isDark ? '#60a5fa' : '#1d4ed8',
               colorPrimaryActive: isDark ? '#2563eb' : '#1e40af',
+              defaultColor: isDark ? '#f1f5f9' : '#334155',
+              defaultBg: isDark ? '#1e293b' : '#ffffff',
+              defaultBorderColor: isDark ? '#334155' : '#cbd5e1',
+              defaultHoverColor: isDark ? '#ffffff' : '#0f172a',
+              defaultHoverBorderColor: isDark ? '#64748b' : '#94a3b8',
+              defaultHoverBg: isDark ? '#334155' : '#f8fafc',
+              defaultActiveColor: isDark ? '#ffffff' : '#0f172a',
+              defaultActiveBorderColor: isDark ? '#94a3b8' : '#64748b',
+              defaultActiveBg: isDark ? '#475569' : '#f1f5f9',
               algorithm: true,
             },
             Card: {
@@ -205,11 +215,28 @@ export const ThemeProvider = ({ children }) => {
             },
             Select: {
               colorBgContainer: isDark ? '#1a263d' : '#ffffff',
+              colorBgElevated: isDark ? '#1a263d' : '#ffffff',
               colorBorder: isDark ? '#2b394e' : '#cbd5e1',
               colorText: isDark ? '#f1f5f9' : '#0f172a',
+              optionSelectedBg: isDark ? '#23324d' : '#eff6ff',
+              optionSelectedColor: isDark ? '#38bdf8' : '#2563eb',
+              optionActiveBg: isDark ? '#1e2c45' : '#f8fafc',
+            },
+            DatePicker: {
+              colorBgContainer: isDark ? '#1a263d' : '#ffffff',
+              colorBgElevated: isDark ? '#1a263d' : '#ffffff',
+              colorBorder: isDark ? '#2b394e' : '#cbd5e1',
+              colorText: isDark ? '#f1f5f9' : '#0f172a',
+              cellActiveWithRangeBg: isDark ? '#1e3a8a' : '#dbeafe',
+              cellHoverWithRangeBg: isDark ? '#1d4ed8' : '#eff6ff',
             },
             Dropdown: {
               colorBgElevated: isDark ? '#162032' : '#ffffff',
+              controlItemBgHover: isDark ? '#1e2c45' : '#f8fafc',
+            },
+            Popover: {
+              colorBgElevated: isDark ? '#162032' : '#ffffff',
+              colorText: isDark ? '#f1f5f9' : '#0f172a',
             },
             Checkbox: {
               colorPrimary: isDark ? '#3b82f6' : '#2563eb',
@@ -217,8 +244,9 @@ export const ThemeProvider = ({ children }) => {
               colorBorder: isDark ? '#475569' : '#94a3b8',
             },
             Calendar: {
-              algorithm: true,
               colorBgContainer: isDark ? '#131c2e' : '#ffffff',
+              fullBg: isDark ? '#131c2e' : '#ffffff',
+              itemActiveBg: isDark ? '#23324d' : '#eff6ff',
             },
             Menu: {
               algorithm: true,

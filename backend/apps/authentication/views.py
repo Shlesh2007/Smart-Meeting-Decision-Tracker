@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import get_user_model
+from django.db import transaction
 from django.core.mail import get_connection, EmailMessage
 from django.conf import settings
 from django.utils import timezone
@@ -33,20 +34,30 @@ class RequestRegisterOTPView(APIView):
         password = request.data.get('password', '')
         password_confirm = request.data.get('password_confirm', '')
 
-        if not email or not username or not password:
-            return Response({'error': 'Username, email, and password are required.'}, status=status.HTTP_400_BAD_REQUEST)
+        errors = {}
+        if not email:
+            errors['email'] = ['Email address is required.']
+        if not username:
+            errors['username'] = ['Username is required.']
+        if not password:
+            errors['password'] = ['Password is required.']
+        if not password_confirm:
+            errors['password_confirm'] = ['Please confirm your password.']
+
+        if errors:
+            return Response(errors, status=status.HTTP_400_BAD_REQUEST)
 
         if password != password_confirm:
-            return Response({'password': 'Passwords do not match.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'password_confirm': ['Passwords do not match.']}, status=status.HTTP_400_BAD_REQUEST)
 
         if len(password) < 6:
-            return Response({'password': 'Password must be at least 6 characters long.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'password': ['Password must be at least 6 characters long.']}, status=status.HTTP_400_BAD_REQUEST)
 
         if User.objects.filter(username__iexact=username).exists():
-            return Response({'username': 'A user with that username already exists.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'username': ['A user with that username already exists.']}, status=status.HTTP_400_BAD_REQUEST)
 
         if User.objects.filter(email__iexact=email).exists():
-            return Response({'email': 'A user with this email address already exists.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'email': ['A user with this email address already exists.']}, status=status.HTTP_400_BAD_REQUEST)
 
         # Generate 6-digit OTP code
         otp_code = f"{random.randint(100000, 999999)}"
@@ -939,36 +950,252 @@ class VerifyEmailChangeOTPView(APIView):
         }, status=status.HTTP_200_OK)
 
 
+class CheckDeleteAccountView(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get(self, request):
+        return self._check(request)
+
+    def post(self, request):
+        return self._check(request)
+
+    def _check(self, request):
+        user = request.user
+        other_users = User.objects.exclude(id=user.id)
+        other_users_count = other_users.count()
+
+        total_owners = User.objects.filter(role=User.Role.OWNER).count()
+        total_admins_and_owners = User.objects.filter(role__in=[User.Role.OWNER, User.Role.ADMIN]).count()
+
+        can_delete = True
+        requires_ownership_transfer = False
+        requires_admin_assignment = False
+        message = ""
+
+        # Sole Owner check
+        if user.role == User.Role.OWNER and total_owners <= 1 and other_users_count > 0:
+            can_delete = False
+            requires_ownership_transfer = True
+            message = (
+                "You can't delete your account yet. "
+                "You are currently the only owner of this organization. "
+                "Transfer ownership to another administrator before deleting your account."
+            )
+        # Sole Admin check
+        elif user.role == User.Role.ADMIN and total_admins_and_owners <= 1 and other_users_count > 0:
+            can_delete = False
+            requires_admin_assignment = True
+            message = (
+                "You can't delete your account yet. "
+                "You are currently the only administrator. "
+                "Transfer ownership or promote another user to Administrator before deleting your account."
+            )
+
+        eligible_users_qs = other_users.order_by('-role', 'first_name', 'username')
+        eligible_users = [
+            {
+                'id': u.id,
+                'username': u.username,
+                'full_name': u.get_full_name() or u.username,
+                'email': u.email,
+                'role': u.role
+            }
+            for u in eligible_users_qs
+        ]
+
+        return Response({
+            'can_delete': can_delete,
+            'requires_ownership_transfer': requires_ownership_transfer,
+            'requires_admin_assignment': requires_admin_assignment,
+            'message': message,
+            'role': user.role,
+            'is_oauth_user': user.is_oauth_user,
+            'eligible_users': eligible_users
+        }, status=status.HTTP_200_OK)
+
+
+class TransferOwnershipView(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def post(self, request):
+        user = request.user
+        target_user_id = request.data.get('target_user_id')
+
+        if not (user.is_admin_role or user.role in [User.Role.OWNER, User.Role.ADMIN]):
+            return Response({'error': 'Only Organization Owners and Admins can transfer ownership/admin rights.'}, status=status.HTTP_403_FORBIDDEN)
+
+        if not target_user_id:
+            return Response({'error': 'Please select a target user to receive ownership.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            target_user = User.objects.exclude(id=user.id).get(id=target_user_id)
+        except User.DoesNotExist:
+            return Response({'error': 'Selected user was not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        with transaction.atomic():
+            if user.role == User.Role.OWNER:
+                target_user.role = User.Role.OWNER
+                target_user.is_staff = True
+                target_user.is_superuser = True
+                target_user.save()
+
+                user.role = User.Role.ADMIN
+                user.save()
+            else:
+                target_user.role = User.Role.ADMIN
+                target_user.is_staff = True
+                target_user.save()
+
+        target_name = target_user.get_full_name() or target_user.username
+        logger.info("Ownership/Admin rights transferred from %s to %s", user.email, target_user.email)
+
+        return Response({
+            'message': f'Ownership rights successfully transferred to {target_name} ({target_user.email})! You can now proceed with account deletion if desired.',
+            'target_user': {
+                'id': target_user.id,
+                'name': target_name,
+                'role': target_user.role
+            }
+        }, status=status.HTTP_200_OK)
+
+
 class DeleteAccountView(APIView):
     permission_classes = (permissions.IsAuthenticated,)
 
+    def post(self, request):
+        return self.delete(request)
+
     def delete(self, request):
+        from apps.meetings.models import Meeting
+        from apps.discussions.models import Discussion
+        from apps.decisions.models import Decision
+        from apps.actions.models import ActionItem
+        from apps.teams.models import Team
+        from apps.notifications.models import Notification
+
         user = request.user
         password = request.data.get('password', '')
-        confirmation = request.data.get('confirmation', '').strip()
+        confirmation = str(request.data.get('confirmation', '')).strip()
 
-        # If user has a set password, verify it
-        if user.has_usable_password():
+        # ALL users must type exact text 'DELETE'
+        if confirmation != 'DELETE':
+            return Response({'error': 'Please type "DELETE" to confirm account deletion.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # For email/password users, verify password
+        if not user.is_oauth_user:
             if not password:
                 return Response({'error': 'Password is required to confirm account deletion.'}, status=status.HTTP_400_BAD_REQUEST)
             if not user.check_password(password):
                 return Response({'error': 'Incorrect password. Account deletion failed.'}, status=status.HTTP_400_BAD_REQUEST)
-        else:
-            # For OAuth users without password
-            if confirmation.upper() != 'DELETE':
-                return Response({'error': 'Please type "DELETE" to confirm account deletion.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        other_users = User.objects.exclude(id=user.id)
+        other_users_count = other_users.count()
+        total_owners = User.objects.filter(role=User.Role.OWNER).count()
+        total_admins_and_owners = User.objects.filter(role__in=[User.Role.OWNER, User.Role.ADMIN]).count()
+
+        # Server-side sole owner/admin enforcement
+        if user.role == User.Role.OWNER and total_owners <= 1 and other_users_count > 0:
+            return Response({
+                'error': 'You can\'t delete your account yet. You are currently the only owner of this organization. Transfer ownership to another administrator before deleting your account.',
+                'requires_ownership_transfer': True
+            }, status=status.HTTP_409_CONFLICT)
+
+        if user.role == User.Role.ADMIN and total_admins_and_owners <= 1 and other_users_count > 0:
+            return Response({
+                'error': 'You can\'t delete your account yet. You are currently the only administrator. Assign another administrator before deleting your account.',
+                'requires_admin_assignment': True
+            }, status=status.HTTP_409_CONFLICT)
 
         user_email = user.email
-        # Delete all associated OTP records from PostgreSQL database
-        PasswordResetOTP.objects.filter(email__iexact=user_email).delete()
 
-        # Permanently delete user record from PostgreSQL database
-        user.delete()
+        with transaction.atomic():
+            # Find a fallback owner/admin/user to adopt organization resources
+            fallback_user = other_users.filter(role=User.Role.OWNER).first() \
+                or other_users.filter(role=User.Role.ADMIN).first() \
+                or other_users.filter(role=User.Role.MANAGER).first() \
+                or other_users.first()
 
-        logger.info("User account %s permanently deleted from PostgreSQL database.", user_email)
+            if fallback_user:
+                # Reassign foreign keys of organization-owned data
+                Meeting.objects.filter(created_by=user).update(created_by=fallback_user)
+                Discussion.objects.filter(created_by=user).update(created_by=fallback_user)
+                Decision.objects.filter(decided_by=user).update(decided_by=fallback_user)
+                ActionItem.objects.filter(created_by=user).update(created_by=fallback_user)
+                Team.objects.filter(created_by=user).update(created_by=fallback_user)
+
+            # Safely remove user from ManyToMany relationships
+            for meeting in user.attended_meetings.all():
+                meeting.participants.remove(user)
+
+            for action in user.assigned_actions.all():
+                action.assigned_to.remove(user)
+
+            for team in user.teams.all():
+                team.members.remove(user)
+
+            # Clean up user's personal records
+            DepartmentChangeRequest.objects.filter(user=user).delete()
+            DepartmentChangeRequest.objects.filter(reviewed_by=user).update(reviewed_by=None)
+            PasswordResetOTP.objects.filter(email__iexact=user_email).delete()
+            Notification.objects.filter(user=user).delete()
+
+            # Permanently delete user record
+            user.delete()
+
+        logger.info("User account %s permanently deleted from database with resources preserved.", user_email)
 
         return Response({
-            'message': 'Your account has been deleted successfully.'
+            'message': 'Your account has been deleted.'
+        }, status=status.HTTP_200_OK)
+
+
+class DeleteOrganizationView(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def post(self, request):
+        return self.delete(request)
+
+    def delete(self, request):
+        from apps.meetings.models import Meeting
+        from apps.discussions.models import Discussion
+        from apps.decisions.models import Decision
+        from apps.actions.models import ActionItem
+        from apps.teams.models import Team
+        from apps.notifications.models import Notification
+
+        user = request.user
+        password = request.data.get('password', '')
+        confirmation = str(request.data.get('confirmation', '')).strip().upper()
+
+        if not (user.role == User.Role.OWNER or user.is_owner_role):
+            return Response({'error': 'Only the Organization Owner can perform organization deletion.'}, status=status.HTTP_403_FORBIDDEN)
+
+        if confirmation != 'SMART MEETING':
+            return Response({'error': 'Please type "SMART MEETING" to confirm organization deletion.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not user.is_oauth_user:
+            if not password:
+                return Response({'error': 'Password is required to confirm organization deletion.'}, status=status.HTTP_400_BAD_REQUEST)
+            if not user.check_password(password):
+                return Response({'error': 'Incorrect password. Organization deletion failed.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        owner_email = user.email
+
+        with transaction.atomic():
+            Notification.objects.all().delete()
+            DepartmentChangeRequest.objects.all().delete()
+            PasswordResetOTP.objects.all().delete()
+            ActionItem.objects.all().delete()
+            Decision.objects.all().delete()
+            Discussion.objects.all().delete()
+            Meeting.objects.all().delete()
+            Team.objects.all().delete()
+            User.objects.all().delete()
+
+        logger.info("Organization permanently deleted by Owner %s", owner_email)
+
+        return Response({
+            'message': 'Your organization and all associated data have been permanently deleted.'
         }, status=status.HTTP_200_OK)
 
 

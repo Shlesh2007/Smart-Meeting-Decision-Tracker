@@ -14,25 +14,27 @@ export const PriorityDistribution = ({ priorityDistribution = {} }) => {
   const [containerRef, isInView] = useScrollAnimation();
   const [activeIndex, setActiveIndex] = React.useState(null);
 
-  // Auto-dismiss timer after 4 seconds
+  // Auto-dismiss timer after 5 seconds
   React.useEffect(() => {
     if (activeIndex !== null) {
       const timer = setTimeout(() => {
         setActiveIndex(null);
-      }, 4000);
+      }, 5000);
       return () => clearTimeout(timer);
     }
   }, [activeIndex]);
 
-  // Tap anywhere on screen to dismiss active popup
+  // Tap outside container to dismiss active popup
   React.useEffect(() => {
     if (activeIndex !== null) {
-      const handlePointerDown = () => {
-        setActiveIndex(null);
+      const handlePointerDown = (e) => {
+        if (containerRef.current && !containerRef.current.contains(e.target)) {
+          setActiveIndex(null);
+        }
       };
       const timer = setTimeout(() => {
         document.addEventListener('pointerdown', handlePointerDown);
-      }, 10);
+      }, 50);
       return () => {
         clearTimeout(timer);
         document.removeEventListener('pointerdown', handlePointerDown);
@@ -43,10 +45,6 @@ export const PriorityDistribution = ({ priorityDistribution = {} }) => {
   const handleCloseTooltip = (e) => {
     if (e) {
       e.stopPropagation();
-      if (e.preventDefault) e.preventDefault();
-      if (e.nativeEvent && e.nativeEvent.stopImmediatePropagation) {
-        e.nativeEvent.stopImmediatePropagation();
-      }
     }
     setActiveIndex(null);
   };
@@ -91,17 +89,17 @@ export const PriorityDistribution = ({ priorityDistribution = {} }) => {
       </div>
 
       {/* Centered Pie Chart Container & Side Vertical Legend */}
-      <div className="my-2 flex flex-col sm:flex-row items-center justify-between gap-2.5 min-h-[185px]">
+      <div className="my-1.5 flex flex-row items-center justify-between gap-2 sm:gap-3 min-h-[130px] sm:min-h-[185px]">
         {/* Pie Chart */}
-        <div className="relative w-full sm:w-1/2 h-44 flex items-center justify-center shrink-0">
+        <div className="relative w-32 sm:w-1/2 h-32 sm:h-44 flex items-center justify-center shrink-0">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart key={isInView ? 'prio-active' : 'prio-idle'} style={{ outline: 'none' }}>
               <Pie
                 data={total > 0 ? chartData : zeroChartData}
                 cx="50%"
                 cy="50%"
-                innerRadius={38}
-                outerRadius={60}
+                innerRadius={typeof window !== 'undefined' && window.innerWidth < 640 ? 26 : 38}
+                outerRadius={typeof window !== 'undefined' && window.innerWidth < 640 ? 44 : 60}
                 paddingAngle={total > 0 ? 3 : 0}
                 dataKey="value"
                 strokeWidth={0}
@@ -109,9 +107,17 @@ export const PriorityDistribution = ({ priorityDistribution = {} }) => {
                 animationBegin={0}
                 animationDuration={850}
                 activeIndex={activeIndex !== null ? activeIndex : undefined}
-                activeShape={{ outerRadius: 64 }}
-                onMouseEnter={(_, index) => setActiveIndex(index)}
-                onMouseLeave={() => setActiveIndex(null)}
+                activeShape={{ outerRadius: typeof window !== 'undefined' && window.innerWidth < 640 ? 48 : 64 }}
+                onMouseEnter={(_, index) => {
+                  if (typeof window !== 'undefined' && window.matchMedia('(pointer: fine)').matches) {
+                    setActiveIndex(index);
+                  }
+                }}
+                onMouseLeave={() => {
+                  if (typeof window !== 'undefined' && window.matchMedia('(pointer: fine)').matches) {
+                    setActiveIndex(null);
+                  }
+                }}
                 onClick={(e, index) => {
                   e?.stopPropagation?.();
                   setActiveIndex((prev) => (prev === index ? null : index));
@@ -127,55 +133,37 @@ export const PriorityDistribution = ({ priorityDistribution = {} }) => {
 
           {/* Center Total Count Label inside Donut */}
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
-            <span className="text-lg font-black text-slate-900 dark:text-white tracking-tight leading-none">
+            <span className="text-base sm:text-lg font-black text-slate-900 dark:text-white tracking-tight leading-none">
               {total}
             </span>
-            <span className="text-[8px] uppercase font-bold text-slate-500 dark:text-slate-300 mt-0.5">Total Items</span>
+            <span className="text-[7px] sm:text-[8px] uppercase font-bold text-slate-500 dark:text-slate-300 mt-0.5">Total Items</span>
           </div>
 
           {/* Controlled HTML Popover */}
           {total > 0 && activeIndex !== null && chartData[activeIndex] && (
             <div
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setActiveIndex(null);
-              }}
-              onTouchEnd={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setActiveIndex(null);
-              }}
-              className="absolute top-1 left-1/2 -translate-x-1/2 z-30 bg-slate-900/95 backdrop-blur-md text-white text-[11px] px-3 py-1.5 rounded-lg shadow-xl border border-slate-700/80 cursor-pointer transition-all duration-200 flex items-center justify-between gap-2.5 max-w-[90%]"
+              onClick={(e) => e.stopPropagation()}
+              className="absolute top-1 left-1/2 -translate-x-1/2 z-30 bg-slate-900/95 backdrop-blur-md text-white text-[11px] px-3 py-1.5 rounded-lg shadow-xl border border-slate-700/80 transition-all duration-200 flex items-center justify-between gap-2.5 max-w-[95%] pointer-events-auto"
             >
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <div className="flex items-center space-x-1.5">
                   <span
-                    className="w-2 h-2 rounded-full inline-block flex-shrink-0"
+                    className="w-2.5 h-2.5 rounded-full inline-block shrink-0 shadow-xs"
                     style={{ backgroundColor: chartData[activeIndex].color || '#3b82f6' }}
                   />
                   <p className="font-bold m-0 text-white leading-tight truncate">
                     {chartData[activeIndex].name}
                   </p>
                 </div>
-                <p className="m-0 text-slate-300 font-semibold mt-0.5 truncate">
+                <p className="m-0 text-slate-300 font-semibold mt-0.5 truncate text-[10px]">
                   {chartData[activeIndex].value} items ({Math.round((chartData[activeIndex].value / total) * 100)}%)
                 </p>
               </div>
               <button
                 type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setActiveIndex(null);
-                }}
-                onTouchEnd={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setActiveIndex(null);
-                }}
-                className="md:hidden text-slate-400 hover:text-white text-xs font-bold px-1.5 py-0.5 rounded bg-slate-800/90 hover:bg-slate-700 border border-slate-700 cursor-pointer shrink-0 leading-none"
-                title="Close"
+                onClick={handleCloseTooltip}
+                className="text-slate-400 hover:text-white text-xs font-extrabold px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 cursor-pointer shrink-0 leading-none"
+                title="Close details"
               >
                 ✕
               </button>
@@ -184,7 +172,7 @@ export const PriorityDistribution = ({ priorityDistribution = {} }) => {
         </div>
 
         {/* Vertical Legend Column */}
-        <div className="w-full sm:w-1/2 flex flex-col justify-center space-y-1.5 pl-0 sm:pl-3 border-t sm:border-t-0 sm:border-l border-slate-100 dark:border-slate-800/80 pt-2 sm:pt-0">
+        <div className="w-1/2 sm:w-1/2 flex flex-col justify-center space-y-0.5 sm:space-y-1.5 pl-1.5 sm:pl-3 border-l border-slate-100 dark:border-slate-800/80">
           {PRIORITIES.map((priority) => {
             const count = priorityDistribution[priority.key] || 0;
             const chartDataIndex = chartData.findIndex((item) => item.key === priority.key);
@@ -207,7 +195,7 @@ export const PriorityDistribution = ({ priorityDistribution = {} }) => {
                     setActiveIndex((prev) => (prev === chartDataIndex ? null : chartDataIndex));
                   }
                 }}
-                className={`w-full flex items-center justify-between px-2.5 py-1 rounded-md border text-left text-[11px] transition-all duration-150 cursor-pointer ${
+                className={`w-full flex items-center justify-between px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-md border text-left text-[10px] sm:text-[11px] transition-all duration-150 cursor-pointer ${
                   isSelected
                     ? 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-600 shadow-xs font-bold'
                     : hasItems
@@ -215,14 +203,14 @@ export const PriorityDistribution = ({ priorityDistribution = {} }) => {
                     : 'bg-transparent border-transparent text-slate-400 dark:text-slate-600 opacity-50 font-normal'
                 }`}
               >
-                <div className="flex items-center space-x-2 min-w-0">
+                <div className="flex items-center space-x-1.5 min-w-0">
                   <span
-                    className="w-2.5 h-2.5 rounded-full inline-block shrink-0"
+                    className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full inline-block shrink-0"
                     style={{ backgroundColor: priority.color }}
                   />
                   <span className="truncate">{priority.label.replace(' Priority', '')}</span>
                 </div>
-                <div className="flex items-center space-x-1 text-[10px] shrink-0 ml-1.5">
+                <div className="flex items-center space-x-0.5 sm:space-x-1 text-[9px] sm:text-[10px] shrink-0 ml-1">
                   <span className="font-bold text-slate-900 dark:text-slate-100">{count}</span>
                   <span className="text-slate-600 dark:text-slate-300 font-semibold">({percentage}%)</span>
                 </div>

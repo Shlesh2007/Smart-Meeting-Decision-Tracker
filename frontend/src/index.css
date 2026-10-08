@@ -167,7 +167,8 @@ html, body {
   padding-bottom: 6px !important;
 }
 
-.ant-form-item .ant-form-item-label > label {
+.ant-form-item .ant-form-item-label > label,
+.ant-form-item .ant-form-item-label > label * {
   font-weight: 600 !important;
   font-size: 13px !important;
   color: #334155 !important;
@@ -175,8 +176,12 @@ html, body {
   line-height: 1.4 !important;
 }
 
-.dark .ant-form-item .ant-form-item-label > label {
-  color: #cbd5e1 !important;
+.dark .ant-form-item .ant-form-item-label > label,
+.dark .ant-form-item .ant-form-item-label > label *,
+.dark .ant-form-item label,
+.dark .ant-form-item label *,
+.dark .ant-form-item .ant-form-item-label span {
+  color: #ffffff !important;
 }
 
 /* Site-wide Required Form Field Star Asterisk Placement (Position star AFTER label with superscript top alignment) */
@@ -313,11 +318,11 @@ a, a:hover, a:focus, a:visited {
 .nav-tab-active {
   position: relative;
   font-weight: 700 !important;
-  color: #2563eb !important;
+  color: #0f172a !important;
 }
 
 .dark .nav-tab-active {
-  color: #60a5fa !important;
+  color: #f8fafc !important;
 }
 
 .nav-tab-active::after {
@@ -329,8 +334,8 @@ a, a:hover, a:focus, a:visited {
   right: 0.5rem;
   height: 3.5px;
   border-radius: 9999px;
-  background-color: #2563eb;
-  box-shadow: 0 1px 3px rgba(37, 99, 235, 0.3);
+  background-color: #0f172a;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.3);
 }
 
 /* Ant Design Responsive Calendar Overrides */
@@ -577,6 +582,34 @@ a:focus, a:focus-visible, a:active,
   outline: none !important;
   box-shadow: none !important;
   -webkit-tap-highlight-color: transparent !important;
+  transform: none !important;
+  animation: none !important;
+}
+
+/* Ensure buttons and dropdown triggers do not scale, shrink, or bounce on click */
+button:active,
+.ant-btn:active,
+.ant-dropdown-trigger:active,
+.ant-select-selector:active {
+  transform: none !important;
+  scale: 1 !important;
+}
+
+/* Ensure default/secondary buttons (Cancel, Back, Refresh) hover in neutral slate tones instead of primary blue */
+.ant-btn-default:hover,
+.ant-btn-default:focus,
+.ant-btn-default:focus-visible {
+  color: #0f172a !important;
+  border-color: #94a3b8 !important;
+  background-color: #f8fafc !important;
+}
+
+.dark .ant-btn-default:hover,
+.dark .ant-btn-default:focus,
+.dark .ant-btn-default:focus-visible {
+  color: #ffffff !important;
+  border-color: #64748b !important;
+  background-color: #334155 !important;
 }
 
 /* Site-wide Removal of Outlines & Borders on Badges, Tags, and Modals */
@@ -673,9 +706,21 @@ aside .ant-menu-inline-collapsed .ant-menu-title-content {
   border-inline-end-color: transparent !important;
 }
 
-/* Dark mode Ant Design Sidebar Active Menu Pill High-Contrast Readability */
+/* Ant Design Sidebar Active Menu Pill High-Contrast Slate Styling */
+.ant-menu-item-selected {
+  background-color: #0f172a !important;
+  color: #ffffff !important;
+}
+
+.ant-menu-item-selected .ant-menu-title-content,
+.ant-menu-item-selected .anticon,
+.ant-menu-item-selected a {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+
 .dark .ant-menu-item-selected {
-  background-color: #1d4ed8 !important;
+  background-color: #334155 !important;
   color: #ffffff !important;
 }
 
@@ -692,6 +737,22 @@ aside .ant-menu-inline-collapsed .ant-menu-title-content {
   color: #94a3b8 !important;
   border-color: #2b394e !important;
   opacity: 1 !important;
+}
+
+/* Ant Design Select & Dropdown Chevron Arrow High-Contrast Dark Mode Visibility */
+.dark .ant-select-arrow,
+.dark .ant-select-suffix,
+.dark .ant-select-arrow .anticon,
+.dark .ant-dropdown-trigger .anticon-down,
+.dark .ant-dropdown-menu-item .anticon {
+  color: #94a3b8 !important;
+  transition: color 0.15s ease !important;
+}
+
+.dark .ant-select:hover .ant-select-arrow,
+.dark .ant-select-focused .ant-select-arrow,
+.dark .ant-dropdown-trigger:hover .anticon-down {
+  color: #38bdf8 !important;
 }
 
 /* Ant Design Custom Calendar Grid Styling for Continuous Multi-Day Spans */
@@ -847,4 +908,162 @@ aside .ant-menu-inline-collapsed .ant-menu-title-content {
 
 ::view-transition-new(root) {
   z-index: 9999 !important;
+}
+
+/* Smart Meeting Redesigned Login Page Animations */
+@keyframes loginCardEntry {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes loginFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-login-card {
+  animation: loginCardEntry 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-login-header {
+  animation: loginFadeIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Smart Meeting Split-Screen SaaS Left Panel Animations */
+@keyframes saasFloat1 {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes saasFloat2 {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes saasFloat3 {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes saasPulseGlow {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.03); }
+}
+
+@keyframes saasLineDash {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+
+.animate-saas-float-1 {
+  animation: saasFloat1 6s ease-in-out infinite;
+}
+
+.animate-saas-float-2 {
+  animation: saasFloat2 5s ease-in-out infinite 1s;
+}
+
+.animate-saas-float-3 {
+  animation: saasFloat3 7s ease-in-out infinite 0.5s;
+}
+
+.animate-saas-pulse {
+  animation: saasPulseGlow 4s ease-in-out infinite;
+}
+
+.animate-saas-line {
+  stroke-dasharray: 6 6;
+  animation: saasLineDash 1.5s linear infinite;
+}
+
+/* Primary Button Universal Slate Theme & Dark Mode Text Visibility Fix */
+.ant-btn-primary {
+  background-color: #0f172a !important;
+  color: #ffffff !important;
+  border-color: #0f172a !important;
+}
+
+.ant-btn-primary:hover,
+.ant-btn-primary:focus,
+.ant-btn-primary:active {
+  background-color: #1e293b !important;
+  color: #ffffff !important;
+  border-color: #1e293b !important;
+}
+
+.dark .ant-btn-primary {
+  background-color: #334155 !important;
+  color: #ffffff !important;
+  border-color: #334155 !important;
+}
+
+.dark .ant-btn-primary:hover,
+.dark .ant-btn-primary:focus,
+.dark .ant-btn-primary:active {
+  background-color: #475569 !important;
+  color: #ffffff !important;
+  border-color: #475569 !important;
+}
+
+.ant-btn-primary *,
+.dark .ant-btn-primary * {
+  color: #ffffff !important;
+}
+
+/* Auth Page Inputs & Browser Autofill Override (Guarantees pure white inputs, uniform 14px font size & dark text across idle, focused, and autofill states) */
+.auth-card .ant-input-affix-wrapper,
+.auth-card .ant-input,
+.auth-card input,
+.auth-card .ant-input-affix-wrapper input,
+.auth-card .ant-input-affix-wrapper-focused input,
+.auth-card input:focus,
+.auth-card .ant-input:focus,
+.dark .auth-card .ant-input-affix-wrapper,
+.dark .auth-card .ant-input,
+.dark .auth-card input,
+.dark .auth-card .ant-input-affix-wrapper input {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+}
+
+.auth-card .ant-input::placeholder,
+.auth-card input::placeholder,
+.auth-card .ant-input-affix-wrapper input::placeholder,
+.dark .auth-card .ant-input::placeholder,
+.dark .auth-card input::placeholder,
+.dark .auth-card .ant-input-affix-wrapper input::placeholder {
+  color: #94a3b8 !important;
+  font-size: 14px !important;
+}
+
+/* Chrome / Edge / Safari Autofill Gray/Blue Overlay & Font-Size Lock */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active,
+.ant-input:-webkit-autofill,
+.ant-input-affix-wrapper input:-webkit-autofill,
+.auth-card input:-webkit-autofill,
+.auth-card .ant-input:-webkit-autofill,
+.auth-card .ant-input-affix-wrapper input:-webkit-autofill {
+  -webkit-box-shadow: 0 0 0px 1000px #ffffff inset !important;
+  -webkit-text-fill-color: #0f172a !important;
+  background-color: #ffffff !important;
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+  transition: background-color 5000s ease-in-out 0s !important;
 }

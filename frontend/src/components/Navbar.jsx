@@ -66,31 +66,31 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
   const quickActionItems = [
     {
       key: 'schedule_meeting',
-      icon: <PlusOutlined className="text-blue-500 font-bold" />,
+      icon: <PlusOutlined className="text-blue-600 dark:text-blue-400 font-bold" />,
       label: (
         <div onClick={() => navigate('/meetings/new')} className="py-1 px-0.5 cursor-pointer">
           <p className="font-bold text-xs text-slate-900 dark:text-white m-0">Schedule Meeting</p>
-          <p className="text-[10px] text-slate-400 m-0">Create session & set agenda</p>
+          <p className="text-[10px] text-slate-400 dark:text-slate-400 m-0">Create session & set agenda</p>
         </div>
       ),
     },
     {
       key: 'add_action_item',
-      icon: <FormOutlined className="text-amber-500 font-bold" />,
+      icon: <FormOutlined className="text-amber-600 dark:text-amber-400 font-bold" />,
       label: (
         <div onClick={() => setShowAddActionModal(true)} className="py-1 px-0.5 cursor-pointer">
           <p className="font-bold text-xs text-slate-900 dark:text-white m-0">Add Action Item</p>
-          <p className="text-[10px] text-slate-400 m-0">Log task & assign team member</p>
+          <p className="text-[10px] text-slate-400 dark:text-slate-400 m-0">Log task & assign team member</p>
         </div>
       ),
     },
     {
       key: 'view_calendar',
-      icon: <CalendarOutlined className="text-indigo-500 font-bold" />,
+      icon: <CalendarOutlined className="text-indigo-600 dark:text-indigo-400 font-bold" />,
       label: (
         <div onClick={() => navigate('/meetings?view=calendar')} className="py-1 px-0.5 cursor-pointer">
           <p className="font-bold text-xs text-slate-900 dark:text-white m-0">View Calendar</p>
-          <p className="text-[10px] text-slate-400 m-0">Monthly schedule overview</p>
+          <p className="text-[10px] text-slate-400 dark:text-slate-400 m-0">Monthly schedule overview</p>
         </div>
       ),
     },
@@ -461,9 +461,9 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
           <Link to="/dashboard" className="no-underline flex items-center shrink-0 overflow-hidden" title="Smart Meeting Decision Tracker">
             <div className={`transition-all duration-300 ease-in-out overflow-hidden flex items-center ${collapsed ? 'w-7' : 'w-44'}`}>
               {collapsed ? (
-                <Logo variant="icon" height={26} />
+                <Logo variant="icon" height={26} isDark={themeMode === 'dark'} />
               ) : (
-                <Logo variant="full" height={46} />
+                <Logo variant="full" height={46} isDark={themeMode === 'dark'} />
               )}
             </div>
           </Link>
@@ -556,7 +556,7 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
             {/* Logo for Responsive / Mobile screens (< lg) */}
             <div className="flex items-center lg:hidden shrink-0">
               <Link to="/dashboard" className="no-underline flex items-center shrink-0" title="Smart Meeting Decision Tracker">
-                <Logo variant="full" height={28} />
+                <Logo variant="full" height={28} isDark={themeMode === 'dark'} />
               </Link>
             </div>
 
@@ -574,17 +574,31 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
           {/* RIGHT SIDE: Quick Actions, Notifications, Theme & Profile */}
           <div className="flex items-center gap-1 sm:gap-2 shrink-0 ml-auto select-none">
 
-            {/* 1. Quick Actions Dropdown Button */}
-            <Dropdown menu={{ items: quickActionItems }} placement="bottomRight" trigger={['click']}>
+            {/* 0. Admin Portal Button (Visible ONLY on responsive/mobile screens for Admins/Owners) */}
+            {isAdmin && (
               <button
                 type="button"
-                className="h-8 px-2 sm:px-2.5 rounded-lg bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200/70 dark:hover:bg-slate-700/80 text-slate-800 dark:text-slate-200 font-semibold text-xs flex items-center gap-1 border-none cursor-pointer"
-                title="Quick Actions"
+                onClick={() => navigate('/admin')}
+                className="flex lg:hidden h-8 px-2 sm:px-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 dark:bg-slate-100 dark:hover:bg-white text-white dark:text-slate-900 font-bold text-xs items-center justify-center gap-1.5 border-none cursor-pointer shadow-xs transition-colors"
+                title="Admin Management Portal"
               >
-                <FormOutlined className="text-blue-600 text-xs font-bold" />
-                <span className="hidden sm:inline font-semibold text-xs">Actions</span>
-                <DownOutlined className="text-[9px] text-slate-400" />
+                <TeamOutlined className="text-xs font-bold" />
+                <span className="hidden sm:inline font-bold text-xs">Admin Portal</span>
               </button>
+            )}
+
+            {/* 1. Quick Actions Dropdown Button (Matching Global Filter Ant Design Button style) */}
+            <Dropdown menu={{ items: quickActionItems }} placement="bottomRight" trigger={['click']}>
+              <Button
+                id="header_quick_actions_btn"
+                name="quick_actions_btn"
+                size="middle"
+                className="h-8 sm:h-9 px-2.5 sm:px-3 font-semibold text-xs rounded-xl flex items-center justify-center gap-1.5 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 shrink-0"
+                icon={<FormOutlined className="text-blue-600 dark:text-blue-400 text-xs" />}
+              >
+                <span className="font-semibold text-xs">Actions</span>
+                <DownOutlined className="text-[9px] text-slate-400 dark:text-slate-400 ml-0.5" />
+              </Button>
             </Dropdown>
 
             {/* 2. Notification Bell Button */}
@@ -604,7 +618,7 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
             >
               <button
                 type="button"
-                className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800 border-none relative cursor-pointer"
+                className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800 border-none relative cursor-pointer"
               >
                 <BellOutlined className="text-base" />
                 {hasUnread && (
@@ -642,7 +656,7 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
                 <span className="hidden sm:inline-block text-xs font-semibold text-slate-800 dark:text-slate-200">
                   {userFirstName}
                 </span>
-                <DownOutlined className="text-[9px] text-slate-400" />
+                <DownOutlined className="text-[9px] text-slate-400 dark:text-slate-300" />
               </div>
             </Dropdown>
 
@@ -655,7 +669,7 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
       <Drawer
         title={
           <Link to="/dashboard" className="no-underline flex items-center" onClick={() => setDrawerOpen(false)}>
-            <Logo variant="full" height={46} />
+            <Logo variant="full" height={46} isDark={themeMode === 'dark'} />
           </Link>
         }
         placement="left"

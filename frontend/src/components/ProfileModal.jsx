@@ -1,12 +1,12 @@
 
 import React, { useState, useEffect } from 'react';
-import { Modal, Avatar, Tag, Descriptions, Button, Form, Input, Alert, App, Grid } from 'antd';
+import { Modal, Avatar, Tag, Descriptions, Button, Form, Input, Alert, App, Grid, Select } from 'antd';
 import { 
   UserOutlined, MailOutlined, IdcardOutlined, CalendarOutlined, 
   TeamOutlined, EditOutlined, SafetyCertificateOutlined, 
   LockOutlined, CheckOutlined, ArrowLeftOutlined, KeyOutlined,
   DeleteOutlined, WarningOutlined, ExclamationCircleOutlined, CloseOutlined,
-  LogoutOutlined
+  LogoutOutlined, SwapOutlined, CrownOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { useNavigate } from 'react-router-dom';
@@ -66,7 +66,18 @@ export const ProfileModal = ({ open, onClose, user }) => {
   const [emailError, setEmailError] = useState('');
   const [emailSuccessMsg, setEmailSuccessMsg] = useState('');
 
-  // Delete Account State
+  // Delete Account: pre-check / ownership-block state
+  const [showDeleteCheckModal, setShowDeleteCheckModal] = useState(false);
+  const [deleteCheckLoading, setDeleteCheckLoading] = useState(false);
+  const [deleteCheckData, setDeleteCheckData] = useState(null); // {can_delete, requires_ownership_transfer, message, eligible_users, ...}
+
+  // Ownership Transfer Modal
+  const [showTransferModal, setShowTransferModal] = useState(false);
+  const [transferTarget, setTransferTarget] = useState(null);
+  const [transferLoading, setTransferLoading] = useState(false);
+  const [transferError, setTransferError] = useState('');
+
+  // Delete Account Confirmation Modal
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletePassword, setDeletePassword] = useState('');
   const [deleteConfirmationText, setDeleteConfirmationText] = useState('');
@@ -188,24 +199,102 @@ export const ProfileModal = ({ open, onClose, user }) => {
     setEmailSuccessMsg('');
   };
 
+  // Step 1: Check account deletion eligibility before showing the delete modal
+  const handleOpenDeleteFlow = async () => {
+    setDeleteCheckLoading(true);
+    setDeleteCheckData(null);
+    try {
+      const data = await authService.checkDeleteAccount();
+      setDeleteCheckData(data);
+      if (!data.can_delete) {
+        // Blocked: show the block/ownership-transfer modal
+        setShowDeleteCheckModal(true);
+      } else {
+        // Clear to delete: jump straight to confirmation modal
+        setDeletePassword('');
+        setDeleteConfirmationText('');
+        setDeleteError('');
+        setShowDeleteModal(true);
+      }
+    } catch (err) {
+      message.error(getErrorMessage(err, 'Failed to check account deletion status.'));
+    } finally {
+      setDeleteCheckLoading(false);
+    }
+  };
+
+  // Step 2a: Transfer ownership to a selected user
+  const handleTransferOwnership = async () => {
+    setTransferError('');
+    if (!transferTarget) {
+      setTransferError('Please select a user to transfer ownership to.');
+      return;
+    }
+    setTransferLoading(true);
+    try {
+      const res = await authService.transferOwnership(transferTarget);
+      await refreshUser();
+      message.success(res.message || 'Ownership transferred successfully!');
+      setShowTransferModal(false);
+      setTransferTarget(null);
+      setShowDeleteCheckModal(false);
+      // Re-run check — user is now eligible to delete
+      const freshCheck = await authService.checkDeleteAccount();
+      setDeleteCheckData(freshCheck);
+      if (freshCheck.can_delete) {
+        setDeletePassword('');
+        setDeleteConfirmationText('');
+        setDeleteError('');
+        setShowDeleteModal(true);
+      } else {
+        setShowDeleteCheckModal(true);
+      }
+    } catch (err) {
+      setTransferError(getErrorMessage(err, 'Failed to transfer ownership.'));
+    } finally {
+      setTransferLoading(false);
+    }
+  };
+
+  // Step 2b: Final account deletion
   const handleDeleteAccount = async () => {
     setDeleteError('');
     setDeleteLoading(true);
     try {
       const payload = {
         password: deletePassword,
-        confirmation: deleteConfirmationText,
+        confirmation: deleteConfirmationText.trim(),
       };
       await authService.deleteAccount(payload);
-      message.success('Your account has been deleted successfully.');
+      message.success('Your account has been deleted.');
       setShowDeleteModal(false);
       onClose();
       logout();
     } catch (err) {
-      setDeleteError(getErrorMessage(err, 'Failed to delete account.'));
+      const errData = err?.response?.data;
+      if (errData?.requires_ownership_transfer || errData?.requires_admin_assignment) {
+        // Server rejected — re-show check modal with fresh data
+        setShowDeleteModal(false);
+        setDeleteCheckData({ ...deleteCheckData, ...errData, can_delete: false });
+        setShowDeleteCheckModal(true);
+        return;
+      }
+      setDeleteError(getErrorMessage(err, 'Failed to delete account. Please try again.'));
     } finally {
       setDeleteLoading(false);
     }
+  };
+
+  const resetDeleteFlow = () => {
+    setShowDeleteModal(false);
+    setShowDeleteCheckModal(false);
+    setShowTransferModal(false);
+    setDeletePassword('');
+    setDeleteConfirmationText('');
+    setDeleteError('');
+    setTransferError('');
+    setTransferTarget(null);
+    setDeleteCheckData(null);
   };
 
   return (
@@ -234,7 +323,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
             )}
           </div>
         }
-        open={open && !showEmailModal && !showDeleteModal}
+        open={open && !showEmailModal && !showDeleteModal && !showDeleteCheckModal && !showTransferModal}
         onCancel={() => {
           setIsEditing(false);
           onClose();
@@ -393,7 +482,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
                   <WarningOutlined className="text-red-600 dark:text-red-400 text-sm shrink-0" />
                   <div className="min-w-0">
                     <span className="text-xs font-bold text-red-900 dark:text-red-300 block leading-tight">Danger Zone</span>
-                    <span className="text-[10px] text-red-700 dark:text-red-400 block leading-tight truncate">Permanently remove account & data.</span>
+                    <span className="text-[10px] text-red-700 dark:text-red-400 block leading-tight truncate">Permanently remove your personal account access.</span>
                   </div>
                 </div>
                 <Button
@@ -401,12 +490,14 @@ export const ProfileModal = ({ open, onClose, user }) => {
                   danger
                   type="primary"
                   icon={<DeleteOutlined />}
-                  onClick={() => setShowDeleteModal(true)}
+                  loading={deleteCheckLoading}
+                  onClick={handleOpenDeleteFlow}
                   className="text-xs font-semibold shrink-0 px-2 py-0.5 h-7 flex items-center justify-center rounded-lg"
                 >
                   Delete Account
                 </Button>
               </div>
+
             </div>
           ) : (
             /* Edit Mode Form */
@@ -624,78 +715,210 @@ export const ProfileModal = ({ open, onClose, user }) => {
         </div>
       </Modal>
 
-      {/* Delete Account Confirmation Modal */}
+      {/* MODAL 1: Account Deletion Blocked — Ownership / Admin Transfer Required */}
+      <Modal
+        title={
+          <div className="flex items-center space-x-2 text-amber-600 dark:text-amber-400">
+            <WarningOutlined className="text-xl" />
+            <span className="font-bold text-lg">Account Deletion Unavailable</span>
+          </div>
+        }
+        open={showDeleteCheckModal}
+        onCancel={resetDeleteFlow}
+        footer={null}
+        width={500}
+        destroyOnHidden
+        closable={true}
+      >
+        <div className="py-3 space-y-4">
+          <Alert
+            message={deleteCheckData?.requires_ownership_transfer ? "You're the only Owner" : "You're the only Administrator"}
+            description={deleteCheckData?.message || "You must transfer your role before deleting your account."}
+            type="warning"
+            showIcon
+            icon={<CrownOutlined />}
+          />
+
+          <div className="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700 text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+            {deleteCheckData?.requires_ownership_transfer
+              ? 'Transfer your Owner role to another user. You will become Admin and can then delete your account.'
+              : 'Promote another user to Admin or Owner role, then you can delete your account.'}
+          </div>
+
+          <div className="flex justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+            <Button icon={<CloseOutlined />} onClick={resetDeleteFlow}>Cancel</Button>
+            <Button
+              type="primary"
+              icon={<SwapOutlined />}
+              onClick={() => {
+                setTransferTarget(null);
+                setTransferError('');
+                setShowTransferModal(true);
+              }}
+              className="bg-amber-600 hover:bg-amber-700 border-amber-600 font-semibold text-white"
+            >
+              Transfer Ownership
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* MODAL 2: Transfer Ownership to Another User */}
+      <Modal
+        title={
+          <div className="flex items-center space-x-2 text-slate-900 dark:text-white">
+            <SwapOutlined className="text-blue-600 dark:text-blue-400 text-lg" />
+            <span className="font-bold">Transfer Ownership</span>
+          </div>
+        }
+        open={showTransferModal}
+        onCancel={() => {
+          setShowTransferModal(false);
+          setTransferTarget(null);
+          setTransferError('');
+        }}
+        footer={null}
+        width={480}
+        destroyOnHidden
+        closable={true}
+      >
+        <div className="py-3 space-y-4">
+          <Alert
+            message="Select who will receive ownership"
+            description={
+              deleteCheckData?.requires_ownership_transfer
+                ? 'The selected user will become the new Owner. Your role will change to Admin.'
+                : 'The selected user will become an Administrator of the organization.'
+            }
+            type="info"
+            showIcon
+          />
+
+          {transferError && (
+            <Alert message={transferError} type="error" showIcon closable onClose={() => setTransferError('')} />
+          )}
+
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+              Select Target User
+            </label>
+            <Select
+              id="transfer_target_user"
+              showSearch
+              placeholder="Search and select a user..."
+              size="large"
+              className="w-full"
+              value={transferTarget}
+              onChange={(val) => setTransferTarget(val)}
+              optionFilterProp="label"
+              options={(deleteCheckData?.eligible_users || []).map(u => ({
+                value: u.id,
+                label: `${u.full_name} (${u.email}) — ${u.role}`,
+              }))}
+            />
+          </div>
+
+          <div className="flex justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+            <Button
+              icon={<CloseOutlined />}
+              onClick={() => {
+                setShowTransferModal(false);
+                setTransferTarget(null);
+                setTransferError('');
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="primary"
+              icon={<SwapOutlined />}
+              loading={transferLoading}
+              disabled={!transferTarget || transferLoading}
+              onClick={handleTransferOwnership}
+              className="bg-slate-900 hover:bg-slate-800 font-semibold text-white"
+            >
+              Transfer & Continue
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* MODAL 3: Delete Account Final Confirmation */}
       <Modal
         title={
           <div className="flex items-center space-x-2 text-red-600 dark:text-red-400">
             <ExclamationCircleOutlined className="text-xl" />
-            <span className="font-bold text-lg">Delete Account</span>
+            <span className="font-bold text-lg">Delete your account?</span>
           </div>
         }
         open={showDeleteModal}
-        onCancel={() => {
-          setShowDeleteModal(false);
-          setDeletePassword('');
-          setDeleteConfirmationText('');
-          setDeleteError('');
-        }}
+        onCancel={resetDeleteFlow}
         footer={null}
-        width={480}
+        width={490}
         destroyOnHidden
         closable={false}
       >
         <div className="py-3 space-y-4">
           <Alert
-            message="Are you sure you want to delete your account?"
-            description="This action is permanent and cannot be undone. All your profile information, settings, and account data will be completely erased."
+            message="This action is permanent and cannot be undone."
+            description="This will permanently delete your personal account and revoke your access to Smart Meeting. Your organization's meetings, decisions, action items, and other shared data will not be deleted."
             type="error"
             showIcon
             icon={<WarningOutlined />}
           />
 
+          {(deleteCheckData?.is_oauth_user === false) && (
+            <div className="bg-blue-50 dark:bg-blue-950/30 p-2.5 rounded-lg border border-blue-100 dark:border-blue-900/40 text-xs text-blue-800 dark:text-blue-300">
+              <span className="font-semibold">Note:</span> Some items associated with your account may be reassigned to another user before your account is deleted.
+            </div>
+          )}
+
           {deleteError && (
             <Alert message={deleteError} type="error" showIcon closable onClose={() => setDeleteError('')} />
           )}
 
-          <div>
-            <label htmlFor="delete_password" className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
-              Confirm Account Deletion
-            </label>
-            <Input.Password
-              id="delete_password"
-              name="delete_password"
-              prefix={<LockOutlined className="text-slate-400" />}
-              placeholder="Enter your password to confirm"
-              size="large"
-              value={deletePassword}
-              onChange={(e) => setDeletePassword(e.target.value)}
-              className="rounded-lg mb-2"
-            />
-            <p className="text-xs text-slate-500 dark:text-slate-400 m-0">
-              Or type <strong className="text-red-600 dark:text-red-400">DELETE</strong> below if signed in with Google/GitHub:
-            </p>
-            <Input
-              id="delete_confirmation_text"
-              name="delete_confirmation_text"
-              placeholder="Type DELETE to confirm"
-              size="large"
-              value={deleteConfirmationText}
-              onChange={(e) => setDeleteConfirmationText(e.target.value)}
-              className="rounded-lg mt-1"
-            />
+          <div className="space-y-3">
+            {!(deleteCheckData?.is_oauth_user ?? user?.is_oauth_user) && (
+              <div>
+                <label htmlFor="delete_password" className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+                  Confirm Password
+                </label>
+                <Input.Password
+                  id="delete_password"
+                  name="delete_password"
+                  prefix={<LockOutlined className="text-slate-400" />}
+                  placeholder="Enter your current password"
+                  size="large"
+                  value={deletePassword}
+                  onChange={(e) => setDeletePassword(e.target.value)}
+                  className="rounded-lg"
+                  autoFocus
+                />
+              </div>
+            )}
+
+            <div>
+              <label htmlFor="delete_confirmation_text" className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+                Type <strong className="text-red-600 dark:text-red-400">DELETE</strong> to confirm
+              </label>
+              <Input
+                id="delete_confirmation_text"
+                name="delete_confirmation_text"
+                placeholder="DELETE"
+                size="large"
+                value={deleteConfirmationText}
+                onChange={(e) => setDeleteConfirmationText(e.target.value)}
+                className="rounded-lg font-mono tracking-widest"
+              />
+            </div>
           </div>
 
           <div className="flex justify-end space-x-2 pt-3 border-t border-slate-100 dark:border-slate-800">
-            <Button 
+            <Button
               id="delete_modal_cancel_btn"
               name="delete_modal_cancel_btn"
               icon={<CloseOutlined />}
-              onClick={() => {
-                setShowDeleteModal(false);
-                setDeletePassword('');
-                setDeleteConfirmationText('');
-                setDeleteError('');
-              }}
+              onClick={resetDeleteFlow}
             >
               Cancel
             </Button>
@@ -706,6 +929,11 @@ export const ProfileModal = ({ open, onClose, user }) => {
               danger
               icon={<DeleteOutlined />}
               loading={deleteLoading}
+              disabled={
+                deleteLoading ||
+                deleteConfirmationText.trim() !== 'DELETE' ||
+                (!(deleteCheckData?.is_oauth_user ?? user?.is_oauth_user) && !deletePassword)
+              }
               onClick={handleDeleteAccount}
               className="font-semibold"
             >
@@ -714,6 +942,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
           </div>
         </div>
       </Modal>
+
 
       {/* Department Request Modal */}
       <Modal

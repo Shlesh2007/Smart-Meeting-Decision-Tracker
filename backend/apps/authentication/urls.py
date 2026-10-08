@@ -3,8 +3,8 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     RegisterView, RequestRegisterOTPView, ConfirmRegisterView, UserProfileView, UserViewSet,
     LookupAccountView, RequestPasswordResetOTPView, VerifyPasswordResetOTPView, ConfirmPasswordResetView,
-    RequestEmailChangeOTPView, VerifyEmailChangeOTPView, DeleteAccountView,
-    GoogleOAuthView, GitHubOAuthView, DepartmentChangeRequestViewSet
+    RequestEmailChangeOTPView, VerifyEmailChangeOTPView, DeleteAccountView, CheckDeleteAccountView,
+    TransferOwnershipView, DeleteOrganizationView, GoogleOAuthView, GitHubOAuthView, DepartmentChangeRequestViewSet
 )
 
 router = DefaultRouter()
@@ -21,7 +21,10 @@ urlpatterns = [
     # Profile Email Change & Account Deletion Endpoints
     path('profile/request-email-change/', RequestEmailChangeOTPView.as_view(), name='auth_request_email_change_otp'),
     path('profile/verify-email-change/', VerifyEmailChangeOTPView.as_view(), name='auth_verify_email_change_otp'),
+    path('profile/delete-account/check/', CheckDeleteAccountView.as_view(), name='auth_check_delete_account'),
+    path('profile/transfer-ownership/', TransferOwnershipView.as_view(), name='auth_transfer_ownership'),
     path('profile/delete-account/', DeleteAccountView.as_view(), name='auth_delete_account'),
+    path('delete-organization/', DeleteOrganizationView.as_view(), name='auth_delete_organization'),
 
     # OTP Password Reset Endpoints
     path('password-reset/lookup-account/', LookupAccountView.as_view(), name='auth_lookup_account'),
