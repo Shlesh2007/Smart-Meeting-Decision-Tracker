@@ -66,10 +66,8 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         raw_username = attrs.get(self.username_field, '').strip()
 
-        # Authenticate strictly against existing database users by username or email
-        user = User.objects.filter(username__iexact=raw_username).first() \
-            or User.objects.filter(email__iexact=raw_username).first()
-
+        # Login strictly by case-insensitive username against actual existing database users
+        user = User.objects.filter(username__iexact=raw_username).first()
         if user:
             attrs[self.username_field] = user.username
 

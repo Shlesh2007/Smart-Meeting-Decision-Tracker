@@ -404,7 +404,7 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
       icon: <ExclamationCircleOutlined className="text-rose-500" />,
       content: 'Are you sure you want to log out of your account?',
       okText: 'Yes, Logout',
-      okButtonProps: { danger: true, className: 'bg-rose-600 font-semibold' },
+      okButtonProps: { danger: true, className: 'bg-slate-600 font-semibold' },
       cancelText: 'Cancel',
       onOk() {
         logout();
