@@ -92,6 +92,7 @@ export default function Dashboard() {
     if (savedPeriod === 'last_week') return 'last_week';
     if (savedPeriod === 'last_month') return 'last_month';
     if (savedPeriod === 'last_year') return 'last_year';
+    if (savedPeriod === 'custom') return 'custom';
     return '30d';
   });
   const [startDate, setStartDate] = useState(() => {
@@ -113,6 +114,7 @@ export default function Dashboard() {
     else if (val === 'all_time') setActivityPeriod('all');
     else if (val === 'today') setActivityPeriod('today');
     else if (val === 'yesterday') setActivityPeriod('yesterday');
+    else if (val === 'custom') setActivityPeriod('custom');
   };
 
   const handleActivityPeriodChange = (val) => {
@@ -127,6 +129,7 @@ export default function Dashboard() {
     else if (val === 'last_week') syncedPeriod = 'last_week';
     else if (val === 'last_month') syncedPeriod = 'last_month';
     else if (val === 'last_year') syncedPeriod = 'last_year';
+    else if (val === 'custom') syncedPeriod = 'custom';
 
     if (syncedPeriod && syncedPeriod !== period) {
       setPeriod(syncedPeriod);
@@ -302,6 +305,8 @@ export default function Dashboard() {
             activityPeriod={activityPeriod}
             onActivityPeriodChange={handleActivityPeriodChange}
             globalPeriod={period}
+            startDate={startDate}
+            endDate={endDate}
           />
         </div>
         <div className="lg:col-span-5 flex flex-col h-full">

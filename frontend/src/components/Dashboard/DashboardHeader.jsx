@@ -253,7 +253,7 @@ export const DashboardHeader = ({
                 { label: 'All Time', value: 'all_time' },
                 { label: 'Yesterday', value: 'yesterday' },
                 { label: 'Last 7 Days', value: 'last_7_days' },
-                { label: '30 Days', value: 'last_30_days' },
+                { label: 'Last 30 Days', value: 'last_30_days' },
                 { label: 'Last Week', value: 'last_week' },
                 { label: 'Last Month', value: 'last_month' },
                 { label: 'Last Year', value: 'last_year' },

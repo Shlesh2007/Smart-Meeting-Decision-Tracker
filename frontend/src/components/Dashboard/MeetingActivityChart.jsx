@@ -11,8 +11,11 @@ export const MeetingActivityChart = ({
   activityPeriod = '30d',
   onActivityPeriodChange,
   globalPeriod,
+  startDate,
+  endDate,
 }) => {
   const [filterDays, setFilterDays] = useState(() => {
+    if (activityPeriod === 'custom' || globalPeriod === 'custom') return 'custom';
     if (activityPeriod === '14d' || activityPeriod === 14) return 14;
     if (activityPeriod === '7d' || activityPeriod === 7) return 7;
     if (activityPeriod === '30d' || activityPeriod === 30) return 30;
@@ -31,6 +34,7 @@ export const MeetingActivityChart = ({
     if (globalPeriod === 'last_week') return 'last_week';
     if (globalPeriod === 'last_month') return 'last_month';
     if (globalPeriod === 'last_30_days') return 30;
+    if (globalPeriod === 'custom') return 'custom';
     return 30;
   });
   const [selectedMonth, setSelectedMonth] = useState('all');
@@ -38,7 +42,9 @@ export const MeetingActivityChart = ({
   const [activePointIndex, setActivePointIndex] = useState(null);
 
   React.useEffect(() => {
-    if (activityPeriod === '14d' || activityPeriod === 14) {
+    if (activityPeriod === 'custom' || globalPeriod === 'custom') {
+      setFilterDays('custom');
+    } else if (activityPeriod === '14d' || activityPeriod === 14) {
       setFilterDays(14);
     } else if (activityPeriod === '7d' || activityPeriod === 7) {
       setFilterDays(7);
@@ -132,6 +138,40 @@ export const MeetingActivityChart = ({
 
     const today = dayjs().startOf('day');
 
+    if (filterDays === 'custom') {
+      if (startDate && endDate) {
+        const start = dayjs(startDate);
+        const end = dayjs(endDate);
+        if (start.isValid() && end.isValid() && (start.isBefore(end) || start.isSame(end, 'day'))) {
+          const result = [];
+          let curr = start;
+          let countLimit = 0;
+          while ((curr.isBefore(end) || curr.isSame(end, 'day')) && countLimit < 366) {
+            const key = curr.format('YYYY-MM-DD');
+            result.push({
+              date: curr.format('MMM DD'),
+              count: activityMap[key] || 0,
+              fullDate: key,
+            });
+            curr = curr.add(1, 'day');
+            countLimit++;
+          }
+          return result;
+        }
+      }
+      const keys = Object.keys(activityMap).sort();
+      if (keys.length === 0) return [];
+      return keys.map((key) => {
+        const parts = key.split('-');
+        const d = parts.length === 3 ? new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2])) : new Date(key);
+        return {
+          date: d.toLocaleDateString('en-US', { month: 'short', day: '2-digit' }),
+          count: activityMap[key],
+          fullDate: key,
+        };
+      });
+    }
+
     if (filterDays === 'today') {
       const key = today.format('YYYY-MM-DD');
       return [{
@@ -153,7 +193,6 @@ export const MeetingActivityChart = ({
 
     if (filterDays === 'last_year') {
       if (selectedMonth === 'all') {
-        // Group activity by Month for the 12 months of Last Year (Jan to Dec)
         const lastYearNum = dayjs().year() - 1;
         const result = [];
         
@@ -176,7 +215,6 @@ export const MeetingActivityChart = ({
         }
         return result;
       } else {
-        // Show daily activity breakdown for the specific selected month
         const startOfMonth = dayjs(`${selectedMonth}-01`).startOf('month');
         const endOfMonth = startOfMonth.endOf('month');
         const result = [];
@@ -237,9 +275,9 @@ export const MeetingActivityChart = ({
     }
 
     if (filterDays === 7 || filterDays === 14 || filterDays === 30) {
-      const startDate = today.subtract(filterDays - 1, 'day');
+      const startDay = today.subtract(filterDays - 1, 'day');
       const result = [];
-      let curr = startDate;
+      let curr = startDay;
 
       while (curr.isBefore(today) || curr.isSame(today, 'day')) {
         const key = curr.format('YYYY-MM-DD');
@@ -266,7 +304,7 @@ export const MeetingActivityChart = ({
         fullDate: key,
       };
     });
-  }, [meetingActivity, filterDays, selectedMonth]);
+  }, [meetingActivity, filterDays, selectedMonth, startDate, endDate]);
 
   const totalMeetingsInPeriod = chartFormattedData.reduce((acc, curr) => acc + curr.count, 0);
 
@@ -297,8 +335,14 @@ export const MeetingActivityChart = ({
           </div>
         </div>
 
-        {/* Dynamic Filter Controls: Single-Day Tags, Month Select Dropdown for Last Year, Segmented for Standard */}
-        {filterDays === 'today' ? (
+        {/* Dynamic Filter Controls: Single-Day Tags, Custom Range Tag, Month Select Dropdown for Last Year, Segmented for Standard */}
+        {filterDays === 'custom' ? (
+          <Tag color="cyan" className="font-bold text-xs m-0 px-2 py-0.5 rounded-lg border-cyan-200">
+            {startDate && endDate
+              ? `Custom Range (${dayjs(startDate).format('MMM D')} - ${dayjs(endDate).format('MMM D')})`
+              : 'Custom Range'}
+          </Tag>
+        ) : filterDays === 'today' ? (
           <Tag color="blue" className="font-bold text-xs m-0 px-2 py-0.5 rounded-lg border-blue-200">
             Today Only (1 Day)
           </Tag>

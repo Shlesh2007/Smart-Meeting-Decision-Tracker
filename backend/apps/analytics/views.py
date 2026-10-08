@@ -184,9 +184,21 @@ class DashboardAnalyticsView(APIView):
             priority_counts = actions_qs.values('priority').annotate(count=Count('id', distinct=True))
             priority_distribution = {item['priority'].upper(): item['count'] for item in priority_counts if item['priority']}
 
-            # Meeting Activity filtering (Today, Yesterday, 7D, 14D, 30D, Last Week, Last Month, Last Year, All)
+            # Meeting Activity filtering (Today, Yesterday, Custom, 7D, 14D, 30D, Last Week, Last Month, Last Year, All)
             activity_qs = base_meetings_qs
-            if activity_period_param in ['today', 'this_day'] or (period in ['today', 'this_day'] and activity_period_param in ['today', '7d', '30d']):
+            if activity_period_param == 'custom' or (period == 'custom' and activity_period_param not in ['7d', '14d', '30d', 'today', 'yesterday', 'last_week', 'last_month', 'last_year', 'all']):
+                activity_period_clean = 'custom'
+                start_date_param = request.query_params.get('start_date')
+                end_date_param = request.query_params.get('end_date')
+                if start_date_param and end_date_param:
+                    activity_qs = activity_qs.filter(meeting_date__gte=start_date_param, meeting_date__lte=end_date_param)
+                elif start_date_param:
+                    activity_qs = activity_qs.filter(meeting_date__gte=start_date_param)
+                elif end_date_param:
+                    activity_qs = activity_qs.filter(meeting_date__lte=end_date_param)
+                else:
+                    activity_qs = activity_qs.none()
+            elif activity_period_param in ['today', 'this_day'] or (period in ['today', 'this_day'] and activity_period_param in ['today', '7d', '30d']):
                 activity_period_clean = 'today'
                 activity_qs = activity_qs.filter(meeting_date=today)
             elif activity_period_param == 'yesterday' or (period == 'yesterday' and activity_period_param in ['yesterday', '7d', '30d']):
