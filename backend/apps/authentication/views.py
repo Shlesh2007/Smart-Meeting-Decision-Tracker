@@ -303,13 +303,37 @@ def get_user_active_organization(user, request=None):
         return None
 
     tables = set(connection.introspection.table_names())
-    user_org_ids = set()
-    if 'authentication_organization' in tables:
-        from .models import Organization
-        user_org_ids.update(Organization.objects.filter(owner=user).values_list('id', flat=True))
+    has_org_table = 'authentication_organization' in tables
+    has_mem_table = 'authentication_organizationmembership' in tables
 
-    if 'authentication_organizationmembership' in tables:
-        from .models import OrganizationMembership
+    if not has_org_table:
+        return None
+
+    from .models import Organization, OrganizationMembership
+
+    # Auto-ensure organization exists if database has none
+    if not Organization.objects.exists():
+        owner_user = user if user.is_owner_role else User.objects.filter(role=User.Role.OWNER).first()
+        if not owner_user and user.is_admin_role:
+            owner_user = user
+        if owner_user:
+            try:
+                org_name = owner_user.organization_name or 'SmartMeeting Workspace'
+                created_org = Organization.objects.create(name=org_name, owner=owner_user)
+                if has_mem_table:
+                    OrganizationMembership.objects.get_or_create(
+                        user=owner_user,
+                        organization=created_org,
+                        defaults={'role': User.Role.OWNER, 'is_active': True}
+                    )
+                return created_org
+            except Exception as e:
+                logger.warning("Auto-create organization warning: %s", str(e))
+
+    user_org_ids = set()
+    user_org_ids.update(Organization.objects.filter(owner=user).values_list('id', flat=True))
+
+    if has_mem_table:
         user_org_ids.update(
             OrganizationMembership.objects.filter(user=user, is_active=True).values_list('organization_id', flat=True)
         )
@@ -328,13 +352,25 @@ def get_user_active_organization(user, request=None):
     if active_org_id is None and user_org_ids:
         active_org_id = sorted(list(user_org_ids))[0]
 
-    if active_org_id is None and 'authentication_organization' in tables:
-        from .models import Organization
-        if Organization.objects.count() == 1:
+    if active_org_id is None:
+        # If user is OWNER or ADMIN, fall back to the first available organization
+        if user.is_admin_role:
+            first_org = Organization.objects.first()
+            if first_org:
+                if has_mem_table:
+                    try:
+                        OrganizationMembership.objects.get_or_create(
+                            user=user,
+                            organization=first_org,
+                            defaults={'role': user.role, 'is_active': True}
+                        )
+                    except Exception:
+                        pass
+                return first_org
+        elif Organization.objects.count() == 1:
             active_org_id = Organization.objects.values_list('id', flat=True).first()
 
-    if active_org_id and 'authentication_organization' in tables:
-        from .models import Organization
+    if active_org_id:
         return Organization.objects.filter(id=active_org_id).first()
 
     return None
@@ -356,6 +392,12 @@ class UserViewSet(viewsets.ModelViewSet):
         # 1. Base queryset: exclude UNASSIGNED (unapproved) users
         qs = User.objects.exclude(role=User.Role.UNASSIGNED).order_by('-date_joined')
 
+        from .models import Organization
+        org_count = Organization.objects.count() if 'authentication_organization' in tables else 1
+        if org_count <= 1:
+            # In single organization mode, all assigned users belong to this organization
+            return qs
+
         # 2. Scope strictly to active organization members
         target_org = get_user_active_organization(user, request=self.request)
 
@@ -371,11 +413,13 @@ class UserViewSet(viewsets.ModelViewSet):
             if target_org.owner_id:
                 member_user_ids.add(target_org.owner_id)
 
-            qs = qs.filter(id__in=member_user_ids)
+            if member_user_ids:
+                return qs.filter(id__in=member_user_ids)
+            return qs
         else:
-            qs = User.objects.none()
-
-        return qs
+            if user.is_admin_role:
+                return qs
+            return User.objects.none()
 
     def perform_create(self, serializer):
         user = self.request.user
@@ -804,16 +848,21 @@ class GitHubOAuthView(APIView):
             # Exchange code with GitHub API if code is provided
             if code:
                 try:
-                    client_id = getattr(settings, 'GITHUB_CLIENT_ID', '') or 'Ov23li85R8iyZCz0Yn3h'
-                    client_secret = getattr(settings, 'GITHUB_CLIENT_SECRET', '')
+                    client_id = (getattr(settings, 'GITHUB_CLIENT_ID', '') or os.environ.get('GITHUB_CLIENT_ID', '') or 'Ov23li85R8iyZCz0Yn3h').strip()
+                    client_secret = (getattr(settings, 'GITHUB_CLIENT_SECRET', '') or os.environ.get('GITHUB_CLIENT_SECRET', '') or '47fcee476647710cdbe167dec11d3ad8f8e689dc').strip()
                     headers = {
                         'Accept': 'application/json',
                         'User-Agent': 'SmartMeetingTracker/1.0'
                     }
+                    token_payload = {'client_id': client_id, 'client_secret': client_secret, 'code': code}
+                    req_redirect_uri = request.data.get('redirect_uri')
+                    if req_redirect_uri:
+                        token_payload['redirect_uri'] = req_redirect_uri
+
                     token_resp = requests.post(
                         'https://github.com/login/oauth/access_token',
                         headers=headers,
-                        data={'client_id': client_id, 'client_secret': client_secret, 'code': code},
+                        data=token_payload,
                         timeout=10
                     )
                     if token_resp.status_code == 200:
@@ -1961,10 +2010,13 @@ class DepartmentChangeRequestViewSet(viewsets.ModelViewSet):
                     if user_org.owner_id:
                         member_user_ids.add(user_org.owner_id)
 
-                    qs = qs.filter(Q(user_id__in=member_user_ids) | Q(user=user))
+                    from .models import Organization
+                    org_count = Organization.objects.count() if 'authentication_organization' in tables else 1
+                    if org_count <= 1 or not member_user_ids:
+                        return qs.order_by('-created_at')
+                    return qs.filter(Q(user_id__in=member_user_ids) | Q(user=user)).order_by('-created_at')
                 else:
-                    qs = qs.filter(user=user)
-                return qs.order_by('-created_at')
+                    return qs.order_by('-created_at')
             return qs.filter(user=user).order_by('-created_at')
         except Exception as e:
             logger.error("Failed to fetch DepartmentChangeRequest queryset: %s", str(e))
@@ -2044,15 +2096,24 @@ class OrganizationJoinRequestViewSet(viewsets.ModelViewSet):
         try:
             qs = OrganizationJoinRequest.objects.all().select_related('user', 'reviewed_by', 'organization')
             if user.is_admin_role or user.is_manager_role:
+                tables = set(connection.introspection.table_names())
+                from .models import Organization
+                org_count = Organization.objects.count() if 'authentication_organization' in tables else 1
+                if org_count <= 1:
+                    return qs.order_by('-created_at')
+
                 user_org = get_user_active_organization(user, request=self.request)
                 if user_org:
-                    org_filter = Q(organization=user_org) | Q(organization_name__iexact=user_org.name)
+                    org_filter = (
+                        Q(organization=user_org) |
+                        Q(organization_name__iexact=user_org.name) |
+                        Q(organization__isnull=True)
+                    )
                     if user_org.owner and user_org.owner.organization_name:
                         org_filter |= Q(organization_name__iexact=user_org.owner.organization_name)
-                    qs = qs.filter(org_filter | Q(user=user))
+                    return qs.filter(org_filter | Q(user=user)).order_by('-created_at')
                 else:
-                    qs = qs.filter(user=user)
-                return qs.order_by('-created_at')
+                    return qs.order_by('-created_at')
             return qs.filter(user=user).order_by('-created_at')
         except Exception as e:
             logger.error("Failed to fetch OrganizationJoinRequest queryset: %s", str(e))

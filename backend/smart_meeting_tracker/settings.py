@@ -227,6 +227,6 @@ DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', f'SmartMeeting Tracker
 # OAuth 2.0 Credentials
 GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID', '1051715789667-m86kur6hnaciip8cp4ghoq08eeso6et3.apps.googleusercontent.com')
 GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET', '')
-GITHUB_CLIENT_ID = os.environ.get('GITHUB_CLIENT_ID', 'Ov23li85R8iyZCz0Yn3h')
-GITHUB_CLIENT_SECRET = os.environ.get('GITHUB_CLIENT_SECRET', '')
+GITHUB_CLIENT_ID = os.environ.get('GITHUB_CLIENT_ID', 'Ov23li85R8iyZCz0Yn3h').strip()
+GITHUB_CLIENT_SECRET = os.environ.get('GITHUB_CLIENT_SECRET', '47fcee476647710cdbe167dec11d3ad8f8e689dc').strip()
 

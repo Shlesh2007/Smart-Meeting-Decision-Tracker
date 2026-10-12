@@ -149,7 +149,9 @@ export default function Login() {
       window.history.replaceState({}, document.title, window.location.pathname);
 
       setOauthLoading('github');
-      authService.loginWithGithub({ code })
+      const envRedirect = (typeof import.meta !== 'undefined' && (import.meta.env?.VITE_GITHUB_REDIRECT_URI || import.meta.env?.NEXT_PUBLIC_GITHUB_REDIRECT_URI)) || '';
+      const rawRedirect = envRedirect || `${window.location.origin}/login`;
+      authService.loginWithGithub({ code, redirect_uri: rawRedirect })
         .then(async (data) => {
           await refreshUser();
           message.success(data.message || 'Logged in with GitHub successfully!');
