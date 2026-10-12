@@ -37,18 +37,36 @@ export default function RequestRejected() {
   const deptName = decision?.requested_department || 'General Team';
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#080f1f] text-slate-900 dark:text-[#f8fafc] flex flex-col justify-center items-center p-4 sm:p-6 relative overflow-hidden transition-colors selection:bg-[#2563eb] selection:text-white">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#080f1f] text-slate-900 dark:text-[#f8fafc] flex flex-col justify-center items-center p-4 sm:p-6 relative overflow-x-hidden overflow-y-auto transition-colors selection:bg-[#2563eb] selection:text-white">
       {/* Fullscreen Fixed Background Image */}
-      <div className="fixed inset-0 pointer-events-none select-none z-0 overflow-hidden">
+      <div className="fixed inset-0 pointer-events-none select-none z-0 overflow-hidden bg-[#eff6ff] dark:bg-[#080f1f]">
+        {/* Desktop / Tablet (>= sm): Full widescreen cover */}
         <img
           src="/background-img.png"
           alt=""
           aria-hidden="true"
-          className="w-full h-full object-cover object-center pointer-events-none select-none brightness-[1.05]"
+          className="hidden sm:block w-full h-full object-cover object-center pointer-events-none select-none brightness-[1.05]"
         />
+
+        {/* Mobile Screens (< sm): Show both top & bottom 3D cubes and circles */}
+        <div className="sm:hidden absolute inset-0 overflow-hidden">
+          <img
+            src="/background-img.png"
+            alt=""
+            aria-hidden="true"
+            className="w-full h-[40vh] object-cover object-top opacity-90 brightness-[1.05]"
+          />
+          <img
+            src="/background-img.png"
+            alt=""
+            aria-hidden="true"
+            className="w-full h-[40vh] object-cover object-bottom absolute bottom-0 left-0 opacity-85 brightness-[1.05]"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#eff6ff]/50 to-[#eff6ff]/80 dark:via-[#080f1f]/60 dark:to-[#080f1f]/90" />
+        </div>
       </div>
 
-      <div className="relative z-10 w-full max-w-xl space-y-6 my-auto py-4">
+      <div className="relative z-10 w-full max-w-xl space-y-6 my-auto py-6 sm:py-8">
         
         {/* Brand Header */}
         <div className="text-center space-y-3">
@@ -71,7 +89,7 @@ export default function RequestRejected() {
 
         {/* Rejection Details Card */}
         <Card
-          className="shadow-xl shadow-slate-200/50 dark:shadow-none rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/90 backdrop-blur-md overflow-hidden"
+          className="shadow-xl shadow-slate-200/50 dark:shadow-none rounded-2xl border border-white/80 dark:border-slate-800 bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl overflow-hidden"
           styles={{ body: { padding: '24px' } }}
         >
           <div className="space-y-6 text-center">
