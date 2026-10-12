@@ -88,18 +88,19 @@ if not DATABASE_URL and (DB_ENGINE == 'postgresql' or DB_NAME):
     DATABASE_URL = f"postgresql://{DB_USER}:{encoded_pass}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
 def is_valid_database_url(url):
-    if not url:
+    if not url or not isinstance(url, str):
         return False
-    if '@host:' in url or '@host/' in url or url.endswith('@host') or url == 'host':
+    url = url.strip()
+    if not (url.startswith('postgres://') or url.startswith('postgresql://')):
+        return False
+    lower_url = url.lower()
+    if '@host:' in lower_url or '@host/' in lower_url or lower_url.endswith('@host') or '@example.com' in lower_url:
         return False
     try:
-        host = url.split('@')[-1].split('/')[0].split(':')[0]
-        # Allow localhost, 127.0.0.1, or valid hostname IPs
-        if host and '.' not in host and host not in ('localhost', '127.0.0.1'):
-            return False
+        parsed = dj_database_url.parse(url)
+        return bool(parsed and parsed.get('NAME') and parsed.get('ENGINE'))
     except Exception:
-        pass
-    return True
+        return False
 
 if is_valid_database_url(DATABASE_URL):
     DATABASES = {
@@ -128,6 +129,11 @@ else:
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
+
+db_engine = DATABASES['default'].get('ENGINE', '')
+db_host = DATABASES['default'].get('HOST', 'local')
+db_name = DATABASES['default'].get('NAME', '')
+print(f"📦 [DATABASE CONFIG]: {db_engine} (Host: {db_host}, DB: {db_name})")
 
 # Custom User Model
 AUTH_USER_MODEL = 'authentication.User'
