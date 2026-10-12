@@ -1,4 +1,4 @@
-from django.db import migrations, models
+from django.db import migrations
 
 class Migration(migrations.Migration):
 
@@ -6,19 +6,4 @@ class Migration(migrations.Migration):
         ('authentication', '0002_passwordresetotp'),
     ]
 
-    operations = [
-        migrations.AlterField(
-            model_name='user',
-            name='role',
-            field=models.CharField(
-                choices=[
-                    ('OWNER', 'Owner'),
-                    ('ADMIN', 'Admin'),
-                    ('MANAGER', 'Manager'),
-                    ('MEMBER', 'Member')
-                ],
-                default='MEMBER',
-                max_length=20
-            ),
-        ),
-    ]
+    operations = []

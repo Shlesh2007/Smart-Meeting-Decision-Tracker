@@ -217,3 +217,60 @@ class MeetingTestCase(TestCase):
         res_daily = self.client.post('/api/meetings/', payload_daily_valid, format='json')
         self.assertEqual(res_daily.status_code, status.HTTP_201_CREATED)
 
+    def test_send_meeting_otp_only_for_google_meet(self):
+        from unittest.mock import patch
+        self.client.force_authenticate(user=self.admin)
+
+        # 1. Physical Conference Room Meeting -> Sending OTP is rejected with 400
+        conf_meeting = Meeting.objects.create(
+            title='In-Person Strategy',
+            meeting_date=date.today(),
+            start_time=time(10, 0),
+            end_time=time(11, 0),
+            location='Conference Room B - Floor 2',
+            meeting_type='INTERNAL',
+            status='SCHEDULED',
+            created_by=self.admin
+        )
+        conf_meeting.participants.add(self.member)
+
+        res_conf = self.client.post(f'/api/meetings/{conf_meeting.id}/send-otp/')
+        self.assertEqual(res_conf.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('google meet', str(res_conf.data).lower())
+
+        # 2. Virtual Google Meet Meeting WITHOUT password -> Sending password is rejected with 400
+        meet_no_pass = Meeting.objects.create(
+            title='Remote Sprint Review Public',
+            meeting_date=date.today(),
+            start_time=time(10, 0),
+            end_time=time(11, 0),
+            location='Google Meet: https://meet.google.com/abc-defg-hij (Public)',
+            meeting_type='PROJECT',
+            status='SCHEDULED',
+            created_by=self.admin
+        )
+        meet_no_pass.participants.add(self.member)
+
+        res_no_pass = self.client.post(f'/api/meetings/{meet_no_pass.id}/send-otp/')
+        self.assertEqual(res_no_pass.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('password', str(res_no_pass.data).lower())
+
+        # 3. Virtual Google Meet Meeting WITH password -> Sending password succeeds
+        meet_with_pass = Meeting.objects.create(
+            title='Remote Sprint Review Protected',
+            meeting_date=date.today(),
+            start_time=time(10, 0),
+            end_time=time(11, 0),
+            location='Google Meet: https://meet.google.com/abc-defg-hij (Pass: sprintSecret99)',
+            meeting_type='PROJECT',
+            status='SCHEDULED',
+            created_by=self.admin
+        )
+        meet_with_pass.participants.add(self.member)
+
+        with patch('apps.meetings.views.send_brevo_transactional_email', return_value=(True, 'Delivered')):
+            res_meet = self.client.post(f'/api/meetings/{meet_with_pass.id}/send-otp/')
+            self.assertEqual(res_meet.status_code, status.HTTP_200_OK)
+            self.assertEqual(res_meet.data.get('password'), 'sprintSecret99')
+
+

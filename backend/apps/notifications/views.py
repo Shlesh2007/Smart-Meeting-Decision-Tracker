@@ -142,6 +142,41 @@ class NotificationViewSet(viewsets.ModelViewSet):
                     'is_read': False
                 }
             )
+        # Sync Pending Organization Join Requests for Admins/Owners
+        if user.is_admin_role or user.is_manager_role:
+            try:
+                from apps.authentication.models import OrganizationJoinRequest
+                from apps.authentication.views import get_user_active_organization
+                user_org = get_user_active_organization(user)
+                if user_org:
+                    org_filter = Q(organization=user_org) | Q(organization_name__iexact=user_org.name)
+                    if user_org.owner and user_org.owner.organization_name:
+                        org_filter |= Q(organization_name__iexact=user_org.owner.organization_name)
+                    pending_join_reqs = OrganizationJoinRequest.objects.filter(
+                        org_filter,
+                        status=OrganizationJoinRequest.Status.PENDING
+                    ).select_related('user')
+
+                    for req in pending_join_reqs:
+                        req_user_name = req.user.get_full_name() or req.user.username if req.user else 'A member'
+                        source_id = f"join-request-{req.id}"
+                        target_link = '/admin?tab=organization_join_requests'
+                        notif, created = Notification.objects.get_or_create(
+                            user=user,
+                            source_id=source_id,
+                            defaults={
+                                'title': f"New Join Request: {req_user_name}",
+                                'subtitle': f"Requested {req.requested_department} in {req.organization_name}",
+                                'link': target_link,
+                                'notification_type': Notification.NotificationType.GENERAL,
+                                'is_read': False
+                            }
+                        )
+                        if not created and notif.link != target_link:
+                            notif.link = target_link
+                            notif.save(update_fields=['link'])
+            except Exception:
+                pass
 
     @action(detail=False, methods=['post'], url_path='mark-all-read')
     def mark_all_read(self, request):

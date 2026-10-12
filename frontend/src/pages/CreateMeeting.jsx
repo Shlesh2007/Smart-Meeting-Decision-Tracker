@@ -406,7 +406,7 @@ export default function CreateMeeting() {
                   <div className="mt-1 pt-1 text-[11px] text-slate-600 dark:text-slate-400 flex items-center space-x-1.5 border-t border-slate-200 dark:border-slate-700">
                     <MailOutlined className="text-blue-500" />
                     <span>
-                      Automated email reminder & Send Password option will be initialized.
+                      Automated email reminder will be sent to participants.
                     </span>
                   </div>
                 )}

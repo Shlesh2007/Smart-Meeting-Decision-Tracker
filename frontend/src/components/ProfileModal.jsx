@@ -6,7 +6,7 @@ import {
   TeamOutlined, EditOutlined, SafetyCertificateOutlined, 
   LockOutlined, CheckOutlined, ArrowLeftOutlined, KeyOutlined,
   DeleteOutlined, WarningOutlined, ExclamationCircleOutlined, CloseOutlined,
-  LogoutOutlined, SwapOutlined, CrownOutlined
+  LogoutOutlined, SwapOutlined, CrownOutlined, BankOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { useNavigate } from 'react-router-dom';
@@ -35,6 +35,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
 
   useEffect(() => {
     if (user && open) {
+      refreshUser().catch(() => {});
       departmentRequestService.getRequests()
         .then((data) => {
           const list = data.results || data || [];
@@ -43,7 +44,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
         })
         .catch(() => setPendingReq(null));
     }
-  }, [user, open]);
+  }, [open]);
 
   useEffect(() => {
     if (showDeptModal) {
@@ -74,6 +75,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
   // Ownership Transfer Modal
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [transferTarget, setTransferTarget] = useState(null);
+  const [transferPassword, setTransferPassword] = useState('');
   const [transferLoading, setTransferLoading] = useState(false);
   const [transferError, setTransferError] = useState('');
 
@@ -237,13 +239,19 @@ export const ProfileModal = ({ open, onClose, user }) => {
       setTransferError('Please select a user to transfer ownership to.');
       return;
     }
+    const isOauth = Boolean(deleteCheckData?.is_oauth_user ?? user?.is_oauth_user);
+    if (!isOauth && !transferPassword) {
+      setTransferError('Owner password is required to transfer ownership.');
+      return;
+    }
     setTransferLoading(true);
     try {
-      const res = await authService.transferOwnership(transferTarget);
+      const res = await authService.transferOwnership(transferTarget, transferPassword);
       await refreshUser();
       message.success(res.message || 'Ownership transferred successfully!');
       setShowTransferModal(false);
       setTransferTarget(null);
+      setTransferPassword('');
       setShowDeleteCheckModal(false);
       // Re-run check — user is now eligible to delete
       const freshCheck = await authService.checkDeleteAccount();
@@ -325,6 +333,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
     setDeleteOrgError('');
     setTransferError('');
     setTransferTarget(null);
+    setTransferPassword('');
     setDeleteCheckData(null);
   };
 
@@ -354,7 +363,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
             )}
           </div>
         }
-        open={open && !showEmailModal && !showDeleteModal && !showDeleteCheckModal && !showTransferModal}
+        open={open && !showEmailModal && !showDeleteModal && !showDeleteCheckModal && !showTransferModal && !showDeleteOrgModal}
         onCancel={() => {
           setIsEditing(false);
           onClose();
@@ -430,6 +439,32 @@ export const ProfileModal = ({ open, onClose, user }) => {
             /* View Mode Details */
             <div className="space-y-2.5">
               <Descriptions column={1} bordered size="small" className="bg-white dark:bg-slate-900 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 [&_.ant-descriptions-item-cell]:!py-1.5 [&_.ant-descriptions-item-cell]:!px-3">
+                <Descriptions.Item label={<span className="font-semibold text-slate-600 dark:text-slate-400 flex items-center text-xs"><BankOutlined className="mr-1.5 text-blue-500" />Organization Workspace</span>}>
+                  <span className="font-bold text-blue-600 dark:text-blue-400 text-xs sm:text-sm">{user.organization_name || 'SmartMeeting Workspace'}</span>
+                </Descriptions.Item>
+
+                <Descriptions.Item label={<span className="font-semibold text-slate-600 dark:text-slate-400 flex items-center text-xs"><CrownOutlined className="mr-1.5 text-amber-500" />Organization Owner</span>}>
+                  {user.organization_owner ? (
+                    <div className="flex items-center space-x-1.5 flex-wrap">
+                      <span className="font-bold text-slate-900 dark:text-slate-200 text-xs sm:text-sm">
+                        {user.organization_owner.full_name || user.organization_owner.username}
+                      </span>
+                      <span className="text-xs text-slate-500 dark:text-slate-400">
+                        ({user.organization_owner.email})
+                      </span>
+                      {user.id === user.organization_owner.id && (
+                        <Tag color="gold" className="font-bold text-[9.5px] m-0 px-1 py-0 border-amber-400 text-amber-900">
+                          👑 You (Owner)
+                        </Tag>
+                      )}
+                    </div>
+                  ) : (
+                    <span className="font-medium text-slate-500 dark:text-slate-400 text-xs italic">
+                      {user.role === 'OWNER' ? `${user.full_name || user.username} (${user.email})` : 'System Administrator / Workspace Founder'}
+                    </span>
+                  )}
+                </Descriptions.Item>
+
                 <Descriptions.Item label={<span className="font-semibold text-slate-600 dark:text-slate-400 flex items-center text-xs"><UserOutlined className="mr-1.5 text-blue-500" />Username</span>}>
                   <span className="font-semibold text-slate-900 dark:text-slate-200 text-xs sm:text-sm">{user.username}</span>
                 </Descriptions.Item>
@@ -761,11 +796,12 @@ export const ProfileModal = ({ open, onClose, user }) => {
         open={showDeleteCheckModal}
         onCancel={resetDeleteFlow}
         footer={null}
-        width={520}
+        width={620}
+        style={{ maxWidth: 'calc(100vw - 24px)', margin: '12px auto' }}
         destroyOnHidden
         closable={true}
       >
-        <div className="py-3 space-y-4">
+        <div className="py-3 space-y-4 overflow-x-hidden">
           <Alert
             message={
               deleteCheckData?.requires_ownership_transfer
@@ -798,9 +834,18 @@ export const ProfileModal = ({ open, onClose, user }) => {
                 </div>
               </div>
 
-              <div className="flex flex-col sm:flex-row justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
-                <Button icon={<CloseOutlined />} onClick={resetDeleteFlow} className="order-3 sm:order-1">
-                  Cancel
+              <div className="flex flex-row items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+                <Button
+                  type="primary"
+                  icon={<SwapOutlined />}
+                  onClick={() => {
+                    setTransferTarget(null);
+                    setTransferError('');
+                    setShowTransferModal(true);
+                  }}
+                  className="bg-blue-600 hover:bg-blue-700 border-blue-600 font-semibold text-white text-xs shrink-0 whitespace-nowrap"
+                >
+                  Option A: Transfer Ownership
                 </Button>
                 <Button
                   danger
@@ -813,21 +858,9 @@ export const ProfileModal = ({ open, onClose, user }) => {
                     setDeleteOrgError('');
                     setShowDeleteOrgModal(true);
                   }}
-                  className="order-2 text-xs font-semibold"
+                  className="text-xs font-semibold shrink-0 whitespace-nowrap"
                 >
                   Option B: Delete Organization
-                </Button>
-                <Button
-                  type="primary"
-                  icon={<SwapOutlined />}
-                  onClick={() => {
-                    setTransferTarget(null);
-                    setTransferError('');
-                    setShowTransferModal(true);
-                  }}
-                  className="bg-blue-600 hover:bg-blue-700 border-blue-600 font-semibold text-white order-1 sm:order-3 text-xs"
-                >
-                  Option A: Transfer Ownership
                 </Button>
               </div>
             </div>
@@ -891,24 +924,44 @@ export const ProfileModal = ({ open, onClose, user }) => {
             <Alert message={transferError} type="error" showIcon closable onClose={() => setTransferError('')} />
           )}
 
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
-              Select Target User
-            </label>
-            <Select
-              id="transfer_target_user"
-              showSearch
-              placeholder="Search and select a user..."
-              size="large"
-              className="w-full"
-              value={transferTarget}
-              onChange={(val) => setTransferTarget(val)}
-              optionFilterProp="label"
-              options={(deleteCheckData?.eligible_users || []).map(u => ({
-                value: u.id,
-                label: `${u.full_name} (${u.email}) — ${u.role}`,
-              }))}
-            />
+          <div className="space-y-3">
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+                Select Target User
+              </label>
+              <Select
+                id="transfer_target_user"
+                showSearch
+                placeholder="Search and select a user..."
+                size="large"
+                className="w-full"
+                value={transferTarget}
+                onChange={(val) => setTransferTarget(val)}
+                optionFilterProp="label"
+                options={(deleteCheckData?.eligible_users || []).map(u => ({
+                  value: u.id,
+                  label: `${u.full_name} (${u.email}) — ${u.role}`,
+                }))}
+              />
+            </div>
+
+            {!(deleteCheckData?.is_oauth_user ?? user?.is_oauth_user) && (
+              <div>
+                <label htmlFor="transfer_password" className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+                  Owner Password
+                </label>
+                <Input.Password
+                  id="transfer_password"
+                  name="transfer_password"
+                  prefix={<LockOutlined className="text-slate-400" />}
+                  placeholder="Enter your owner password to authorize transfer"
+                  size="large"
+                  value={transferPassword}
+                  onChange={(e) => setTransferPassword(e.target.value)}
+                  className="rounded-lg"
+                />
+              </div>
+            )}
           </div>
 
           <div className="flex justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
@@ -917,6 +970,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
               onClick={() => {
                 setShowTransferModal(false);
                 setTransferTarget(null);
+                setTransferPassword('');
                 setTransferError('');
               }}
             >
@@ -926,7 +980,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
               type="primary"
               icon={<SwapOutlined />}
               loading={transferLoading}
-              disabled={!transferTarget || transferLoading}
+              disabled={!transferTarget || transferLoading || (!(deleteCheckData?.is_oauth_user ?? user?.is_oauth_user) && !transferPassword)}
               onClick={handleTransferOwnership}
               className="bg-slate-900 hover:bg-slate-800 font-semibold text-white"
             >

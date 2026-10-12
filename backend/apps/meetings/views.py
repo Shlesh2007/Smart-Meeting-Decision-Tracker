@@ -66,12 +66,27 @@ class MeetingViewSet(viewsets.ModelViewSet):
         meeting = serializer.save(created_by=self.request.user, status=Meeting.Status.SCHEDULED)
          
         try:
-            # Automatically dispatch meeting invitation email with Google Meet link & entry OTP code
+            # Automatically dispatch meeting invitation email
             organizer_email = [meeting.created_by.email] if (meeting.created_by and getattr(meeting.created_by, 'email', None)) else []
             recipients = list(set([p.email for p in meeting.participants.all() if getattr(p, 'email', None)] + organizer_email))
             if recipients:
-                otp_code = f"{random.randint(100000, 999999)}"
+                location_str = (meeting.location or '').lower()
+                is_google_meet = 'meet.google.com' in location_str or location_str.startswith('http') or 'google meet' in location_str
+                
+                # Check if Google Meet meeting has a password
+                import re
+                pass_match = re.search(r'\(Pass:\s*([^)]+)\)', meeting.location or '', re.IGNORECASE)
+                meet_password = pass_match.group(1).strip() if pass_match else None
+                if not meet_password:
+                    pass_match2 = re.search(r'(?:pass|password):\s*([^\s,)]+)', meeting.location or '', re.IGNORECASE)
+                    if pass_match2:
+                        meet_password = pass_match2.group(1).strip()
+
+                # Password is only attached if this is a virtual Google Meet with a password
+                password_to_send = meet_password if (is_google_meet and meet_password) else None
                 subject = f"📅 Meeting Invitation: {meeting.title}"
+                
+                pass_line = f"  Meeting Password: {password_to_send}\n\n" if password_to_send else ""
                 text_body = (
                     f"Hello,\n\n"
                     f"You have been invited to a new meeting on SmartMeeting Decision Tracker:\n\n"
@@ -80,11 +95,11 @@ class MeetingViewSet(viewsets.ModelViewSet):
                     f"  Time: {meeting.start_time} - {meeting.end_time}\n"
                     f"  Location / Meet Link: {meeting.location or 'Online'}\n"
                     f"  Organizer: {meeting.created_by.get_full_name() or meeting.created_by.username if meeting.created_by else 'Admin'}\n\n"
-                    f"  Participant Entry OTP Code: {otp_code}\n\n"
+                    f"{pass_line}"
                     f"Agenda / Description:\n{meeting.description or 'No description provided.'}\n\n"
                     f"Best regards,\nSmartMeeting Tracker Team"
                 )
-                html_body = build_meeting_email_html(meeting, otp_code=otp_code, title_prefix="New Meeting Invitation")
+                html_body = build_meeting_email_html(meeting, otp_code=password_to_send, title_prefix="New Meeting Invitation")
                 send_brevo_transactional_email(subject, recipients, text_body, html_body)
         except Exception as email_err:
             logger.error(f"Failed to dispatch meeting invitation email: {email_err}")
@@ -188,7 +203,25 @@ class SendMeetingOTPView(APIView):
 
         # Check meeting status and date validation
         if meeting.status in ['COMPLETED', 'CANCELLED'] or meeting.meeting_date < date.today():
-            return Response({'error': 'Cannot send OTP code for past or completed/cancelled meetings.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Cannot send password for past or completed/cancelled meetings.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        location_str = (meeting.location or '').lower()
+        is_google_meet = 'meet.google.com' in location_str or location_str.startswith('http') or 'google meet' in location_str
+        if not is_google_meet:
+            return Response({'error': 'Passwords can only be sent for virtual Google Meet meetings. Physical conference room meetings do not require a password.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        import re
+        pass_match = re.search(r'\(Pass:\s*([^)]+)\)', meeting.location or '', re.IGNORECASE)
+        meet_password = pass_match.group(1).strip() if pass_match else None
+        if not meet_password:
+            pass_match2 = re.search(r'(?:pass|password):\s*([^\s,)]+)', meeting.location or '', re.IGNORECASE)
+            if pass_match2:
+                meet_password = pass_match2.group(1).strip()
+
+        if not meet_password and '(protected)' not in location_str:
+            return Response({'error': 'This Google Meet meeting does not have a password configured.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        password_to_send = meet_password or 'Protected'
 
         recipients = [p.email for p in meeting.participants.all() if p.email]
         if not recipients and meeting.created_by.email:
@@ -197,28 +230,27 @@ class SendMeetingOTPView(APIView):
         if not recipients:
             return Response({'error': 'No participant email addresses available.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        otp_code = f"{random.randint(100000, 999999)}"
-        subject = f"🔑 Meeting Entry OTP Verification - {meeting.title}"
+        subject = f"🔑 Meeting Password - {meeting.title}"
         text_body = (
             f"Hello,\n\n"
-            f"You have received a verification OTP code for your upcoming meeting:\n\n"
+            f"You have received the access password for your upcoming Google Meet session:\n\n"
             f"    Meeting: {meeting.title}\n"
             f"    Date: {meeting.meeting_date}\n"
             f"    Time: {meeting.start_time} - {meeting.end_time}\n"
-            f"    Location: {meeting.location or 'Online'}\n\n"
-            f"    Participant OTP Code: {otp_code}\n\n"
-            f"Please present this OTP code to confirm your attendance.\n\n"
+            f"    Location / Meet Link: {meeting.location or 'Online'}\n\n"
+            f"    Meeting Password: {password_to_send}\n\n"
+            f"Please use this password to join the meeting.\n\n"
             f"Best regards,\nSmartMeeting Tracker Team"
         )
-        html_body = build_meeting_email_html(meeting, otp_code=otp_code, title_prefix="Meeting Entry OTP Code")
+        html_body = build_meeting_email_html(meeting, otp_code=password_to_send, title_prefix="Meeting Password")
 
         success, detail = send_brevo_transactional_email(subject, recipients, text_body, html_body)
         if not success:
-            return Response({'error': f'Failed to deliver meeting OTP email: {detail}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({'error': f'Failed to deliver meeting password email: {detail}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return Response({
-            'message': f'Meeting OTP code ({otp_code}) sent successfully to {len(recipients)} participant(s).',
-            'otp_code': otp_code,
+            'message': f'Meeting password sent successfully to {len(recipients)} participant(s).',
+            'password': password_to_send,
             'recipients': recipients
         }, status=status.HTTP_200_OK)
 

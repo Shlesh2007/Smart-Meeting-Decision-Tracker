@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button, Input, Select, AutoComplete, Tag, Spin, DatePicker, Alert } from 'antd';
-import { PlusOutlined, SyncOutlined, CalendarOutlined, ThunderboltOutlined, SearchOutlined } from '@ant-design/icons';
+import { PlusOutlined, SyncOutlined, CalendarOutlined, ThunderboltOutlined, SearchOutlined, BankOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { meetingService, actionService, discussionService } from '../../services/api.js';
 
@@ -160,8 +160,14 @@ export const DashboardHeader = ({
         {/* Greeting & Date Info */}
         <div className="flex items-start justify-between w-full sm:w-auto flex-1 min-w-0 gap-2">
           <div className="space-y-0.5 min-w-0 flex-1">
-            <h1 className="text-base sm:text-lg font-extrabold text-slate-900 dark:text-white m-0 tracking-tight leading-snug">
-              {greetingTime}, {userName}! 👋
+            <h1 className="text-base sm:text-lg font-extrabold text-slate-900 dark:text-white m-0 tracking-tight leading-snug flex items-center flex-wrap gap-1.5">
+              <span>{greetingTime}, {userName}! 👋</span>
+              {user?.organization_name && (
+                <span className="inline-flex items-center space-x-1 bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 text-xs font-extrabold px-2.5 py-0.5 rounded-full border border-blue-200 dark:border-blue-900/60" title={`Active Organization: ${user.organization_name}`}>
+                  <BankOutlined className="text-blue-600 dark:text-blue-400 text-xs" />
+                  <span>{user.organization_name}</span>
+                </span>
+              )}
             </h1>
             <p className="text-xs text-slate-600 dark:text-slate-300 font-medium m-0">
               {user?.role === 'ADMIN' || user?.role === 'OWNER'

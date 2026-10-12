@@ -41,7 +41,7 @@ export const api = axios.create({
   },
 });
 
-// Interceptor to inject JWT Access Token and sanitize relative endpoint URLs
+// Interceptor to inject JWT Access Token, selected Organization ID, and sanitize relative endpoint URLs
 api.interceptors.request.use(
   (config) => {
     // Ensure relative URL doesn't strip /api from baseURL
@@ -52,6 +52,10 @@ api.interceptors.request.use(
       const token = localStorage.getItem('access_token');
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
+      }
+      const selectedOrgId = localStorage.getItem('selected_org_id');
+      if (selectedOrgId) {
+        config.headers['X-Organization-ID'] = selectedOrgId;
       }
     }
     return config;
@@ -115,8 +119,12 @@ export const authService = {
     const res = await api.get('/auth/profile/delete-account/check/');
     return res.data;
   },
-  transferOwnership: async (target_user_id) => {
-    const res = await api.post('/auth/profile/transfer-ownership/', { target_user_id });
+  transferOwnership: async (target_user_id, password) => {
+    const payload = { target_user_id };
+    if (password) {
+      payload.password = password;
+    }
+    const res = await api.post('/auth/profile/transfer-ownership/', payload);
     return res.data;
   },
   deleteAccount: async (payload) => {
@@ -125,6 +133,18 @@ export const authService = {
   },
   deleteOrganization: async (payload) => {
     const res = await api.post('/auth/delete-organization/', payload);
+    return res.data;
+  },
+  createOrganization: async (payload) => {
+    const res = await api.post('/auth/organization/create/', payload);
+    return res.data;
+  },
+  joinOrganization: async (payload) => {
+    const res = await api.post('/auth/organization/join/', payload);
+    return res.data;
+  },
+  getOrganizationStatus: async () => {
+    const res = await api.get('/auth/organization/status/');
     return res.data;
   },
   logout: () => {
@@ -173,8 +193,12 @@ export const userService = {
     const res = await api.get('/auth/users/', { params });
     return res.data;
   },
-  updateUserRole: async (userId, role) => {
-    const res = await api.patch(`/auth/users/${userId}/`, { role });
+  updateUserRole: async (userId, role, password) => {
+    const payload = { role };
+    if (password) {
+      payload.password = password;
+    }
+    const res = await api.patch(`/auth/users/${userId}/`, payload);
     return res.data;
   },
   updateUserDepartment: async (userId, department) => {
@@ -198,6 +222,25 @@ export const departmentRequestService = {
   },
   rejectRequest: async (id, payload) => {
     const res = await api.post(`/auth/department-requests/${id}/reject/`, payload);
+    return res.data;
+  }
+};
+
+export const organizationJoinRequestService = {
+  getRequests: async (params) => {
+    const res = await api.get('/auth/organization-join-requests/', { params });
+    return res.data;
+  },
+  approveRequest: async (id, payload) => {
+    const res = await api.post(`/auth/organization-join-requests/${id}/approve/`, payload);
+    return res.data;
+  },
+  rejectRequest: async (id, payload) => {
+    const res = await api.post(`/auth/organization-join-requests/${id}/reject/`, payload);
+    return res.data;
+  },
+  acknowledgeRequest: async (id) => {
+    const res = await api.post(`/auth/organization-join-requests/${id}/acknowledge/`);
     return res.data;
   }
 };

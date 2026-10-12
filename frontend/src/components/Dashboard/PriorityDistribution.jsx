@@ -1,5 +1,5 @@
 import React from 'react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { BarChartOutlined } from '@ant-design/icons';
 import { useScrollAnimation } from '../../hooks/useScrollAnimation.js';
 

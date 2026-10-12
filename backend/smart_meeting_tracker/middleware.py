@@ -9,13 +9,13 @@ class CustomCorsMiddleware:
             response = HttpResponse()
             response["Access-Control-Allow-Origin"] = "*"
             response["Access-Control-Allow-Methods"] = "GET, POST, PUT, PATCH, DELETE, OPTIONS"
-            response["Access-Control-Allow-Headers"] = "Accept, Authorization, Content-Type, X-Requested-With, Origin, DNT, X-CSRFToken"
+            response["Access-Control-Allow-Headers"] = "Accept, Authorization, Content-Type, X-Requested-With, Origin, DNT, X-CSRFToken, X-Organization-ID"
             response["Access-Control-Max-Age"] = "86400"
             return response
 
         response = self.get_response(request)
         response["Access-Control-Allow-Origin"] = "*"
         response["Access-Control-Allow-Methods"] = "GET, POST, PUT, PATCH, DELETE, OPTIONS"
-        response["Access-Control-Allow-Headers"] = "Accept, Authorization, Content-Type, X-Requested-With, Origin, DNT, X-CSRFToken"
+        response["Access-Control-Allow-Headers"] = "Accept, Authorization, Content-Type, X-Requested-With, Origin, DNT, X-CSRFToken, X-Organization-ID"
         response["Content-Security-Policy"] = "default-src 'self' data: blob: https:; script-src 'self' 'unsafe-eval' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:; font-src 'self' data: https:; img-src 'self' data: blob: https:; connect-src 'self' ws: wss: https: http:;"
         return response

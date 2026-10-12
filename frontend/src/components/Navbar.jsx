@@ -29,6 +29,7 @@ import {
   CheckSquareOutlined,
   TeamOutlined,
   UserOutlined,
+  BankOutlined,
   LogoutOutlined,
   RightOutlined,
   BellOutlined,
@@ -39,6 +40,7 @@ import {
   CloseOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
+  UsergroupAddOutlined,
   PlusOutlined,
   FormOutlined,
   SearchOutlined,
@@ -118,6 +120,8 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
             icon = <FireOutlined className="text-red-500" />;
           } else if (nType === 'upcoming') {
             icon = <ClockCircleOutlined className="text-blue-500" />;
+          } else if (nType === 'join_request' || (n.title && n.title.toLowerCase().includes('join request'))) {
+            icon = <UsergroupAddOutlined className="text-amber-500 font-bold" />;
           }
           return { ...n, icon };
         });
@@ -130,12 +134,13 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
       .finally(() => setLoadingNotifications(false));
   };
 
-  const notificationsFetchedRef = useRef(null);
-
   useEffect(() => {
-    if (user && notificationsFetchedRef.current !== user.id) {
-      notificationsFetchedRef.current = user.id;
+    if (user) {
       fetchNotifications();
+      const intervalTimer = setInterval(() => {
+        fetchNotifications();
+      }, 15000);
+      return () => clearInterval(intervalTimer);
     }
   }, [user]);
 
@@ -444,8 +449,8 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
     },
   ];
 
-  const userFirstName = user?.first_name || user?.username || 'Priya';
-  const userInitial = (userFirstName[0] || 'P').toUpperCase();
+  const userFirstName = user?.first_name || user?.username || 'User';
+  const userInitial = (userFirstName[0] || 'U').toUpperCase();
 
   return (
     <>
@@ -570,6 +575,16 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
               </p>
             </div>
           </div>
+
+          {/* Active Organization Workspace Badge */}
+          {user?.has_organization && user?.organization_name && (
+            <div className="hidden sm:flex items-center space-x-1.5 bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-900/50 px-2.5 py-1 rounded-xl shrink-0 max-w-[150px] sm:max-w-[200px] md:max-w-[280px]" title={`Current Organization Workspace: ${user.organization_name}`}>
+              <BankOutlined className="text-blue-600 dark:text-blue-400 text-xs shrink-0" />
+              <span className="text-[11px] font-bold text-slate-800 dark:text-slate-100 truncate">
+                {user.organization_name}
+              </span>
+            </div>
+          )}
 
           {/* RIGHT SIDE: Quick Actions, Notifications, Theme & Profile */}
           <div className="flex items-center gap-1 sm:gap-2 shrink-0 ml-auto select-none">

@@ -98,8 +98,10 @@ class ActionItemViewSet(viewsets.ModelViewSet):
         # MEMBER role restriction on action item creation unless assigned to self
         assigned_to = serializer.validated_data.get('assigned_to', [])
         if not user.is_manager_role and assigned_to:
-            if any(u.id != user.id for u in assigned_to):
-                raise permissions.PermissionDenied("MEMBER role cannot assign action items to other users.")
+            for u in assigned_to:
+                u_id = getattr(u, 'id', u)
+                if u_id != user.id:
+                    raise permissions.PermissionDenied("MEMBER role cannot assign action items to other users.")
         serializer.save(created_by=user)
 
     def perform_update(self, serializer):

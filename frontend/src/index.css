@@ -596,20 +596,64 @@ button:active,
 }
 
 /* Ensure default/secondary buttons (Cancel, Back, Refresh) hover in neutral slate tones instead of primary blue */
-.ant-btn-default:hover,
-.ant-btn-default:focus,
-.ant-btn-default:focus-visible {
+.ant-btn-default:not(.github-auth-btn):hover,
+.ant-btn-default:not(.github-auth-btn):focus,
+.ant-btn-default:not(.github-auth-btn):focus-visible {
   color: #0f172a !important;
   border-color: #94a3b8 !important;
   background-color: #f8fafc !important;
 }
 
-.dark .ant-btn-default:hover,
-.dark .ant-btn-default:focus,
-.dark .ant-btn-default:focus-visible {
+.dark .ant-btn-default:not(.github-auth-btn):hover,
+.dark .ant-btn-default:not(.github-auth-btn):focus,
+.dark .ant-btn-default:not(.github-auth-btn):focus-visible {
   color: #ffffff !important;
   border-color: #64748b !important;
   background-color: #334155 !important;
+}
+
+/* GitHub OAuth Button High-Contrast Styling & Hover Icon Color Fix */
+.github-auth-btn,
+.ant-btn.github-auth-btn {
+  background-color: #ffffff !important;
+  color: #334155 !important;
+  border-color: #e2e8f0 !important;
+}
+
+.github-auth-btn .anticon,
+.ant-btn.github-auth-btn .anticon,
+.github-auth-btn svg,
+.ant-btn.github-auth-btn svg {
+  color: #1e293b !important;
+  fill: #1e293b !important;
+  transition: color 0.15s ease, fill 0.15s ease !important;
+}
+
+.github-auth-btn:hover,
+.github-auth-btn:focus,
+.github-auth-btn:active,
+.ant-btn.github-auth-btn:hover,
+.ant-btn.github-auth-btn:focus,
+.ant-btn.github-auth-btn:active {
+  background-color: #181717 !important;
+  color: #ffffff !important;
+  border-color: #181717 !important;
+}
+
+.github-auth-btn:hover .anticon,
+.github-auth-btn:focus .anticon,
+.github-auth-btn:active .anticon,
+.ant-btn.github-auth-btn:hover .anticon,
+.ant-btn.github-auth-btn:focus .anticon,
+.ant-btn.github-auth-btn:active .anticon,
+.github-auth-btn:hover svg,
+.github-auth-btn:focus svg,
+.github-auth-btn:active svg,
+.ant-btn.github-auth-btn:hover svg,
+.ant-btn.github-auth-btn:focus svg,
+.ant-btn.github-auth-btn:active svg {
+  color: #ffffff !important;
+  fill: #ffffff !important;
 }
 
 /* Site-wide Removal of Outlines & Borders on Badges, Tags, and Modals */

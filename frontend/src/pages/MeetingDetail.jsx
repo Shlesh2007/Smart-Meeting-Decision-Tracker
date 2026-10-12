@@ -17,7 +17,7 @@ import {
 import {
   CalendarOutlined, ClockCircleOutlined, EnvironmentOutlined,
   PlusOutlined, HistoryOutlined, ArrowLeftOutlined, EditOutlined, MessageOutlined, FileTextOutlined,
-  MailOutlined, SafetyCertificateOutlined, StopOutlined, CloseCircleOutlined, CheckSquareOutlined
+  MailOutlined, SafetyCertificateOutlined, StopOutlined, CloseCircleOutlined, CheckSquareOutlined, LockOutlined, LinkOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 
@@ -167,6 +167,15 @@ export default function MeetingDetail() {
     meeting && canEditMeeting && meeting.status === 'SCHEDULED'
   );
 
+  const rawLocation = (meeting?.location || '').trim();
+  const locationLower = rawLocation.toLowerCase();
+  const isGoogleMeet = locationLower.includes('meet.google.com') || locationLower.includes('google meet') || locationLower.startsWith('http');
+  const passMatch = rawLocation.match(/\(Pass:\s*([^)]+)\)/i) || rawLocation.match(/(?:pass|password):\s*([^\s,)]+)/i);
+  const meetPassword = passMatch ? passMatch[1].trim() : null;
+  const hasMeetingPassword = Boolean(meetPassword || locationLower.includes('(protected)'));
+  const urlMatch = rawLocation.match(/https?:\/\/[^\s)]+/i);
+  const meetUrl = urlMatch ? urlMatch[0] : null;
+
   const handleSendReminder = async () => {
     setSendingReminder(true);
     try {
@@ -296,17 +305,19 @@ export default function MeetingDetail() {
                 </Button>
               </Tooltip>
 
-              <Tooltip title={isMeetingPastOrEnded ? 'OTP can only be sent for upcoming active meetings' : 'Dispatches 6-digit participant entry check-in OTP via email to invited attendees'}>
-                <Button
-                  icon={<SafetyCertificateOutlined className={isMeetingPastOrEnded ? '' : 'text-blue-600 dark:text-blue-400'} />}
-                  onClick={handleSendPassword}
-                  loading={sendingOtp}
-                  disabled={isMeetingPastOrEnded}
-                  className="font-medium whitespace-nowrap text-xs sm:text-sm px-2.5 sm:px-3 flex-1 sm:flex-initial text-center justify-center"
-                >
-                  Send Entry OTP
-                </Button>
-              </Tooltip>
+              {isGoogleMeet && hasMeetingPassword && (
+                <Tooltip title={isMeetingPastOrEnded ? 'Password can only be sent for upcoming active meetings' : 'Send Google Meet password to all invited participants via email'}>
+                  <Button
+                    icon={<LockOutlined className={isMeetingPastOrEnded ? '' : 'text-amber-500'} />}
+                    onClick={handleSendPassword}
+                    loading={sendingOtp}
+                    disabled={isMeetingPastOrEnded}
+                    className="font-medium whitespace-nowrap text-xs sm:text-sm px-2.5 sm:px-3 flex-1 sm:flex-initial text-center justify-center"
+                  >
+                    Send Password
+                  </Button>
+                </Tooltip>
+              )}
 
               <Tooltip title={isMeetingCancelled ? 'Discussions cannot be added to a cancelled meeting' : ''}>
                 <span>
@@ -347,7 +358,28 @@ export default function MeetingDetail() {
           </div>
           <div className="flex items-center space-x-2 min-w-0 overflow-hidden">
             <EnvironmentOutlined className="text-blue-600 dark:text-blue-400 text-base shrink-0" />
-            <span className="truncate">Location: <strong>{meeting.location}</strong></span>
+            <span className="truncate">
+              Location:{' '}
+              {meetUrl ? (
+                <span className="inline-flex items-center gap-1.5 flex-wrap">
+                  <a
+                    href={meetUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 underline inline-flex items-center gap-1"
+                  >
+                    Google Meet <LinkOutlined className="text-xs" />
+                  </a>
+                  {meetPassword && (
+                    <Tag color="orange" className="m-0 font-mono text-[11px] font-semibold border-amber-300 dark:border-amber-700">
+                      Pass: {meetPassword}
+                    </Tag>
+                  )}
+                </span>
+              ) : (
+                <strong>{meeting.location || 'Online'}</strong>
+              )}
+            </span>
           </div>
           <div className="flex items-center space-x-2 min-w-0 overflow-hidden">
             <ClockCircleOutlined className="text-purple-600 dark:text-purple-400 text-base shrink-0" />

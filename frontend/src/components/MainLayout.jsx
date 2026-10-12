@@ -9,7 +9,7 @@ export function MainLayout({ children }) {
   const { user } = useAuth();
   const location = useLocation();
   const pathname = location.pathname;
-  const isAuthPage = pathname === '/login' || pathname === '/register';
+  const isAuthPage = pathname === '/login' || pathname.startsWith('/login/') || pathname === '/register' || pathname === '/onboarding' || pathname === '/create-organization' || pathname === '/request-approved' || pathname === '/request-rejected';
   const showSidebar = user && !isAuthPage;
 
   const [collapsed, setCollapsed] = useState(() => {

@@ -9,15 +9,24 @@ export const getErrorMessage = (err, defaultMsg = 'An unexpected error occurred.
   const responseData = err.response?.data;
 
   if (responseData) {
-    // 1. Direct string error/detail message
+    // 1. Direct string or array error/detail message
     if (typeof responseData.detail === 'string' && responseData.detail.trim()) {
       return responseData.detail;
+    }
+    if (Array.isArray(responseData.detail) && responseData.detail.length > 0) {
+      return responseData.detail.join(', ');
     }
     if (typeof responseData.error === 'string' && responseData.error.trim()) {
       return responseData.error;
     }
+    if (Array.isArray(responseData.error) && responseData.error.length > 0) {
+      return responseData.error.join(', ');
+    }
     if (typeof responseData.message === 'string' && responseData.message.trim()) {
       return responseData.message;
+    }
+    if (Array.isArray(responseData.message) && responseData.message.length > 0) {
+      return responseData.message.join(', ');
     }
 
     // 2. DRF Field level errors: e.g. { name: ["A team with this name already exists."], email: ["Enter a valid email."] }
@@ -27,6 +36,7 @@ export const getErrorMessage = (err, defaultMsg = 'An unexpected error occurred.
       Object.entries(responseData).forEach(([key, value]) => {
         if (key === 'detail' || key === 'error' || key === 'message') {
           if (typeof value === 'string') messages.push(value);
+          else if (Array.isArray(value)) messages.push(value.join(', '));
         } else {
           const formattedKey = key === 'non_field_errors' ? '' : `${key.replace(/_/g, ' ')}: `;
           if (Array.isArray(value)) {

@@ -9,8 +9,7 @@ import { Form, Input, Button, Card, Typography, Modal, Divider, Steps, Alert, Ta
 import {
   UserOutlined, LockOutlined,
   GoogleOutlined, GithubOutlined, MailOutlined, SafetyCertificateOutlined,
-  CheckCircleOutlined, SyncOutlined, CalendarOutlined, CheckSquareOutlined,
-  FileTextOutlined, ClockCircleOutlined, ThunderboltOutlined, TeamOutlined
+  CheckCircleOutlined, SyncOutlined
 } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
@@ -495,12 +494,12 @@ export default function Login() {
                   Google
                 </Button>
                 <Button
-                  icon={<GithubOutlined className="text-slate-800 text-base group-hover:!text-white group-hover:!fill-white transition-colors" />}
+                  icon={<GithubOutlined className="text-base transition-colors" />}
                   onClick={handleGithubOAuth}
                   loading={oauthLoading === 'github'}
                   disabled={submitting || Boolean(oauthLoading)}
                   style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '12px', height: '42px' }}
-                  className="group font-semibold border-slate-200 bg-white text-slate-700 hover:bg-[#181717] hover:text-white hover:border-[#181717] transition-all duration-150 shadow-none text-xs"
+                  className="github-auth-btn group font-semibold border-slate-200 bg-white text-slate-700 transition-all duration-150 shadow-none text-xs"
                 >
                   GitHub
                 </Button>

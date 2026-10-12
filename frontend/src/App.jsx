@@ -15,6 +15,10 @@ import MeetingDetail from './pages/MeetingDetail.jsx';
 import MyActions from './pages/MyActions.jsx';
 import Admin from './pages/Admin.jsx';
 import OAuthCallback from './pages/OAuthCallback.jsx';
+import Onboarding from './pages/Onboarding.jsx';
+import CreateOrganization from './pages/CreateOrganization.jsx';
+import RequestApproved from './pages/RequestApproved.jsx';
+import RequestRejected from './pages/RequestRejected.jsx';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -45,6 +49,10 @@ export default function App() {
                 <Route path="/login" element={<Login />} />
                 <Route path="/login/:panelType" element={<Login />} />
                 <Route path="/register" element={<Register />} />
+                <Route path="/create-organization" element={<CreateOrganization />} />
+                <Route path="/onboarding" element={<Onboarding />} />
+                <Route path="/request-approved" element={<RequestApproved />} />
+                <Route path="/request-rejected" element={<RequestRejected />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/meetings" element={<Meetings />} />
                 <Route path="/meetings/new" element={<CreateMeeting />} />

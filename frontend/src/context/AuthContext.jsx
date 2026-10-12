@@ -41,33 +41,80 @@ export const AuthProvider = ({ children }) => {
       path === '/' ||
       path.startsWith('/login') ||
       path.startsWith('/register') ||
+      path.startsWith('/create-organization') ||
       path.startsWith('/oauth-callback') ||
       path.endsWith('.html') ||
       path.includes('file://')
     );
   };
 
-  // Global Auth Guard: Protect all non-public routes
+  const hasOrganization = Boolean(user && user.has_organization !== false && user.role !== 'UNASSIGNED');
+
+  const navigateByStatus = (profile) => {
+    if (!profile) return;
+    const unack = profile.unacknowledged_decision;
+    if (unack) {
+      if (unack.status === 'APPROVED') {
+        navigate('/request-approved');
+        return;
+      } else if (unack.status === 'REJECTED') {
+        navigate('/request-rejected');
+        return;
+      }
+    }
+    if (!profile.has_organization || profile.role === 'UNASSIGNED') {
+      navigate('/onboarding');
+    } else {
+      navigate('/dashboard');
+    }
+  };
+
+  // Global Auth & Onboarding Guard: Protect all non-public routes and check organization membership
   useEffect(() => {
     if (!loading) {
       if (!user && !isPublicRoute(pathname)) {
         navigate('/login');
-      } else if (user && isPublicRoute(pathname) && pathname === '/') {
-        navigate('/dashboard');
+      } else if (user) {
+        const unack = user.unacknowledged_decision;
+        if (unack) {
+          if (unack.status === 'APPROVED' && pathname !== '/request-approved') {
+            navigate('/request-approved');
+          } else if (unack.status === 'REJECTED' && pathname !== '/request-rejected') {
+            navigate('/request-rejected');
+          }
+        } else {
+          if (pathname === '/request-approved' || pathname === '/request-rejected') {
+            if (hasOrganization) {
+              navigate('/dashboard');
+            } else {
+              navigate('/onboarding');
+            }
+          } else if (!hasOrganization) {
+            if (pathname !== '/onboarding' && pathname !== '/create-organization') {
+              navigate('/onboarding');
+            }
+          } else if (pathname === '/onboarding' || pathname === '/create-organization') {
+            navigate('/dashboard');
+          } else if (isPublicRoute(pathname) && pathname === '/') {
+            navigate('/dashboard');
+          }
+        }
       }
     }
-  }, [user, loading, pathname, navigate]);
+  }, [user, loading, pathname, navigate, hasOrganization]);
 
 
   const login = async (credentials) => {
     await authService.login(credentials);
-    return await refreshUser();
+    const profile = await refreshUser();
+    navigateByStatus(profile);
+    return profile;
   };
 
   const register = async (payload) => {
     await authService.register(payload);
-    await refreshUser();
-    navigate('/dashboard');
+    const profile = await refreshUser();
+    navigateByStatus(profile);
   };
 
   const requestRegisterOTP = async (payload) => {
@@ -76,8 +123,32 @@ export const AuthProvider = ({ children }) => {
 
   const confirmRegister = async (payload) => {
     const res = await authService.confirmRegister(payload);
-    await refreshUser();
-    navigate('/dashboard');
+    const profile = await refreshUser();
+    navigateByStatus(profile);
+    return res;
+  };
+
+  const createOrganization = async (payload) => {
+    const res = await authService.createOrganization(payload);
+    const updated = await refreshUser();
+    if (updated) {
+      setUser(updated);
+    } else if (res.user) {
+      setUser(res.user);
+    }
+    return res;
+  };
+
+  const joinOrganization = async (payload) => {
+    const res = await authService.joinOrganization(payload);
+    if (!res.pending) {
+      const updated = await refreshUser();
+      if (updated) {
+        setUser(updated);
+      } else if (res.user) {
+        setUser(res.user);
+      }
+    }
     return res;
   };
 
@@ -90,8 +161,8 @@ export const AuthProvider = ({ children }) => {
   const isOwner = Boolean(user && user.role === 'OWNER');
   const isAdmin = Boolean(user && (user.role === 'OWNER' || user.role === 'ADMIN'));
   const isManager = Boolean(user && (user.role === 'OWNER' || user.role === 'ADMIN' || user.role === 'MANAGER'));
-  const isMember = Boolean(user);
-  const hasRole = (roleArray) => Array.isArray(roleArray) && user && roleArray.includes(user.role);
+  const isMember = Boolean(user && hasOrganization);
+  const hasRole = (roleArray) => Array.isArray(roleArray) && user && hasOrganization && roleArray.includes(user.role);
 
   if (loading) {
     return (
@@ -136,13 +207,16 @@ export const AuthProvider = ({ children }) => {
         register,
         requestRegisterOTP,
         confirmRegister,
+        createOrganization,
+        joinOrganization,
         logout,
         refreshUser,
         isOwner,
         isAdmin,
         isManager,
         isMember,
-        hasRole
+        hasRole,
+        hasOrganization
       }}
     >
       {children}

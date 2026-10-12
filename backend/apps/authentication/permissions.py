@@ -63,12 +63,12 @@ class CanManageUsersPermission(permissions.BasePermission):
         if request.method in permissions.SAFE_METHODS:
             return True
 
-        # Nobody can modify superusers unless superuser
-        if obj.is_superuser and not request.user.is_superuser:
+        # Nobody can modify superusers unless superuser or organization owner
+        if obj.is_superuser and not request.user.is_superuser and not request.user.is_owner_role:
             return False
 
         # OWNER accounts protection
-        if obj.role == 'OWNER' or getattr(obj, 'is_owner_role', False):
+        if obj.role == 'OWNER':
             # ADMIN cannot modify or delete OWNER
             if not request.user.is_owner_role:
                 return False

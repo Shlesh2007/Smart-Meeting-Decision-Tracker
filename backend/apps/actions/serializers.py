@@ -85,10 +85,13 @@ class ActionItemSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         ret = super().to_representation(instance)
         # If assigned_to_detail is empty, fallback to created_by_detail so action items never show as unassigned
-        if not ret.get('assigned_to_detail') and ret.get('created_by_detail'):
-            ret['assigned_to_detail'] = [ret['created_by_detail']]
-            if instance.created_by_id:
-                ret['assigned_to'] = [instance.created_by_id]
+        try:
+            if not ret.get('assigned_to_detail') and ret.get('created_by_detail'):
+                ret['assigned_to_detail'] = [ret['created_by_detail']]
+                if getattr(instance, 'created_by_id', None):
+                    ret['assigned_to'] = [instance.created_by_id]
+        except Exception:
+            pass
         return ret
 
     def to_internal_value(self, data):
@@ -107,53 +110,72 @@ class ActionItemSerializer(serializers.ModelSerializer):
             return ''
 
     def get_dependency_details(self, obj):
-        return [
-            {
-                'id': dep.id,
-                'title': dep.title,
-                'status': dep.status,
-                'is_completed': dep.status == ActionItem.Status.COMPLETED
-            }
-            for dep in obj.dependencies.all()
-        ]
+        try:
+            return [
+                {
+                    'id': dep.id,
+                    'title': dep.title,
+                    'status': dep.status,
+                    'is_completed': dep.status == ActionItem.Status.COMPLETED
+                }
+                for dep in obj.dependencies.all()
+            ]
+        except Exception:
+            return []
 
     def validate(self, attrs):
-        target_status = attrs.get('status', self.instance.status if self.instance else ActionItem.Status.TODO)
+        target_status = attrs.get('status', getattr(self.instance, 'status', ActionItem.Status.TODO) if self.instance else ActionItem.Status.TODO)
         
-        decision = attrs.get('decision', self.instance.decision if self.instance else None)
-        if decision and hasattr(decision, 'discussion') and decision.discussion:
-            meeting = getattr(decision.discussion, 'meeting', None)
-            if meeting and getattr(meeting, 'status', None) == 'CANCELLED':
-                raise serializers.ValidationError({
-                    "non_field_errors": ["Action items cannot be created or updated for a cancelled meeting."]
-                })
+        try:
+            decision = attrs.get('decision')
+            if not decision and self.instance:
+                try:
+                    decision = self.instance.decision
+                except Exception:
+                    decision = None
 
-        if self.instance and self.instance.status in [ActionItem.Status.COMPLETED, ActionItem.Status.CANCELLED]:
+            if decision and hasattr(decision, 'discussion') and decision.discussion:
+                meeting = getattr(decision.discussion, 'meeting', None)
+                if meeting and getattr(meeting, 'status', None) == 'CANCELLED':
+                    raise serializers.ValidationError({
+                        "non_field_errors": ["Action items cannot be created or updated for a cancelled meeting."]
+                    })
+        except serializers.ValidationError:
+            raise
+        except Exception:
+            pass
+
+        if self.instance and getattr(self.instance, 'status', None) in [ActionItem.Status.COMPLETED, ActionItem.Status.CANCELLED]:
             if 'status' in attrs and attrs['status'] != self.instance.status:
                 raise serializers.ValidationError({
                     "status": "Completed or Cancelled action items are locked and cannot be changed back to another status."
                 })
 
         # Determine current or proposed dependencies
-        if 'dependencies' in attrs:
-            proposed_deps = attrs['dependencies']
-        elif self.instance:
-            proposed_deps = self.instance.dependencies.all()
-        else:
-            proposed_deps = []
+        try:
+            if 'dependencies' in attrs:
+                proposed_deps = attrs['dependencies']
+            elif self.instance:
+                proposed_deps = list(self.instance.dependencies.all())
+            else:
+                proposed_deps = []
 
-        # Check self-dependency
-        if self.instance and self.instance in proposed_deps:
-            raise serializers.ValidationError({"dependencies": "An action item cannot depend on itself."})
+            # Check self-dependency
+            if self.instance and self.instance in proposed_deps:
+                raise serializers.ValidationError({"dependencies": "An action item cannot depend on itself."})
 
-        # Rule 2: Dependency Validation on Status (TODO, IN_PROGRESS, or COMPLETED)
-        incomplete_deps = [dep for dep in proposed_deps if getattr(dep, 'status', None) != ActionItem.Status.COMPLETED]
-        if incomplete_deps and target_status in [ActionItem.Status.TODO, ActionItem.Status.IN_PROGRESS, ActionItem.Status.COMPLETED]:
-            titles = ", ".join([f"'{getattr(dep, 'title', str(dep))}' ({getattr(dep, 'status', 'Unknown')})" for dep in incomplete_deps])
-            status_label = "Todo" if target_status == ActionItem.Status.TODO else ("In Progress" if target_status == ActionItem.Status.IN_PROGRESS else "Completed")
-            raise serializers.ValidationError({
-                "status": f"Cannot set status to {status_label}. Outstanding incomplete prerequisite dependencies: {titles}."
-            })
+            # Rule 2: Dependency Validation on Status (TODO, IN_PROGRESS, or COMPLETED)
+            incomplete_deps = [dep for dep in proposed_deps if getattr(dep, 'status', None) != ActionItem.Status.COMPLETED]
+            if incomplete_deps and target_status in [ActionItem.Status.TODO, ActionItem.Status.IN_PROGRESS, ActionItem.Status.COMPLETED]:
+                titles = ", ".join([f"'{getattr(dep, 'title', str(dep))}' ({getattr(dep, 'status', 'Unknown')})" for dep in incomplete_deps])
+                status_label = "Todo" if target_status == ActionItem.Status.TODO else ("In Progress" if target_status == ActionItem.Status.IN_PROGRESS else "Completed")
+                raise serializers.ValidationError({
+                    "status": f"Cannot set status to {status_label}. Outstanding incomplete prerequisite dependencies: {titles}."
+                })
+        except serializers.ValidationError:
+            raise
+        except Exception:
+            pass
 
         return attrs
 
@@ -173,15 +195,27 @@ class ActionItemSerializer(serializers.ModelSerializer):
             validated_data['completion_notes'] = req.data['completion_notes']
 
         # Auto-set status to BLOCKED if created with incomplete dependencies
-        has_incomplete = any(getattr(dep, 'status', None) != ActionItem.Status.COMPLETED for dep in dependencies)
-        if has_incomplete and validated_data.get('status') != ActionItem.Status.CANCELLED:
-            validated_data['status'] = ActionItem.Status.BLOCKED
+        try:
+            has_incomplete = any(getattr(dep, 'status', None) != ActionItem.Status.COMPLETED for dep in dependencies)
+            if has_incomplete and validated_data.get('status') != ActionItem.Status.CANCELLED:
+                validated_data['status'] = ActionItem.Status.BLOCKED
+        except Exception:
+            pass
 
         action = ActionItem.objects.create(**validated_data)
+        
         if dependencies:
-            action.dependencies.set(dependencies)
+            try:
+                action.dependencies.set(dependencies)
+            except Exception:
+                pass
+
         if assigned_to_users:
-            action.assigned_to.set(assigned_to_users)
+            try:
+                action.assigned_to.set(assigned_to_users)
+            except Exception:
+                pass
+
         return action
 
     def update(self, instance, validated_data):

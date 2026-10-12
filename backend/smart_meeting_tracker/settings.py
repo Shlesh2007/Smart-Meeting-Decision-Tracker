@@ -170,6 +170,18 @@ SIMPLE_JWT = {
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+    'x-organization-id',
+]
 
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'UTC'
@@ -207,8 +219,8 @@ else:
 DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', f'SmartMeeting Tracker <{EMAIL_HOST_USER}>')
 
 # OAuth 2.0 Credentials
-GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID', 'mock-google-client-id.apps.googleusercontent.com')
+GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID', '1051715789667-m86kur6hnaciip8cp4ghoq08eeso6et3.apps.googleusercontent.com')
 GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET', '')
-GITHUB_CLIENT_ID = os.environ.get('GITHUB_CLIENT_ID', 'mock-github-client-id')
-GITHUB_CLIENT_SECRET = os.environ.get('GITHUB_CLIENT_SECRET', 'mock-github-client-secret')
+GITHUB_CLIENT_ID = os.environ.get('GITHUB_CLIENT_ID', 'Ov23li85R8iyZCz0Yn3h')
+GITHUB_CLIENT_SECRET = os.environ.get('GITHUB_CLIENT_SECRET', '')
 

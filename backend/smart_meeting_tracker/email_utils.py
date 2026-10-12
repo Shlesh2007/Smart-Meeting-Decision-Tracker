@@ -120,13 +120,15 @@ def build_meeting_email_html(meeting, otp_code=None, title_prefix="Meeting Invit
     Generates a responsive HTML email template for meeting invitations, OTPs, and reminders.
     """
     location = meeting.location or "Online"
-    is_meet_link = "meet.google.com" in location.lower() or location.startswith("http")
+    import re
+    url_match = re.search(r'https?://[^\s)]+', location)
+    meet_url = url_match.group(0) if url_match else None
     meet_button_html = ""
-    if is_meet_link:
-        meet_url = location if location.startswith("http") else f"https://{location}"
+    if meet_url or "meet.google.com" in location.lower():
+        join_href = meet_url or (location if location.startswith("http") else f"https://{location}")
         meet_button_html = f"""
         <div style="margin: 20px 0; text-align: center;">
-            <a href="{meet_url}" target="_blank" style="background-color: #2563eb; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-weight: 700; font-size: 15px; display: inline-block; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);">
+            <a href="{join_href}" target="_blank" style="background-color: #2563eb; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-weight: 700; font-size: 15px; display: inline-block; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);">
                 🚀 Join Google Meet
             </a>
         </div>
@@ -136,9 +138,9 @@ def build_meeting_email_html(meeting, otp_code=None, title_prefix="Meeting Invit
     if otp_code:
         otp_box_html = f"""
         <div style="background-color: #f0f9ff; border: 2px dashed #0284c7; border-radius: 12px; padding: 18px; text-align: center; margin: 20px 0;">
-            <div style="font-size: 13px; font-weight: 700; color: #0369a1; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;">🔑 Participant Entry OTP Code</div>
-            <div style="font-size: 32px; font-weight: 900; font-family: 'Courier New', Courier, monospace; letter-spacing: 8px; color: #0284c7;">{otp_code}</div>
-            <div style="font-size: 11px; color: #64748b; margin-top: 6px;">Present this code to confirm your meeting attendance</div>
+            <div style="font-size: 13px; font-weight: 700; color: #0369a1; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;">🔑 Meeting Access Password</div>
+            <div style="font-size: 26px; font-weight: 900; font-family: 'Courier New', Courier, monospace; letter-spacing: 4px; color: #0284c7;">{otp_code}</div>
+            <div style="font-size: 11px; color: #64748b; margin-top: 6px;">Use this password to join the Google Meet session</div>
         </div>
         """
 

@@ -7,9 +7,7 @@ import { getErrorMessage } from '../utils/errorHandler.js';
 import { Form, Input, Button, Divider, App, ConfigProvider, theme as antdTheme } from 'antd';
 import {
   UserOutlined, MailOutlined, LockOutlined, SafetyCertificateOutlined,
-  SendOutlined, CheckCircleOutlined, GoogleOutlined, GithubOutlined,
-  CalendarOutlined, CheckSquareOutlined, FileTextOutlined, ClockCircleOutlined,
-  ThunderboltOutlined, TeamOutlined
+  CheckCircleOutlined, GoogleOutlined, GithubOutlined
 } from '@ant-design/icons';
 
 export default function Register() {
@@ -267,7 +265,22 @@ export default function Register() {
                   <Form.Item
                     name="first_name"
                     label={<span className="font-semibold text-slate-700 text-xs uppercase tracking-wider">First Name</span>}
-                    rules={[{ required: true, message: 'Please enter first name' }]}
+                    rules={[
+                      { required: true, message: 'Please enter first name' },
+                      { min: 2, message: 'First name must be at least 2 letters' },
+                      { max: 50, message: 'First name cannot exceed 50 characters' },
+                      { pattern: /^[a-zA-Z\s'\-]+$/, message: 'First name can only contain letters, spaces, hyphens, and apostrophes' },
+                      {
+                        validator(_, value) {
+                          if (!value) return Promise.resolve();
+                          const dangerous = /(\b(select|delete|insert|update|drop|alter|create|truncate|exec|union|table|from|where|into)\b)|([;*<>\\/{}="`]|--)/i;
+                          if (dangerous.test(value)) {
+                            return Promise.reject(new Error('Invalid name syntax. Symbols or SQL commands are not allowed.'));
+                          }
+                          return Promise.resolve();
+                        }
+                      }
+                    ]}
                     className="mb-2"
                   >
                     <Input id="first_name" name="first_name" prefix={<UserOutlined className="text-slate-400 mr-1.5" />} placeholder="John" className="rounded-xl border-slate-300 h-10 text-sm" />
@@ -276,7 +289,22 @@ export default function Register() {
                   <Form.Item
                     name="last_name"
                     label={<span className="font-semibold text-slate-700 text-xs uppercase tracking-wider">Last Name</span>}
-                    rules={[{ required: true, message: 'Please enter last name' }]}
+                    rules={[
+                      { required: true, message: 'Please enter last name' },
+                      { min: 2, message: 'Last name must be at least 2 letters' },
+                      { max: 50, message: 'Last name cannot exceed 50 characters' },
+                      { pattern: /^[a-zA-Z\s'\-]+$/, message: 'Last name can only contain letters, spaces, hyphens, and apostrophes' },
+                      {
+                        validator(_, value) {
+                          if (!value) return Promise.resolve();
+                          const dangerous = /(\b(select|delete|insert|update|drop|alter|create|truncate|exec|union|table|from|where|into)\b)|([;*<>\\/{}="`]|--)/i;
+                          if (dangerous.test(value)) {
+                            return Promise.reject(new Error('Invalid name syntax. Symbols or SQL commands are not allowed.'));
+                          }
+                          return Promise.resolve();
+                        }
+                      }
+                    ]}
                     className="mb-2"
                   >
                     <Input id="last_name" name="last_name" prefix={<UserOutlined className="text-slate-400 mr-1.5" />} placeholder="Doe" className="rounded-xl border-slate-300 h-10 text-sm" />
@@ -286,7 +314,22 @@ export default function Register() {
                 <Form.Item
                   name="username"
                   label={<span className="font-semibold text-slate-700 text-xs uppercase tracking-wider">Username</span>}
-                  rules={[{ required: true, message: 'Please enter username' }]}
+                  rules={[
+                    { required: true, message: 'Please enter username' },
+                    { min: 3, message: 'Username must be between 3 and 30 characters' },
+                    { max: 30, message: 'Username cannot exceed 30 characters' },
+                    { pattern: /^[a-zA-Z0-9_-]+$/, message: 'Username can only contain letters, numbers, underscores, and hyphens' },
+                    {
+                      validator(_, value) {
+                        if (!value) return Promise.resolve();
+                        const dangerous = /(\b(select|delete|insert|update|drop|alter|create|truncate|exec|union|table|from|where|into)\b)|([;*<>\\/{}="`]|--)/i;
+                        if (dangerous.test(value)) {
+                          return Promise.reject(new Error('Invalid username format. Special symbols or SQL commands are not allowed.'));
+                        }
+                        return Promise.resolve();
+                      }
+                    }
+                  ]}
                   className="mb-2"
                 >
                   <Input id="username" name="username" prefix={<UserOutlined className="text-slate-400 mr-1.5" />} placeholder="john_doe" className="rounded-xl border-slate-300 h-10 text-sm" />
@@ -297,7 +340,8 @@ export default function Register() {
                   label={<span className="font-semibold text-slate-700 text-xs uppercase tracking-wider">Email Address</span>}
                   rules={[
                     { required: true, message: 'Please enter email address' },
-                    { type: 'email', message: 'Invalid email address format' }
+                    { type: 'email', message: 'Invalid email address format' },
+                    { max: 100, message: 'Email address cannot exceed 100 characters' }
                   ]}
                   className="mb-2"
                 >
@@ -426,12 +470,12 @@ export default function Register() {
                   Google
                 </Button>
                 <Button
-                  icon={<GithubOutlined className="text-slate-800 text-base group-hover:!text-white group-hover:!fill-white transition-colors" />}
+                  icon={<GithubOutlined className="text-base transition-colors" />}
                   onClick={handleGithubOAuth}
                   loading={oauthLoading === 'github'}
                   disabled={submitting || otpRequesting || Boolean(oauthLoading)}
                   style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '12px', height: '42px' }}
-                  className="group font-semibold border-slate-200 bg-white text-slate-700 hover:bg-[#181717] hover:text-white hover:border-[#181717] transition-all duration-150 shadow-none text-xs"
+                  className="github-auth-btn group font-semibold border-slate-200 bg-white text-slate-700 transition-all duration-150 shadow-none text-xs"
                 >
                   GitHub
                 </Button>
@@ -442,6 +486,13 @@ export default function Register() {
                 Already have an account?{' '}
                 <Link to="/login" className="font-bold text-slate-900 hover:text-slate-700 no-underline transition-colors">
                   Login now
+                </Link>
+              </div>
+
+              {/* Organizer Link Footer */}
+              <div className="text-center mt-3 pt-2 border-t border-slate-100">
+                <Link to="/create-organization" className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 no-underline text-[11px] font-medium transition-colors">
+                  New here? Become an Organizer with your own organization
                 </Link>
               </div>
 
