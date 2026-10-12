@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext.jsx';
-import { userService, teamService, departmentRequestService, authService, organizationJoinRequestService } from '../services/api.js';
+import { userService, teamService, departmentRequestService, authService, organizationJoinRequestService, organizationLeaveRequestService } from '../services/api.js';
 import { LoadingSkeleton } from '../components/LoadingSkeleton.jsx';
 import { ParticipantProfileModal } from '../components/ParticipantProfileModal.jsx';
 import { getErrorMessage } from '../utils/errorHandler.js';
@@ -10,7 +10,7 @@ import {
 import {
   TeamOutlined, UserOutlined, PlusOutlined, SafetyOutlined, LockOutlined,
   EditOutlined, DeleteOutlined, UsergroupAddOutlined, CrownOutlined, CheckOutlined, CloseOutlined, SolutionOutlined, EyeOutlined,
-  WarningOutlined, ExclamationCircleOutlined, SearchOutlined, FilterOutlined, UserAddOutlined
+  WarningOutlined, ExclamationCircleOutlined, SearchOutlined, FilterOutlined, UserAddOutlined, UserDeleteOutlined, LogoutOutlined
 } from '@ant-design/icons';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import dayjs from 'dayjs';
@@ -38,6 +38,9 @@ export default function Admin() {
   const resolveTabKey = (param) => {
     if (!param) return 'users';
     const p = String(param).toLowerCase();
+    if (p === 'leave_requests' || p === 'leave-requests' || p === 'leave') {
+      return 'leave_requests';
+    }
     if (p === 'organization_join_requests' || p === 'join_requests' || p === 'join-requests' || p === 'join') {
       return 'organization_join_requests';
     }
@@ -133,6 +136,7 @@ export default function Admin() {
   };
   const [deptRequests, setDeptRequests] = useState([]);
   const [orgJoinRequests, setOrgJoinRequests] = useState([]);
+  const [orgLeaveRequests, setOrgLeaveRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionLoadingId, setActionLoadingId] = useState(null);
   const [showTeamModal, setShowTeamModal] = useState(false);
@@ -211,15 +215,16 @@ export default function Admin() {
     }
   };
 
-  const loadData = useCallback(() => {
-    setLoading(true);
+  const loadData = useCallback((showSpinner = true) => {
+    if (showSpinner) setLoading(true);
     Promise.allSettled([
       userService.getUsers(),
       teamService.getTeams(),
       departmentRequestService.getRequests(),
-      organizationJoinRequestService.getRequests()
+      organizationJoinRequestService.getRequests(),
+      organizationLeaveRequestService.getRequests()
     ])
-      .then(([uRes, tRes, dRes, jRes]) => {
+      .then(([uRes, tRes, dRes, jRes, lRes]) => {
         if (uRes.status === 'fulfilled') {
           const val = uRes.value;
           setUsers(Array.isArray(val) ? val : (val.results || []));
@@ -250,17 +255,46 @@ export default function Admin() {
           setOrgJoinRequests([]);
         }
 
-        if (uRes.status === 'rejected') {
-          message.error(getErrorMessage(uRes.reason, 'Failed to load user directory.'));
+        if (lRes && lRes.status === 'fulfilled') {
+          const val = lRes.value;
+          setOrgLeaveRequests(Array.isArray(val) ? val : (val.results || []));
+        } else {
+          setOrgLeaveRequests([]);
+        }
+
+        if (showSpinner && uRes.status === 'rejected') {
+          antMessage.error(getErrorMessage(uRes.reason, 'Failed to load user directory.'));
         }
       })
-      .finally(() => setLoading(false));
-  }, []);
+      .finally(() => {
+        if (showSpinner) setLoading(false);
+      });
+  }, [antMessage]);
 
   useEffect(() => {
-    if (isAdmin && !fetchedRef.current) {
-      fetchedRef.current = true;
-      loadData();
+    if (isAdmin) {
+      if (!fetchedRef.current) {
+        fetchedRef.current = true;
+        loadData(true);
+      }
+
+      // Live Auto-Refresh: poll every 5 seconds so new join requests, leave requests, and user status appear live
+      const pollTimer = setInterval(() => {
+        loadData(false);
+      }, 5000);
+
+      const handleFocus = () => {
+        loadData(false);
+      };
+
+      window.addEventListener('focus', handleFocus);
+      window.addEventListener('visibilitychange', handleFocus);
+
+      return () => {
+        clearInterval(pollTimer);
+        window.removeEventListener('focus', handleFocus);
+        window.removeEventListener('visibilitychange', handleFocus);
+      };
     }
   }, [isAdmin, loadData]);
 
@@ -467,20 +501,85 @@ export default function Admin() {
           );
         }
 
+        const canRemove = !isSelf && !isTargetOwner && (isOwner || u.role !== 'ADMIN');
+
         return (
-          <Select
-            id={`user_role_${u.id}`}
-            name={`user_role_${u.id}`}
-            value={u.role}
-            onChange={(newRole) => handleRoleSelectChange(u, newRole)}
-            disabled={isDisabled}
-            className="w-32"
-            options={allowedRoleOptions}
-          />
+          <div className="flex items-center space-x-2">
+            <Select
+              id={`user_role_${u.id}`}
+              name={`user_role_${u.id}`}
+              value={u.role}
+              onChange={(newRole) => handleRoleSelectChange(u, newRole)}
+              disabled={isDisabled}
+              className="w-28"
+              options={allowedRoleOptions}
+            />
+            {canRemove && (
+              <Popconfirm
+                title="Remove from Organization"
+                description={`Are you sure you want to remove ${u.full_name || u.username} from the organization?`}
+                onConfirm={() => handleRemoveUser(u.id)}
+                okText="Yes, Remove"
+                okButtonProps={{ danger: true }}
+              >
+                <Tooltip title="Remove member from organization">
+                  <Button
+                    size="small"
+                    danger
+                    icon={<UserDeleteOutlined />}
+                    loading={actionLoadingId === `remove_${u.id}`}
+                    className="h-8 w-8 p-0 flex items-center justify-center shrink-0"
+                  />
+                </Tooltip>
+              </Popconfirm>
+            )}
+          </div>
         );
       },
     },
   ];
+
+  const handleRemoveUser = async (userId) => {
+    setActionLoadingId(`remove_${userId}`);
+    try {
+      const res = await userService.removeUserFromOrganization(userId);
+      message.success(res.message || 'User removed from organization successfully.');
+      loadData();
+    } catch (err) {
+      const msg = err.response?.data?.error || err.response?.data?.detail || 'Failed to remove user from organization.';
+      message.error(msg);
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
+
+  const handleApproveLeaveRequest = async (reqId) => {
+    setActionLoadingId(reqId);
+    try {
+      const res = await organizationLeaveRequestService.approveRequest(reqId);
+      message.success(res.message || 'Organization leave request approved!');
+      loadData();
+    } catch (err) {
+      const msg = err.response?.data?.error || err.response?.data?.detail || 'Failed to approve leave request.';
+      message.error(msg);
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
+
+  const handleRejectLeaveRequest = async (reqId) => {
+    setActionLoadingId(reqId);
+    try {
+      const res = await organizationLeaveRequestService.rejectRequest(reqId);
+      message.success(res.message || 'Organization leave request rejected.');
+      loadData();
+    } catch (err) {
+      const msg = err.response?.data?.error || err.response?.data?.detail || 'Failed to reject leave request.';
+      message.error(msg);
+    } finally {
+      setActionLoadingId(null);
+    }
+  };
 
   const handleApproveDeptRequest = async (reqId) => {
     setActionLoadingId(reqId);
@@ -697,8 +796,95 @@ export default function Admin() {
     }
   ];
 
-  const pendingOrgJoinCount = orgJoinRequests.filter(r => r.status === 'PENDING').length;
+  const orgLeaveColumns = [
+    {
+      title: 'Member Details',
+      key: 'user',
+      render: (_, r) => (
+        <div>
+          <span className="font-semibold text-slate-900 dark:text-slate-100 block text-xs sm:text-sm">
+            {r.user_detail?.full_name || r.user_detail?.username}
+          </span>
+          <span className="text-xs text-slate-500 dark:text-slate-400 block">{r.user_detail?.email}</span>
+        </div>
+      )
+    },
+    {
+      title: 'Department & Role',
+      key: 'dept_role',
+      render: (_, r) => (
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <Tag color="geekblue" className="font-bold text-xs m-0">{r.user_detail?.department || 'General Team'}</Tag>
+          {getRoleTag(r.user_detail?.role || 'MEMBER')}
+        </div>
+      )
+    },
+    {
+      title: 'Reason / Notes',
+      dataIndex: 'reason',
+      key: 'reason',
+      render: (val) => <span className="text-xs italic text-slate-600 dark:text-slate-300">{val || 'No reason provided'}</span>
+    },
+    {
+      title: 'Status',
+      dataIndex: 'status',
+      key: 'status',
+      render: (status) => {
+        if (status === 'APPROVED') return <Tag color="success" className="font-bold">APPROVED</Tag>;
+        if (status === 'REJECTED') return <Tag color="error" className="font-bold">REJECTED</Tag>;
+        return <Tag color="warning" className="font-bold">PENDING APPROVAL</Tag>;
+      }
+    },
+    {
+      title: 'Submitted Date',
+      dataIndex: 'created_at',
+      key: 'created_at',
+      render: (d) => d ? dayjs(d).format('MMM DD, YYYY') : '—'
+    },
+    {
+      title: 'Review Action',
+      key: 'action',
+      render: (_, r) => {
+        if (r.status !== 'PENDING') {
+          return <span className="text-xs text-slate-400 font-medium">Reviewed by {r.reviewed_by_detail?.full_name || 'Admin'}</span>;
+        }
 
+        return (
+          <div className="flex items-center space-x-2">
+            <Popconfirm
+              title="Approve Leave Request"
+              description={`Are you sure you want to approve this request? ${r.user_detail?.full_name || r.user_detail?.username} will be removed from the organization.`}
+              onConfirm={() => handleApproveLeaveRequest(r.id)}
+              okText="Yes, Approve"
+            >
+              <Button
+                type="primary"
+                size="small"
+                icon={<CheckOutlined />}
+                loading={actionLoadingId === r.id}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs border-none"
+              >
+                Approve Leave
+              </Button>
+            </Popconfirm>
+            <Button
+              danger
+              size="small"
+              icon={<CloseOutlined />}
+              loading={actionLoadingId === r.id}
+              onClick={() => handleRejectLeaveRequest(r.id)}
+              className="font-bold text-xs"
+            >
+              Reject
+            </Button>
+          </div>
+        );
+      }
+    }
+  ];
+
+  const pendingOrgJoinCount = orgJoinRequests.filter(r => r.status === 'PENDING').length;
+  const pendingOrgLeaveCount = orgLeaveRequests.filter(r => r.status === 'PENDING').length;
   const pendingDeptCount = deptRequests.filter(r => r.status === 'PENDING').length;
 
   return (
@@ -828,7 +1014,7 @@ export default function Admin() {
                         )}
                       </span>
                       {(userSearchTerm || userRoleFilter !== 'ALL' || userDeptFilter !== 'ALL') && (
-                        <span className="text-amber-600 dark:text-amber-400 font-semibold">⚡ Active Filter</span>
+                        <span className="text-amber-600 dark:text-amber-400 font-semibold"> Active Filter</span>
                       )}
                     </div>
                   </div>
@@ -1158,6 +1344,124 @@ export default function Admin() {
                                   icon={<CloseOutlined className="text-[9px]" />}
                                   loading={actionLoadingId === r.id}
                                   onClick={() => handleRejectJoinRequest(r.id)}
+                                  className="font-bold text-[10px] rounded-md h-6 px-2.5"
+                                >
+                                  Reject
+                                </Button>
+                              </div>
+                            ) : (
+                              <span className="text-slate-400 italic text-[10px]">
+                                Reviewed by {r.reviewed_by_detail?.full_name || 'Admin'}
+                              </span>
+                            )}
+                          </div>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                </>
+              ),
+            },
+            {
+              key: 'leave_requests',
+              label: (
+                <span className="font-semibold flex items-center space-x-1 sm:space-x-2 text-[11px] sm:text-sm whitespace-nowrap">
+                  <LogoutOutlined />
+                  <span className="hidden sm:inline">Leave Requests ({orgLeaveRequests.length})</span>
+                  <span className="inline sm:hidden">Leave ({orgLeaveRequests.length})</span>
+                  {pendingOrgLeaveCount > 0 && (
+                    <Tag color="volcano" className="font-bold text-[9px] sm:text-[10px] m-0 rounded-full px-1 sm:px-1.5 py-0">
+                      {pendingOrgLeaveCount} <span className="hidden sm:inline">PENDING</span>
+                    </Tag>
+                  )}
+                </span>
+              ),
+              children: loading ? (
+                <LoadingSkeleton type="table" />
+              ) : orgLeaveRequests.length === 0 ? (
+                <div className="py-12 text-center text-slate-400">
+                  <LogoutOutlined className="text-4xl mb-2 text-slate-300" />
+                  <p className="font-medium text-slate-700 dark:text-slate-300 m-0">No member leave requests submitted yet.</p>
+                </div>
+              ) : (
+                <>
+                  {/* Desktop Table View (>= 1024px) */}
+                  <div className="hidden lg:block w-full overflow-x-auto">
+                    <Table columns={orgLeaveColumns} dataSource={orgLeaveRequests} rowKey="id" pagination={{ pageSize: 8 }} scroll={{ x: 750 }} />
+                  </div>
+
+                  {/* Responsive Cards Grid View (< 1024px) */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 block lg:hidden py-1.5">
+                    {orgLeaveRequests.map((r) => {
+                      const isPending = r.status === 'PENDING';
+                      const statusTag = r.status === 'APPROVED' ? (
+                        <Tag color="success" className="font-bold text-[10px] m-0 px-1 py-0">APPROVED</Tag>
+                      ) : r.status === 'REJECTED' ? (
+                        <Tag color="error" className="font-bold text-[10px] m-0 px-1 py-0">REJECTED</Tag>
+                      ) : (
+                        <Tag color="warning" className="font-bold text-[10px] m-0 px-1 py-0">PENDING</Tag>
+                      );
+
+                      return (
+                        <Card
+                          key={r.id}
+                          className="shadow-xs rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-800 hover:border-blue-400 transition-all"
+                          styles={{ body: { padding: '10px 12px' } }}
+                        >
+                          {/* Header: Member info & Status tag */}
+                          <div className="flex items-center justify-between gap-2 pb-1 border-b border-slate-100 dark:border-slate-700/60">
+                            <div className="min-w-0 flex-1">
+                              <span className="font-bold text-xs text-slate-900 dark:text-white block truncate leading-tight">
+                                {r.user_detail?.full_name || r.user_detail?.username}
+                              </span>
+                              <span className="text-[10.5px] text-slate-400 block truncate leading-tight">{r.user_detail?.email}</span>
+                            </div>
+                            <div className="shrink-0">{statusTag}</div>
+                          </div>
+
+                          {/* Department & Role */}
+                          <div className="py-1 space-y-0.5">
+                            <div className="flex items-center gap-1.5 text-[11px] flex-wrap">
+                              <Tag color="geekblue" className="m-0 text-[10px] font-bold px-1.5 py-0">{r.user_detail?.department || 'General Team'}</Tag>
+                              {getRoleTag(r.user_detail?.role || 'MEMBER')}
+                            </div>
+                            {r.reason && (
+                              <p className="text-[10.5px] italic text-slate-500 dark:text-slate-400 m-0 truncate leading-tight">
+                                "{r.reason}"
+                              </p>
+                            )}
+                          </div>
+
+                          {/* Footer: Date & Actions */}
+                          <div className="pt-1.5 mt-1 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-between text-[10.5px]">
+                            <span className="text-slate-400">
+                              {r.created_at ? dayjs(r.created_at).format('MMM DD, YYYY') : '—'}
+                            </span>
+
+                            {isPending ? (
+                              <div className="flex items-center space-x-1.5">
+                                <Popconfirm
+                                  title="Approve Leave Request"
+                                  description={`Are you sure you want to approve this request? ${r.user_detail?.full_name || r.user_detail?.username} will be removed from the organization.`}
+                                  onConfirm={() => handleApproveLeaveRequest(r.id)}
+                                  okText="Yes, Approve"
+                                >
+                                  <Button
+                                    type="primary"
+                                    size="small"
+                                    icon={<CheckOutlined className="text-[9px]" />}
+                                    loading={actionLoadingId === r.id}
+                                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] border-none rounded-md h-6 px-2.5"
+                                  >
+                                    Approve Leave
+                                  </Button>
+                                </Popconfirm>
+                                <Button
+                                  danger
+                                  size="small"
+                                  icon={<CloseOutlined className="text-[9px]" />}
+                                  loading={actionLoadingId === r.id}
+                                  onClick={() => handleRejectLeaveRequest(r.id)}
                                   className="font-bold text-[10px] rounded-md h-6 px-2.5"
                                 >
                                   Reject

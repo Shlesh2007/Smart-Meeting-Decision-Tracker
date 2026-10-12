@@ -104,26 +104,48 @@ export default function MeetingDetail() {
         setAllActions([]);
       }
     } catch (err) {
-      const status = err.response?.status;
-      if (status === 403) {
-        setErrorState('PERMISSION_DENIED');
-      } else if (status === 404) {
-        setErrorState('NOT_FOUND');
-      } else {
-        setErrorState('NETWORK_ERROR');
+      if (showSpinner) {
+        const status = err.response?.status;
+        if (status === 403) {
+          setErrorState('PERMISSION_DENIED');
+        } else if (status === 404) {
+          setErrorState('NOT_FOUND');
+        } else {
+          setErrorState('NETWORK_ERROR');
+        }
+        message.error('Failed to load meeting details.');
       }
-      message.error('Failed to load meeting details.');
     } finally {
-      setLoading(false);
+      if (showSpinner) setLoading(false);
     }
   }, [meetingId]);
 
   const fetchedRef = useRef(null);
 
   useEffect(() => {
-    if (meetingId && fetchedRef.current !== meetingId) {
-      fetchedRef.current = meetingId;
-      loadData();
+    if (meetingId) {
+      if (fetchedRef.current !== meetingId) {
+        fetchedRef.current = meetingId;
+        loadData(true);
+      }
+
+      // Live Sync: Background refresh discussions & actions every 6 seconds and on window focus
+      const pollTimer = setInterval(() => {
+        loadData(false);
+      }, 6000);
+
+      const handleFocus = () => {
+        loadData(false);
+      };
+
+      window.addEventListener('focus', handleFocus);
+      window.addEventListener('visibilitychange', handleFocus);
+
+      return () => {
+        clearInterval(pollTimer);
+        window.removeEventListener('focus', handleFocus);
+        window.removeEventListener('visibilitychange', handleFocus);
+      };
     }
   }, [meetingId, loadData]);
 

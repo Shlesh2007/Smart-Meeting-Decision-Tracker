@@ -239,3 +239,29 @@ class OrganizationJoinRequest(models.Model):
     def __str__(self):
         org_title = self.organization.name if self.organization else self.organization_name
         return f"Join Request by {self.user.username} for {org_title} ({self.status})"
+
+
+class OrganizationLeaveRequest(models.Model):
+    class Status(models.TextChoices):
+        PENDING = 'PENDING', 'Pending'
+        APPROVED = 'APPROVED', 'Approved'
+        REJECTED = 'REJECTED', 'Rejected'
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='organization_leave_requests')
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name='leave_requests', null=True, blank=True)
+    organization_name = models.CharField(max_length=150, default='SmartMeeting Workspace')
+    reason = models.TextField(blank=True, default='')
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    reviewed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='reviewed_leave_requests')
+    review_notes = models.TextField(blank=True, default='')
+    is_acknowledged = models.BooleanField(default=False)
+    acknowledged_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        org_title = self.organization.name if self.organization else self.organization_name
+        return f"Leave Request by {self.user.username} from {org_title} ({self.status})"

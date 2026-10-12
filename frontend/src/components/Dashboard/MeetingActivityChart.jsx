@@ -376,7 +376,7 @@ export const MeetingActivityChart = ({
               { label: '30D', value: 30 },
               { label: 'All', value: 0 },
             ]}
-            className="bg-slate-100 dark:bg-slate-800 text-[10px] font-bold"
+            className="ml-auto w-fit bg-slate-100 dark:bg-slate-800 text-[10px] font-bold"
           />
         )}
       </div>

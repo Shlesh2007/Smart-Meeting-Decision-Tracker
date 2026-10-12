@@ -164,8 +164,8 @@ export const NeedsAttention = ({ overdueList = [], urgentList = [], loading = fa
   return (
     <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 sm:p-3.5 shadow-xs transition-all h-full flex flex-col justify-between">
       {/* Header & Tabs */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-1.5 border-b border-slate-100 dark:border-slate-800">
-        <div className="flex items-center space-x-2">
+      <div className="flex flex-row items-center justify-between flex-wrap gap-2 pb-1.5 border-b border-slate-100 dark:border-slate-800">
+        <div className="flex items-center space-x-2 shrink-0">
           <div className="w-6.5 h-6.5 rounded-lg bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 flex items-center justify-center text-xs font-bold">
             <FireOutlined />
           </div>
@@ -187,7 +187,7 @@ export const NeedsAttention = ({ overdueList = [], urgentList = [], loading = fa
             { label: 'Critical', value: 'CRITICAL' },
             { label: 'High', value: 'HIGH' },
           ]}
-          className="bg-slate-100 dark:bg-slate-800 text-[10px] font-bold"
+          className="ml-auto w-fit bg-slate-100 dark:bg-slate-800 text-[10px] font-bold"
         />
       </div>
 

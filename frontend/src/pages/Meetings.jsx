@@ -53,9 +53,11 @@ export default function Meetings() {
     }
   }, [searchParams]);
 
-  const fetchMeetings = useCallback(() => {
-    setLoading(true);
-    setError(false);
+  const fetchMeetings = useCallback((showSpinner = true) => {
+    if (showSpinner) {
+      setLoading(true);
+      setError(false);
+    }
 
     const params = {
       page: viewMode === 'calendar' ? 1 : page,
@@ -75,8 +77,12 @@ export default function Meetings() {
         setMeetings(res.results || []);
         setTotal(res.count || 0);
       })
-      .catch(() => setError(true))
-      .finally(() => setLoading(false));
+      .catch(() => {
+        if (showSpinner) setError(true);
+      })
+      .finally(() => {
+        if (showSpinner) setLoading(false);
+      });
   }, [page, pageSize, search, meetingType, status, dateRange, viewMode]);
 
   const prevParamsRef = useRef('');
@@ -85,8 +91,26 @@ export default function Meetings() {
     const currentParamsKey = `${page}-${pageSize}-${search}-${meetingType}-${status}-${dateRange ? dateRange.join(',') : ''}-${viewMode}`;
     if (prevParamsRef.current !== currentParamsKey) {
       prevParamsRef.current = currentParamsKey;
-      fetchMeetings();
+      fetchMeetings(true);
     }
+
+    // Live Sync: Background refresh every 6 seconds and on window focus
+    const pollTimer = setInterval(() => {
+      fetchMeetings(false);
+    }, 6000);
+
+    const handleFocus = () => {
+      fetchMeetings(false);
+    };
+
+    window.addEventListener('focus', handleFocus);
+    window.addEventListener('visibilitychange', handleFocus);
+
+    return () => {
+      clearInterval(pollTimer);
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('visibilitychange', handleFocus);
+    };
   }, [page, pageSize, search, meetingType, status, dateRange, viewMode, fetchMeetings]);
 
   const handleResetFilters = () => {

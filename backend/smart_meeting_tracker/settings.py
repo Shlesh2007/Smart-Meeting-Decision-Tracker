@@ -230,3 +230,6 @@ GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET', '')
 GITHUB_CLIENT_ID = os.environ.get('GITHUB_CLIENT_ID', 'Ov23li85R8iyZCz0Yn3h').strip()
 GITHUB_CLIENT_SECRET = os.environ.get('GITHUB_CLIENT_SECRET', '47fcee476647710cdbe167dec11d3ad8f8e689dc').strip()
 
+# Frontend Production Website URL
+FRONTEND_URL = os.environ.get('FRONTEND_URL', 'https://smart-meeting-decision-tracker-zy1o.vercel.app').rstrip('/')
+

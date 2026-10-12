@@ -1,4 +1,5 @@
 from rest_framework import generics, viewsets, permissions, status
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -520,7 +521,75 @@ class UserViewSet(viewsets.ModelViewSet):
         if instance.role == User.Role.ADMIN and not caller.is_owner_role:
             raise permissions.PermissionDenied("ADMIN cannot delete another ADMIN account.")
 
+        tables = set(connection.introspection.table_names())
+        if 'authentication_organizationmembership' in tables:
+            try:
+                from .models import OrganizationMembership
+                OrganizationMembership.objects.filter(user=instance).delete()
+            except Exception:
+                pass
+
+        if 'authentication_organizationleaverequest' in tables:
+            try:
+                from .models import OrganizationLeaveRequest
+                OrganizationLeaveRequest.objects.filter(user=instance).delete()
+                OrganizationLeaveRequest.objects.filter(reviewed_by=instance).update(reviewed_by=None)
+            except Exception:
+                pass
+
         instance.delete()
+
+    @action(detail=True, methods=['post'])
+    def remove_from_organization(self, request, pk=None):
+        caller = request.user
+        target_user = self.get_object()
+
+        if target_user.role == User.Role.OWNER or target_user.is_owner_role:
+            return Response({'error': 'Organization Owner cannot be removed from the organization.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if target_user.id == caller.id:
+            return Response({'error': 'You cannot remove yourself. Please submit a Leave Request instead.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if target_user.role == User.Role.ADMIN and not caller.is_owner_role:
+            return Response({'error': 'Only the Organization Owner can remove an Administrator.'}, status=status.HTTP_403_FORBIDDEN)
+
+        with transaction.atomic():
+            # 1. Deactivate OrganizationMembership
+            from .models import OrganizationMembership, Organization
+            OrganizationMembership.objects.filter(user=target_user).update(is_active=False)
+
+            # 2. Reset user role to UNASSIGNED
+            target_user.role = User.Role.UNASSIGNED
+            target_user.is_staff = False
+            target_user.is_superuser = False
+            target_user.save()
+
+            # 3. Clean up any active teams membership
+            try:
+                for team in target_user.teams.all():
+                    team.members.remove(target_user)
+            except Exception:
+                pass
+
+        logger.info("Admin/Owner %s removed user %s from organization.", caller.email, target_user.email)
+
+        # Send notification to target_user
+        try:
+            from apps.notifications.models import Notification
+            Notification.objects.create(
+                user=target_user,
+                title="Removed from Organization Workspace",
+                subtitle=f"You have been removed from the workspace by {caller.get_full_name() or caller.username}.",
+                link="/onboarding",
+                notification_type=Notification.NotificationType.GENERAL,
+                is_read=False
+            )
+        except Exception:
+            pass
+
+        return Response({
+            'message': f'{target_user.get_full_name() or target_user.username} has been removed from the organization.'
+        }, status=status.HTTP_200_OK)
 
 
 # --- OTP PASSWORD RESET VIEWS ---
@@ -1239,11 +1308,33 @@ class CheckDeleteAccountView(APIView):
 
     def _check(self, request):
         user = request.user
-        other_users = User.objects.exclude(id=user.id)
-        other_users_count = other_users.count()
+        tables = set(connection.introspection.table_names())
+        user_org = get_user_active_organization(user, request=request)
 
-        total_owners = User.objects.filter(role=User.Role.OWNER).count()
-        total_admins_and_owners = User.objects.filter(role__in=[User.Role.OWNER, User.Role.ADMIN]).count()
+        # Scope strictly to members of user's active organization
+        member_user_ids = set()
+        if user_org:
+            if 'authentication_organizationmembership' in tables:
+                from .models import OrganizationMembership
+                member_user_ids.update(
+                    OrganizationMembership.objects.filter(organization=user_org, is_active=True)
+                    .values_list('user_id', flat=True)
+                )
+            if user_org.owner_id:
+                member_user_ids.add(user_org.owner_id)
+
+        if member_user_ids:
+            other_users = User.objects.filter(id__in=member_user_ids).exclude(id=user.id).exclude(role=User.Role.UNASSIGNED)
+            org_owners = User.objects.filter(id__in=member_user_ids, role=User.Role.OWNER)
+            org_admins_and_owners = User.objects.filter(id__in=member_user_ids, role__in=[User.Role.OWNER, User.Role.ADMIN])
+        else:
+            other_users = User.objects.exclude(id=user.id).exclude(role=User.Role.UNASSIGNED)
+            org_owners = User.objects.filter(role=User.Role.OWNER)
+            org_admins_and_owners = User.objects.filter(role__in=[User.Role.OWNER, User.Role.ADMIN])
+
+        other_users_count = other_users.count()
+        total_owners = org_owners.count()
+        total_admins_and_owners = org_admins_and_owners.count()
 
         can_delete = True
         requires_ownership_transfer = False
@@ -1305,10 +1396,28 @@ class TransferOwnershipView(APIView):
         if not target_user_id:
             return Response({'error': 'Please select a target user to receive ownership.'}, status=status.HTTP_400_BAD_REQUEST)
 
+        tables = set(connection.introspection.table_names())
+        user_org = get_user_active_organization(user, request=request)
+
+        # Restrict target user lookup strictly to members of this organization
+        member_user_ids = set()
+        if user_org:
+            if 'authentication_organizationmembership' in tables:
+                from .models import OrganizationMembership
+                member_user_ids.update(
+                    OrganizationMembership.objects.filter(organization=user_org, is_active=True)
+                    .values_list('user_id', flat=True)
+                )
+            if user_org.owner_id:
+                member_user_ids.add(user_org.owner_id)
+
         try:
-            target_user = User.objects.exclude(id=user.id).get(id=target_user_id)
+            target_qs = User.objects.exclude(id=user.id).exclude(role=User.Role.UNASSIGNED)
+            if member_user_ids:
+                target_qs = target_qs.filter(id__in=member_user_ids)
+            target_user = target_qs.get(id=target_user_id)
         except User.DoesNotExist:
-            return Response({'error': 'Selected user was not found.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Selected user was not found in your organization.'}, status=status.HTTP_404_NOT_FOUND)
 
         if user.role == User.Role.OWNER:
             password = request.data.get('password')
@@ -1322,6 +1431,7 @@ class TransferOwnershipView(APIView):
                     return Response({'error': 'Incorrect password. Ownership transfer failed.'}, status=status.HTTP_400_BAD_REQUEST)
 
         with transaction.atomic():
+            from .models import Organization, OrganizationMembership
             if user.role == User.Role.OWNER:
                 target_user.role = User.Role.OWNER
                 target_user.is_staff = True
@@ -1330,13 +1440,26 @@ class TransferOwnershipView(APIView):
 
                 user.role = User.Role.ADMIN
                 user.save()
+
+                # Update Organization model owner reference
+                if user_org and 'authentication_organization' in tables:
+                    user_org.owner = target_user
+                    user_org.save()
+
+                # Update OrganizationMembership table roles
+                if user_org and 'authentication_organizationmembership' in tables:
+                    OrganizationMembership.objects.filter(user=target_user, organization=user_org).update(role=User.Role.OWNER)
+                    OrganizationMembership.objects.filter(user=user, organization=user_org).update(role=User.Role.ADMIN)
             else:
                 target_user.role = User.Role.ADMIN
                 target_user.is_staff = True
                 target_user.save()
 
+                if user_org and 'authentication_organizationmembership' in tables:
+                    OrganizationMembership.objects.filter(user=target_user, organization=user_org).update(role=User.Role.ADMIN)
+
         target_name = target_user.get_full_name() or target_user.username
-        logger.info("Ownership/Admin rights transferred from %s to %s", user.email, target_user.email)
+        logger.info("Ownership/Admin rights transferred from %s to %s in organization %s", user.email, target_user.email, user_org.name if user_org else 'N/A')
 
         return Response({
             'message': f'Ownership rights successfully transferred to {target_name} ({target_user.email})! You can now proceed with account deletion if desired.',
@@ -1468,6 +1591,21 @@ class DeleteAccountView(APIView):
                 pass
 
             # 4. Personal records cleanup
+            if 'authentication_organizationmembership' in tables:
+                try:
+                    from .models import OrganizationMembership
+                    OrganizationMembership.objects.filter(user=user).delete()
+                except Exception as mem_err:
+                    logger.warning("OrganizationMembership cleanup warning: %s", str(mem_err))
+
+            if 'authentication_organizationleaverequest' in tables:
+                try:
+                    from .models import OrganizationLeaveRequest
+                    OrganizationLeaveRequest.objects.filter(user=user).delete()
+                    OrganizationLeaveRequest.objects.filter(reviewed_by=user).update(reviewed_by=None)
+                except Exception:
+                    pass
+
             if 'authentication_organizationjoinrequest' in tables:
                 try:
                     from .models import OrganizationJoinRequest
@@ -1505,6 +1643,10 @@ class DeleteAccountView(APIView):
                 logger.warning("Standard ORM user.delete() CASCADE warning: %s. Executing direct database deletion.", str(delete_err))
                 from django.db import connection
                 with connection.cursor() as cursor:
+                    try:
+                        cursor.execute("DELETE FROM authentication_organizationmembership WHERE user_id = %s", [user.id])
+                    except Exception:
+                        pass
                     cursor.execute("DELETE FROM authentication_user WHERE id = %s", [user.id])
 
             logger.info("User account %s permanently deleted from database with resources preserved.", user_email)
@@ -1614,9 +1756,33 @@ def ensure_database_migrated():
                     except Exception as ex:
                         logger.warning("Add completion_notes column warning: %s", str(ex))
 
-        # 3. Trigger Django migrate command for migration state consistency
+        # 3. Ensure authentication_organizationleaverequest table exists
+        if 'authentication_organizationleaverequest' not in tables:
+            with connection.cursor() as cursor:
+                try:
+                    cursor.execute("""
+                        CREATE TABLE IF NOT EXISTS authentication_organizationleaverequest (
+                            id BIGSERIAL PRIMARY KEY,
+                            user_id BIGINT NOT NULL REFERENCES authentication_user(id) ON DELETE CASCADE,
+                            organization_id BIGINT REFERENCES authentication_organization(id) ON DELETE CASCADE,
+                            organization_name VARCHAR(150) NOT NULL DEFAULT 'SmartMeeting Workspace',
+                            reason TEXT NOT NULL DEFAULT '',
+                            status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+                            reviewed_by_id BIGINT REFERENCES authentication_user(id) ON DELETE SET NULL,
+                            review_notes TEXT NOT NULL DEFAULT '',
+                            is_acknowledged BOOLEAN NOT NULL DEFAULT FALSE,
+                            acknowledged_at TIMESTAMP WITH TIME ZONE NULL,
+                            created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+                            updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+                        );
+                    """)
+                except Exception as table_err:
+                    logger.warning("Create authentication_organizationleaverequest table warning: %s", str(table_err))
+
+        # 4. Trigger Django makemigrations & migrate command
         try:
             from django.core.management import call_command
+            call_command('makemigrations', 'authentication', interactive=False)
             call_command('migrate', interactive=False)
         except Exception as mig_err:
             logger.warning("Auto-migration command note: %s", str(mig_err))
@@ -1677,8 +1843,8 @@ class CreateOrganizationView(APIView):
             return Response({'error': f"Failed to create organization: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
 
 
-from .models import DepartmentChangeRequest, OrganizationJoinRequest
-from .serializers import UserSerializer, RegisterSerializer, CustomTokenObtainPairSerializer, DepartmentChangeRequestSerializer, OrganizationJoinRequestSerializer, OrganizationSerializer
+from .models import DepartmentChangeRequest, OrganizationJoinRequest, OrganizationLeaveRequest
+from .serializers import UserSerializer, RegisterSerializer, CustomTokenObtainPairSerializer, DepartmentChangeRequestSerializer, OrganizationJoinRequestSerializer, OrganizationLeaveRequestSerializer, OrganizationSerializer
 
 class JoinOrganizationView(APIView):
     permission_classes = (permissions.IsAuthenticated,)
@@ -1921,6 +2087,7 @@ class OrganizationStatusView(APIView):
 
             user_pending_request = None
             user_unacknowledged_decision = None
+            user_pending_leave_request = None
             if user.is_authenticated and 'authentication_organizationjoinrequest' in tables:
                 try:
                     from .models import OrganizationJoinRequest
@@ -1957,6 +2124,21 @@ class OrganizationStatusView(APIView):
                 except Exception as e:
                     logger.warning("Join request status lookup warning: %s", str(e))
 
+            if user.is_authenticated and 'authentication_organizationleaverequest' in tables:
+                try:
+                    from .models import OrganizationLeaveRequest
+                    pending_leave = OrganizationLeaveRequest.objects.filter(user=user, status=OrganizationLeaveRequest.Status.PENDING).first()
+                    if pending_leave:
+                        user_pending_leave_request = {
+                            'id': pending_leave.id,
+                            'organization_name': pending_leave.organization_name,
+                            'reason': pending_leave.reason,
+                            'status': pending_leave.status,
+                            'created_at': pending_leave.created_at
+                        }
+                except Exception as e:
+                    logger.warning("Leave request status lookup warning: %s", str(e))
+
             return Response({
                 'has_active_organization': has_active_org,
                 'organization_name': org_name,
@@ -1966,7 +2148,8 @@ class OrganizationStatusView(APIView):
                 'existing_departments': existing_departments,
                 'all_organizations': all_organizations,
                 'user_pending_request': user_pending_request,
-                'user_unacknowledged_decision': user_unacknowledged_decision
+                'user_unacknowledged_decision': user_unacknowledged_decision,
+                'user_pending_leave_request': user_pending_leave_request
             }, status=status.HTTP_200_OK)
 
         except Exception as e:
@@ -1982,8 +2165,6 @@ class OrganizationStatusView(APIView):
                 'user_pending_request': None
             }, status=status.HTTP_200_OK)
 
-
-from rest_framework.decorators import action
 
 class DepartmentChangeRequestViewSet(viewsets.ModelViewSet):
     serializer_class = DepartmentChangeRequestSerializer
@@ -2096,24 +2277,16 @@ class OrganizationJoinRequestViewSet(viewsets.ModelViewSet):
         try:
             qs = OrganizationJoinRequest.objects.all().select_related('user', 'reviewed_by', 'organization')
             if user.is_admin_role or user.is_manager_role:
-                tables = set(connection.introspection.table_names())
-                from .models import Organization
-                org_count = Organization.objects.count() if 'authentication_organization' in tables else 1
-                if org_count <= 1:
-                    return qs.order_by('-created_at')
-
                 user_org = get_user_active_organization(user, request=self.request)
                 if user_org:
+                    # Strict Organization Scoping: only show join requests for THIS organization
                     org_filter = (
                         Q(organization=user_org) |
-                        Q(organization_name__iexact=user_org.name) |
-                        Q(organization__isnull=True)
+                        Q(organization_name__iexact=user_org.name)
                     )
-                    if user_org.owner and user_org.owner.organization_name:
-                        org_filter |= Q(organization_name__iexact=user_org.owner.organization_name)
-                    return qs.filter(org_filter | Q(user=user)).order_by('-created_at')
+                    return qs.filter(org_filter).order_by('-created_at')
                 else:
-                    return qs.order_by('-created_at')
+                    return qs.filter(user=user).order_by('-created_at')
             return qs.filter(user=user).order_by('-created_at')
         except Exception as e:
             logger.error("Failed to fetch OrganizationJoinRequest queryset: %s", str(e))
@@ -2183,25 +2356,51 @@ class OrganizationJoinRequestViewSet(viewsets.ModelViewSet):
             except Exception as notif_err:
                 logger.warning("Failed to create approval in-app notification: %s", str(notif_err))
 
+            site_url = getattr(settings, 'FRONTEND_URL', 'https://smart-meeting-decision-tracker-zy1o.vercel.app').rstrip('/')
+
             subject = f"✅ Organization Join Request Approved - {org_title}"
             recipient_name = target_user.first_name or target_user.username
             text_body = (
                 f"Hello {recipient_name},\n\n"
-                f"Great news! Your request to join '{org_title}' has been approved by an Administrator.\n\n"
-                f"You can now log in and access all workspace features.\n\n"
+                f"Great news! Your request to join '{org_title}' (Department: {req_obj.requested_department}) has been approved by an Administrator.\n\n"
+                f"You can now access your workspace and collaborate with your team at:\n"
+                f"{site_url}/\n\n"
                 f"Best regards,\nSmartMeeting Tracker Team"
             )
             html_body = f"""
             <!DOCTYPE html>
             <html>
-            <body style="font-family: Arial, sans-serif; background-color: #f8fafc; padding: 20px;">
-              <div style="max-width: 500px; margin: 0 auto; background: #ffffff; padding: 24px; border-radius: 12px; border: 1px solid #e2e8f0;">
-                <h2 style="color: #0f172a; margin-top: 0;">🎉 Join Request Approved!</h2>
-                <p>Hello <strong>{recipient_name}</strong>,</p>
-                <p>Your request to join <strong>{org_title}</strong> (Department: {req_obj.requested_department}) has been approved by an Organization Administrator.</p>
-                <p>You can now access the full dashboard and collaborate with your team.</p>
-                <br>
-                <p style="color: #64748b; font-size: 12px;">SmartMeeting Decision Tracker Team</p>
+            <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; padding: 24px; margin: 0; color: #1e293b;">
+              <div style="max-width: 540px; margin: 0 auto; background: #ffffff; padding: 32px; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                <div style="text-align: center; margin-bottom: 24px;">
+                  <span style="display: inline-block; background-color: #ecfdf5; color: #059669; font-size: 32px; width: 64px; height: 64px; line-height: 64px; border-radius: 50%; border: 1px solid #a7f3d0;">🎉</span>
+                  <h2 style="color: #0f172a; margin: 16px 0 6px 0; font-size: 22px; font-weight: 700;">Join Request Approved!</h2>
+                  <p style="color: #64748b; font-size: 13px; margin: 0;">Welcome to <strong>{org_title}</strong></p>
+                </div>
+
+                <p style="font-size: 15px; line-height: 1.6; margin: 0 0 16px 0;">
+                  Hello <strong>{recipient_name}</strong>,
+                </p>
+                <p style="font-size: 14px; line-height: 1.6; color: #334155; margin: 0 0 20px 0;">
+                  Your request to join <strong>{org_title}</strong> (Department: <strong>{req_obj.requested_department}</strong>) has been officially approved by an Administrator.
+                </p>
+
+                <div style="text-align: center; margin: 28px 0;">
+                  <a href="{site_url}/" target="_blank" style="display: inline-block; background-color: #0f172a; color: #ffffff; font-size: 14px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 10px; box-shadow: 0 2px 8px rgba(15,23,42,0.15);">
+                    🚀 Open Workspace Dashboard
+                  </a>
+                </div>
+
+                <div style="border-top: 1px solid #e2e8f0; padding-top: 16px; margin-top: 24px; text-align: center;">
+                  <p style="color: #64748b; font-size: 12px; margin: 0 0 6px 0;">Website URL:</p>
+                  <a href="{site_url}/" target="_blank" style="color: #2563eb; font-size: 13px; word-break: break-all; font-weight: 500;">
+                    {site_url}/
+                  </a>
+                </div>
+
+                <div style="border-top: 1px solid #f1f5f9; padding-top: 16px; margin-top: 20px; text-align: center; color: #94a3b8; font-size: 11px;">
+                  SmartMeeting Decision Tracker · Automated Workspace Notification
+                </div>
               </div>
             </body>
             </html>
@@ -2251,24 +2450,40 @@ class OrganizationJoinRequestViewSet(viewsets.ModelViewSet):
             except Exception as notif_err:
                 logger.warning("Failed to create rejection in-app notification: %s", str(notif_err))
 
+            site_url = getattr(settings, 'FRONTEND_URL', 'https://smart-meeting-decision-tracker-zy1o.vercel.app').rstrip('/')
+
             subject = f"Organization Join Request Update - {org_title}"
             recipient_name = target_user.first_name or target_user.username
             text_body = (
                 f"Hello {recipient_name},\n\n"
                 f"Your request to join '{org_title}' was reviewed by an Administrator and was not accepted at this time.\n\n"
+                f"Website URL: {site_url}/\n\n"
                 f"If you have questions, please contact your organization administrator.\n\n"
                 f"Best regards,\nSmartMeeting Tracker Team"
             )
             html_body = f"""
             <!DOCTYPE html>
             <html>
-            <body style="font-family: Arial, sans-serif; background-color: #f8fafc; padding: 20px;">
-              <div style="max-width: 500px; margin: 0 auto; background: #ffffff; padding: 24px; border-radius: 12px; border: 1px solid #e2e8f0;">
-                <h2 style="color: #0f172a; margin-top: 0;">Organization Join Request Status</h2>
+            <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; padding: 24px; margin: 0; color: #1e293b;">
+              <div style="max-width: 500px; margin: 0 auto; background: #ffffff; padding: 28px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                <h2 style="color: #0f172a; margin-top: 0; font-size: 20px;">Organization Join Request Status</h2>
                 <p>Hello <strong>{recipient_name}</strong>,</p>
-                <p>Your request to join <strong>{org_title}</strong> was reviewed by an Administrator and was not approved at this time.</p>
+                <p style="color: #475569; font-size: 14px; line-height: 1.6;">Your request to join <strong>{org_title}</strong> was reviewed by an Administrator and was not approved at this time.</p>
+                
+                <div style="margin: 20px 0; text-align: center;">
+                  <a href="{site_url}/" target="_blank" style="display: inline-block; background-color: #0f172a; color: #ffffff; font-size: 13px; font-weight: 600; text-decoration: none; padding: 10px 24px; border-radius: 8px;">
+                    Visit SmartMeeting Platform
+                  </a>
+                </div>
+
+                <div style="border-top: 1px solid #e2e8f0; padding-top: 12px; margin-top: 20px; text-align: center;">
+                  <a href="{site_url}/" target="_blank" style="color: #2563eb; font-size: 12px; word-break: break-all;">
+                    {site_url}/
+                  </a>
+                </div>
+
                 <br>
-                <p style="color: #64748b; font-size: 12px;">SmartMeeting Decision Tracker Team</p>
+                <p style="color: #64748b; font-size: 12px; margin: 0;">SmartMeeting Decision Tracker Team</p>
               </div>
             </body>
             </html>
@@ -2301,6 +2516,260 @@ class OrganizationJoinRequestViewSet(viewsets.ModelViewSet):
             'message': 'Join request decision acknowledged successfully.',
             'data': OrganizationJoinRequestSerializer(req_obj, context={'request': request}).data
         }, status=status.HTTP_200_OK)
+
+
+class OrganizationLeaveRequestViewSet(viewsets.ModelViewSet):
+    serializer_class = OrganizationLeaveRequestSerializer
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get_queryset(self):
+        user = self.request.user
+        if not user.is_authenticated:
+            return OrganizationLeaveRequest.objects.none()
+
+        try:
+            ensure_database_migrated()
+            tables = set(connection.introspection.table_names())
+            if 'authentication_organizationleaverequest' not in tables:
+                return OrganizationLeaveRequest.objects.none()
+
+            qs = OrganizationLeaveRequest.objects.all().select_related('user', 'reviewed_by', 'organization')
+            if user.is_admin_role or user.is_manager_role:
+                user_org = get_user_active_organization(user, request=self.request)
+                if user_org:
+                    org_filter = (
+                        Q(organization=user_org) |
+                        Q(organization_name__iexact=user_org.name)
+                    )
+                    return qs.filter(org_filter).order_by('-created_at')
+                else:
+                    return qs.filter(user=user).order_by('-created_at')
+            return qs.filter(user=user).order_by('-created_at')
+        except Exception as e:
+            logger.error("Failed to fetch OrganizationLeaveRequest queryset: %s", str(e))
+            return OrganizationLeaveRequest.objects.none()
+
+    def create(self, request, *args, **kwargs):
+        try:
+            ensure_database_migrated()
+            user = request.user
+            if user.role == User.Role.OWNER or user.is_owner_role:
+                return Response({
+                    'error': 'As the Organization Owner, you cannot submit a leave request. Please transfer ownership to another team member first, or delete the organization.'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            if user.role == User.Role.UNASSIGNED:
+                return Response({'error': 'You do not belong to any active organization.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Check if already has a PENDING leave request
+            existing = OrganizationLeaveRequest.objects.filter(user=user, status=OrganizationLeaveRequest.Status.PENDING).first()
+            if existing:
+                return Response({
+                    'error': 'You already have a pending leave request under review by the Administrator and Owner.',
+                    'pending': True,
+                    'request_id': existing.id
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            user_org = get_user_active_organization(user, request=request)
+            org_name = user_org.name if user_org else (user.organization_name or 'SmartMeeting Workspace')
+            reason = request.data.get('reason', '').strip()
+
+            leave_req = OrganizationLeaveRequest.objects.create(
+                user=user,
+                organization=user_org,
+                organization_name=org_name,
+                reason=reason,
+                status=OrganizationLeaveRequest.Status.PENDING
+            )
+
+            logger.info("User %s submitted a Leave Request for organization '%s' (Reason: %s)", user.email, org_name, reason)
+
+            # Notify Owner and Admins
+            try:
+                from apps.notifications.models import Notification
+                source_id = f"leave-request-{leave_req.id}"
+                req_user_name = user.get_full_name() or user.username
+                recipients = set()
+
+                if user_org and user_org.owner:
+                    recipients.add(user_org.owner)
+
+                tables = set(connection.introspection.table_names())
+                if user_org and 'authentication_organizationmembership' in tables:
+                    admin_mems = OrganizationMembership.objects.filter(
+                        organization=user_org,
+                        role__in=[User.Role.OWNER, User.Role.ADMIN],
+                        is_active=True
+                    ).select_related('user')
+                    for mem in admin_mems:
+                        recipients.add(mem.user)
+
+                if not recipients:
+                    for admin_u in User.objects.filter(role__in=[User.Role.OWNER, User.Role.ADMIN]):
+                        recipients.add(admin_u)
+
+                for recipient in recipients:
+                    if recipient.id != user.id:
+                        Notification.objects.get_or_create(
+                            user=recipient,
+                            source_id=source_id,
+                            defaults={
+                                'title': f"Leave Request: {req_user_name}",
+                                'subtitle': f"Requested to leave {org_name} (Reason: {reason or 'Not specified'})",
+                                'link': '/admin?tab=leave_requests',
+                                'notification_type': Notification.NotificationType.GENERAL,
+                                'is_read': False
+                            }
+                        )
+            except Exception as notif_err:
+                logger.warning("Failed to notify admins of leave request: %s", str(notif_err))
+
+            return Response({
+                'message': 'Your request to leave the organization has been submitted. It is now awaiting approval from the Owner or an Administrator.',
+                'data': OrganizationLeaveRequestSerializer(leave_req, context={'request': request}).data
+            }, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            logger.error("OrganizationLeaveRequest create error: %s", str(e), exc_info=True)
+            return Response({'error': f'Failed to submit leave request: {str(e)}'}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['post'])
+    def approve(self, request, pk=None):
+        reviewer = request.user
+        if not (reviewer.is_admin_role or reviewer.is_manager_role):
+            return Response({'error': 'Only Admins and Owners can approve leave requests.'}, status=status.HTTP_403_FORBIDDEN)
+
+        req_obj = self.get_object()
+        if req_obj.status != OrganizationLeaveRequest.Status.PENDING:
+            return Response({'error': f'Leave request is already {req_obj.status}.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        target_user = req_obj.user
+
+        if target_user.role == User.Role.ADMIN and not reviewer.is_owner_role:
+            return Response({'error': 'Only the Organization Owner can approve the leave request of an Administrator.'}, status=status.HTTP_403_FORBIDDEN)
+
+        with transaction.atomic():
+            req_obj.status = OrganizationLeaveRequest.Status.APPROVED
+            req_obj.reviewed_by = reviewer
+            req_obj.review_notes = request.data.get('review_notes', '')
+            req_obj.save()
+
+            # Deactivate membership & reset user role
+            from .models import OrganizationMembership
+            OrganizationMembership.objects.filter(user=target_user).update(is_active=False)
+
+            target_user.role = User.Role.UNASSIGNED
+            target_user.is_staff = False
+            target_user.is_superuser = False
+            target_user.save()
+
+            # Clean up team memberships
+            try:
+                for team in target_user.teams.all():
+                    team.members.remove(target_user)
+            except Exception:
+                pass
+
+        # Send Email notification to user via Brevo
+        try:
+            site_url = getattr(settings, 'FRONTEND_URL', 'https://smart-meeting-decision-tracker-zy1o.vercel.app').rstrip('/')
+            org_title = req_obj.organization_name or 'SmartMeeting Workspace'
+            recipient_name = target_user.first_name or target_user.username
+            subject = f"✅ Leave Request Approved - {org_title}"
+            text_body = (
+                f"Hello {recipient_name},\n\n"
+                f"Your request to leave '{org_title}' has been officially approved by {reviewer.get_full_name() or reviewer.username}.\n\n"
+                f"You have been detached from the organization. You can now join another company or create your own workspace at:\n"
+                f"{site_url}/onboarding\n\n"
+                f"Best regards,\nSmartMeeting Tracker Team"
+            )
+            html_body = f"""
+            <!DOCTYPE html>
+            <html>
+            <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; padding: 24px; margin: 0; color: #1e293b;">
+              <div style="max-width: 520px; margin: 0 auto; background: #ffffff; padding: 32px; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                <div style="text-align: center; margin-bottom: 24px;">
+                  <span style="display: inline-block; background-color: #ecfdf5; color: #059669; font-size: 32px; width: 64px; height: 64px; line-height: 64px; border-radius: 50%; border: 1px solid #a7f3d0;">👋</span>
+                  <h2 style="color: #0f172a; margin: 16px 0 6px 0; font-size: 20px; font-weight: 700;">Leave Request Approved</h2>
+                  <p style="color: #64748b; font-size: 13px; margin: 0;">You have departed from <strong>{org_title}</strong></p>
+                </div>
+                <p style="font-size: 14px; line-height: 1.6; color: #334155; margin: 0 0 16px 0;">
+                  Hello <strong>{recipient_name}</strong>,<br>
+                  Your request to leave <strong>{org_title}</strong> has been officially approved. Your account remains active, and you can now join another organization or launch your own workspace.
+                </p>
+                <div style="text-align: center; margin: 28px 0;">
+                  <a href="{site_url}/onboarding" target="_blank" style="display: inline-block; background-color: #0f172a; color: #ffffff; font-size: 14px; font-weight: 600; text-decoration: none; padding: 12px 28px; border-radius: 10px;">
+                    🚀 Go to Onboarding Portal
+                  </a>
+                </div>
+                <div style="border-top: 1px solid #f1f5f9; padding-top: 16px; margin-top: 20px; text-align: center; color: #94a3b8; font-size: 11px;">
+                  SmartMeeting Decision Tracker · Workspace Notification
+                </div>
+              </div>
+            </body>
+            </html>
+            """
+            send_brevo_transactional_email(subject, [target_user.email], text_body, html_body)
+        except Exception as mail_err:
+            logger.error("Failed to send leave approval email: %s", str(mail_err))
+
+        logger.info("Admin/Owner %s approved leave request for %s", reviewer.email, target_user.email)
+
+        return Response({
+            'message': f'Approved! {target_user.get_full_name() or target_user.username} has been removed from {req_obj.organization_name}.',
+            'data': OrganizationLeaveRequestSerializer(req_obj, context={'request': request}).data
+        })
+
+    @action(detail=True, methods=['post'])
+    def reject(self, request, pk=None):
+        reviewer = request.user
+        if not (reviewer.is_admin_role or reviewer.is_manager_role):
+            return Response({'error': 'Only Admins and Owners can reject leave requests.'}, status=status.HTTP_403_FORBIDDEN)
+
+        req_obj = self.get_object()
+        if req_obj.status != OrganizationLeaveRequest.Status.PENDING:
+            return Response({'error': f'Leave request is already {req_obj.status}.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        req_obj.status = OrganizationLeaveRequest.Status.REJECTED
+        req_obj.reviewed_by = reviewer
+        req_obj.review_notes = request.data.get('review_notes', '')
+        req_obj.save()
+
+        # Notify member via email
+        try:
+            target_user = req_obj.user
+            org_title = req_obj.organization_name or 'SmartMeeting Workspace'
+            recipient_name = target_user.first_name or target_user.username
+            subject = f"Leave Request Update - {org_title}"
+            text_body = (
+                f"Hello {recipient_name},\n\n"
+                f"Your request to leave '{org_title}' was reviewed by an Administrator/Owner and was not accepted at this time.\n\n"
+                f"Review Note: {req_obj.review_notes or 'Please consult with your team lead or administrator.'}\n\n"
+                f"Best regards,\nSmartMeeting Tracker Team"
+            )
+            html_body = f"""
+            <!DOCTYPE html>
+            <html>
+            <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f8fafc; padding: 24px; margin: 0; color: #1e293b;">
+              <div style="max-width: 500px; margin: 0 auto; background: #ffffff; padding: 28px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+                <h3 style="color: #0f172a; margin-top: 0;">Leave Request Declined</h3>
+                <p>Hello <strong>{recipient_name}</strong>,</p>
+                <p style="color: #475569; font-size: 14px; line-height: 1.6;">Your request to leave <strong>{org_title}</strong> was reviewed and not accepted at this time.</p>
+                {f'<p style="background: #f1f5f9; padding: 12px; border-radius: 8px; font-size: 13px; color: #334155;"><strong>Note:</strong> {req_obj.review_notes}</p>' if req_obj.review_notes else ''}
+                <p style="color: #64748b; font-size: 12px;">SmartMeeting Decision Tracker Team</p>
+              </div>
+            </body>
+            </html>
+            """
+            send_brevo_transactional_email(subject, [target_user.email], text_body, html_body)
+        except Exception as mail_err:
+            logger.error("Failed to send leave rejection email: %s", str(mail_err))
+
+        logger.info("Admin %s rejected leave request for %s", reviewer.email, req_obj.user.email)
+
+        return Response({
+            'message': f'Leave request for {req_obj.user.email} has been rejected.',
+            'data': OrganizationLeaveRequestSerializer(req_obj, context={'request': request}).data
+        })
 
 
 

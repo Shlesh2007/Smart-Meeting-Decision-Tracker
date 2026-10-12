@@ -234,7 +234,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         return super().validate(attrs)
 
 
-from .models import DepartmentChangeRequest, OrganizationJoinRequest, Organization, OrganizationMembership
+from .models import DepartmentChangeRequest, OrganizationJoinRequest, OrganizationLeaveRequest, Organization, OrganizationMembership
 
 class OrganizationSerializer(serializers.ModelSerializer):
     owner_name = serializers.SerializerMethodField()
@@ -293,6 +293,29 @@ class OrganizationJoinRequestSerializer(serializers.ModelSerializer):
         model = OrganizationJoinRequest
         fields = (
             'id', 'user', 'user_detail', 'organization_detail', 'organization_name', 'requested_department',
+            'status', 'reviewed_by', 'reviewed_by_detail', 'review_notes', 'is_acknowledged', 'acknowledged_at',
+            'created_at', 'updated_at'
+        )
+        read_only_fields = ('id', 'user', 'user_detail', 'status', 'reviewed_by', 'reviewed_by_detail', 'created_at', 'updated_at')
+
+    def get_organization_detail(self, obj):
+        try:
+            if hasattr(obj, 'organization') and obj.organization:
+                return OrganizationSerializer(obj.organization, context=self.context).data
+        except Exception:
+            pass
+        return None
+
+
+class OrganizationLeaveRequestSerializer(serializers.ModelSerializer):
+    user_detail = UserSerializer(source='user', read_only=True)
+    reviewed_by_detail = UserSerializer(source='reviewed_by', read_only=True)
+    organization_detail = serializers.SerializerMethodField()
+
+    class Meta:
+        model = OrganizationLeaveRequest
+        fields = (
+            'id', 'user', 'user_detail', 'organization_detail', 'organization_name', 'reason',
             'status', 'reviewed_by', 'reviewed_by_detail', 'review_notes', 'is_acknowledged', 'acknowledged_at',
             'created_at', 'updated_at'
         )

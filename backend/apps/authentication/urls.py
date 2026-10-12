@@ -6,13 +6,14 @@ from .views import (
     RequestEmailChangeOTPView, VerifyEmailChangeOTPView, DeleteAccountView, CheckDeleteAccountView,
     TransferOwnershipView, DeleteOrganizationView, CreateOrganizationView, JoinOrganizationView,
     OrganizationStatusView, GoogleOAuthView, GitHubOAuthView, DepartmentChangeRequestViewSet,
-    OrganizationJoinRequestViewSet
+    OrganizationJoinRequestViewSet, OrganizationLeaveRequestViewSet
 )
 
 router = DefaultRouter()
 router.register('users', UserViewSet, basename='user')
 router.register('department-requests', DepartmentChangeRequestViewSet, basename='department-request')
 router.register('organization-join-requests', OrganizationJoinRequestViewSet, basename='organization-join-request')
+router.register('organization-leave-requests', OrganizationLeaveRequestViewSet, basename='organization-leave-request')
 
 
 urlpatterns = [

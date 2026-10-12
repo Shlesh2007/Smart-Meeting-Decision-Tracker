@@ -30,6 +30,34 @@ export const AuthProvider = ({ children }) => {
       refreshUser()
         .catch(() => {})
         .finally(() => setLoading(false));
+
+      // Global Live Sync: keep user profile, roles, and status synchronized across all tabs and windows
+      const pollTimer = setInterval(() => {
+        const currentToken = localStorage.getItem('access_token');
+        if (currentToken) {
+          authService.getProfile()
+            .then((profile) => setUser(profile))
+            .catch(() => {});
+        }
+      }, 10000);
+
+      const handleFocus = () => {
+        const currentToken = localStorage.getItem('access_token');
+        if (currentToken) {
+          authService.getProfile()
+            .then((profile) => setUser(profile))
+            .catch(() => {});
+        }
+      };
+
+      window.addEventListener('focus', handleFocus);
+      window.addEventListener('visibilitychange', handleFocus);
+
+      return () => {
+        clearInterval(pollTimer);
+        window.removeEventListener('focus', handleFocus);
+        window.removeEventListener('visibilitychange', handleFocus);
+      };
     } else {
       setLoading(false);
     }

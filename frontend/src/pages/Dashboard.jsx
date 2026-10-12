@@ -137,9 +137,11 @@ export default function Dashboard() {
     }
   };
 
-  const fetchDashboard = useCallback((selectedPeriod = 'today', searchQuery = '', sDate = '', eDate = '', actPeriod = '30d') => {
-    setLoading(true);
-    setError(null);
+  const fetchDashboard = useCallback((selectedPeriod = 'today', searchQuery = '', sDate = '', eDate = '', actPeriod = '30d', showSpinner = true) => {
+    if (showSpinner) {
+      setLoading(true);
+      setError(null);
+    }
     const params = {
       period: selectedPeriod,
       search: searchQuery || undefined,
@@ -152,13 +154,17 @@ export default function Dashboard() {
     analyticsService
       .getDashboard(params)
       .then((res) => setData(res))
-      .catch((err) =>
-        setError(
-          err.response?.data?.detail ||
-          'Unable to load dashboard metrics. Please ensure your backend API server is running.'
-        )
-      )
-      .finally(() => setLoading(false));
+      .catch((err) => {
+        if (showSpinner) {
+          setError(
+            err.response?.data?.detail ||
+            'Unable to load dashboard metrics. Please ensure your backend API server is running.'
+          );
+        }
+      })
+      .finally(() => {
+        if (showSpinner) setLoading(false);
+      });
   }, []);
 
   const prevParamsRef = useRef('');
@@ -167,8 +173,26 @@ export default function Dashboard() {
     const currentParamsKey = `${period}-${search}-${startDate}-${endDate}-${activityPeriod}`;
     if (prevParamsRef.current !== currentParamsKey) {
       prevParamsRef.current = currentParamsKey;
-      fetchDashboard(period, search, startDate, endDate, activityPeriod);
+      fetchDashboard(period, search, startDate, endDate, activityPeriod, true);
     }
+
+    // Live Sync: Background refresh every 8 seconds and on window focus
+    const pollTimer = setInterval(() => {
+      fetchDashboard(period, search, startDate, endDate, activityPeriod, false);
+    }, 8000);
+
+    const handleFocus = () => {
+      fetchDashboard(period, search, startDate, endDate, activityPeriod, false);
+    };
+
+    window.addEventListener('focus', handleFocus);
+    window.addEventListener('visibilitychange', handleFocus);
+
+    return () => {
+      clearInterval(pollTimer);
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('visibilitychange', handleFocus);
+    };
   }, [period, search, startDate, endDate, activityPeriod, fetchDashboard]);
 
   const handleCardClick = (basePath) => {

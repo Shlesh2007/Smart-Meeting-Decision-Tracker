@@ -204,6 +204,10 @@ export const userService = {
   updateUserDepartment: async (userId, department) => {
     const res = await api.patch(`/auth/users/${userId}/`, { department });
     return res.data;
+  },
+  removeUserFromOrganization: async (userId) => {
+    const res = await api.post(`/auth/users/${userId}/remove_from_organization/`);
+    return res.data;
   }
 };
 
@@ -241,6 +245,25 @@ export const organizationJoinRequestService = {
   },
   acknowledgeRequest: async (id) => {
     const res = await api.post(`/auth/organization-join-requests/${id}/acknowledge/`);
+    return res.data;
+  }
+};
+
+export const organizationLeaveRequestService = {
+  getRequests: async (params) => {
+    const res = await api.get('/auth/organization-leave-requests/', { params });
+    return res.data;
+  },
+  createRequest: async (payload) => {
+    const res = await api.post('/auth/organization-leave-requests/', payload);
+    return res.data;
+  },
+  approveRequest: async (id, payload) => {
+    const res = await api.post(`/auth/organization-leave-requests/${id}/approve/`, payload);
+    return res.data;
+  },
+  rejectRequest: async (id, payload) => {
+    const res = await api.post(`/auth/organization-leave-requests/${id}/reject/`, payload);
     return res.data;
   }
 };

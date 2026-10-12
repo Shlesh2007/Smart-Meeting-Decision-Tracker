@@ -74,8 +74,8 @@ export default function MyActions() {
   const [completingItem, setCompletingItem] = useState(null);
   const [completionNotesInput, setCompletionNotesInput] = useState('');
 
-  const fetchMyActions = useCallback(() => {
-    setLoading(true);
+  const fetchMyActions = useCallback((showSpinner = true) => {
+    if (showSpinner) setLoading(true);
     const params = { page_size: 1000, ordering: 'due_date' };
 
     if (search && search.trim()) {
@@ -108,8 +108,12 @@ export default function MyActions() {
           }
         }
       })
-      .catch(() => message.error('Failed to load action items.'))
-      .finally(() => setLoading(false));
+      .catch(() => {
+        if (showSpinner) message.error('Failed to load action items.');
+      })
+      .finally(() => {
+        if (showSpinner) setLoading(false);
+      });
   }, [isAdmin, isOwner, search, dateRange, searchParams]);
 
   const prevParamsRef = useRef('');
@@ -118,8 +122,26 @@ export default function MyActions() {
     const currentParamsKey = `${activeTab}-${search}-${dateRange ? dateRange.join(',') : ''}-${isAdmin}-${isOwner}`;
     if (prevParamsRef.current !== currentParamsKey) {
       prevParamsRef.current = currentParamsKey;
-      fetchMyActions();
+      fetchMyActions(true);
     }
+
+    // Live Sync: Background refresh every 6 seconds and on window focus
+    const pollTimer = setInterval(() => {
+      fetchMyActions(false);
+    }, 6000);
+
+    const handleFocus = () => {
+      fetchMyActions(false);
+    };
+
+    window.addEventListener('focus', handleFocus);
+    window.addEventListener('visibilitychange', handleFocus);
+
+    return () => {
+      clearInterval(pollTimer);
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('visibilitychange', handleFocus);
+    };
   }, [activeTab, search, dateRange, isAdmin, isOwner, fetchMyActions]);
 
 

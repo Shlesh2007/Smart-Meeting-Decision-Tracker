@@ -11,7 +11,7 @@ import {
 import dayjs from 'dayjs';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
-import { authService, departmentRequestService } from '../services/api.js';
+import { authService, departmentRequestService, organizationLeaveRequestService } from '../services/api.js';
 import { getErrorMessage } from '../utils/errorHandler.js';
 
 const { useBreakpoint } = Grid;
@@ -33,6 +33,12 @@ export const ProfileModal = ({ open, onClose, user }) => {
   const [deptLoading, setDeptLoading] = useState(false);
   const [pendingReq, setPendingReq] = useState(null);
 
+  // Organization Leave Request Flow State
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const [leaveReason, setLeaveReason] = useState('');
+  const [leaveLoading, setLeaveLoading] = useState(false);
+  const [pendingLeaveReq, setPendingLeaveReq] = useState(null);
+
   useEffect(() => {
     if (user && open) {
       refreshUser().catch(() => {});
@@ -43,6 +49,14 @@ export const ProfileModal = ({ open, onClose, user }) => {
           setPendingReq(activePending || null);
         })
         .catch(() => setPendingReq(null));
+
+      organizationLeaveRequestService.getRequests()
+        .then((data) => {
+          const list = data.results || data || [];
+          const activePending = list.find(r => r.status === 'PENDING');
+          setPendingLeaveReq(activePending || null);
+        })
+        .catch(() => setPendingLeaveReq(null));
     }
   }, [open]);
 
@@ -94,6 +108,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
   const [deleteOrgError, setDeleteOrgError] = useState('');
 
   const [form] = Form.useForm();
+  const [emailForm] = Form.useForm();
 
 
   useEffect(() => {
@@ -206,6 +221,24 @@ export const ProfileModal = ({ open, onClose, user }) => {
     setOtpCode('');
     setEmailError('');
     setEmailSuccessMsg('');
+    emailForm.resetFields();
+  };
+
+  const handleSubmitLeaveRequest = async () => {
+    setLeaveLoading(true);
+    try {
+      const res = await organizationLeaveRequestService.createRequest({
+        reason: leaveReason.trim()
+      });
+      message.success(res.message || 'Leave request submitted successfully. Awaiting Owner/Admin approval.');
+      setPendingLeaveReq(res.data);
+      setShowLeaveModal(false);
+      setLeaveReason('');
+    } catch (err) {
+      message.error(getErrorMessage(err, 'Failed to submit leave request.'));
+    } finally {
+      setLeaveLoading(false);
+    }
   };
 
   // Step 1: Check account deletion eligibility before showing the delete modal
@@ -476,7 +509,15 @@ export const ProfileModal = ({ open, onClose, user }) => {
                       type="link" 
                       size="small"
                       icon={<SafetyCertificateOutlined className="text-blue-600" />}
-                      onClick={() => setShowEmailModal(true)}
+                      onClick={() => {
+                        setNewEmail('');
+                        setOtpCode('');
+                        setEmailError('');
+                        setEmailSuccessMsg('');
+                        setEmailStep(1);
+                        emailForm.resetFields();
+                        setShowEmailModal(true);
+                      }}
                       className="text-xs font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 p-0 shrink-0 whitespace-nowrap mt-0.5 sm:mt-0"
                     >
                       Change Email
@@ -541,6 +582,43 @@ export const ProfileModal = ({ open, onClose, user }) => {
                   </span>
                 </Descriptions.Item>
               </Descriptions>
+
+              {/* Organization Workspace Membership & Leave Request */}
+              {user.role !== 'OWNER' && user.role !== 'UNASSIGNED' && (
+                <div className="bg-amber-50/70 dark:bg-amber-950/20 p-2.5 rounded-xl border border-amber-200 dark:border-amber-900/40 flex items-center justify-between gap-2">
+                  <div className="flex items-center space-x-2 min-w-0 flex-1">
+                    <LogoutOutlined className="text-amber-600 dark:text-amber-400 text-sm shrink-0" />
+                    <div className="min-w-0">
+                      <span className="text-xs font-bold text-amber-950 dark:text-amber-200 block leading-tight">
+                        Leave Organization
+                      </span>
+                      <span className="text-[10px] text-amber-800 dark:text-amber-400 block leading-tight truncate">
+                        {pendingLeaveReq ? (
+                          <span className="font-semibold text-amber-700 dark:text-amber-300">
+                            ⏳ Leave Request submitted ({dayjs(pendingLeaveReq.created_at).format('MMM DD')}) — Awaiting Admin/Owner approval
+                          </span>
+                        ) : (
+                          'Request approval from Owner/Admin to leave this workspace.'
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                  {pendingLeaveReq ? (
+                    <Tag color="warning" className="font-bold text-[10px] m-0 shrink-0 px-2 py-0.5">
+                      UNDER REVIEW
+                    </Tag>
+                  ) : (
+                    <Button
+                      size="small"
+                      icon={<LogoutOutlined />}
+                      onClick={() => setShowLeaveModal(true)}
+                      className="text-xs font-semibold shrink-0 px-2.5 py-0.5 h-7 flex items-center justify-center rounded-lg border-amber-300 bg-amber-100 hover:bg-amber-200 text-amber-900 dark:bg-amber-900/40 dark:text-amber-200 dark:border-amber-800"
+                    >
+                      Request to Leave
+                    </Button>
+                  )}
+                </div>
+              )}
 
               {/* Danger Zone: Account Deletion */}
               <div className="bg-red-50/70 dark:bg-red-950/20 p-2 sm:p-2.5 rounded-xl border border-red-200 dark:border-red-900/40 flex items-center justify-between gap-2">
@@ -627,6 +705,85 @@ export const ProfileModal = ({ open, onClose, user }) => {
         </div>
       </Modal>
 
+      {/* Request to Leave Organization Modal */}
+      <Modal
+        title={
+          <div className="flex items-center space-x-2 text-slate-900 dark:text-white">
+            <LogoutOutlined className="text-amber-600 dark:text-amber-400 text-lg" />
+            <span className="font-bold">Request to Leave Organization</span>
+          </div>
+        }
+        open={showLeaveModal}
+        onCancel={() => {
+          if (!leaveLoading) {
+            setShowLeaveModal(false);
+            setLeaveReason('');
+          }
+        }}
+        footer={[
+          <Button
+            key="cancel"
+            onClick={() => {
+              setShowLeaveModal(false);
+              setLeaveReason('');
+            }}
+            disabled={leaveLoading}
+          >
+            Cancel
+          </Button>,
+          <Button
+            key="submit"
+            type="primary"
+            danger
+            loading={leaveLoading}
+            onClick={handleSubmitLeaveRequest}
+            className="font-bold"
+          >
+            Submit Leave Request
+          </Button>
+        ]}
+        width={480}
+        destroyOnHidden
+      >
+        <div className="py-2 space-y-3">
+          <Alert
+            type="warning"
+            showIcon
+            message="Approval Required"
+            description={
+              <span>
+                Once submitted, your request must be reviewed and approved by the <strong>Organization Owner or Administrator</strong>. You will remain an active member until your request is officially approved.
+              </span>
+            }
+          />
+
+          <div className="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300">
+            <p className="m-0 mb-1">
+              <strong>Workspace:</strong> {user.organization_name || 'SmartMeeting Workspace'}
+            </p>
+            <p className="m-0">
+              <strong>Your Role:</strong> {user.role} ({user.department || 'General Team'})
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              Reason / Departure Note (Optional)
+            </label>
+            <Input.TextArea
+              rows={3}
+              value={leaveReason}
+              onChange={(e) => setLeaveReason(e.target.value)}
+              placeholder="Provide context for the Administrator/Owner regarding your departure..."
+              maxLength={400}
+              showCount
+              disabled={leaveLoading}
+              className="rounded-lg text-xs"
+            />
+          </div>
+        </div>
+      </Modal>
+
       {/* 2-Step OTP Email Change Modal */}
       <Modal
         title={
@@ -653,7 +810,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
 
           {emailStep === 1 ? (
             /* STEP 1: Enter New Email */
-            <Form form={form} layout="vertical" onFinish={handleRequestEmailOTP}>
+            <Form form={emailForm} layout="vertical" onFinish={handleRequestEmailOTP}>
               <div className="bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 mb-3">
                 <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block mb-1">Current Registered Email</span>
                 <span className="font-bold text-slate-900 dark:text-white text-sm flex items-center">
@@ -677,6 +834,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
                   prefix={<MailOutlined className="text-slate-400" />}
                   placeholder="e.g. new.email@company.com"
                   size="large"
+                  value={newEmail}
                   onChange={(e) => setNewEmail(e.target.value)}
                   className="rounded-lg"
                   autoFocus
@@ -948,13 +1106,13 @@ export const ProfileModal = ({ open, onClose, user }) => {
             {!(deleteCheckData?.is_oauth_user ?? user?.is_oauth_user) && (
               <div>
                 <label htmlFor="transfer_password" className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
-                  Owner Password
+                   Password
                 </label>
                 <Input.Password
                   id="transfer_password"
                   name="transfer_password"
                   prefix={<LockOutlined className="text-slate-400" />}
-                  placeholder="Enter your owner password to authorize transfer"
+                  placeholder="Enter your password to authorize transfer"
                   size="large"
                   value={transferPassword}
                   onChange={(e) => setTransferPassword(e.target.value)}

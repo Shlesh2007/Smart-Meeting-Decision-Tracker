@@ -1075,8 +1075,19 @@ aside .ant-menu-inline-collapsed .ant-menu-title-content {
 .dark .auth-card .ant-form-item .ant-form-item-label > label *,
 .dark .auth-card .ant-form-item label,
 .dark .auth-card .ant-form-item label *,
-.dark .auth-card .ant-form-item .ant-form-item-label span {
+.dark .auth-card .ant-form-item .ant-form-item-label span,
+.dark .auth-card .ant-form-item-label > label {
   color: #334155 !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+}
+
+.auth-card .ant-form-item-label,
+.dark .auth-card .ant-form-item-label {
+  padding-bottom: 4px !important;
+  line-height: normal !important;
 }
 
 .auth-card .ant-input-affix-wrapper,
@@ -1086,15 +1097,85 @@ aside .ant-menu-inline-collapsed .ant-menu-title-content {
 .auth-card .ant-input-affix-wrapper-focused input,
 .auth-card input:focus,
 .auth-card .ant-input:focus,
+.auth-card .ant-select-selector,
+.auth-card .ant-select-single .ant-select-selector,
 .dark .auth-card .ant-input-affix-wrapper,
 .dark .auth-card .ant-input,
 .dark .auth-card input,
-.dark .auth-card .ant-input-affix-wrapper input {
+.dark .auth-card .ant-input-affix-wrapper input,
+.dark .auth-card .ant-select-selector,
+.dark .auth-card .ant-select-single .ant-select-selector {
   background-color: #ffffff !important;
   color: #0f172a !important;
   border-color: #cbd5e1 !important;
   font-size: 14px !important;
   line-height: 1.5 !important;
+}
+
+.auth-card .ant-select-selection-item,
+.dark .auth-card .ant-select-selection-item {
+  color: #0f172a !important;
+  font-size: 14px !important;
+}
+
+.auth-card .ant-select-selection-placeholder,
+.dark .auth-card .ant-select-selection-placeholder {
+  color: #94a3b8 !important;
+  font-size: 14px !important;
+}
+
+.auth-card .ant-select-arrow,
+.dark .auth-card .ant-select-arrow {
+  color: #64748b !important;
+}
+
+/* Auth Select Popup Dropdown Override (Ensures dropdown menu is always clean white, with dark text and subtle hover highlights) */
+.auth-select-dropdown,
+.dark .auth-select-dropdown,
+div.auth-select-dropdown {
+  background-color: #ffffff !important;
+  background: #ffffff !important;
+  border-radius: 14px !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.04) !important;
+  padding: 6px !important;
+}
+
+.auth-select-dropdown .ant-select-dropdown,
+.dark .auth-select-dropdown .ant-select-dropdown {
+  background-color: #ffffff !important;
+  background: #ffffff !important;
+}
+
+.auth-select-dropdown .ant-select-item,
+.dark .auth-select-dropdown .ant-select-item {
+  color: #1e293b !important;
+  font-size: 13.5px !important;
+  font-weight: 500 !important;
+  border-radius: 8px !important;
+  padding: 8px 12px !important;
+  margin-bottom: 2px !important;
+  transition: all 0.15s ease !important;
+}
+
+.auth-select-dropdown .ant-select-item-option-active,
+.dark .auth-select-dropdown .ant-select-item-option-active,
+.auth-select-dropdown .ant-select-item:hover,
+.dark .auth-select-dropdown .ant-select-item:hover {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+.auth-select-dropdown .ant-select-item-option-selected,
+.dark .auth-select-dropdown .ant-select-item-option-selected {
+  background-color: #eff6ff !important;
+  color: #2563eb !important;
+  font-weight: 600 !important;
+}
+
+.auth-select-dropdown .ant-select-item-option-content,
+.dark .auth-select-dropdown .ant-select-item-option-content {
+  color: inherit !important;
 }
 
 .auth-card .ant-input::placeholder,
@@ -1123,6 +1204,53 @@ input:-webkit-autofill:active,
   font-size: 14px !important;
   line-height: 1.5 !important;
   transition: background-color 5000s ease-in-out 0s !important;
+}
+
+/* Ensure Primary Buttons inside auth cards are always dark slate (#0f172a) with crisp white text */
+.auth-card .ant-btn-primary,
+.dark .auth-card .ant-btn-primary {
+  background-color: #0f172a !important;
+  color: #ffffff !important;
+  border-color: #0f172a !important;
+}
+
+.auth-card .ant-btn-primary:hover,
+.dark .auth-card .ant-btn-primary:hover {
+  background-color: #1e293b !important;
+  color: #ffffff !important;
+  border-color: #1e293b !important;
+}
+
+/* Ensure Alerts and Status Banners on Auth / Onboarding pages always have clean light styling */
+.dark .ant-alert-info.bg-blue-50\/90,
+.dark .ant-alert-info.bg-blue-50\/80,
+.dark .ant-alert-info.bg-blue-50\/60,
+.ant-alert-info.bg-blue-50\/90,
+.ant-alert-info.bg-blue-50\/80,
+.ant-alert-info.bg-blue-50\/60 {
+  background-color: rgba(239, 246, 255, 0.95) !important;
+  border-color: #bfdbfe !important;
+}
+
+.dark .ant-alert-info.bg-blue-50\/90 .ant-alert-message,
+.dark .ant-alert-info.bg-blue-50\/90 .ant-alert-description,
+.dark .ant-alert-info.bg-blue-50\/80 .ant-alert-message,
+.dark .ant-alert-info.bg-blue-50\/80 .ant-alert-description {
+  color: #1e3a8a !important;
+}
+
+.dark .ant-alert-warning.bg-amber-50\/90,
+.dark .ant-alert-warning.bg-amber-50\/60,
+.ant-alert-warning.bg-amber-50\/90,
+.ant-alert-warning.bg-amber-50\/60 {
+  background-color: rgba(254, 252, 232, 0.95) !important;
+  border-color: #fde68a !important;
+}
+
+.dark .ant-alert-warning.bg-amber-50\/90 .ant-alert-message,
+.dark .ant-alert-warning.bg-amber-50\/90 .ant-alert-description,
+.dark .ant-alert-warning.bg-amber-50\/90 strong {
+  color: #78350f !important;
 }
 
 /* ==================================================
