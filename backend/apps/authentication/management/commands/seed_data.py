@@ -53,7 +53,7 @@ class Command(BaseCommand):
         users_data = [
             {
                 'username': 'Shlesh',
-                'email': 'shlesh.darji@smdt.in',
+                'email': 'shleshdarji317@gmail.com',
                 'first_name': 'Shlesh',
                 'last_name': 'Darji',
                 'role': User.Role.OWNER,
@@ -146,13 +146,35 @@ class Command(BaseCommand):
         created_users = {}
         for udata in users_data:
             pwd = udata.pop('password')
-            uObj, _ = User.objects.get_or_create(
-                username=udata['username'],
-                defaults=udata
-            )
+            u_email = udata['email']
+            u_name = udata['username']
+
+            # Lookup by email or username to avoid unique constraint collisions
+            uObj = User.objects.filter(email__iexact=u_email).first() or User.objects.filter(username__iexact=u_name).first()
+            if not uObj:
+                uObj = User.objects.create(
+                    username=u_name,
+                    email=u_email,
+                    first_name=udata.get('first_name', ''),
+                    last_name=udata.get('last_name', ''),
+                    role=udata.get('role', User.Role.MEMBER),
+                    department=udata.get('department', 'General Team')
+                )
+            else:
+                uObj.username = u_name
+                uObj.email = u_email
+                uObj.first_name = udata.get('first_name', uObj.first_name)
+                uObj.last_name = udata.get('last_name', uObj.last_name)
+                uObj.role = udata.get('role', uObj.role)
+                uObj.department = udata.get('department', uObj.department)
+
             uObj.set_password(pwd)
+            if uObj.role in [User.Role.OWNER, User.Role.ADMIN]:
+                uObj.is_staff = True
+                if uObj.role == User.Role.OWNER:
+                    uObj.is_superuser = True
             uObj.save()
-            created_users[udata['username']] = uObj
+            created_users[u_name] = uObj
 
         shlesh = created_users['Shlesh']
         aarav = created_users['owner']
@@ -164,6 +186,26 @@ class Command(BaseCommand):
         neha = created_users['member4']
 
         all_user_list = [shlesh, aarav, priya, rohan, ananya, vikram, rajesh, neha]
+
+        # Ensure default organization and memberships exist
+        try:
+            from apps.authentication.models import Organization, OrganizationMembership
+            org, _ = Organization.objects.get_or_create(
+                name='SmartMeeting Workspace',
+                defaults={'owner': shlesh}
+            )
+            if not org.owner:
+                org.owner = shlesh
+                org.save()
+
+            for u in all_user_list:
+                OrganizationMembership.objects.get_or_create(
+                    user=u,
+                    organization=org,
+                    defaults={'role': u.role, 'is_active': True}
+                )
+        except Exception as o_err:
+            self.stdout.write(self.style.WARNING(f'Organization setup notice: {o_err}'))
 
         # 2. Teams Creation
         tech_team = Team.objects.create(

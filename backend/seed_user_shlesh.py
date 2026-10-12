@@ -16,23 +16,31 @@ from apps.actions.models import ActionItem
 def seed_shlesh_user_and_data():
     print("🚀 Seeding user 'Shlesh' and associated sample data...")
 
-    # 1. Create or update user Shlesh
+    # 1. Create or update user Shlesh safely
     username = "Shlesh"
     password = "Shlesh@17"
     email = "shleshdarji317@gmail.com"
 
-    user, created = User.objects.get_or_create(
-        username=username,
-        defaults={
-            'email': email,
-            'first_name': 'Shlesh',
-            'last_name': 'Darji',
-            'role': User.Role.OWNER,
-            'department': 'Engineering',
-            'is_staff': True,
-            'is_superuser': True,
-        }
-    )
+    existing_by_email = User.objects.filter(email__iexact=email).first()
+    existing_by_username = User.objects.filter(username__iexact=username).first()
+
+    created = False
+    if existing_by_email and existing_by_username and existing_by_email.id != existing_by_username.id:
+        # Merge duplicate records: delete placeholder and update real user
+        print(f"⚠️ Reconciling duplicate accounts for '{username}' and '{email}'...")
+        existing_by_username.delete()
+        user = existing_by_email
+        user.username = username
+    elif existing_by_email:
+        user = existing_by_email
+        user.username = username
+    elif existing_by_username:
+        user = existing_by_username
+        user.email = email
+    else:
+        user = User(username=username, email=email)
+        created = True
+
     user.email = email
     user.first_name = 'Shlesh'
     user.last_name = 'Darji'
@@ -42,6 +50,25 @@ def seed_shlesh_user_and_data():
     user.is_superuser = True
     user.set_password(password)
     user.save()
+
+    # Ensure Organization and membership exist
+    try:
+        from apps.authentication.models import Organization, OrganizationMembership
+        org, _ = Organization.objects.get_or_create(
+            name='SmartMeeting Workspace',
+            defaults={'owner': user}
+        )
+        if not org.owner:
+            org.owner = user
+            org.save()
+
+        OrganizationMembership.objects.get_or_create(
+            user=user,
+            organization=org,
+            defaults={'role': User.Role.OWNER, 'is_active': True}
+        )
+    except Exception as org_err:
+        print(f"⚠️ Organization creation warning: {org_err}")
 
     if created:
         print(f"✅ Created User '{username}' with password '{password}' (Role: OWNER / Superuser)")
