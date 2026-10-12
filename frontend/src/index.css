@@ -1065,6 +1065,47 @@ aside .ant-menu-inline-collapsed .ant-menu-title-content {
   color: #ffffff !important;
 }
 
+/* User-requested Dark Mode Theme: Bottom Navigation Create Circular Button, Dashboard Schedule Button, and Meetings Create Button MUST be white with black/dark text */
+.dark .bottom-nav-create-btn,
+.dark .bottom-nav-create-btn.ant-btn,
+.dark .bottom-nav-create-btn.ant-btn-primary,
+.dark .schedule-meeting-btn,
+.dark .schedule-meeting-btn.ant-btn,
+.dark .schedule-meeting-btn.ant-btn-primary,
+.dark .create-meeting-btn,
+.dark .create-meeting-btn.ant-btn,
+.dark .create-meeting-btn.ant-btn-primary {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #ffffff !important;
+}
+
+.dark .bottom-nav-create-btn:hover,
+.dark .bottom-nav-create-btn:focus,
+.dark .bottom-nav-create-btn:active,
+.dark .schedule-meeting-btn:hover,
+.dark .schedule-meeting-btn:focus,
+.dark .schedule-meeting-btn:active,
+.dark .create-meeting-btn:hover,
+.dark .create-meeting-btn:focus,
+.dark .create-meeting-btn:active {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+  border-color: #f1f5f9 !important;
+}
+
+.dark .bottom-nav-create-btn *,
+.dark .bottom-nav-create-btn svg,
+.dark .schedule-meeting-btn *,
+.dark .schedule-meeting-btn span,
+.dark .schedule-meeting-btn svg,
+.dark .create-meeting-btn *,
+.dark .create-meeting-btn span,
+.dark .create-meeting-btn svg {
+  color: #0f172a !important;
+  fill: #0f172a !important;
+}
+
 /* Auth Page Inputs & Browser Autofill Override (Guarantees pure white inputs, uniform 14px font size & dark text across idle, focused, and autofill states) */
 .auth-card .ant-form-item .ant-form-item-label > label,
 .auth-card .ant-form-item .ant-form-item-label > label *,

@@ -896,7 +896,7 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
             zIndex: 50,
             pointerEvents: 'auto',
           }}
-          className={`border-none flex items-center justify-center shadow-md pointer-events-auto cursor-pointer ${
+          className={`bottom-nav-create-btn border-none flex items-center justify-center shadow-md pointer-events-auto cursor-pointer ${
             pathname === '/meetings/new'
               ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 ring-4 ring-slate-400/50 scale-105'
               : 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 active:scale-95'

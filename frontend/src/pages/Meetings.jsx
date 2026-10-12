@@ -259,7 +259,12 @@ export default function Meetings() {
           />
 
           <Link to="/meetings/new" className="no-underline w-full sm:w-auto">
-            <Button type="primary" icon={<PlusOutlined />} size="middle" className="w-full sm:w-auto bg-slate-900 hover:bg-slate-800 dark:bg-slate-100 dark:hover:bg-white text-white dark:text-slate-900 font-bold rounded-xl border-none shadow-xs text-xs h-9 px-4 flex items-center justify-center">
+            <Button
+              type="primary"
+              icon={<PlusOutlined className="text-white dark:!text-slate-900" />}
+              size="middle"
+              className="create-meeting-btn w-full sm:w-auto bg-slate-900 hover:bg-slate-800 dark:!bg-white dark:hover:!bg-slate-100 text-white dark:!text-slate-900 font-bold rounded-xl border-none shadow-xs text-xs h-9 px-4 flex items-center justify-center"
+            >
               Create Meeting
             </Button>
           </Link>
