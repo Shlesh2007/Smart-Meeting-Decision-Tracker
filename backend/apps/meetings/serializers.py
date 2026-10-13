@@ -241,6 +241,8 @@ class MeetingSerializer(serializers.ModelSerializer):
             # Always ensure organizer/creator is included as a participant
             if instance.created_by:
                 instance.participants.add(instance.created_by)
+            if instance.team:
+                instance.participants.add(*instance.team.members.all())
 
         if update_series and instance.recurrence_group_id:
             future_meetings = Meeting.objects.filter(

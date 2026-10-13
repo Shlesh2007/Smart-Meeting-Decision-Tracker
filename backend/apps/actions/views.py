@@ -1,6 +1,7 @@
 from rest_framework import viewsets, permissions, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.exceptions import PermissionDenied
 from django_filters.rest_framework import DjangoFilterBackend
 import django_filters
 from django.utils import timezone
@@ -93,7 +94,7 @@ class ActionItemViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         user = self.request.user
         if not user or not user.is_authenticated:
-            raise permissions.PermissionDenied("Authentication required to create action items.")
+            raise PermissionDenied("Authentication required to create action items.")
 
         # MEMBER role restriction on action item creation unless assigned to self
         assigned_to = serializer.validated_data.get('assigned_to', [])
@@ -101,7 +102,7 @@ class ActionItemViewSet(viewsets.ModelViewSet):
             for u in assigned_to:
                 u_id = getattr(u, 'id', u)
                 if u_id != user.id:
-                    raise permissions.PermissionDenied("MEMBER role cannot assign action items to other users.")
+                    raise PermissionDenied("MEMBER role cannot assign action items to other users.")
         serializer.save(created_by=user)
 
     def perform_update(self, serializer):
@@ -112,17 +113,26 @@ class ActionItemViewSet(viewsets.ModelViewSet):
         new_status = serializer.validated_data.get('status')
         if action_item.status in [ActionItem.Status.COMPLETED, ActionItem.Status.CANCELLED]:
             if new_status and new_status != action_item.status:
-                raise permissions.PermissionDenied("Completed or Cancelled action items are locked and cannot be changed back to another status.")
+                raise PermissionDenied("Completed or Cancelled action items are locked and cannot be changed back to another status.")
 
         # OWNER and ADMIN can update any field
         if user.is_admin_role:
             serializer.save()
             return
 
-        # MANAGER can update items created by them or assigned to their scope
+        # MANAGER can update items created by them, assigned to them, or within their team/meeting scope
         if user.is_manager_role:
             try:
-                if action_item.created_by == user or action_item.assigned_to.filter(id=user.id).exists():
+                is_in_scope = (
+                    action_item.created_by == user or
+                    action_item.assigned_to.filter(id=user.id).exists() or
+                    (hasattr(action_item, 'decision') and action_item.decision and
+                     hasattr(action_item.decision, 'discussion') and action_item.decision.discussion and
+                     hasattr(action_item.decision.discussion, 'meeting') and action_item.decision.discussion.meeting and
+                     (action_item.decision.discussion.meeting.created_by == user or
+                      (action_item.decision.discussion.meeting.team and action_item.decision.discussion.meeting.team.members.filter(id=user.id).exists())))
+                )
+                if is_in_scope:
                     serializer.save()
                     return
             except Exception:
@@ -131,18 +141,18 @@ class ActionItemViewSet(viewsets.ModelViewSet):
                     return
 
         # MEMBER restrictions:
-        # 1. MEMBER can only update action items assigned to them
+        # 1. MEMBER can only update action items assigned to them or created by them
         try:
             is_assigned = action_item.assigned_to.filter(id=user.id).exists()
         except Exception:
             is_assigned = (action_item.created_by == user)
 
         if not is_assigned and action_item.created_by != user:
-            raise permissions.PermissionDenied("MEMBER cannot modify action items assigned to another user.")
+            raise PermissionDenied("MEMBER cannot modify action items assigned to another user.")
 
         # 2. MEMBER cannot modify COMPLETED or CANCELLED action items
         if action_item.status in [ActionItem.Status.COMPLETED, ActionItem.Status.CANCELLED]:
-            raise permissions.PermissionDenied("Completed or Cancelled action items are locked and cannot be modified by MEMBER role.")
+            raise PermissionDenied("Completed or Cancelled action items are locked and cannot be modified by MEMBER role.")
 
         # 3. MEMBER can ONLY update status field!
         sensitive_fields = ['title', 'description', 'due_date', 'priority', 'assigned_to', 'decision']
@@ -152,20 +162,50 @@ class ActionItemViewSet(viewsets.ModelViewSet):
                 if field == 'assigned_to':
                     try:
                         current_ids = set(action_item.assigned_to.values_list('id', flat=True))
-                        new_ids = set(u.id for u in validated_data['assigned_to'])
+                        new_ids = set(getattr(u, 'id', u) for u in validated_data['assigned_to'])
                         if current_ids != new_ids:
-                            raise permissions.PermissionDenied("MEMBER role is not authorized to modify sensitive field 'assigned_to'. You may only update status.")
+                            raise PermissionDenied("MEMBER role is not authorized to modify sensitive field 'assigned_to'. You may only update status.")
+                    except PermissionDenied:
+                        raise
                     except Exception:
                         pass
-                elif validated_data[field] != getattr(action_item, field):
-                    raise permissions.PermissionDenied(f"MEMBER role is not authorized to modify sensitive field '{field}'. You may only update status.")
+                else:
+                    curr_val = getattr(action_item, field, None)
+                    new_val = validated_data.get(field)
+                    if hasattr(curr_val, 'id') and hasattr(new_val, 'id'):
+                        if curr_val.id != new_val.id:
+                            raise PermissionDenied(f"MEMBER role is not authorized to modify sensitive field '{field}'. You may only update status.")
+                    elif curr_val != new_val:
+                        raise PermissionDenied(f"MEMBER role is not authorized to modify sensitive field '{field}'. You may only update status.")
 
         serializer.save()
 
     def perform_destroy(self, instance):
         user = self.request.user
-        if not user.is_manager_role and instance.created_by != user:
-            raise permissions.PermissionDenied("MEMBER role cannot delete action items.")
+        if user.is_admin_role:
+            instance.delete()
+            return
+        if user.is_manager_role:
+            try:
+                is_in_scope = (
+                    instance.created_by == user or
+                    instance.assigned_to.filter(id=user.id).exists() or
+                    (hasattr(instance, 'decision') and instance.decision and
+                     hasattr(instance.decision, 'discussion') and instance.decision.discussion and
+                     hasattr(instance.decision.discussion, 'meeting') and instance.decision.discussion.meeting and
+                     (instance.decision.discussion.meeting.created_by == user or
+                      (instance.decision.discussion.meeting.team and instance.decision.discussion.meeting.team.members.filter(id=user.id).exists())))
+                )
+                if is_in_scope:
+                    instance.delete()
+                    return
+            except Exception:
+                if instance.created_by == user:
+                    instance.delete()
+                    return
+            raise PermissionDenied("Managers can only delete action items within their team or meeting scope.")
+        if instance.created_by != user:
+            raise PermissionDenied("MEMBER role cannot delete action items.")
         instance.delete()
 
     @action(detail=False, methods=['get'])

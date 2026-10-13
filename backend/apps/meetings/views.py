@@ -2,6 +2,7 @@ from rest_framework import viewsets, permissions, filters, status
 from rest_framework.decorators import action
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.exceptions import PermissionDenied
 from django_filters.rest_framework import DjangoFilterBackend
 import django_filters
 from django.db.models import Q
@@ -113,7 +114,7 @@ class MeetingViewSet(viewsets.ModelViewSet):
         is_only_status_update = updated_fields == {'status'} or updated_fields == set()
 
         if meeting.status in [Meeting.Status.COMPLETED, Meeting.Status.CANCELLED, Meeting.Status.IN_PROGRESS] and not is_only_status_update:
-            raise permissions.PermissionDenied(
+            raise PermissionDenied(
                 "Completed, In Progress, or Cancelled meetings cannot be edited by anyone."
             )
         
@@ -130,14 +131,14 @@ class MeetingViewSet(viewsets.ModelViewSet):
 
         # MEMBER can only update meetings they created
         if meeting.created_by != user:
-            raise permissions.PermissionDenied("Only the meeting organizer, team manager, or an Admin/Owner can edit meeting details.")
+            raise PermissionDenied("Only the meeting organizer, team manager, or an Admin/Owner can edit meeting details.")
 
         serializer.save()
 
     def perform_destroy(self, instance):
         user = self.request.user
         if not user.is_admin_role and instance.created_by != user:
-            raise permissions.PermissionDenied("Only the meeting organizer or an Admin/Owner can delete this meeting.")
+            raise PermissionDenied("Only the meeting organizer or an Admin/Owner can delete this meeting.")
         instance.delete()
 
     @action(detail=True, methods=['post'], url_path='cancel')

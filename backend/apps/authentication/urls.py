@@ -6,7 +6,7 @@ from .views import (
     RequestEmailChangeOTPView, VerifyEmailChangeOTPView, DeleteAccountView, CheckDeleteAccountView,
     TransferOwnershipView, DeleteOrganizationView, CreateOrganizationView, JoinOrganizationView,
     OrganizationStatusView, GoogleOAuthView, GitHubOAuthView, DepartmentChangeRequestViewSet,
-    OrganizationJoinRequestViewSet, OrganizationLeaveRequestViewSet
+    OrganizationJoinRequestViewSet, OrganizationLeaveRequestViewSet, SeedDataView
 )
 
 router = DefaultRouter()
@@ -34,6 +34,7 @@ urlpatterns = [
     path('organization/join/', JoinOrganizationView.as_view(), name='auth_join_organization'),
     path('organization/status/', OrganizationStatusView.as_view(), name='auth_organization_status'),
     path('delete-organization/', DeleteOrganizationView.as_view(), name='auth_delete_organization'),
+    path('seed-data/', SeedDataView.as_view(), name='auth_seed_data'),
 
     # OTP Password Reset Endpoints
     path('password-reset/lookup-account/', LookupAccountView.as_view(), name='auth_lookup_account'),

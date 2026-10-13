@@ -167,6 +167,12 @@ class RegisterSerializer(serializers.ModelSerializer):
         fields = ('username', 'email', 'first_name', 'last_name', 'password', 'password_confirm', 'department')
 
     def validate(self, attrs):
+        if ' ' in attrs.get('password', ''):
+            raise serializers.ValidationError({"password": "Password cannot contain spaces."})
+
+        if ' ' in attrs.get('password_confirm', ''):
+            raise serializers.ValidationError({"password_confirm": "Password cannot contain spaces."})
+
         if attrs['password'] != attrs['password_confirm']:
             raise serializers.ValidationError({"password": "Passwords do not match."})
 
@@ -231,6 +237,13 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         user = User.objects.filter(username__iexact=raw_username).first()
         if user:
             attrs[self.username_field] = user.username
+
+        raw_password = attrs.get('password', '')
+        if user and raw_password:
+            # If checking with raw password fails, but checking with stripped password succeeds, use stripped
+            if not user.check_password(raw_password) and user.check_password(raw_password.strip()):
+                attrs['password'] = raw_password.strip()
+
         return super().validate(attrs)
 
 

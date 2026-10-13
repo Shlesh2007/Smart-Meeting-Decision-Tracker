@@ -164,9 +164,20 @@ class ActionItemSerializer(serializers.ModelSerializer):
             if self.instance and self.instance in proposed_deps:
                 raise serializers.ValidationError({"dependencies": "An action item cannot depend on itself."})
 
-            # Rule 2: Dependency Validation on Status (TODO, IN_PROGRESS, or COMPLETED)
+            # Check incomplete dependencies
             incomplete_deps = [dep for dep in proposed_deps if getattr(dep, 'status', None) != ActionItem.Status.COMPLETED]
-            if incomplete_deps and target_status in [ActionItem.Status.TODO, ActionItem.Status.IN_PROGRESS, ActionItem.Status.COMPLETED]:
+
+            # 1. On creation: If incomplete dependencies exist, automatically set status to BLOCKED; otherwise default to TODO
+            if not self.instance:
+                if incomplete_deps and attrs.get('status') != ActionItem.Status.CANCELLED:
+                    attrs['status'] = ActionItem.Status.BLOCKED
+                elif 'status' not in attrs:
+                    attrs['status'] = ActionItem.Status.TODO
+
+            target_status = attrs.get('status', getattr(self.instance, 'status', ActionItem.Status.TODO) if self.instance else ActionItem.Status.TODO)
+
+            # 2. On update / manual status change: Cannot change status to TODO, IN_PROGRESS, or COMPLETED while prerequisites are incomplete
+            if incomplete_deps and self.instance and 'status' in attrs and attrs['status'] in [ActionItem.Status.TODO, ActionItem.Status.IN_PROGRESS, ActionItem.Status.COMPLETED]:
                 titles = ", ".join([f"'{getattr(dep, 'title', str(dep))}' ({getattr(dep, 'status', 'Unknown')})" for dep in incomplete_deps])
                 status_label = "Todo" if target_status == ActionItem.Status.TODO else ("In Progress" if target_status == ActionItem.Status.IN_PROGRESS else "Completed")
                 raise serializers.ValidationError({
@@ -230,19 +241,37 @@ class ActionItemSerializer(serializers.ModelSerializer):
             instance.completion_notes = req.data['completion_notes']
 
         if dependencies is not None:
-            instance.dependencies.set(dependencies)
+            try:
+                instance.dependencies.set(dependencies)
+            except Exception:
+                pass
+
         if assigned_to_users is not None:
-            instance.assigned_to.set(assigned_to_users)
+            try:
+                instance.assigned_to.set(assigned_to_users)
+            except Exception:
+                try:
+                    if assigned_to_users:
+                        first_user = assigned_to_users[0] if isinstance(assigned_to_users, (list, tuple)) else assigned_to_users
+                        instance.assigned_to_id = getattr(first_user, 'id', first_user)
+                except Exception:
+                    pass
 
         # Re-evaluate instance status against its dependencies
-        current_deps = instance.dependencies.all()
-        has_incomplete = any(getattr(dep, 'status', None) != ActionItem.Status.COMPLETED for dep in current_deps)
-        if has_incomplete and instance.status not in [ActionItem.Status.CANCELLED, ActionItem.Status.BLOCKED]:
-            instance.status = ActionItem.Status.BLOCKED
+        try:
+            current_deps = instance.dependencies.all()
+            has_incomplete = any(getattr(dep, 'status', None) != ActionItem.Status.COMPLETED for dep in current_deps)
+            if has_incomplete and instance.status not in [ActionItem.Status.CANCELLED, ActionItem.Status.BLOCKED]:
+                instance.status = ActionItem.Status.BLOCKED
+        except Exception:
+            pass
 
         instance.save()
 
         # Trigger auto-unblocking for all dependent actions
-        instance.unblock_dependents()
+        try:
+            instance.unblock_dependents()
+        except Exception:
+            pass
 
         return instance

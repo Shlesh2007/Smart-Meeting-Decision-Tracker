@@ -2,16 +2,27 @@ import logging
 from django.utils import timezone
 from django.db.models import Q
 
+import time
+
 logger = logging.getLogger(__name__)
 
-def auto_update_meeting_statuses():
+_last_auto_update_ts = 0
+
+def auto_update_meeting_statuses(force=False):
     """
     Automatically updates Meeting statuses in database based on current date and time:
+    - Throttled to run at most once every 30 seconds unless force=True to keep API requests fast.
     - Meetings whose date/end_time has passed become 'COMPLETED' (unless CANCELLED).
     - Meetings currently active between start_time and end_time become 'IN_PROGRESS' (unless CANCELLED).
     - Meetings whose start_time is in the future become 'SCHEDULED' (unless CANCELLED).
     - Cancelled meetings remain 'CANCELLED' permanently.
     """
+    global _last_auto_update_ts
+    now_ts = time.time()
+    if not force and (now_ts - _last_auto_update_ts < 30):
+        return
+
+    _last_auto_update_ts = now_ts
     try:
         from .models import Meeting
 

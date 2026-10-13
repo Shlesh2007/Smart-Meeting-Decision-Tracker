@@ -78,12 +78,16 @@ def validate_registration_inputs(first_name, last_name, username, email, passwor
     if check_passwords:
         if not password:
             errors['password'] = ['Password is required.']
+        elif ' ' in password:
+            errors['password'] = ['Password cannot contain spaces.']
         elif len(password) < 6:
             errors['password'] = ['Password must be at least 6 characters long.']
 
         if password_confirm is not None:
             if not password_confirm:
                 errors['password_confirm'] = ['Please confirm your password.']
+            elif ' ' in password_confirm:
+                errors['password_confirm'] = ['Password cannot contain spaces.']
             elif password != password_confirm:
                 errors['password_confirm'] = ['Passwords do not match.']
 
@@ -434,15 +438,16 @@ class UserViewSet(viewsets.ModelViewSet):
         if role_to_assign == User.Role.OWNER:
             if not user.is_owner_role:
                 raise permissions.PermissionDenied("Only the current OWNER can assign the OWNER role.")
-            password = self.request.data.get('password')
+            raw_password = self.request.data.get('password') or ''
+            password = str(raw_password).strip()
             from rest_framework import serializers as drf_serializers
             if not user.is_oauth_user:
-                if not password:
+                if not password and not raw_password:
                     raise drf_serializers.ValidationError({'error': 'Owner password is required to assign Owner role.'})
-                if not user.check_password(password):
+                if not (user.check_password(password) or user.check_password(raw_password)):
                     raise drf_serializers.ValidationError({'error': 'Incorrect password. Ownership assignment failed.'})
-            elif user.has_usable_password() and password:
-                if not user.check_password(password):
+            elif user.has_usable_password() and (password or raw_password):
+                if not (user.check_password(password) or user.check_password(raw_password)):
                     raise drf_serializers.ValidationError({'error': 'Incorrect password. Ownership assignment failed.'})
 
         serializer.save()
@@ -469,15 +474,16 @@ class UserViewSet(viewsets.ModelViewSet):
 
         # Require owner password verification when promoting another member to OWNER
         if new_role == User.Role.OWNER and target_user.role != User.Role.OWNER:
-            password = self.request.data.get('password')
+            raw_password = self.request.data.get('password') or ''
+            password = str(raw_password).strip()
             from rest_framework import serializers as drf_serializers
             if not caller.is_oauth_user:
-                if not password:
+                if not password and not raw_password:
                     raise drf_serializers.ValidationError({'error': 'Owner password is required to assign Owner role.'})
-                if not caller.check_password(password):
+                if not (caller.check_password(password) or caller.check_password(raw_password)):
                     raise drf_serializers.ValidationError({'error': 'Incorrect password. Ownership assignment failed.'})
-            elif caller.has_usable_password() and password:
-                if not caller.check_password(password):
+            elif caller.has_usable_password() and (password or raw_password):
+                if not (caller.check_password(password) or caller.check_password(raw_password)):
                     raise drf_serializers.ValidationError({'error': 'Incorrect password. Ownership assignment failed.'})
 
         # Prevent removing ownership if caller is the only OWNER
@@ -777,6 +783,9 @@ class ConfirmPasswordResetView(APIView):
 
         if not email or not otp_code or not new_password:
             return Response({'error': 'Email, OTP code, and new password are required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if ' ' in new_password:
+            return Response({'error': 'Password cannot contain spaces.'}, status=status.HTTP_400_BAD_REQUEST)
 
         if len(new_password) < 6:
             return Response({'error': 'New password must be at least 6 characters long.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -1420,14 +1429,15 @@ class TransferOwnershipView(APIView):
             return Response({'error': 'Selected user was not found in your organization.'}, status=status.HTTP_404_NOT_FOUND)
 
         if user.role == User.Role.OWNER:
-            password = request.data.get('password')
+            raw_password = request.data.get('password') or ''
+            password = str(raw_password).strip()
             if not user.is_oauth_user:
-                if not password:
+                if not password and not raw_password:
                     return Response({'error': 'Owner password is required to transfer ownership.'}, status=status.HTTP_400_BAD_REQUEST)
-                if not user.check_password(password):
+                if not (user.check_password(password) or user.check_password(raw_password)):
                     return Response({'error': 'Incorrect password. Ownership transfer failed.'}, status=status.HTTP_400_BAD_REQUEST)
-            elif user.has_usable_password() and password:
-                if not user.check_password(password):
+            elif user.has_usable_password() and (password or raw_password):
+                if not (user.check_password(password) or user.check_password(raw_password)):
                     return Response({'error': 'Incorrect password. Ownership transfer failed.'}, status=status.HTTP_400_BAD_REQUEST)
 
         with transaction.atomic():
@@ -1483,7 +1493,8 @@ class DeleteAccountView(APIView):
     def delete(self, request):
         try:
             user = request.user
-            password = request.data.get('password', '')
+            raw_password = request.data.get('password', '')
+            password = str(raw_password).strip()
             confirmation = str(request.data.get('confirmation', '')).strip()
 
             # ALL users must type exact text 'DELETE'
@@ -1492,9 +1503,9 @@ class DeleteAccountView(APIView):
 
             # For email/password users, verify password
             if not user.is_oauth_user:
-                if not password:
+                if not password and not raw_password:
                     return Response({'error': 'Password is required to confirm account deletion.'}, status=status.HTTP_400_BAD_REQUEST)
-                if not user.check_password(password):
+                if not (user.check_password(password) or user.check_password(raw_password)):
                     return Response({'error': 'Incorrect password. Account deletion failed.'}, status=status.HTTP_400_BAD_REQUEST)
 
             other_users = User.objects.exclude(id=user.id)
@@ -1687,9 +1698,11 @@ class DeleteOrganizationView(APIView):
             return Response({'error': 'Please type "SMART MEETING" to confirm organization deletion.'}, status=status.HTTP_400_BAD_REQUEST)
 
         if not user.is_oauth_user:
-            if not password:
+            raw_password = request.data.get('password', '')
+            password = str(raw_password).strip()
+            if not password and not raw_password:
                 return Response({'error': 'Password is required to confirm organization deletion.'}, status=status.HTTP_400_BAD_REQUEST)
-            if not user.check_password(password):
+            if not (user.check_password(password) or user.check_password(raw_password)):
                 return Response({'error': 'Incorrect password. Organization deletion failed.'}, status=status.HTTP_400_BAD_REQUEST)
 
         owner_email = user.email
@@ -2239,6 +2252,13 @@ class DepartmentChangeRequestViewSet(viewsets.ModelViewSet):
         target_user.department = req_obj.requested_department
         target_user.save()
 
+        # Mark admin notifications for this department request as read
+        try:
+            from apps.notifications.models import Notification
+            Notification.objects.filter(source_id=f"dept-request-{req_obj.id}").update(is_read=True)
+        except Exception:
+            pass
+
         return Response({
             'message': f'Department request approved! Updated {target_user.username}\'s department to "{req_obj.requested_department}".',
             'data': DepartmentChangeRequestSerializer(req_obj, context={'request': request}).data
@@ -2258,6 +2278,13 @@ class DepartmentChangeRequestViewSet(viewsets.ModelViewSet):
         req_obj.reviewed_by = user
         req_obj.review_notes = request.data.get('review_notes', '')
         req_obj.save()
+
+        # Mark admin notifications for this department request as read
+        try:
+            from apps.notifications.models import Notification
+            Notification.objects.filter(source_id=f"dept-request-{req_obj.id}").update(is_read=True)
+        except Exception:
+            pass
 
         return Response({
             'message': 'Department change request rejected.',
@@ -2409,6 +2436,13 @@ class OrganizationJoinRequestViewSet(viewsets.ModelViewSet):
         except Exception as mail_err:
             logger.error("Failed to send approval email notification: %s", str(mail_err))
 
+        # Mark admin notifications for this join request as read
+        try:
+            from apps.notifications.models import Notification
+            Notification.objects.filter(source_id=f"join-request-{req_obj.id}").update(is_read=True)
+        except Exception as notif_cleanup_err:
+            logger.warning("Failed to mark join request notifications as read: %s", str(notif_cleanup_err))
+
         logger.info("Admin %s approved join request for %s", user.email, target_user.email)
 
         return Response({
@@ -2491,6 +2525,13 @@ class OrganizationJoinRequestViewSet(viewsets.ModelViewSet):
             send_brevo_transactional_email(subject, [target_user.email], text_body, html_body)
         except Exception as mail_err:
             logger.error("Failed to send rejection email notification: %s", str(mail_err))
+
+        # Mark admin notifications for this join request as read
+        try:
+            from apps.notifications.models import Notification
+            Notification.objects.filter(source_id=f"join-request-{req_obj.id}").update(is_read=True)
+        except Exception as notif_cleanup_err:
+            logger.warning("Failed to mark join request notifications as read: %s", str(notif_cleanup_err))
 
         logger.info("Admin %s rejected join request for %s", user.email, req_obj.user.email)
 
@@ -2712,6 +2753,13 @@ class OrganizationLeaveRequestViewSet(viewsets.ModelViewSet):
         except Exception as mail_err:
             logger.error("Failed to send leave approval email: %s", str(mail_err))
 
+        # Mark admin notifications for this leave request as read
+        try:
+            from apps.notifications.models import Notification
+            Notification.objects.filter(source_id=f"leave-request-{req_obj.id}").update(is_read=True)
+        except Exception:
+            pass
+
         logger.info("Admin/Owner %s approved leave request for %s", reviewer.email, target_user.email)
 
         return Response({
@@ -2733,6 +2781,13 @@ class OrganizationLeaveRequestViewSet(viewsets.ModelViewSet):
         req_obj.reviewed_by = reviewer
         req_obj.review_notes = request.data.get('review_notes', '')
         req_obj.save()
+
+        # Mark admin notifications for this leave request as read
+        try:
+            from apps.notifications.models import Notification
+            Notification.objects.filter(source_id=f"leave-request-{req_obj.id}").update(is_read=True)
+        except Exception:
+            pass
 
         # Notify member via email
         try:
@@ -2770,6 +2825,33 @@ class OrganizationLeaveRequestViewSet(viewsets.ModelViewSet):
             'message': f'Leave request for {req_obj.user.email} has been rejected.',
             'data': OrganizationLeaveRequestSerializer(req_obj, context={'request': request}).data
         })
+
+
+class SeedDataView(APIView):
+    permission_classes = (permissions.AllowAny,)
+
+    def post(self, request):
+        clean = bool(request.data.get('clean', False))
+        password = request.data.get('password', 'Shlesh@17')
+        from .seeder import seed_database, SEED_ORGANIZATIONS
+        try:
+            stats = seed_database(clean=clean, password=password)
+            return Response({
+                'message': 'Database seeded successfully with 3 valid organizations!',
+                'stats': stats,
+                'default_password': password,
+                'organizations': [
+                    {
+                        'name': org['name'],
+                        'owner': org['owner']['email'],
+                        'members_count': len(org['users']) + 1,
+                    }
+                    for org in SEED_ORGANIZATIONS
+                ]
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            logger.error("SeedDataView error: %s", str(e), exc_info=True)
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 
