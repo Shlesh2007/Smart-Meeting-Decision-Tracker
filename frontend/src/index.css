@@ -486,8 +486,7 @@ body.ant-modal-open {
   scrollbar-color: #475569 transparent !important;
 }
 
-/* Palm swipe & Mouse drag for horizontal scroll containers */
-.ant-tabs-nav-wrap,
+/* Mouse drag for horizontal scroll containers */
 .drag-scroll-x {
   touch-action: pan-x pan-y;
   -webkit-overflow-scrolling: touch;
@@ -495,9 +494,15 @@ body.ant-modal-open {
   transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
 }
 
-.ant-tabs-nav-wrap:active,
 .drag-scroll-x:active {
   cursor: grabbing !important;
+}
+
+/* Ensure tabs navigation bar and whitespace use default cursor */
+.ant-tabs-nav-wrap,
+.ant-tabs-nav,
+.ant-tabs-nav-list {
+  cursor: default !important;
 }
 
 /* Ensure table headers and cells do not show palm/hand cursor */
@@ -595,29 +600,57 @@ button:active,
   scale: 1 !important;
 }
 
-/* Ensure default/secondary buttons (Cancel, Back, Refresh) hover in neutral slate tones instead of primary blue */
-.ant-btn-default:not(.github-auth-btn):hover,
-.ant-btn-default:not(.github-auth-btn):focus,
-.ant-btn-default:not(.github-auth-btn):focus-visible {
+/* Ensure default/secondary buttons (Cancel, Back, Refresh, OAuth) hover in neutral slate tones */
+.ant-btn-default:hover,
+.ant-btn-default:focus,
+.ant-btn-default:focus-visible {
   color: #0f172a !important;
   border-color: #94a3b8 !important;
   background-color: #f8fafc !important;
 }
 
-.dark .ant-btn-default:not(.github-auth-btn):hover,
-.dark .ant-btn-default:not(.github-auth-btn):focus,
-.dark .ant-btn-default:not(.github-auth-btn):focus-visible {
+.dark .ant-btn-default:hover,
+.dark .ant-btn-default:focus,
+.dark .ant-btn-default:focus-visible {
   color: #ffffff !important;
   border-color: #64748b !important;
   background-color: #334155 !important;
 }
 
-/* GitHub OAuth Button High-Contrast Styling & Hover Icon Color Fix */
+/* Social OAuth Buttons (Google & GitHub) Consistent High-Quality Styling */
+.oauth-btn,
+.ant-btn.oauth-btn,
+.google-auth-btn,
+.ant-btn.google-auth-btn,
 .github-auth-btn,
 .ant-btn.github-auth-btn {
   background-color: #ffffff !important;
   color: #334155 !important;
   border-color: #e2e8f0 !important;
+  transition: all 0.15s ease !important;
+}
+
+.oauth-btn:hover,
+.oauth-btn:focus,
+.oauth-btn:active,
+.ant-btn.oauth-btn:hover,
+.ant-btn.oauth-btn:focus,
+.ant-btn.oauth-btn:active,
+.google-auth-btn:hover,
+.google-auth-btn:focus,
+.google-auth-btn:active,
+.ant-btn.google-auth-btn:hover,
+.ant-btn.google-auth-btn:focus,
+.ant-btn.google-auth-btn:active,
+.github-auth-btn:hover,
+.github-auth-btn:focus,
+.github-auth-btn:active,
+.ant-btn.github-auth-btn:hover,
+.ant-btn.github-auth-btn:focus,
+.ant-btn.github-auth-btn:active {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+  border-color: #94a3b8 !important;
 }
 
 .github-auth-btn .anticon,
@@ -629,32 +662,14 @@ button:active,
   transition: color 0.15s ease, fill 0.15s ease !important;
 }
 
-.github-auth-btn:hover,
-.github-auth-btn:focus,
-.github-auth-btn:active,
-.ant-btn.github-auth-btn:hover,
-.ant-btn.github-auth-btn:focus,
-.ant-btn.github-auth-btn:active {
-  background-color: #181717 !important;
-  color: #ffffff !important;
-  border-color: #181717 !important;
+.github-auth-btn:hover .anticon,
+.github-auth-btn:hover svg,
+.ant-btn.github-auth-btn:hover .anticon,
+.ant-btn.github-auth-btn:hover svg {
+  color: #0f172a !important;
+  fill: #0f172a !important;
 }
 
-.github-auth-btn:hover .anticon,
-.github-auth-btn:focus .anticon,
-.github-auth-btn:active .anticon,
-.ant-btn.github-auth-btn:hover .anticon,
-.ant-btn.github-auth-btn:focus .anticon,
-.ant-btn.github-auth-btn:active .anticon,
-.github-auth-btn:hover svg,
-.github-auth-btn:focus svg,
-.github-auth-btn:active svg,
-.ant-btn.github-auth-btn:hover svg,
-.ant-btn.github-auth-btn:focus svg,
-.ant-btn.github-auth-btn:active svg {
-  color: #ffffff !important;
-  fill: #ffffff !important;
-}
 
 /* Site-wide Removal of Outlines & Borders on Badges, Tags, and Modals */
 .ant-tag,
@@ -839,6 +854,38 @@ aside .ant-menu-inline-collapsed .ant-menu-title-content {
 
 .dark .meeting-calendar-custom .ant-picker-calendar-date-value {
   color: #94a3b8;
+}
+
+/* Only highlight actual Today (.ant-picker-cell-today), not the selected day number across other months */
+.meeting-calendar-custom .ant-picker-cell-in-view.ant-picker-cell-selected:not(.ant-picker-cell-today) .ant-picker-calendar-date,
+.meeting-calendar-custom .ant-picker-cell-selected:not(.ant-picker-cell-today) .ant-picker-calendar-date {
+  background: transparent !important;
+}
+
+.meeting-calendar-custom .ant-picker-cell-in-view.ant-picker-cell-selected:not(.ant-picker-cell-today) .ant-picker-calendar-date-value,
+.meeting-calendar-custom .ant-picker-cell-selected:not(.ant-picker-cell-today) .ant-picker-calendar-date-value {
+  color: #475569 !important;
+}
+
+.dark .meeting-calendar-custom .ant-picker-cell-in-view.ant-picker-cell-selected:not(.ant-picker-cell-today) .ant-picker-calendar-date-value,
+.dark .meeting-calendar-custom .ant-picker-cell-selected:not(.ant-picker-cell-today) .ant-picker-calendar-date-value {
+  color: #94a3b8 !important;
+}
+
+.meeting-calendar-custom .ant-picker-cell-in-view.ant-picker-cell-today .ant-picker-calendar-date {
+  background-color: #eff6ff !important;
+}
+
+.dark .meeting-calendar-custom .ant-picker-cell-in-view.ant-picker-cell-today .ant-picker-calendar-date {
+  background-color: #23324d !important;
+}
+
+.meeting-calendar-custom .ant-picker-cell-in-view.ant-picker-cell-today .ant-picker-calendar-date-value {
+  color: #2563eb !important;
+}
+
+.dark .meeting-calendar-custom .ant-picker-cell-in-view.ant-picker-cell-today .ant-picker-calendar-date-value {
+  color: #38bdf8 !important;
 }
 
 /* Smart Meeting Splash Screen Warm Theme & Animations */
@@ -1065,7 +1112,7 @@ aside .ant-menu-inline-collapsed .ant-menu-title-content {
   color: #ffffff !important;
 }
 
-/* User-requested Dark Mode Theme: Bottom Navigation Create Circular Button, Dashboard Schedule Button, and Meetings Create Button MUST be white with black/dark text */
+/* User-requested Dark Mode Theme: Bottom Navigation Create Circular Button, Dashboard Schedule Button, Meetings Create Button, and Delete Account Button MUST be white with black/dark text */
 .dark .bottom-nav-create-btn,
 .dark .bottom-nav-create-btn.ant-btn,
 .dark .bottom-nav-create-btn.ant-btn-primary,
@@ -1074,10 +1121,21 @@ aside .ant-menu-inline-collapsed .ant-menu-title-content {
 .dark .schedule-meeting-btn.ant-btn-primary,
 .dark .create-meeting-btn,
 .dark .create-meeting-btn.ant-btn,
-.dark .create-meeting-btn.ant-btn-primary {
+.dark .create-meeting-btn.ant-btn-primary,
+.dark .delete-account-btn,
+.dark .delete-account-btn.ant-btn,
+.dark .delete-account-btn.ant-btn-primary,
+.dark .delete-account-btn.ant-btn-dangerous {
   background-color: #ffffff !important;
   color: #0f172a !important;
   border-color: #ffffff !important;
+}
+
+.dark .delete-account-btn:disabled,
+.dark .delete-account-btn.ant-btn:disabled {
+  background-color: rgba(255, 255, 255, 0.65) !important;
+  color: #0f172a !important;
+  border-color: transparent !important;
 }
 
 .dark .bottom-nav-create-btn:hover,
@@ -1088,7 +1146,10 @@ aside .ant-menu-inline-collapsed .ant-menu-title-content {
 .dark .schedule-meeting-btn:active,
 .dark .create-meeting-btn:hover,
 .dark .create-meeting-btn:focus,
-.dark .create-meeting-btn:active {
+.dark .create-meeting-btn:active,
+.dark .delete-account-btn:not(:disabled):hover,
+.dark .delete-account-btn:not(:disabled):focus,
+.dark .delete-account-btn:not(:disabled):active {
   background-color: #f1f5f9 !important;
   color: #0f172a !important;
   border-color: #f1f5f9 !important;
@@ -1101,7 +1162,10 @@ aside .ant-menu-inline-collapsed .ant-menu-title-content {
 .dark .schedule-meeting-btn svg,
 .dark .create-meeting-btn *,
 .dark .create-meeting-btn span,
-.dark .create-meeting-btn svg {
+.dark .create-meeting-btn svg,
+.dark .delete-account-btn *,
+.dark .delete-account-btn span,
+.dark .delete-account-btn svg {
   color: #0f172a !important;
   fill: #0f172a !important;
 }
@@ -1247,16 +1311,34 @@ input:-webkit-autofill:active,
   transition: background-color 5000s ease-in-out 0s !important;
 }
 
-/* Ensure Primary Buttons inside auth cards are always dark slate (#0f172a) with crisp white text */
-.auth-card .ant-btn-primary,
-.dark .auth-card .ant-btn-primary {
+/* Ensure Primary Buttons inside auth cards default to dark slate, with vibrant blue for login-submit-btn */
+.auth-card .ant-btn-primary.login-submit-btn,
+.auth-card .ant-btn-primary.login-submit-btn:focus,
+.login-submit-btn,
+.login-submit-btn.ant-btn-primary {
+  background-color: #2563eb !important;
+  color: #ffffff !important;
+  border-color: #2563eb !important;
+}
+
+.auth-card .ant-btn-primary.login-submit-btn:hover,
+.auth-card .ant-btn-primary.login-submit-btn:active,
+.login-submit-btn:hover,
+.login-submit-btn:active {
+  background-color: #1d4ed8 !important;
+  color: #ffffff !important;
+  border-color: #1d4ed8 !important;
+}
+
+.auth-card .ant-btn-primary:not(.login-submit-btn),
+.dark .auth-card .ant-btn-primary:not(.login-submit-btn) {
   background-color: #0f172a !important;
   color: #ffffff !important;
   border-color: #0f172a !important;
 }
 
-.auth-card .ant-btn-primary:hover,
-.dark .auth-card .ant-btn-primary:hover {
+.auth-card .ant-btn-primary:not(.login-submit-btn):hover,
+.dark .auth-card .ant-btn-primary:not(.login-submit-btn):hover {
   background-color: #1e293b !important;
   color: #ffffff !important;
   border-color: #1e293b !important;
@@ -1386,4 +1468,150 @@ html.dark, body.dark, .dark {
 .dark .ant-menu-item-selected a {
   color: #F8FAFC !important;
   font-weight: 700 !important;
+}
+
+/* ==============================================================
+   Reset Password via OTP Modal (Strict Clean White Light Styling)
+   ============================================================== */
+.auth-reset-modal .ant-modal-content,
+.dark .auth-reset-modal .ant-modal-content,
+div.auth-reset-modal .ant-modal-content {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-radius: 20px !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+}
+
+.auth-reset-modal .ant-modal-header,
+.dark .auth-reset-modal .ant-modal-header,
+div.auth-reset-modal .ant-modal-header {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-bottom: none !important;
+  margin-bottom: 12px !important;
+}
+
+.auth-reset-modal .ant-modal-title,
+.dark .auth-reset-modal .ant-modal-title,
+div.auth-reset-modal .ant-modal-title,
+.auth-reset-modal .ant-modal-title *,
+.dark .auth-reset-modal .ant-modal-title * {
+  color: #0f172a !important;
+  font-weight: 700 !important;
+}
+
+.auth-reset-modal .ant-modal-close,
+.dark .auth-reset-modal .ant-modal-close,
+div.auth-reset-modal .ant-modal-close {
+  color: #64748b !important;
+}
+
+.auth-reset-modal .ant-modal-close:hover,
+.dark .auth-reset-modal .ant-modal-close:hover {
+  color: #0f172a !important;
+}
+
+.auth-reset-modal .ant-steps-item-title,
+.dark .auth-reset-modal .ant-steps-item-title {
+  color: #1e293b !important;
+  font-weight: 600 !important;
+}
+
+.auth-reset-modal .ant-steps-item-description,
+.dark .auth-reset-modal .ant-steps-item-description {
+  color: #64748b !important;
+}
+
+.auth-reset-modal .ant-steps-item-process > .ant-steps-item-container > .ant-steps-item-icon,
+.dark .auth-reset-modal .ant-steps-item-process > .ant-steps-item-container > .ant-steps-item-icon {
+  background-color: #0f172a !important;
+  border-color: #0f172a !important;
+}
+
+.auth-reset-modal .ant-steps-item-process > .ant-steps-item-container > .ant-steps-item-icon .ant-steps-icon,
+.dark .auth-reset-modal .ant-steps-item-process > .ant-steps-item-container > .ant-steps-item-icon .ant-steps-icon {
+  color: #ffffff !important;
+}
+
+.auth-reset-modal .ant-steps-item-finish > .ant-steps-item-container > .ant-steps-item-icon,
+.dark .auth-reset-modal .ant-steps-item-finish > .ant-steps-item-container > .ant-steps-item-icon {
+  border-color: #0f172a !important;
+}
+
+.auth-reset-modal .ant-steps-item-finish > .ant-steps-item-container > .ant-steps-item-icon .ant-steps-icon,
+.dark .auth-reset-modal .ant-steps-item-finish > .ant-steps-item-container > .ant-steps-item-icon .ant-steps-icon {
+  color: #0f172a !important;
+}
+
+.auth-reset-modal .ant-steps-item-wait > .ant-steps-item-container > .ant-steps-item-icon,
+.dark .auth-reset-modal .ant-steps-item-wait > .ant-steps-item-container > .ant-steps-item-icon {
+  background-color: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+}
+
+.auth-reset-modal .ant-steps-item-wait > .ant-steps-item-container > .ant-steps-item-icon .ant-steps-icon,
+.dark .auth-reset-modal .ant-steps-item-wait > .ant-steps-item-container > .ant-steps-item-icon .ant-steps-icon {
+  color: #64748b !important;
+}
+
+.auth-reset-modal .ant-form-item-label > label,
+.dark .auth-reset-modal .ant-form-item-label > label {
+  color: #334155 !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+}
+
+.auth-reset-modal .ant-input-affix-wrapper,
+.auth-reset-modal .ant-input,
+.auth-reset-modal input,
+.dark .auth-reset-modal .ant-input-affix-wrapper,
+.dark .auth-reset-modal .ant-input,
+.dark .auth-reset-modal input {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+}
+
+.auth-reset-modal .ant-input-affix-wrapper-focused,
+.auth-reset-modal .ant-input:focus,
+.dark .auth-reset-modal .ant-input-affix-wrapper-focused,
+.dark .auth-reset-modal .ant-input:focus {
+  border-color: #0f172a !important;
+  box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.1) !important;
+}
+
+.auth-reset-modal .ant-input::placeholder,
+.auth-reset-modal input::placeholder,
+.dark .auth-reset-modal .ant-input::placeholder,
+.dark .auth-reset-modal input::placeholder {
+  color: #94a3b8 !important;
+}
+
+.auth-reset-modal .ant-btn-default,
+.dark .auth-reset-modal .ant-btn-default {
+  background-color: #ffffff !important;
+  color: #334155 !important;
+  border-color: #cbd5e1 !important;
+}
+
+.auth-reset-modal .ant-btn-default:hover,
+.dark .auth-reset-modal .ant-btn-default:hover {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+  border-color: #94a3b8 !important;
+}
+
+.auth-reset-modal .ant-btn-primary,
+.dark .auth-reset-modal .ant-btn-primary {
+  background-color: #0f172a !important;
+  color: #ffffff !important;
+  border-color: #0f172a !important;
+}
+
+.auth-reset-modal .ant-btn-primary:hover,
+.dark .auth-reset-modal .ant-btn-primary:hover {
+  background-color: #1e293b !important;
+  color: #ffffff !important;
+  border-color: #1e293b !important;
 }

@@ -189,8 +189,9 @@ export const authService = {
 
 // Users & Teams
 export const userService = {
-  getUsers: async (params) => {
-    const res = await api.get('/auth/users/', { params });
+  getUsers: async (params = {}) => {
+    const defaultParams = { page_size: 500, ...params };
+    const res = await api.get('/auth/users/', { params: defaultParams });
     return res.data;
   },
   updateUserRole: async (userId, role, password) => {
@@ -375,8 +376,11 @@ export const actionService = {
     return res.data;
   },
   updateAction: async (id, payload) => {
-    const res = await api.put(`/actions/${id}/`, payload);
+    const res = await api.patch(`/actions/${id}/`, payload);
     return res.data;
+  },
+  deleteAction: async (id) => {
+    await api.delete(`/actions/${id}/`);
   }
 };
 

@@ -16,7 +16,7 @@ import {
 } from 'antd';
 import {
   CalendarOutlined, ClockCircleOutlined, EnvironmentOutlined,
-  PlusOutlined, HistoryOutlined, ArrowLeftOutlined, EditOutlined, MessageOutlined, FileTextOutlined,
+  PlusOutlined, HistoryOutlined, ArrowLeftOutlined, EditOutlined, DeleteOutlined, MessageOutlined, FileTextOutlined,
   MailOutlined, SafetyCertificateOutlined, StopOutlined, CloseCircleOutlined, CheckSquareOutlined, LockOutlined, LinkOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
@@ -25,7 +25,7 @@ export default function MeetingDetail() {
   const navigate = useNavigate();
   const params = useParams();
   const meetingId = Number(params.id);
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, isManager } = useAuth();
 
   const [meeting, setMeeting] = useState(null);
   const [discussions, setDiscussions] = useState([]);
@@ -51,58 +51,37 @@ export default function MeetingDetail() {
   const [viewingDetailAction, setViewingDetailAction] = useState(null);
   const [errorState, setErrorState] = useState(null);
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
+  const loadData = useCallback(async (showSpinner = false) => {
+    if (showSpinner) {
+      setLoading(true);
+    }
     setErrorState(null);
     try {
-      const m = await meetingService.getMeetingById(meetingId);
+      // Parallelize meeting, discussions, and meeting actions requests
+      const [m, d, aResMeeting] = await Promise.all([
+        meetingService.getMeetingById(meetingId),
+        discussionService.getDiscussions(meetingId).catch((err) => {
+          console.error('Failed to load discussions:', err);
+          return [];
+        }),
+        actionService.getActions({ meeting: meetingId, page_size: 500 }).catch((err) => {
+          console.error('Failed to load actions:', err);
+          return [];
+        })
+      ]);
+
       setMeeting(m);
-      
-      try {
-        const d = await discussionService.getDiscussions(meetingId);
-        const listDisc = Array.isArray(d) ? d : (Array.isArray(d?.results) ? d.results : []);
-        setDiscussions(listDisc);
-      } catch (err) {
-        console.error('Failed to load discussions:', err);
-        setDiscussions([]);
-      }
 
-      try {
-        const [aResMeeting, aResAll] = await Promise.all([
-          actionService.getActions({ meeting: meetingId, page_size: 1000 }).catch(() => []),
-          actionService.getActions({ page_size: 1000 }).catch(() => [])
-        ]);
+      const listDisc = Array.isArray(d) ? d : (Array.isArray(d?.results) ? d.results : []);
+      setDiscussions(listDisc);
 
-        const listMeeting = Array.isArray(aResMeeting?.results)
-          ? aResMeeting.results
-          : Array.isArray(aResMeeting)
-          ? aResMeeting
-          : [];
+      const listMeeting = Array.isArray(aResMeeting?.results)
+        ? aResMeeting.results
+        : Array.isArray(aResMeeting)
+        ? aResMeeting
+        : [];
 
-        const listAll = Array.isArray(aResAll?.results)
-          ? aResAll.results
-          : Array.isArray(aResAll)
-          ? aResAll
-          : [];
-
-        const map = new Map();
-        listMeeting.forEach(item => {
-          if (item && item.id) map.set(item.id, item);
-        });
-
-        listAll.forEach(item => {
-          if (!item || !item.id) return;
-          const aMeetingId = item.meeting_id || item.meeting || (typeof item.meeting === 'object' ? item.meeting?.id : null) || (item.meeting_detail && item.meeting_detail.id);
-          if (Number(aMeetingId) === Number(meetingId)) {
-            map.set(item.id, item);
-          }
-        });
-
-        setAllActions(Array.from(map.values()));
-      } catch (err) {
-        console.error('Failed to load actions:', err);
-        setAllActions([]);
-      }
+      setAllActions(listMeeting);
     } catch (err) {
       if (showSpinner) {
         const status = err.response?.status;
@@ -116,7 +95,9 @@ export default function MeetingDetail() {
         message.error('Failed to load meeting details.');
       }
     } finally {
-      if (showSpinner) setLoading(false);
+      if (showSpinner) {
+        setLoading(false);
+      }
     }
   }, [meetingId]);
 
@@ -177,17 +158,34 @@ export default function MeetingDetail() {
     meeting && user && (meeting.created_by === user.id || meeting.created_by_detail?.id === user.id)
   );
 
+  const isTeamMember = Boolean(
+    meeting?.team_detail?.members?.includes(user?.id) ||
+    meeting?.team_detail?.members_detail?.some(m => m.id === user?.id) ||
+    (Array.isArray(meeting?.team?.members) && meeting?.team?.members.includes(user?.id))
+  );
+
   const canCancelMeeting = Boolean(
     meeting && isCreator && meeting.status !== 'CANCELLED' && meeting.status !== 'COMPLETED'
   );
 
   const canEditMeeting = Boolean(
-    meeting && (isAdmin || isCreator)
+    meeting && (isAdmin || (isManager && (isCreator || isTeamMember)) || isCreator)
   );
 
   const isMeetingDetailsEditable = Boolean(
     meeting && canEditMeeting && meeting.status === 'SCHEDULED'
   );
+
+  const handleDeleteAction = async (actionId) => {
+    try {
+      await actionService.deleteAction(actionId);
+      message.success('Action item deleted successfully.');
+      loadData();
+    } catch (err) {
+      const msg = err.response?.data?.detail || err.response?.data?.error || 'Failed to delete action item.';
+      message.error(msg);
+    }
+  };
 
   const rawLocation = (meeting?.location || '').trim();
   const locationLower = rawLocation.toLowerCase();
@@ -278,7 +276,7 @@ export default function MeetingDetail() {
               <Tooltip
                 title={
                   !canEditMeeting
-                    ? 'Only the meeting organizer or an administrator can edit details.'
+                    ? 'Only the meeting organizer, team manager, or an administrator can edit details.'
                     : meeting.status !== 'SCHEDULED'
                     ? 'Meeting details cannot be edited once the meeting is In Progress, Completed, or Cancelled.'
                     : ''
@@ -746,17 +744,45 @@ export default function MeetingDetail() {
                                   )}
                                 </div>
 
-                                <Button
-                                  size="small"
-                                  type="text"
-                                  icon={<EditOutlined />}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setEditingAction(action);
-                                    setActiveDecisionForAction(decision);
-                                  }}
-                                  className="shrink-0"
-                                />
+                                <div className="flex items-center space-x-0.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+                                  <Tooltip title="Edit Action Item">
+                                    <Button
+                                      size="small"
+                                      type="text"
+                                      icon={<EditOutlined />}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setEditingAction(action);
+                                        setActiveDecisionForAction(decision);
+                                      }}
+                                      className="text-slate-500 hover:text-blue-600"
+                                    />
+                                  </Tooltip>
+                                  {(isAdmin || isManager || action.created_by === user?.id || action.created_by_detail?.id === user?.id) && (
+                                    <Popconfirm
+                                      title="Delete Action Item"
+                                      description={`Are you sure you want to delete "${action.title}"?`}
+                                      onConfirm={(e) => {
+                                        e?.stopPropagation();
+                                        handleDeleteAction(action.id);
+                                      }}
+                                      onCancel={(e) => e?.stopPropagation()}
+                                      okText="Yes, Delete"
+                                      cancelText="No"
+                                      okButtonProps={{ danger: true }}
+                                    >
+                                      <Tooltip title="Delete Action Item">
+                                        <Button
+                                          size="small"
+                                          danger
+                                          type="text"
+                                          icon={<DeleteOutlined />}
+                                          className="text-slate-400 hover:text-rose-600"
+                                        />
+                                      </Tooltip>
+                                    </Popconfirm>
+                                  )}
+                                </div>
                               </div>
                             </div>
                           ))}
@@ -943,6 +969,15 @@ export default function MeetingDetail() {
           await actionService.updateActionStatus(item.id, newStatus);
           setViewingDetailAction((prev) => (prev ? { ...prev, status: newStatus } : null));
           loadData();
+        }}
+        onEdit={(item) => {
+          setViewingDetailAction(null);
+          setEditingAction(item);
+          setActiveDecisionForAction({ id: item.decision });
+        }}
+        onDelete={(item) => {
+          setViewingDetailAction(null);
+          handleDeleteAction(item.id);
         }}
       />
     </div>

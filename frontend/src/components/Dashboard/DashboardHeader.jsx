@@ -166,6 +166,8 @@ export const DashboardHeader = ({
             <p className="text-xs text-slate-600 dark:text-slate-300 font-medium m-0">
               {user?.role === 'ADMIN' || user?.role === 'OWNER'
                 ? "Here's the organization-wide meeting & employee action item performance dashboard."
+                : user?.role === 'MANAGER'
+                ? "Here's your team & meeting performance dashboard."
                 : "Here's your personal meeting & action item workspace overview."}
             </p>
           </div>

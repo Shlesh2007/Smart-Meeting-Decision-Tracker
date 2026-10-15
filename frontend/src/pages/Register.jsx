@@ -24,6 +24,12 @@ export default function Register() {
 
   useEffect(() => {
     form.resetFields();
+    if (typeof window !== 'undefined') {
+      document.documentElement.classList.remove('dark');
+      document.body.classList.remove('dark');
+      document.documentElement.style.colorScheme = 'light';
+      window.dispatchEvent(new Event('smdt-theme-reset'));
+    }
   }, [form]);
 
   // OAuth Handlers
@@ -410,11 +416,22 @@ export default function Register() {
                     label={<span className="font-semibold text-slate-700 text-xs uppercase tracking-wider">Password</span>}
                     rules={[
                       { required: true, message: 'Please enter password' },
-                      { min: 6, message: 'Password must be at least 6 characters' }
+                      { min: 6, message: 'Password must be at least 6 characters' },
+                      { pattern: /^\S+$/, message: 'Password cannot contain spaces' }
                     ]}
+                    normalize={(val) => (val ? val.replace(/\s/g, '') : val)}
                     className="mb-3"
                   >
-                    <Input.Password id="password" name="password" prefix={<LockOutlined className="text-slate-400 mr-1.5" />} placeholder="••••••••" className="rounded-xl border-slate-300 h-10 text-sm" />
+                    <Input.Password
+                      id="password"
+                      name="password"
+                      prefix={<LockOutlined className="text-slate-400 mr-1.5" />}
+                      placeholder="••••••••"
+                      onKeyDown={(e) => {
+                        if (e.key === ' ') e.preventDefault();
+                      }}
+                      className="rounded-xl border-slate-300 h-10 text-sm"
+                    />
                   </Form.Item>
 
                   <Form.Item
@@ -423,6 +440,7 @@ export default function Register() {
                     dependencies={['password']}
                     rules={[
                       { required: true, message: 'Please enter confirm password' },
+                      { pattern: /^\S+$/, message: 'Password cannot contain spaces' },
                       ({ getFieldValue }) => ({
                         validator(_, value) {
                           if (!value || getFieldValue('password') === value) {
@@ -432,9 +450,19 @@ export default function Register() {
                         },
                       }),
                     ]}
+                    normalize={(val) => (val ? val.replace(/\s/g, '') : val)}
                     className="mb-3"
                   >
-                    <Input id="password_confirm" name="password_confirm" prefix={<LockOutlined className="text-slate-400 mr-1.5" />} placeholder="Confirm password" className="rounded-xl border-slate-300 h-10 text-sm" />
+                    <Input.Password
+                      id="password_confirm"
+                      name="password_confirm"
+                      prefix={<LockOutlined className="text-slate-400 mr-1.5" />}
+                      placeholder="Confirm password"
+                      onKeyDown={(e) => {
+                        if (e.key === ' ') e.preventDefault();
+                      }}
+                      className="rounded-xl border-slate-300 h-10 text-sm"
+                    />
                   </Form.Item>
                 </div>
 
@@ -465,7 +493,7 @@ export default function Register() {
                   loading={oauthLoading === 'google'}
                   disabled={submitting || otpRequesting || Boolean(oauthLoading)}
                   style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '12px', height: '42px' }}
-                  className="font-semibold border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-300 transition-all duration-150 shadow-none text-xs"
+                  className="oauth-btn google-auth-btn font-semibold border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-300 transition-all duration-150 shadow-none text-xs"
                 >
                   Google
                 </Button>
@@ -475,7 +503,7 @@ export default function Register() {
                   loading={oauthLoading === 'github'}
                   disabled={submitting || otpRequesting || Boolean(oauthLoading)}
                   style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '12px', height: '42px' }}
-                  className="github-auth-btn group font-semibold border-slate-200 bg-white text-slate-700 transition-all duration-150 shadow-none text-xs"
+                  className="oauth-btn github-auth-btn font-semibold border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-300 transition-all duration-150 shadow-none text-xs"
                 >
                   GitHub
                 </Button>
@@ -499,7 +527,7 @@ export default function Register() {
             </div>
 
             {/* Bottom Footer Copyright */}
-            <div className="w-full text-center text-[10px] text-slate-400 mt-3">
+            <div className="w-full text-center text-xs font-semibold text-slate-800 mt-5 pb-8 select-none">
               © {new Date().getFullYear()} Smart Meeting Decision Tracker. All rights reserved.
             </div>
 

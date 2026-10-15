@@ -383,7 +383,7 @@ export default function Meetings() {
           title="No Meetings Found"
           description={search || meetingType || status || (dateRange && dateRange[0] && dateRange[1]) ? "No meetings matched your current filter criteria." : "Try adjusting your search filters or schedule a new meeting."}
           icon={<CalendarOutlined />}
-          actionText={search || meetingType || status || (dateRange && dateRange[0] && dateRange[1]) ? "Reset Filters" : "Create Meeting"}
+          actionText={search || meetingType || status || (dateRange && dateRange[0] && dateRange[1]) ? "Reset Filters" :""}
           onAction={search || meetingType || status || (dateRange && dateRange[0] && dateRange[1]) ? handleResetFilters : () => navigate('/meetings/new')}
         />
       ) : (

@@ -183,6 +183,13 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     authService.logout();
     setUser(null);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('smdt_theme', 'light');
+      document.documentElement.classList.remove('dark');
+      document.body.classList.remove('dark');
+      document.documentElement.style.colorScheme = 'light';
+      window.dispatchEvent(new Event('smdt-theme-reset'));
+    }
     navigate('/login');
   };
 

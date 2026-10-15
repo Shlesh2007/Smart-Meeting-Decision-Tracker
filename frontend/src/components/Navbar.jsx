@@ -55,7 +55,7 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
   const location = useLocation();
   const pathname = location.pathname;
   const navigate = useNavigate();
-  const { user, logout, isAdmin } = useAuth();
+  const { user, logout, isAdmin, isManager } = useAuth();
   const { themeMode, toggleTheme } = useTheme();
   const screens = useBreakpoint();
 
@@ -140,7 +140,16 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
       const intervalTimer = setInterval(() => {
         fetchNotifications();
       }, 15000);
-      return () => clearInterval(intervalTimer);
+
+      const handleNotificationsUpdated = () => {
+        fetchNotifications();
+      };
+      window.addEventListener('notifications-updated', handleNotificationsUpdated);
+
+      return () => {
+        clearInterval(intervalTimer);
+        window.removeEventListener('notifications-updated', handleNotificationsUpdated);
+      };
     }
   }, [user]);
 
@@ -233,7 +242,7 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
     }
     if (pathname === '/admin') {
       return {
-        title: 'Admin Management',
+        title: isManager && !isAdmin ? 'Manager Portal' : 'Admin Management',
         subtitle: '',
       };
     }
@@ -281,11 +290,11 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
       label: 'Action Items',
       onClick: () => handleNavigation('/my-actions'),
     },
-    ...(isAdmin ? [
+    ...((isAdmin || isManager) ? [
       {
         key: '/admin',
         icon: <TeamOutlined className="text-base" />,
-        label: 'Admin Management',
+        label: isManager && !isAdmin ? 'Manager Portal' : 'Admin Management',
         onClick: () => handleNavigation('/admin'),
       },
     ] : []),
@@ -430,12 +439,12 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
         </div>
       ),
     },
-    ...(isAdmin ? [
+    ...((isAdmin || isManager) ? [
       { type: 'divider' },
       {
         key: 'admin_portal',
         icon: <TeamOutlined className="text-blue-600" />,
-        label: <span className="font-bold text-slate-800 dark:text-slate-200">Admin Management Portal</span>,
+        label: <span className="font-bold text-slate-800 dark:text-slate-200">{isManager && !isAdmin ? 'Manager Portal' : 'Admin Management Portal'}</span>,
         onClick: () => navigate('/admin'),
       },
     ] : []),
@@ -513,7 +522,7 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
                     <span className="font-bold text-xs text-slate-900 dark:text-slate-100 truncate">
                       {userFirstName}
                     </span>
-                    <Tag color={isAdmin ? 'volcano' : 'blue'} className="text-[9px] uppercase font-bold m-0 px-1 shrink-0">
+                    <Tag color={user.role === 'OWNER' ? 'gold' : user.role === 'ADMIN' ? 'volcano' : user.role === 'MANAGER' ? 'cyan' : 'blue'} className="text-[9px] uppercase font-bold m-0 px-1 shrink-0">
                       {user.role}
                     </Tag>
                   </div>
@@ -589,16 +598,22 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
           {/* RIGHT SIDE: Quick Actions, Notifications, Theme & Profile */}
           <div className="flex items-center gap-1 sm:gap-2 shrink-0 ml-auto select-none">
 
-            {/* 0. Admin Portal Button (Visible ONLY on responsive/mobile screens for Admins/Owners) */}
-            {isAdmin && (
+            {/* 0. Admin / Manager Portal Button (Visible ONLY on responsive/mobile screens for Admins/Owners/Managers) */}
+            {(isAdmin || isManager) && (
               <button
                 type="button"
                 onClick={() => navigate('/admin')}
-                className="flex lg:hidden h-8 px-2 sm:px-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 dark:bg-slate-100 dark:hover:bg-white text-white dark:text-slate-900 font-bold text-xs items-center justify-center gap-1.5 border-none cursor-pointer shadow-xs transition-colors"
-                title="Admin Management Portal"
+                className={`flex lg:hidden h-8 px-2 sm:px-2.5 rounded-lg font-bold text-xs items-center justify-center gap-1.5 border-none cursor-pointer shadow-xs transition-colors ${
+                  isManager && !isAdmin
+                    ? 'bg-cyan-600 hover:bg-cyan-700 text-white'
+                    : 'bg-slate-900 hover:bg-slate-800 dark:bg-slate-100 dark:hover:bg-white text-white dark:text-slate-900'
+                }`}
+                title={isManager && !isAdmin ? 'Manager Portal' : 'Admin Management Portal'}
               >
                 <TeamOutlined className="text-xs font-bold" />
-                <span className="hidden sm:inline font-bold text-xs">Admin Portal</span>
+                <span className="hidden sm:inline font-bold text-xs">
+                  {isManager && !isAdmin ? 'Manager Portal' : 'Admin Portal'}
+                </span>
               </button>
             )}
 
@@ -742,7 +757,7 @@ export const Navbar = ({ collapsed = false, onToggleSidebar }) => {
                 <span className="font-bold text-xs text-slate-900 truncate">
                   {userFirstName}
                 </span>
-                <Tag color={isAdmin ? 'volcano' : 'blue'} className="text-[9px] uppercase font-bold m-0 px-1 shrink-0">
+                <Tag color={user.role === 'OWNER' ? 'gold' : user.role === 'ADMIN' ? 'volcano' : user.role === 'MANAGER' ? 'cyan' : 'blue'} className="text-[9px] uppercase font-bold m-0 px-1 shrink-0">
                   {user.role}
                 </Tag>
               </div>

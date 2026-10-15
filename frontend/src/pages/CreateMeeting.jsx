@@ -564,7 +564,10 @@ export default function CreateMeeting() {
                     name="participant_ids"
                     mode="multiple"
                     placeholder={selectedTeamObj ? "Select additional non-team participants" : "Select team members"}
-                    options={availableIndividualUsers.map(u => ({ label: `${u.full_name} • ${u.email} (${u.role})`, value: u.id }))}
+                    options={availableIndividualUsers.map(u => ({
+                      label: `${u.full_name || [u.first_name, u.last_name].filter(Boolean).join(' ') || u.username} • ${u.email} (${u.role || 'Member'})`,
+                      value: u.id
+                    }))}
                   />
                 </Form.Item>
                 <p className="text-xs text-slate-400 dark:text-slate-400 mt-1.5 mb-5">
@@ -671,7 +674,7 @@ export default function CreateMeeting() {
                 <Link to="/dashboard" className="no-underline">
                   <Button className="rounded-xl">Cancel</Button>
                 </Link>
-                <Button type="primary" htmlType="submit" loading={submitting} className="bg-slate-900 hover:bg-slate-800 dark:bg-slate-100 dark:hover:bg-white text-white dark:text-slate-900 font-semibold rounded-xl border-none">
+                <Button type="primary" htmlType="submit" loading={submitting} className="schedule-meeting-btn bg-slate-900 hover:bg-slate-800 dark:!bg-white dark:hover:!bg-slate-100 text-white dark:!text-black font-semibold rounded-xl border-none">
                   Schedule Meeting
                 </Button>
               </div>

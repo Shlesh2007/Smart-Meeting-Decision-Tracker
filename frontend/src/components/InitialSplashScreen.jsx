@@ -419,14 +419,22 @@ export function LoadingScreen({ progress, statusMessage }) {
  * InitialSplashScreen wrapper component managing loading timing and fade-out transition.
  */
 export function InitialSplashScreen({ children }) {
-  const [showSplash, setShowSplash] = useState(true);
+  const [showSplash, setShowSplash] = useState(() => {
+    try {
+      return !sessionStorage.getItem('smdt_splash_shown');
+    } catch {
+      return false;
+    }
+  });
   const [progress, setProgress] = useState(0);
   const [statusMessage, setStatusMessage] = useState('Preparing your workspace...');
   const [fadeOut, setFadeOut] = useState(false);
 
   useEffect(() => {
+    if (!showSplash) return;
+
     const startTime = Date.now();
-    const duration = 2400; // 2.4 seconds total animation duration
+    const duration = 900; // Snappy 0.9s duration
 
     const progressInterval = setInterval(() => {
       const elapsed = Date.now() - startTime;
@@ -443,21 +451,24 @@ export function InitialSplashScreen({ children }) {
 
       if (currentProgress >= 100) {
         clearInterval(progressInterval);
+        try {
+          sessionStorage.setItem('smdt_splash_shown', 'true');
+        } catch {}
 
         setTimeout(() => {
           setFadeOut(true);
-        }, 300);
+        }, 150);
 
         setTimeout(() => {
           setShowSplash(false);
-        }, 850);
+        }, 400);
       }
-    }, 35);
+    }, 25);
 
     return () => {
       clearInterval(progressInterval);
     };
-  }, []);
+  }, [showSplash]);
 
   if (!showSplash) {
     return <>{children}</>;

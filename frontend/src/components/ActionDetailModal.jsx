@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Modal, Tag, Select, Button, Tooltip, message as staticMessage, App } from 'antd';
+import { Modal, Tag, Select, Button, Tooltip, message as staticMessage, App, Popconfirm } from 'antd';
 import {
-  CheckSquareOutlined, LockOutlined, ExclamationCircleOutlined, ArrowRightOutlined
+  CheckSquareOutlined, LockOutlined, ExclamationCircleOutlined, ArrowRightOutlined, EditOutlined, DeleteOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { StatusBadge } from './StatusBadge.jsx';
@@ -15,12 +15,14 @@ export const ActionDetailModal = ({
   actionItem,
   onStatusChange,
   onNavigateMeeting,
-  onCompleteRequest
+  onCompleteRequest,
+  onEdit,
+  onDelete
 }) => {
   const navigate = useNavigate();
   const staticApp = App.useApp ? App.useApp() : null;
   const message = staticApp?.message || staticMessage;
-  const { user } = useAuth();
+  const { user, isAdmin, isManager } = useAuth();
 
   const [updating, setUpdating] = useState(false);
   const [justUpdated, setJustUpdated] = useState(false);
@@ -128,7 +130,44 @@ export const ActionDetailModal = ({
     <Modal
       open={open}
       onCancel={onClose}
-      footer={null}
+      footer={
+        (onEdit || onDelete) ? (
+          <div className="flex items-center justify-between w-full pt-1">
+            <div>
+              {onDelete && (isAdmin || isManager || actionItem.created_by === user?.id || actionItem.created_by_detail?.id === user?.id) && (
+                <Popconfirm
+                  title="Delete Action Item"
+                  description="Are you sure you want to delete this action item?"
+                  onConfirm={() => onDelete(actionItem)}
+                  okText="Yes, Delete"
+                  cancelText="No"
+                  okButtonProps={{ danger: true }}
+                >
+                  <Button danger icon={<DeleteOutlined />} size="small">
+                    Delete
+                  </Button>
+                </Popconfirm>
+              )}
+            </div>
+            <div className="flex items-center space-x-2">
+              {onEdit && (isAdmin || isManager || actionItem.created_by === user?.id || actionItem.created_by_detail?.id === user?.id) && (
+                <Button
+                  icon={<EditOutlined />}
+                  size="small"
+                  type="primary"
+                  onClick={() => onEdit(actionItem)}
+                  className="bg-slate-900 hover:bg-slate-800 text-white font-bold"
+                >
+                  Edit Details
+                </Button>
+              )}
+              <Button size="small" onClick={onClose}>
+                Close
+              </Button>
+            </div>
+          </div>
+        ) : null
+      }
       title={
         <div className="flex items-center space-x-2.5 pr-10">
           <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center text-base shrink-0">
@@ -212,7 +251,12 @@ export const ActionDetailModal = ({
                 value={actionItem.status}
                 loading={updating}
                 onChange={handleSelectStatus}
-                className="w-36 font-bold text-xs"
+                style={{ width: 140, minWidth: 140 }}
+                popupMatchSelectWidth={false}
+                dropdownMatchSelectWidth={false}
+                dropdownStyle={{ minWidth: 200 }}
+                popupClassName="!min-w-[200px]"
+                className="font-bold text-xs shrink-0"
                 options={[
                   {
                     label: hasIncompleteDeps ? '🔒 Todo (Locked)' : 'Todo',

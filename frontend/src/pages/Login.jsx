@@ -75,6 +75,12 @@ export default function Login() {
 
   useEffect(() => {
     loginForm.resetFields();
+    if (typeof window !== 'undefined') {
+      document.documentElement.classList.remove('dark');
+      document.body.classList.remove('dark');
+      document.documentElement.style.colorScheme = 'light';
+      window.dispatchEvent(new Event('smdt-theme-reset'));
+    }
   }, [loginForm]);
 
   const handleLoginValuesChange = (changedValues, allValues) => {
@@ -281,13 +287,16 @@ export default function Login() {
   };
 
   const handleConfirmNewPassword = async (values) => {
-    if (values.new_password !== values.confirm_password) {
+    const cleanNewPass = (values.new_password || '').replace(/\s/g, '');
+    const cleanConfirmPass = (values.confirm_password || '').replace(/\s/g, '');
+
+    if (cleanNewPass !== cleanConfirmPass) {
       newPasswordForm.setFields([{ name: 'confirm_password', errors: ['Passwords do not match.'] }]);
       return;
     }
     setOtpLoading(true);
     try {
-      const res = await authService.confirmPasswordReset(resetEmail, otpCode, values.new_password);
+      const res = await authService.confirmPasswordReset(resetEmail, otpCode, cleanNewPass);
       message.success(res.message || 'Password reset successfully!');
       setResetStep(3);
     } catch (err) {
@@ -330,6 +339,22 @@ export default function Login() {
           fontSizeLG: 14,
         },
         components: {
+          Modal: {
+            colorBgElevated: '#ffffff',
+            colorTextHeading: '#0f172a',
+            colorText: '#0f172a',
+            borderRadiusLG: 20,
+            paddingContentHorizontalLG: 24,
+            headerBg: '#ffffff',
+            contentBg: '#ffffff',
+          },
+          Steps: {
+            colorText: '#0f172a',
+            colorTextDescription: '#64748b',
+            colorFillContent: '#e2e8f0',
+            finishIconBorderColor: '#0f172a',
+            colorPrimary: '#0f172a',
+          },
           Form: {
             labelColor: '#334155',
             labelRequiredMarkColor: '#ef4444',
@@ -349,27 +374,27 @@ export default function Login() {
             fontSizeLG: 14,
           },
           Button: {
-            colorPrimary: '#0f172a',
-            colorPrimaryHover: '#1e293b',
-            colorPrimaryActive: '#020617',
+            colorPrimary: '#2563eb',
+            colorPrimaryHover: '#1d4ed8',
+            colorPrimaryActive: '#1e40af',
             controlHeight: 44,
             borderRadius: 12,
           }
         }
       }}
     >
-      <div className="relative w-screen h-screen overflow-hidden lg:grid lg:grid-cols-[50vw_50vw] bg-slate-100/80 lg:bg-slate-50 text-slate-900 select-none">
+      <div className="relative w-screen min-h-screen overflow-x-hidden lg:grid lg:grid-cols-[50vw_50vw] bg-slate-100 lg:bg-slate-50 text-slate-900 select-none">
         
         {/* ========================================== */}
         {/* MOBILE BACKGROUND IMAGE OVERLAY (< lg)     */}
         {/* ========================================== */}
-        <div className="lg:hidden absolute inset-0 z-0 overflow-hidden pointer-events-none">
+        <div className="lg:hidden fixed inset-0 z-0 overflow-hidden pointer-events-none">
           <img
             src="/auth-hero.png"
             alt="Background Hero"
-            className="w-full h-full object-cover object-center filter brightness-[1.08] contrast-[0.85] opacity-25"
+            className="w-full h-full object-cover object-top filter brightness-[1.05] contrast-[0.95] opacity-35"
           />
-          <div className="absolute inset-0 bg-slate-100/70 backdrop-blur-[2px]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-slate-100/30 via-slate-100/70 to-slate-100/95 backdrop-blur-[3px]" />
         </div>
 
         {/* ========================================== */}
@@ -378,29 +403,29 @@ export default function Login() {
         <AuthHero />
 
         {/* ========================================== */}
-        {/* RIGHT SIDE / MAIN FORM CONTAINER (50vw x 100vh) */}
+        {/* RIGHT SIDE / MAIN FORM CONTAINER (50vw x 100vh on desktop) */}
         {/* ========================================== */}
-        <div className="relative z-10 w-full lg:w-[50vw] h-screen overflow-y-auto overflow-x-hidden flex flex-col justify-center items-center p-3 sm:p-6 xl:p-8">
+        <div className="relative z-10 w-full lg:w-[50vw] min-h-screen lg:h-screen overflow-y-auto overflow-x-hidden flex flex-col justify-center items-center px-4 py-8 sm:p-6 xl:p-8">
           
-          <div className="w-[min(calc(100%-32px),480px)] mx-auto flex flex-col items-center justify-center my-auto py-2">
+          <div className="w-full max-w-[420px] mx-auto flex flex-col items-center justify-center my-auto py-2">
             
             {/* Brand Logo Header */}
-            <div className="mb-3 text-center">
-              <Logo variant="full" height={38} isDark={false} className="mx-auto" />
+            <div className="mb-4 text-center">
+              <Logo variant="full" height={42} isDark={false} className="mx-auto" />
             </div>
 
             {/* Page Heading & Subtitle Above Card */}
-            <div className="text-center mb-4 px-2">
-              <h1 className="text-xl sm:text-2xl font-extrabold text-[#0f172a] tracking-tight m-0 leading-tight">
+            <div className="text-center mb-5 px-2">
+              <h1 className="text-2xl sm:text-[26px] font-extrabold text-[#0f172a] tracking-tight m-0 leading-tight">
                 Login to Your Account
               </h1>
-              <p className="text-xs text-slate-600 font-medium mt-1 leading-relaxed m-0 max-w-[340px] sm:max-w-md mx-auto">
+              <p className="text-xs sm:text-sm text-slate-600 font-medium mt-1.5 leading-relaxed m-0 max-w-[340px] mx-auto">
                 Access your team meetings, action items, and decision logs
               </p>
             </div>
 
             {/* Floating White Card */}
-            <div className="w-full bg-white shadow-xl shadow-slate-400/15 rounded-[24px] p-6 sm:p-7 border border-slate-100 auth-card">
+            <div className="w-full bg-white shadow-2xl shadow-slate-900/10 rounded-[28px] p-6 sm:p-7 border border-slate-100/80 auth-card">
               
               {/* Authentication Form */}
               <Form
@@ -416,38 +441,45 @@ export default function Login() {
               >
                 <Form.Item
                   name="username"
-                  label={<span className="font-semibold text-slate-700 text-xs uppercase tracking-wider">Username</span>}
+                  label={<span className="font-semibold text-slate-800 text-sm">Username</span>}
                   rules={[{ required: true, message: 'Please enter username' }]}
                   className="mb-4"
                 >
                   <Input
                     id="username"
                     name="username"
-                    prefix={<UserOutlined className="text-slate-400 mr-1.5" />}
+                    prefix={<UserOutlined className="text-slate-400 mr-2 text-base" />}
                     placeholder="Username"
                     autoComplete="username"
                     onPressEnter={(e) => {
                       e.preventDefault();
                       passwordInputRef.current?.focus();
                     }}
-                    className="rounded-xl border-slate-300 focus:border-blue-600 transition-colors h-11"
+                    className="rounded-xl border-slate-300 focus:border-blue-600 transition-colors h-11 text-sm bg-slate-50/40 hover:bg-white focus:bg-white"
                   />
                 </Form.Item>
 
                 <Form.Item
                   name="password"
-                  label={<span className="font-semibold text-slate-700 text-xs uppercase tracking-wider">Password</span>}
-                  rules={[{ required: true, message: 'Please enter password' }]}
+                  label={<span className="font-semibold text-slate-800 text-sm">Password</span>}
+                  rules={[
+                    { required: true, message: 'Please enter password' },
+                    { pattern: /^\S+$/, message: 'Password cannot contain spaces' }
+                  ]}
+                  normalize={(val) => (val ? val.replace(/\s/g, '') : val)}
                   className="mb-1"
                 >
                   <Input.Password
                     id="password"
                     name="password"
                     ref={passwordInputRef}
-                    prefix={<LockOutlined className="text-slate-400 mr-1.5" />}
+                    prefix={<LockOutlined className="text-slate-400 mr-2 text-base" />}
                     placeholder="••••••••"
                     autoComplete="current-password"
-                    className="rounded-xl border-slate-300 focus:border-blue-600 transition-colors h-11"
+                    onKeyDown={(e) => {
+                      if (e.key === ' ') e.preventDefault();
+                    }}
+                    className="rounded-xl border-slate-300 focus:border-blue-600 transition-colors h-11 text-sm bg-slate-50/40 hover:bg-white focus:bg-white"
                   />
                 </Form.Item>
 
@@ -459,7 +491,7 @@ export default function Login() {
                       closeResetModal();
                       setIsForgotModalOpen(true);
                     }}
-                    className="text-xs font-semibold text-slate-500 hover:text-slate-900 focus:outline-none cursor-pointer bg-transparent border-0 p-0 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="text-xs font-semibold text-slate-600 hover:text-blue-600 focus:outline-none cursor-pointer bg-transparent border-0 p-0 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     Forgot password?
                   </button>
@@ -472,26 +504,26 @@ export default function Login() {
                     loading={submitting}
                     disabled={submitting || Boolean(oauthLoading)}
                     block
-                    className="font-bold rounded-xl border-none bg-slate-900 hover:bg-slate-800 active:bg-slate-950 text-white text-base h-11 shadow-lg shadow-slate-900/20 transition-all duration-200 active:scale-[0.99]"
+                    className="login-submit-btn font-bold rounded-xl border-none bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-base h-12 shadow-lg shadow-blue-500/25 transition-all duration-200 active:scale-[0.99]"
                   >
                     Login
                   </Button>
                 </Form.Item>
               </Form>
 
-              <Divider style={{ margin: '16px 0 16px 0', fontSize: '12px', color: '#64748b', borderColor: '#cbd5e1' }}>
+              <Divider style={{ margin: '18px 0', fontSize: '12px', color: '#64748b', borderColor: '#cbd5e1' }}>
                 <span style={{ whiteSpace: 'nowrap' }}>Or continue with</span>
               </Divider>
 
               {/* Social OAuth Buttons */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', width: '100%', marginBottom: '16px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', width: '100%', marginBottom: '18px' }}>
                 <Button
                   icon={<GoogleOutlined className="text-red-500 text-base" />}
                   onClick={handleGoogleOAuth}
                   loading={oauthLoading === 'google'}
                   disabled={submitting || Boolean(oauthLoading)}
                   style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '12px', height: '42px' }}
-                  className="font-semibold border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-300 transition-all duration-150 shadow-none text-xs"
+                  className="oauth-btn google-auth-btn font-semibold border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-300 transition-all duration-150 shadow-none text-xs"
                 >
                   Google
                 </Button>
@@ -501,7 +533,7 @@ export default function Login() {
                   loading={oauthLoading === 'github'}
                   disabled={submitting || Boolean(oauthLoading)}
                   style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '12px', height: '42px' }}
-                  className="github-auth-btn group font-semibold border-slate-200 bg-white text-slate-700 transition-all duration-150 shadow-none text-xs"
+                  className="oauth-btn github-auth-btn font-semibold border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-900 hover:border-slate-300 transition-all duration-150 shadow-none text-xs"
                 >
                   GitHub
                 </Button>
@@ -510,7 +542,7 @@ export default function Login() {
               {/* Register Link Footer */}
               <div className="text-center text-xs text-slate-500">
                 Don't have an account?{' '}
-                <Link to="/register" className="font-bold text-slate-900 hover:text-slate-700 no-underline transition-colors">
+                <Link to="/register" className="font-bold text-blue-600 hover:text-blue-700 hover:underline no-underline transition-colors">
                   Register now
                 </Link>
               </div>
@@ -518,7 +550,7 @@ export default function Login() {
             </div>
 
             {/* Bottom Footer Copyright */}
-            <div className="w-full text-center text-[11px] text-slate-400 mt-6">
+            <div className="w-full text-center text-xs font-semibold text-slate-800 mt-6 pb-8 select-none">
               © {new Date().getFullYear()} Smart Meeting Decision Tracker. All rights reserved.
             </div>
 
@@ -529,12 +561,19 @@ export default function Login() {
       </div>
 
       <Modal
-        title="Reset Password via OTP"
+        title={<span className="text-slate-900 font-bold text-base">Reset Password via OTP</span>}
         open={isForgotModalOpen}
         onCancel={closeResetModal}
         footer={null}
         destroyOnHidden
+        destroyOnClose
         width={500}
+        className="auth-reset-modal"
+        styles={{
+          content: { backgroundColor: '#ffffff', color: '#0f172a', borderRadius: '20px', border: '1px solid #e2e8f0', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' },
+          header: { backgroundColor: '#ffffff', color: '#0f172a', borderBottom: 'none', marginBottom: '12px' },
+          body: { backgroundColor: '#ffffff', color: '#0f172a' },
+        }}
         style={{ maxWidth: 'calc(100vw - 24px)', margin: '12px auto' }}
       >
         <div className="py-2">
@@ -685,18 +724,40 @@ export default function Login() {
                 label="New Password"
                 rules={[
                   { required: true, message: 'Please enter your new password!' },
-                  { min: 6, message: 'Password must be at least 6 characters.' }
+                  { min: 6, message: 'Password must be at least 6 characters.' },
+                  { pattern: /^\S+$/, message: 'Password cannot contain spaces' }
                 ]}
+                normalize={(val) => (val ? val.replace(/\s/g, '') : val)}
               >
-                <Input.Password id="new_password" name="new_password" prefix={<LockOutlined className="text-slate-400" />} placeholder="••••••••" />
+                <Input.Password
+                  id="new_password"
+                  name="new_password"
+                  prefix={<LockOutlined className="text-slate-400" />}
+                  placeholder="••••••••"
+                  onKeyDown={(e) => {
+                    if (e.key === ' ') e.preventDefault();
+                  }}
+                />
               </Form.Item>
 
               <Form.Item
                 name="confirm_password"
                 label="Confirm New Password"
-                rules={[{ required: true, message: 'Please enter confirm new password' }]}
+                rules={[
+                  { required: true, message: 'Please enter confirm new password' },
+                  { pattern: /^\S+$/, message: 'Password cannot contain spaces' }
+                ]}
+                normalize={(val) => (val ? val.replace(/\s/g, '') : val)}
               >
-                <Input id="confirm_password" name="confirm_password" prefix={<LockOutlined className="text-slate-400" />} placeholder="Confirm new password" />
+                <Input.Password
+                  id="confirm_password"
+                  name="confirm_password"
+                  prefix={<LockOutlined className="text-slate-400" />}
+                  placeholder="Confirm new password"
+                  onKeyDown={(e) => {
+                    if (e.key === ' ') e.preventDefault();
+                  }}
+                />
               </Form.Item>
 
               <div className="flex justify-end space-x-2 mt-6">

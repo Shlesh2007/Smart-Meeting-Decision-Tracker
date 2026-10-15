@@ -6,18 +6,19 @@ import { StatusBadge } from '../components/StatusBadge.jsx';
 import { LoadingSkeleton } from '../components/LoadingSkeleton.jsx';
 import { EmptyState } from '../components/EmptyState.jsx';
 import { ActionDetailModal } from '../components/ActionDetailModal.jsx';
+import { ActionFormModal } from '../components/ActionFormModal.jsx';
 import {
-  Card, Table, Select, Button, Tag, message, Alert, Input, Modal, Tooltip, Dropdown, DatePicker
+  Card, Table, Select, Button, Tag, message, Alert, Input, Modal, Tooltip, Dropdown, DatePicker, Popconfirm
 } from 'antd';
 import {
-  CheckSquareOutlined, SearchOutlined, LockOutlined, ReloadOutlined, EllipsisOutlined
+  CheckSquareOutlined, SearchOutlined, LockOutlined, ReloadOutlined, EllipsisOutlined, EditOutlined, DeleteOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 
 const { RangePicker } = DatePicker;
 
 export default function MyActions() {
-  const { user, isAdmin, isOwner } = useAuth();
+  const { user, isAdmin, isOwner, isManager } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
 
@@ -27,6 +28,7 @@ export default function MyActions() {
   const [search, setSearch] = useState(searchParams.get('search') || '');
   const [updatingId, setUpdatingId] = useState(null);
   const [viewDetailActionItem, setViewDetailActionItem] = useState(null);
+  const [editingActionModal, setEditingActionModal] = useState(null);
 
   const handleCloseDetailModal = () => {
     setViewDetailActionItem(null);
@@ -191,6 +193,17 @@ export default function MyActions() {
     }
   };
 
+  const handleDeleteAction = async (actionId) => {
+    try {
+      await actionService.deleteAction(actionId);
+      message.success('Action item deleted successfully.');
+      fetchMyActions(false);
+    } catch (err) {
+      const msg = err.response?.data?.detail || err.response?.data?.error || 'Failed to delete action item.';
+      message.error(msg);
+    }
+  };
+
   const filteredActions = (Array.isArray(actions) ? actions : []).filter((item) => {
     if (!item) return false;
     const query = search.trim().toLowerCase();
@@ -347,9 +360,9 @@ export default function MyActions() {
       },
     },
     {
-      title: 'Status & Action',
+      title: 'Status',
       key: 'status_action',
-      width: 150,
+      width: 140,
       render: (_, record) => {
         const hasIncompleteDeps = record.dependency_details?.some(d => !d.is_completed);
         const isTerminal = record.status === 'COMPLETED' || record.status === 'CANCELLED';
@@ -363,7 +376,12 @@ export default function MyActions() {
             onChange={(val) => handleStatusChange(record, val)}
             disabled={isTerminal}
             size="small"
-            className="w-34 font-semibold text-xs rounded-lg"
+            style={{ width: 135, minWidth: 135 }}
+            popupMatchSelectWidth={false}
+            dropdownMatchSelectWidth={false}
+            dropdownStyle={{ minWidth: 200 }}
+            popupClassName="!min-w-[200px]"
+            className="font-semibold text-xs rounded-lg shrink-0"
             options={[
               { label: hasIncompleteDeps ? '🔒 Todo (Locked)' : 'Todo', value: 'TODO', disabled: hasIncompleteDeps },
               { label: hasIncompleteDeps ? '🔒 In Progress (Locked)' : 'In Progress', value: 'IN_PROGRESS', disabled: hasIncompleteDeps },
@@ -387,6 +405,52 @@ export default function MyActions() {
         }
 
         return selectNode;
+      },
+    },
+    {
+      title: 'Manage',
+      key: 'manage_action',
+      width: 85,
+      render: (_, record) => {
+        const isCreatedBySelf = record.created_by === user?.id || record.created_by_detail?.id === user?.id;
+        const canEdit = isAdmin || isManager || isCreatedBySelf;
+        const canDelete = isAdmin || isManager || isCreatedBySelf;
+
+        return (
+          <div className="flex items-center space-x-1" onClick={(e) => e.stopPropagation()}>
+            {canEdit && (
+              <Tooltip title="Edit Action Item">
+                <Button
+                  size="small"
+                  type="text"
+                  icon={<EditOutlined className="text-blue-600 dark:text-blue-400 text-xs" />}
+                  onClick={() => setEditingActionModal(record)}
+                  className="h-7 w-7 p-0 flex items-center justify-center hover:bg-blue-50 dark:hover:bg-slate-700 rounded-lg"
+                />
+              </Tooltip>
+            )}
+            {canDelete && (
+              <Popconfirm
+                title="Delete Action Item"
+                description={`Delete "${record.title}"?`}
+                onConfirm={() => handleDeleteAction(record.id)}
+                okText="Yes, Delete"
+                cancelText="No"
+                okButtonProps={{ danger: true }}
+              >
+                <Tooltip title="Delete Action Item">
+                  <Button
+                    size="small"
+                    danger
+                    type="text"
+                    icon={<DeleteOutlined className="text-rose-500 text-xs" />}
+                    className="h-7 w-7 p-0 flex items-center justify-center hover:bg-rose-50 dark:hover:bg-slate-700 rounded-lg"
+                  />
+                </Tooltip>
+              </Popconfirm>
+            )}
+          </div>
+        );
       },
     },
   ];
@@ -583,7 +647,7 @@ export default function MyActions() {
                 showSorterTooltip={false}
                 rowKey="id"
                 pagination={{ pageSize: 10 }}
-                scroll={{ x: 1050 }}
+                scroll={{ x: 1100 }}
                 className="w-full"
                 onRow={(record) => ({
                   onClick: (e) => {
@@ -736,6 +800,37 @@ export default function MyActions() {
                           ]}
                         />
                       </div>
+
+                      {/* Manage buttons for mobile */}
+                      {(isAdmin || isManager || (record.created_by === user?.id || record.created_by_detail?.id === user?.id)) && (
+                        <div className="pt-1 flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+                          <Button
+                            size="small"
+                            icon={<EditOutlined />}
+                            onClick={() => setEditingActionModal(record)}
+                            className="text-xs h-7 px-2.5 font-medium"
+                          >
+                            Edit
+                          </Button>
+                          <Popconfirm
+                            title="Delete Action Item"
+                            description={`Delete "${record.title}"?`}
+                            onConfirm={() => handleDeleteAction(record.id)}
+                            okText="Yes, Delete"
+                            cancelText="No"
+                            okButtonProps={{ danger: true }}
+                          >
+                            <Button
+                              size="small"
+                              danger
+                              icon={<DeleteOutlined />}
+                              className="text-xs h-7 px-2.5 font-medium"
+                            >
+                              Delete
+                            </Button>
+                          </Popconfirm>
+                        </div>
+                      )}
                     </div>
                   </Card>
                 );
@@ -765,6 +860,14 @@ export default function MyActions() {
           setCompletingItem(item);
           setCompletionNotesInput(item.completion_notes || '');
         }}
+        onEdit={(item) => {
+          setViewDetailActionItem(null);
+          setEditingActionModal(item);
+        }}
+        onDelete={(item) => {
+          setViewDetailActionItem(null);
+          handleDeleteAction(item.id);
+        }}
       />
 
       {/* Action Completion Notes Modal */}
@@ -790,6 +893,21 @@ export default function MyActions() {
           />
         </div>
       </Modal>
+
+      {/* Action Item Edit Form Modal */}
+      {editingActionModal && (
+        <ActionFormModal
+          open={Boolean(editingActionModal)}
+          onClose={() => setEditingActionModal(null)}
+          existingAction={editingActionModal}
+          meetingId={editingActionModal.meeting_id || (typeof editingActionModal.meeting === 'object' ? editingActionModal.meeting?.id : editingActionModal.meeting)}
+          decisionId={editingActionModal.decision}
+          onSuccess={() => {
+            setEditingActionModal(null);
+            fetchMyActions(false);
+          }}
+        />
+      )}
     </div>
   );
 }

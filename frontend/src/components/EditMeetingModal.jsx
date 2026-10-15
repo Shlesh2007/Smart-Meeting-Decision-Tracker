@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Modal, Form, Input, Select, DatePicker, TimePicker, message, Popover, Tag, Checkbox } from 'antd';
 import { TeamOutlined, SyncOutlined } from '@ant-design/icons';
 import { meetingService, userService, teamService } from '../services/api.js';
@@ -14,50 +14,129 @@ export const EditMeetingModal = ({ open, onClose, meeting, onSuccess }) => {
 
   useEffect(() => {
     if (open) {
+      // Pre-seed known users from existing meeting details immediately
+      const initialMap = new Map();
+      if (Array.isArray(meeting?.participants_detail)) {
+        meeting.participants_detail.forEach((p) => {
+          if (p && p.id) initialMap.set(Number(p.id), p);
+        });
+      }
+      if (initialMap.size > 0) {
+        setUsers(Array.from(initialMap.values()));
+      }
+
       Promise.all([
-        userService.getUsers(),
+        userService.getUsers({ page_size: 500 }),
         teamService.getTeams()
       ])
         .then(([uRes, tRes]) => {
-          setUsers(uRes.results || uRes);
-          setTeams(tRes.results || tRes);
+          const uList = Array.isArray(uRes) ? uRes : (uRes.results || []);
+          const tList = Array.isArray(tRes) ? tRes : (tRes.results || []);
+
+          const userMap = new Map();
+          // 1. Seed existing meeting participants
+          if (Array.isArray(meeting?.participants_detail)) {
+            meeting.participants_detail.forEach((p) => {
+              if (p && p.id) userMap.set(Number(p.id), p);
+            });
+          }
+          // 2. Add all organization members
+          uList.forEach((u) => {
+            if (u && u.id) userMap.set(Number(u.id), u);
+          });
+
+          setUsers(Array.from(userMap.values()));
+          setTeams(tList);
         })
         .catch(() => {
-          setUsers([]);
+          const fallbackUsers = Array.isArray(meeting?.participants_detail) ? meeting.participants_detail : [];
+          setUsers(fallbackUsers);
           setTeams([]);
         });
     }
-  }, [open]);
+  }, [open, meeting]);
 
   const selectedTeamId = Form.useWatch('team', form);
   const isRecurring = Form.useWatch('is_recurring', form);
+  const currentParticipantIds = Form.useWatch('participant_ids', form) || [];
 
-  // Compute selected team object & member IDs to exclude them from individual invite list
-  const selectedTeamObj = teams.find(t => t.id === selectedTeamId);
-  const teamMemberIds = new Set(
-    selectedTeamObj
-      ? (selectedTeamObj.members || (selectedTeamObj.members_detail ? selectedTeamObj.members_detail.map(m => m.id) : []))
-      : []
-  );
-
-  const availableIndividualUsers = users.filter(u => !teamMemberIds.has(u.id));
-
-  // Auto-clean individual participant selections if a user is already in the selected team
-  useEffect(() => {
-    if (selectedTeamId && teams.length > 0) {
-      const selectedTeam = teams.find(t => t.id === selectedTeamId);
-      if (selectedTeam) {
-        const tMemberIds = new Set(
-          selectedTeam.members || (selectedTeam.members_detail ? selectedTeam.members_detail.map(m => m.id) : [])
-        );
-        const currentIndividualIds = form.getFieldValue('participant_ids') || [];
-        const cleanedIds = currentIndividualIds.filter(id => !tMemberIds.has(id));
-        if (cleanedIds.length !== currentIndividualIds.length) {
-          form.setFieldsValue({ participant_ids: cleanedIds });
-        }
-      }
+  // Compute selected team object & member IDs
+  const selectedTeamObj = teams.find((t) => t.id === selectedTeamId);
+  const teamMemberIds = useMemo(() => {
+    if (!selectedTeamObj) return new Set();
+    const ids = [];
+    if (Array.isArray(selectedTeamObj.members)) {
+      selectedTeamObj.members.forEach((m) => ids.push(typeof m === 'object' ? m.id : m));
     }
-  }, [selectedTeamId, teams, form]);
+    if (Array.isArray(selectedTeamObj.members_detail)) {
+      selectedTeamObj.members_detail.forEach((m) => ids.push(m.id));
+    }
+    return new Set(ids.map(Number));
+  }, [selectedTeamObj]);
+
+  const selectedParticipantIdSet = useMemo(() => {
+    return new Set(
+      (Array.isArray(currentParticipantIds) ? currentParticipantIds : []).map(Number)
+    );
+  }, [currentParticipantIds]);
+
+  // Compute rich participant options so Ant Design always renders full names & roles instead of raw IDs
+  const participantOptions = useMemo(() => {
+    const userMap = new Map();
+
+    // 1. Meeting participants
+    if (Array.isArray(meeting?.participants_detail)) {
+      meeting.participants_detail.forEach((p) => {
+        if (p && p.id) userMap.set(Number(p.id), p);
+      });
+    }
+
+    // 2. Team member details
+    teams.forEach((t) => {
+      if (Array.isArray(t.members_detail)) {
+        t.members_detail.forEach((m) => {
+          if (m && m.id && !userMap.has(Number(m.id))) userMap.set(Number(m.id), m);
+        });
+      }
+    });
+
+    // 3. Organization users
+    users.forEach((u) => {
+      if (u && u.id) userMap.set(Number(u.id), u);
+    });
+
+    const options = [];
+    const addedIds = new Set();
+
+    // Include users: all selected users PLUS unselected users who aren't already part of the chosen team
+    userMap.forEach((u, uId) => {
+      const isSelected = selectedParticipantIdSet.has(uId);
+      const isInTeam = teamMemberIds.has(uId);
+
+      if (isSelected || !isInTeam) {
+        addedIds.add(uId);
+        const name = u.full_name || [u.first_name, u.last_name].filter(Boolean).join(' ') || u.username || `User #${uId}`;
+        const role = u.role || 'Member';
+        options.push({
+          label: `${name} (${role})`,
+          value: u.id
+        });
+      }
+    });
+
+    // Fallback safety: ensure any currently selected ID has an option tag so it never renders a bare number
+    selectedParticipantIdSet.forEach((id) => {
+      if (!addedIds.has(id)) {
+        addedIds.add(id);
+        options.push({
+          label: `Participant #${id} (Invited)`,
+          value: id
+        });
+      }
+    });
+
+    return options;
+  }, [users, meeting, teams, selectedParticipantIdSet, teamMemberIds]);
 
   useEffect(() => {
     if (meeting && open) {
@@ -357,7 +436,7 @@ export const EditMeetingModal = ({ open, onClose, meeting, onSuccess }) => {
                   name="participant_ids"
                   mode="multiple"
                   placeholder={selectedTeamObj ? "Additional participants" : "Select participants"}
-                  options={availableIndividualUsers.map(u => ({ label: `${u.full_name} (${u.role})`, value: u.id }))}
+                  options={participantOptions}
                 />
               </Form.Item>
             </div>
@@ -412,12 +491,15 @@ export const EditMeetingModal = ({ open, onClose, meeting, onSuccess }) => {
                   </div>
 
                   {meeting?.recurrence_group_id && (
-                    <div className="pt-0.5">
+                    <div className="p-2 bg-purple-50/70 dark:bg-purple-950/30 rounded-lg border border-purple-200/80 dark:border-purple-800/50 mt-1.5">
                       <Form.Item name="update_series" valuePropName="checked" className="!m-0" style={{ marginBottom: 0 }}>
                         <Checkbox className="text-xs text-purple-700 dark:text-purple-300 font-bold">
                           Apply changes to all future meetings in this recurring series
                         </Checkbox>
                       </Form.Item>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400 m-0 mt-1 leading-normal">
+                        💡 <strong>Single day updates:</strong> Leave this unchecked if only today's meeting has different attendees. Each day has its own separate meeting record.
+                      </p>
                     </div>
                   )}
                 </div>

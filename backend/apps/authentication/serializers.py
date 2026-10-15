@@ -53,7 +53,10 @@ class UserSerializer(serializers.ModelSerializer):
             tables = set(connection.introspection.table_names())
 
             owner = None
-            if 'authentication_organization' in tables:
+            if getattr(obj, 'role', None) == User.Role.OWNER:
+                owner = obj
+
+            if not owner and 'authentication_organization' in tables:
                 from .models import Organization
                 owned_org = Organization.objects.filter(owner=obj).first()
                 if owned_org:

@@ -46,7 +46,7 @@ export const ParticipantProfileModal = ({ open, onClose, user }) => {
               <p className="text-xs text-slate-500 dark:text-slate-400 m-0 truncate">{user.email}</p>
             )}
             <div className="mt-1.5 flex items-center space-x-2 flex-wrap gap-y-1">
-              <Tag color={isAdminOrOwner ? 'volcano' : 'blue'} className="font-bold uppercase tracking-wider text-[10px]">
+              <Tag color={roleName === 'OWNER' ? 'gold' : roleName === 'ADMIN' ? 'volcano' : roleName === 'MANAGER' ? 'cyan' : 'blue'} className="font-bold uppercase tracking-wider text-[10px]">
                 {roleName}
               </Tag>
               {user.department && (

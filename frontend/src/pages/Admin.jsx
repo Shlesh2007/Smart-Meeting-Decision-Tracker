@@ -30,13 +30,13 @@ const getRoleTag = (role) => {
 };
 
 export default function Admin() {
-  const { user, isOwner, isAdmin, logout } = useAuth();
+  const { user, isOwner, isAdmin, isManager, logout } = useAuth();
   const { message: antMessage } = App.useApp();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const resolveTabKey = (param) => {
-    if (!param) return 'users';
+    if (!param) return (isManager && !isAdmin) ? 'department_requests' : 'users';
     const p = String(param).toLowerCase();
     if (p === 'leave_requests' || p === 'leave-requests' || p === 'leave') {
       return 'leave_requests';
@@ -49,8 +49,7 @@ export default function Admin() {
     }
     if (p === 'teams') return 'teams';
     if (p === 'organization_settings' || p === 'settings') return 'organization_settings';
-    if (p === 'users') return 'users';
-    return 'users';
+    return (isManager && !isAdmin) ? 'department_requests' : 'users';
   };
 
   const tabParam = searchParams.get('tab') || searchParams.get('activeTab');
@@ -169,7 +168,8 @@ export default function Admin() {
   const handleConfirmMakeOwner = async () => {
     if (!promoteOwnerTarget) return;
 
-    if (!user?.is_oauth_user && !promoteOwnerPassword) {
+    const cleanPassword = (promoteOwnerPassword || '').replace(/\s/g, '');
+    if (!user?.is_oauth_user && !cleanPassword) {
       setPromoteOwnerError('Please enter your owner password to authorize this action.');
       return;
     }
@@ -178,7 +178,7 @@ export default function Admin() {
     setPromoteOwnerError('');
 
     try {
-      await userService.updateUserRole(promoteOwnerTarget.id, 'OWNER', promoteOwnerPassword);
+      await userService.updateUserRole(promoteOwnerTarget.id, 'OWNER', cleanPassword);
       antMessage.success(`Successfully assigned Owner role to ${promoteOwnerTarget.full_name || promoteOwnerTarget.username}!`);
       handleCancelMakeOwner();
       loadData();
@@ -201,7 +201,7 @@ export default function Admin() {
     setOrgDeleteLoading(true);
     try {
       const res = await authService.deleteOrganization({
-        password: orgDeletePassword,
+        password: (orgDeletePassword || '').replace(/\s/g, ''),
         confirmation: orgDeleteConfirmText.trim().toUpperCase(),
       });
       antMessage.success(res.message || 'Your organization and all associated data have been permanently deleted.');
@@ -272,7 +272,7 @@ export default function Admin() {
   }, [antMessage]);
 
   useEffect(() => {
-    if (isAdmin) {
+    if (isAdmin || isManager) {
       if (!fetchedRef.current) {
         fetchedRef.current = true;
         loadData(true);
@@ -296,7 +296,7 @@ export default function Admin() {
         window.removeEventListener('visibilitychange', handleFocus);
       };
     }
-  }, [isAdmin, loadData]);
+  }, [isAdmin, isManager, loadData]);
 
 
   const openCreateTeam = () => {
@@ -349,15 +349,15 @@ export default function Admin() {
     }
   };
 
-  if (!isAdmin) {
+  if (!isAdmin && !isManager) {
     return (
       <div className="py-16 max-w-xl mx-auto text-center">
         <Alert
           type="error"
           showIcon
           icon={<LockOutlined className="text-2xl" />}
-          message="Access Restricted (Admin / Owner Only)"
-          description="You must have an Admin or Owner role to access the User & Team Management Portal."
+          message="Access Restricted (Admin / Manager Only)"
+          description="You must have an Admin, Manager, or Owner role to access the Management Portal."
         />
       </div>
     );
@@ -442,7 +442,7 @@ export default function Admin() {
       render: (_, u) => {
         const isTargetOwner = u.role === 'OWNER';
         const isSelf = u.id === user?.id;
-        const isDisabled = isSelf || isTargetOwner || (!isOwner && u.role === 'ADMIN');
+        const isDisabled = !isAdmin || isSelf || isTargetOwner || (!isOwner && u.role === 'ADMIN');
 
         return (
           <Select
@@ -489,7 +489,7 @@ export default function Admin() {
       render: (_, u) => {
         const isTargetOwner = u.role === 'OWNER';
         const isSelf = u.id === user?.id;
-        const isDisabled = isSelf || isTargetOwner || (!isOwner && u.role === 'ADMIN');
+        const isDisabled = !isAdmin || isSelf || isTargetOwner || (!isOwner && u.role === 'ADMIN');
 
         if (isTargetOwner) {
           return (
@@ -501,7 +501,7 @@ export default function Admin() {
           );
         }
 
-        const canRemove = !isSelf && !isTargetOwner && (isOwner || u.role !== 'ADMIN');
+        const canRemove = isAdmin && !isSelf && !isTargetOwner && (isOwner || u.role !== 'ADMIN');
 
         return (
           <div className="flex items-center space-x-2">
@@ -554,11 +554,12 @@ export default function Admin() {
   };
 
   const handleApproveLeaveRequest = async (reqId) => {
-    setActionLoadingId(reqId);
+    setActionLoadingId(`approve_leave_${reqId}`);
     try {
       const res = await organizationLeaveRequestService.approveRequest(reqId);
       message.success(res.message || 'Organization leave request approved!');
       loadData();
+      window.dispatchEvent(new CustomEvent('notifications-updated'));
     } catch (err) {
       const msg = err.response?.data?.error || err.response?.data?.detail || 'Failed to approve leave request.';
       message.error(msg);
@@ -568,11 +569,12 @@ export default function Admin() {
   };
 
   const handleRejectLeaveRequest = async (reqId) => {
-    setActionLoadingId(reqId);
+    setActionLoadingId(`reject_leave_${reqId}`);
     try {
       const res = await organizationLeaveRequestService.rejectRequest(reqId);
       message.success(res.message || 'Organization leave request rejected.');
       loadData();
+      window.dispatchEvent(new CustomEvent('notifications-updated'));
     } catch (err) {
       const msg = err.response?.data?.error || err.response?.data?.detail || 'Failed to reject leave request.';
       message.error(msg);
@@ -582,11 +584,12 @@ export default function Admin() {
   };
 
   const handleApproveDeptRequest = async (reqId) => {
-    setActionLoadingId(reqId);
+    setActionLoadingId(`approve_dept_${reqId}`);
     try {
       const res = await departmentRequestService.approveRequest(reqId);
       message.success(res.message || 'Department change request approved!');
       loadData();
+      window.dispatchEvent(new CustomEvent('notifications-updated'));
     } catch (err) {
       const msg = err.response?.data?.error || err.response?.data?.detail || 'Failed to approve request.';
       message.error(msg);
@@ -596,11 +599,12 @@ export default function Admin() {
   };
 
   const handleRejectDeptRequest = async (reqId) => {
-    setActionLoadingId(reqId);
+    setActionLoadingId(`reject_dept_${reqId}`);
     try {
       const res = await departmentRequestService.rejectRequest(reqId);
       message.success(res.message || 'Department change request rejected.');
       loadData();
+      window.dispatchEvent(new CustomEvent('notifications-updated'));
     } catch (err) {
       const msg = err.response?.data?.error || err.response?.data?.detail || 'Failed to reject request.';
       message.error(msg);
@@ -610,11 +614,12 @@ export default function Admin() {
   };
 
   const handleApproveJoinRequest = async (reqId) => {
-    setActionLoadingId(reqId);
+    setActionLoadingId(`approve_join_${reqId}`);
     try {
       const res = await organizationJoinRequestService.approveRequest(reqId);
       message.success(res.message || 'Organization join request approved!');
       loadData();
+      window.dispatchEvent(new CustomEvent('notifications-updated'));
     } catch (err) {
       const msg = err.response?.data?.error || err.response?.data?.detail || 'Failed to approve join request.';
       message.error(msg);
@@ -624,11 +629,12 @@ export default function Admin() {
   };
 
   const handleRejectJoinRequest = async (reqId) => {
-    setActionLoadingId(reqId);
+    setActionLoadingId(`reject_join_${reqId}`);
     try {
       const res = await organizationJoinRequestService.rejectRequest(reqId);
       message.success(res.message || 'Organization join request rejected.');
       loadData();
+      window.dispatchEvent(new CustomEvent('notifications-updated'));
     } catch (err) {
       const msg = err.response?.data?.error || err.response?.data?.detail || 'Failed to reject join request.';
       message.error(msg);
@@ -697,7 +703,8 @@ export default function Admin() {
               type="primary"
               size="small"
               icon={<CheckOutlined />}
-              loading={actionLoadingId === r.id}
+              loading={actionLoadingId === `approve_dept_${r.id}`}
+              disabled={actionLoadingId === `reject_dept_${r.id}`}
               onClick={() => handleApproveDeptRequest(r.id)}
               className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs border-none"
             >
@@ -707,7 +714,8 @@ export default function Admin() {
               danger
               size="small"
               icon={<CloseOutlined />}
-              loading={actionLoadingId === r.id}
+              loading={actionLoadingId === `reject_dept_${r.id}`}
+              disabled={actionLoadingId === `approve_dept_${r.id}`}
               onClick={() => handleRejectDeptRequest(r.id)}
               className="font-bold text-xs"
             >
@@ -774,7 +782,8 @@ export default function Admin() {
               type="primary"
               size="small"
               icon={<CheckOutlined />}
-              loading={actionLoadingId === r.id}
+              loading={actionLoadingId === `approve_join_${r.id}`}
+              disabled={actionLoadingId === `reject_join_${r.id}`}
               onClick={() => handleApproveJoinRequest(r.id)}
               className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs border-none"
             >
@@ -784,7 +793,8 @@ export default function Admin() {
               danger
               size="small"
               icon={<CloseOutlined />}
-              loading={actionLoadingId === r.id}
+              loading={actionLoadingId === `reject_join_${r.id}`}
+              disabled={actionLoadingId === `approve_join_${r.id}`}
               onClick={() => handleRejectJoinRequest(r.id)}
               className="font-bold text-xs"
             >
@@ -861,7 +871,8 @@ export default function Admin() {
                 type="primary"
                 size="small"
                 icon={<CheckOutlined />}
-                loading={actionLoadingId === r.id}
+                loading={actionLoadingId === `approve_leave_${r.id}`}
+                disabled={actionLoadingId === `reject_leave_${r.id}`}
                 className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs border-none"
               >
                 Approve Leave
@@ -871,7 +882,8 @@ export default function Admin() {
               danger
               size="small"
               icon={<CloseOutlined />}
-              loading={actionLoadingId === r.id}
+              loading={actionLoadingId === `reject_leave_${r.id}`}
+              disabled={actionLoadingId === `approve_leave_${r.id}`}
               onClick={() => handleRejectLeaveRequest(r.id)}
               className="font-bold text-xs"
             >
@@ -893,19 +905,25 @@ export default function Admin() {
         <div>
           <h1 className="text-lg sm:text-2xl font-bold text-slate-900 dark:text-white m-0 flex items-center space-x-2">
             <SafetyOutlined className="text-slate-900 dark:text-slate-100" />
-            <span>Admin & Role Management Portal</span>
+            <span>{isManager && !isAdmin ? 'Manager Portal' : 'Admin & Role Management Portal'}</span>
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 m-0 mt-1">Manage organization users, role hierarchy (Owner, Admin, Manager, Member), and teams.</p>
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 m-0 mt-1">
+            {isManager && !isAdmin
+              ? 'Review employee department change requests, manage organization join/leave requests, and view teams.'
+              : 'Manage organization users, role hierarchy (Owner, Admin, Manager, Member), and teams.'}
+          </p>
         </div>
-        <Button
-          type="primary"
-          size="middle"
-          icon={<PlusOutlined />}
-          onClick={openCreateTeam}
-          className="h-9 px-4 text-xs font-bold rounded-xl border-none bg-slate-900 hover:bg-slate-800 text-white shadow-xs w-full sm:w-auto shrink-0 flex items-center justify-center"
-        >
-          Create New Team
-        </Button>
+        {isAdmin && (
+          <Button
+            type="primary"
+            size="middle"
+            icon={<PlusOutlined />}
+            onClick={openCreateTeam}
+            className="h-9 px-4 text-xs font-bold rounded-xl border-none bg-slate-900 hover:bg-slate-800 text-white shadow-xs w-full sm:w-auto shrink-0 flex items-center justify-center"
+          >
+            Create New Team
+          </Button>
+        )}
       </div>
 
       <Card className="shadow-xs rounded-2xl dark:bg-slate-800 dark:border-slate-700/80 w-full max-w-full" styles={{ body: { padding: '12px 16px' } }}>
@@ -1224,7 +1242,8 @@ export default function Admin() {
                                   type="primary"
                                   size="small"
                                   icon={<CheckOutlined className="text-[9px]" />}
-                                  loading={actionLoadingId === r.id}
+                                  loading={actionLoadingId === `approve_dept_${r.id}`}
+                                  disabled={actionLoadingId === `reject_dept_${r.id}`}
                                   onClick={() => handleApproveDeptRequest(r.id)}
                                   className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] border-none rounded-md h-6 px-2.5"
                                 >
@@ -1234,7 +1253,8 @@ export default function Admin() {
                                   danger
                                   size="small"
                                   icon={<CloseOutlined className="text-[9px]" />}
-                                  loading={actionLoadingId === r.id}
+                                  loading={actionLoadingId === `reject_dept_${r.id}`}
+                                  disabled={actionLoadingId === `approve_dept_${r.id}`}
                                   onClick={() => handleRejectDeptRequest(r.id)}
                                   className="font-bold text-[10px] rounded-md h-6 px-2.5"
                                 >
@@ -1332,7 +1352,8 @@ export default function Admin() {
                                   type="primary"
                                   size="small"
                                   icon={<CheckOutlined className="text-[9px]" />}
-                                  loading={actionLoadingId === r.id}
+                                  loading={actionLoadingId === `approve_join_${r.id}`}
+                                  disabled={actionLoadingId === `reject_join_${r.id}`}
                                   onClick={() => handleApproveJoinRequest(r.id)}
                                   className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] border-none rounded-md h-6 px-2.5"
                                 >
@@ -1342,7 +1363,8 @@ export default function Admin() {
                                   danger
                                   size="small"
                                   icon={<CloseOutlined className="text-[9px]" />}
-                                  loading={actionLoadingId === r.id}
+                                  loading={actionLoadingId === `reject_join_${r.id}`}
+                                  disabled={actionLoadingId === `approve_join_${r.id}`}
                                   onClick={() => handleRejectJoinRequest(r.id)}
                                   className="font-bold text-[10px] rounded-md h-6 px-2.5"
                                 >
@@ -1450,7 +1472,8 @@ export default function Admin() {
                                     type="primary"
                                     size="small"
                                     icon={<CheckOutlined className="text-[9px]" />}
-                                    loading={actionLoadingId === r.id}
+                                    loading={actionLoadingId === `approve_leave_${r.id}`}
+                                    disabled={actionLoadingId === `reject_leave_${r.id}`}
                                     className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] border-none rounded-md h-6 px-2.5"
                                   >
                                     Approve Leave
@@ -1460,7 +1483,8 @@ export default function Admin() {
                                   danger
                                   size="small"
                                   icon={<CloseOutlined className="text-[9px]" />}
-                                  loading={actionLoadingId === r.id}
+                                  loading={actionLoadingId === `reject_leave_${r.id}`}
+                                  disabled={actionLoadingId === `approve_leave_${r.id}`}
                                   onClick={() => handleRejectLeaveRequest(r.id)}
                                   className="font-bold text-[10px] rounded-md h-6 px-2.5"
                                 >
@@ -1563,7 +1587,7 @@ export default function Admin() {
                               <span className="font-bold text-slate-900 dark:text-white text-base">{team.name}</span>
                             </div>
                           }
-                          extra={
+                          extra={isAdmin ? (
                             <div className="flex space-x-2">
                               <Button
                                 size="small"
@@ -1582,7 +1606,7 @@ export default function Admin() {
                                 <Button size="small" danger icon={<DeleteOutlined />} />
                               </Popconfirm>
                             </div>
-                          }
+                          ) : null}
                         >
                           {team.description && (
                             <p className="text-sm text-slate-600 dark:text-slate-300 mb-4 bg-slate-50 dark:bg-slate-800 p-2.5 rounded-lg border border-slate-100 dark:border-slate-700 italic">
@@ -1756,7 +1780,10 @@ export default function Admin() {
                   placeholder="Enter your owner password"
                   size="large"
                   value={orgDeletePassword}
-                  onChange={(e) => setOrgDeletePassword(e.target.value)}
+                  onChange={(e) => setOrgDeletePassword(e.target.value.replace(/\s/g, ''))}
+                  onKeyDown={(e) => {
+                    if (e.key === ' ') e.preventDefault();
+                  }}
                   className="rounded-lg"
                   autoFocus
                 />
@@ -1874,7 +1901,10 @@ export default function Admin() {
                   placeholder="Enter your owner password"
                   size="large"
                   value={promoteOwnerPassword}
-                  onChange={(e) => setPromoteOwnerPassword(e.target.value)}
+                  onChange={(e) => setPromoteOwnerPassword(e.target.value.replace(/\s/g, ''))}
+                  onKeyDown={(e) => {
+                    if (e.key === ' ') e.preventDefault();
+                  }}
                   onPressEnter={handleConfirmMakeOwner}
                   className="rounded-lg"
                   autoFocus

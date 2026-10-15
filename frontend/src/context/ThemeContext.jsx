@@ -5,6 +5,7 @@ import { ConfigProvider, theme as antdTheme, message } from 'antd';
 const ThemeContext = createContext({
   themeMode: 'light',
   toggleTheme: () => {},
+  setThemeMode: () => {},
 });
 
 export const ThemeProvider = ({ children }) => {
@@ -16,6 +17,25 @@ export const ThemeProvider = ({ children }) => {
     }
     return 'light';
   });
+
+  const applyThemeMode = (mode) => {
+    const nextTheme = mode === 'dark' ? 'dark' : 'light';
+    const root = document.documentElement;
+    const body = document.body;
+    if (nextTheme === 'dark') {
+      root.classList.add('dark');
+      body.classList.add('dark');
+      root.style.colorScheme = 'dark';
+    } else {
+      root.classList.remove('dark');
+      body.classList.remove('dark');
+      root.style.colorScheme = 'light';
+    }
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('smdt_theme', nextTheme);
+    }
+    setThemeMode(nextTheme);
+  };
 
   // Synchronize document classes on initial mount & mode change
   useEffect(() => {
@@ -35,6 +55,12 @@ export const ThemeProvider = ({ children }) => {
       body.classList.remove('dark');
       root.style.colorScheme = 'light';
     }
+
+    const handleThemeReset = () => {
+      applyThemeMode('light');
+    };
+    window.addEventListener('smdt-theme-reset', handleThemeReset);
+    return () => window.removeEventListener('smdt-theme-reset', handleThemeReset);
   }, [themeMode]);
 
   // Radial Theme Reveal Transition
@@ -141,7 +167,7 @@ export const ThemeProvider = ({ children }) => {
   const isDark = themeMode === 'dark';
 
   return (
-    <ThemeContext.Provider value={{ themeMode, toggleTheme }}>
+    <ThemeContext.Provider value={{ themeMode, toggleTheme, setThemeMode: applyThemeMode }}>
       <ConfigProvider
         wave={{ disabled: true }}
         theme={{

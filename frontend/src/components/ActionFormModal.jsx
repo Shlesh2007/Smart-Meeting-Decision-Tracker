@@ -180,9 +180,12 @@ export const ActionFormModal = ({
       completion_notes: values.completion_notes || '',
       assigned_to: Array.isArray(values.assigned_to) ? values.assigned_to : (values.assigned_to ? [values.assigned_to] : []),
       priority: values.priority,
-      due_date: values.due_date ? values.due_date.format('YYYY-MM-DD') : '',
       dependency_ids: values.dependency_ids || []
     };
+
+    if (values.due_date) {
+      payload.due_date = values.due_date.format('YYYY-MM-DD');
+    }
 
     if (existingAction) {
       payload.status = values.status;
@@ -244,7 +247,7 @@ export const ActionFormModal = ({
       onCancel={onClose}
       onOk={() => form.submit()}
       confirmLoading={submitting}
-      okButtonProps={{ className: 'bg-slate-900 hover:bg-slate-800 font-semibold text-white border-none h-9 px-4 rounded-lg shadow-xs' }}
+      okButtonProps={{ className:"schedule-meeting-btn bg-slate-900 hover:bg-slate-800 dark:!bg-white dark:hover:!bg-slate-100 text-white dark:!text-black font-semibold h-9 px-4 rounded-lg border-none" }}
       cancelButtonProps={{ className: 'font-semibold border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 h-9 px-4 rounded-lg' }}
       okText={existingAction ? 'Update Action' : 'Create Action'}
       width={600}

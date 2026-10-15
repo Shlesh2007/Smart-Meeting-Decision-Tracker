@@ -243,6 +243,9 @@ export const ProfileModal = ({ open, onClose, user }) => {
 
   // Step 1: Check account deletion eligibility before showing the delete modal
   const handleOpenDeleteFlow = async () => {
+    if (typeof document !== 'undefined' && document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
     setDeleteCheckLoading(true);
     setDeleteCheckData(null);
     try {
@@ -273,13 +276,14 @@ export const ProfileModal = ({ open, onClose, user }) => {
       return;
     }
     const isOauth = Boolean(deleteCheckData?.is_oauth_user ?? user?.is_oauth_user);
-    if (!isOauth && !transferPassword) {
+    const cleanPassword = (transferPassword || '').replace(/\s/g, '');
+    if (!isOauth && !cleanPassword) {
       setTransferError('Owner password is required to transfer ownership.');
       return;
     }
     setTransferLoading(true);
     try {
-      const res = await authService.transferOwnership(transferTarget, transferPassword);
+      const res = await authService.transferOwnership(transferTarget, cleanPassword);
       await refreshUser();
       message.success(res.message || 'Ownership transferred successfully!');
       setShowTransferModal(false);
@@ -310,7 +314,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
     setDeleteLoading(true);
     try {
       const payload = {
-        password: deletePassword,
+        password: (deletePassword || '').replace(/\s/g, ''),
         confirmation: deleteConfirmationText.trim(),
       };
       await authService.deleteAccount(payload);
@@ -339,7 +343,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
     setDeleteOrgLoading(true);
     try {
       await authService.deleteOrganization({
-        password: deleteOrgPassword,
+        password: (deleteOrgPassword || '').replace(/\s/g, ''),
         confirmation: deleteOrgConfirmationText.trim(),
       });
       message.success('Your organization and all associated data have been permanently deleted.');
@@ -374,6 +378,8 @@ export const ProfileModal = ({ open, onClose, user }) => {
     <>
       {/* Main Profile Details Modal */}
       <Modal
+        closable={!isEditing}
+        focusTriggerAfterClose={false}
         title={
           <div className="flex items-center justify-between pr-6">
             <div className="flex items-center space-x-2 text-slate-900 dark:text-white">
@@ -456,7 +462,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
               </h3>
               <p className="text-xs text-slate-500 dark:text-slate-400 m-0 truncate leading-tight mt-0.5">{user.email}</p>
               <div className="mt-1 flex items-center space-x-1.5 flex-wrap">
-                <Tag color={user.role === 'ADMIN' ? 'volcano' : 'blue'} className="font-bold uppercase tracking-wider text-[9.5px] py-0 px-1.5">
+                <Tag color={user.role === 'OWNER' ? 'gold' : user.role === 'ADMIN' ? 'volcano' : user.role === 'MANAGER' ? 'cyan' : 'blue'} className="font-bold uppercase tracking-wider text-[9.5px] py-0 px-1.5">
                   {user.role}
                 </Tag>
                 {user.department && (
@@ -471,40 +477,50 @@ export const ProfileModal = ({ open, onClose, user }) => {
           {!isEditing ? (
             /* View Mode Details */
             <div className="space-y-2.5">
-              <Descriptions column={1} bordered size="small" className="bg-white dark:bg-slate-900 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 [&_.ant-descriptions-item-cell]:!py-1.5 [&_.ant-descriptions-item-cell]:!px-3">
+              <Descriptions 
+                column={1} 
+                bordered 
+                size="small" 
+                labelStyle={{ width: '165px', minWidth: '150px' }}
+                className="bg-white dark:bg-slate-900 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 [&_.ant-descriptions-item-cell]:!py-1.5 [&_.ant-descriptions-item-cell]:!px-3"
+              >
                 <Descriptions.Item label={<span className="font-semibold text-slate-600 dark:text-slate-400 flex items-center text-xs"><BankOutlined className="mr-1.5 text-blue-500" />Organization Workspace</span>}>
                   <span className="font-bold text-blue-600 dark:text-blue-400 text-xs sm:text-sm">{user.organization_name || 'SmartMeeting Workspace'}</span>
                 </Descriptions.Item>
 
-                <Descriptions.Item label={<span className="font-semibold text-slate-600 dark:text-slate-400 flex items-center text-xs"><CrownOutlined className="mr-1.5 text-amber-500" />Organization Owner</span>}>
-                  {user.organization_owner ? (
-                    <div className="flex items-center space-x-1.5 flex-wrap">
-                      <span className="font-bold text-slate-900 dark:text-slate-200 text-xs sm:text-sm">
-                        {user.organization_owner.full_name || user.organization_owner.username}
+                {user.role !== 'OWNER' && (
+                  <Descriptions.Item label={<span className="font-semibold text-slate-600 dark:text-slate-400 flex items-center text-xs"><CrownOutlined className="mr-1.5 text-amber-500" />Organization Owner</span>}>
+                    {user.organization_owner ? (
+                      <div className="flex items-center space-x-1.5 flex-wrap">
+                        <span className="font-bold text-slate-900 dark:text-slate-200 text-xs sm:text-sm">
+                          {user.organization_owner.full_name || user.organization_owner.username}
+                        </span>
+                        <span className="text-xs text-slate-500 dark:text-slate-400">
+                          ({user.organization_owner.email})
+                        </span>
+                        {user.id === user.organization_owner.id && (
+                          <Tag color="gold" className="font-bold text-[9.5px] m-0 px-1 py-0 border-amber-400 text-amber-900">
+                            👑 You (Owner)
+                          </Tag>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="font-medium text-slate-500 dark:text-slate-400 text-xs italic">
+                        System Administrator / Workspace Founder
                       </span>
-                      <span className="text-xs text-slate-500 dark:text-slate-400">
-                        ({user.organization_owner.email})
-                      </span>
-                      {user.id === user.organization_owner.id && (
-                        <Tag color="gold" className="font-bold text-[9.5px] m-0 px-1 py-0 border-amber-400 text-amber-900">
-                          👑 You (Owner)
-                        </Tag>
-                      )}
-                    </div>
-                  ) : (
-                    <span className="font-medium text-slate-500 dark:text-slate-400 text-xs italic">
-                      {user.role === 'OWNER' ? `${user.full_name || user.username} (${user.email})` : 'System Administrator / Workspace Founder'}
-                    </span>
-                  )}
-                </Descriptions.Item>
+                    )}
+                  </Descriptions.Item>
+                )}
 
                 <Descriptions.Item label={<span className="font-semibold text-slate-600 dark:text-slate-400 flex items-center text-xs"><UserOutlined className="mr-1.5 text-blue-500" />Username</span>}>
                   <span className="font-semibold text-slate-900 dark:text-slate-200 text-xs sm:text-sm">{user.username}</span>
                 </Descriptions.Item>
 
                 <Descriptions.Item label={<span className="font-semibold text-slate-600 dark:text-slate-400 flex items-center text-xs"><MailOutlined className="mr-1.5 text-blue-500" />Email Address</span>}>
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1 w-full min-w-0">
-                    <span className="font-medium text-slate-900 dark:text-slate-200 break-all text-xs sm:text-sm">{user.email}</span>
+                  <div className="flex items-center justify-between gap-2 w-full min-w-0">
+                    <span className="font-medium text-slate-900 dark:text-slate-200 text-xs sm:text-sm truncate" title={user.email}>
+                      {user.email}
+                    </span>
                     <Button 
                       type="link" 
                       size="small"
@@ -518,7 +534,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
                         emailForm.resetFields();
                         setShowEmailModal(true);
                       }}
-                      className="text-xs font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 p-0 shrink-0 whitespace-nowrap mt-0.5 sm:mt-0"
+                      className="text-xs font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 p-0 shrink-0 whitespace-nowrap"
                     >
                       Change Email
                     </Button>
@@ -528,7 +544,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
                 <Descriptions.Item label={<span className="font-semibold text-slate-600 dark:text-slate-400 flex items-center text-xs"><IdcardOutlined className="mr-1.5 text-blue-500" />Account Role</span>}>
                   <div className="flex items-center justify-between gap-1 w-full min-w-0">
                     <span className="font-bold text-slate-900 dark:text-slate-200 text-xs sm:text-sm">{user.role}</span>
-                    {(user.role === 'ADMIN' || user.role === 'OWNER') && (
+                    {!isDesktop && (user.role === 'ADMIN' || user.role === 'OWNER') && (
                       <Button
                         type="primary"
                         size="small"
@@ -537,9 +553,23 @@ export const ProfileModal = ({ open, onClose, user }) => {
                           onClose();
                           navigate('/admin');
                         }}
-                        className="bg-slate-900 hover:bg-slate-800 text-white font-bold text-[11px] rounded-lg border-none shrink-0"
+                        className="md:hidden bg-slate-900 hover:bg-slate-800 text-white font-bold text-[11px] rounded-lg border-none shrink-0"
                       >
                         Admin Portal →
+                      </Button>
+                    )}
+                    {!isDesktop && user.role === 'MANAGER' && (
+                      <Button
+                        type="primary"
+                        size="small"
+                        icon={<TeamOutlined />}
+                        onClick={() => {
+                          onClose();
+                          navigate('/admin');
+                        }}
+                        className="md:hidden bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-[11px] rounded-lg border-none shrink-0"
+                      >
+                        Manager Portal →
                       </Button>
                     )}
                   </div>
@@ -636,7 +666,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
                   icon={<DeleteOutlined />}
                   loading={deleteCheckLoading}
                   onClick={handleOpenDeleteFlow}
-                  className="text-xs font-semibold shrink-0 px-2 py-0.5 h-7 flex items-center justify-center rounded-lg"
+                  className="delete-account-btn text-xs font-semibold shrink-0 px-2 py-0.5 h-7 flex items-center justify-center rounded-lg"
                 >
                   Delete Account
                 </Button>
@@ -1105,17 +1135,22 @@ export const ProfileModal = ({ open, onClose, user }) => {
 
             {!(deleteCheckData?.is_oauth_user ?? user?.is_oauth_user) && (
               <div>
+                <input type="text" name="username" autoComplete="username" className="hidden" readOnly tabIndex={-1} />
                 <label htmlFor="transfer_password" className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
                    Password
                 </label>
                 <Input.Password
                   id="transfer_password"
                   name="transfer_password"
+                  autoComplete="new-password"
                   prefix={<LockOutlined className="text-slate-400" />}
                   placeholder="Enter your password to authorize transfer"
                   size="large"
                   value={transferPassword}
-                  onChange={(e) => setTransferPassword(e.target.value)}
+                  onChange={(e) => setTransferPassword(e.target.value.replace(/\s/g, ''))}
+                  onKeyDown={(e) => {
+                    if (e.key === ' ') e.preventDefault();
+                  }}
                   className="rounded-lg"
                 />
               </div>
@@ -1162,6 +1197,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
         width={490}
         destroyOnHidden
         closable={false}
+        focusTriggerAfterClose={false}
       >
         <div className="py-3 space-y-4">
           <Alert
@@ -1179,19 +1215,23 @@ export const ProfileModal = ({ open, onClose, user }) => {
           <div className="space-y-3">
             {!(deleteCheckData?.is_oauth_user ?? user?.is_oauth_user) && (
               <div>
+                <input type="text" name="username" autoComplete="username" className="hidden" readOnly tabIndex={-1} />
                 <label htmlFor="delete_password" className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
                   Current Password
                 </label>
                 <Input.Password
                   id="delete_password"
                   name="delete_password"
+                  autoComplete="new-password"
                   prefix={<LockOutlined className="text-slate-400" />}
                   placeholder="Enter your current password"
                   size="large"
                   value={deletePassword}
-                  onChange={(e) => setDeletePassword(e.target.value)}
+                  onChange={(e) => setDeletePassword(e.target.value.replace(/\s/g, ''))}
+                  onKeyDown={(e) => {
+                    if (e.key === ' ') e.preventDefault();
+                  }}
                   className="rounded-lg"
-                  autoFocus
                 />
               </div>
             )}
@@ -1203,6 +1243,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
               <Input
                 id="delete_confirmation_text"
                 name="delete_confirmation_text"
+                autoComplete="off"
                 placeholder="DELETE"
                 size="large"
                 value={deleteConfirmationText}
@@ -1234,7 +1275,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
                 (!(deleteCheckData?.is_oauth_user ?? user?.is_oauth_user) && !deletePassword)
               }
               onClick={handleDeleteAccount}
-              className="font-semibold"
+              className="delete-account-btn font-semibold"
             >
               Delete Account
             </Button>
@@ -1261,6 +1302,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
         width={500}
         destroyOnHidden
         closable={false}
+        focusTriggerAfterClose={false}
       >
         <div className="py-3 space-y-4">
           <Alert
@@ -1278,19 +1320,23 @@ export const ProfileModal = ({ open, onClose, user }) => {
           <div className="space-y-3">
             {!(deleteCheckData?.is_oauth_user ?? user?.is_oauth_user) && (
               <div>
+                <input type="text" name="username" autoComplete="username" className="hidden" readOnly tabIndex={-1} />
                 <label htmlFor="delete_org_password" className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
                   Current Password
                 </label>
                 <Input.Password
                   id="delete_org_password"
                   name="delete_org_password"
+                  autoComplete="new-password"
                   prefix={<LockOutlined className="text-slate-400" />}
                   placeholder="Enter your current password"
                   size="large"
                   value={deleteOrgPassword}
-                  onChange={(e) => setDeleteOrgPassword(e.target.value)}
+                  onChange={(e) => setDeleteOrgPassword(e.target.value.replace(/\s/g, ''))}
+                  onKeyDown={(e) => {
+                    if (e.key === ' ') e.preventDefault();
+                  }}
                   className="rounded-lg"
-                  autoFocus
                 />
               </div>
             )}
@@ -1302,6 +1348,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
               <Input
                 id="delete_org_confirmation_text"
                 name="delete_org_confirmation_text"
+                autoComplete="off"
                 placeholder="DELETE ORGANIZATION"
                 size="large"
                 value={deleteOrgConfirmationText}
@@ -1334,7 +1381,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
                 (!(deleteCheckData?.is_oauth_user ?? user?.is_oauth_user) && !deleteOrgPassword)
               }
               onClick={handleDeleteOrganization}
-              className="font-semibold"
+              className="delete-account-btn font-semibold"
             >
               Delete Organization
             </Button>
