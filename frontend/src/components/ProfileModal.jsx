@@ -496,35 +496,36 @@ export const ProfileModal = ({ open, onClose, user }) => {
           {!isEditing ? (
             /* View Mode Details */
             <div className="space-y-2.5">
-              <Descriptions 
-                column={1} 
-                bordered 
-                size="small" 
-                labelStyle={{ 
-                  width: isDesktop ? '160px' : '108px', 
-                  minWidth: isDesktop ? '160px' : '108px' 
-                }}
-                contentStyle={{
-                  minWidth: 0,
-                  overflow: 'hidden',
-                }}
-                className="bg-white dark:bg-slate-900 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 w-full [&_table]:!table-layout-fixed [&_table]:!w-full [&_.ant-descriptions-row]:!w-full [&_.ant-descriptions-item-cell]:!py-1.5 [&_.ant-descriptions-item-cell]:!px-2.5 sm:[&_.ant-descriptions-item-cell]:!px-3 [&_.ant-descriptions-item-container]:!min-w-0 [&_.ant-descriptions-item-container]:!w-full [&_.ant-descriptions-item-container]:!overflow-hidden [&_.ant-descriptions-item-content]:!min-w-0 [&_.ant-descriptions-item-content]:!w-full [&_.ant-descriptions-item-content]:!overflow-hidden"
-              >
-                <Descriptions.Item label={<span className="font-semibold text-slate-600 dark:text-slate-400 flex items-center text-xs whitespace-nowrap"><BankOutlined className="mr-1 text-blue-500 shrink-0" /><span className="hidden sm:inline">Organization </span>Workspace</span>}>
-                  <span className="font-bold text-blue-600 dark:text-blue-400 text-xs sm:text-sm truncate block" title={user.organization_name || 'SmartMeeting Workspace'}>{user.organization_name || 'SmartMeeting Workspace'}</span>
-                </Descriptions.Item>
+              <div className="bg-white dark:bg-slate-900 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 divide-y divide-slate-200 dark:divide-slate-800 text-xs w-full shadow-xs">
+                {/* 1. Workspace */}
+                <div className="flex items-center min-w-0 w-full">
+                  <div className="w-[110px] sm:w-[160px] shrink-0 bg-slate-50/80 dark:bg-slate-800/60 px-2.5 py-2 font-semibold text-slate-600 dark:text-slate-400 flex items-center border-r border-slate-200 dark:border-slate-800 self-stretch">
+                    <BankOutlined className="mr-1.5 text-blue-500 shrink-0 text-xs" />
+                    <span className="truncate">Workspace</span>
+                  </div>
+                  <div className="flex-1 min-w-0 px-2.5 py-2 flex items-center">
+                    <span className="font-bold text-blue-600 dark:text-blue-400 text-xs sm:text-sm truncate block" title={user.organization_name || 'SmartMeeting Workspace'}>
+                      {user.organization_name || 'SmartMeeting Workspace'}
+                    </span>
+                  </div>
+                </div>
 
+                {/* 2. Organization Owners */}
                 {Boolean(ownersList.length > 0 && (user.role !== 'OWNER' || isMultiOwner)) && (
-                  <Descriptions.Item label={<span className="font-semibold text-slate-600 dark:text-slate-400 flex items-center text-xs whitespace-nowrap"><CrownOutlined className="mr-1 text-amber-500 shrink-0" />{isMultiOwner ? `Owners (${ownersList.length})` : 'Owner'}</span>}>
-                    <div className="space-y-1 py-0.5 min-w-0 w-full">
+                  <div className="flex min-w-0 w-full">
+                    <div className="w-[110px] sm:w-[160px] shrink-0 bg-slate-50/80 dark:bg-slate-800/60 px-2.5 py-2 font-semibold text-slate-600 dark:text-slate-400 flex items-center border-r border-slate-200 dark:border-slate-800 self-stretch">
+                      <CrownOutlined className="mr-1.5 text-amber-500 shrink-0 text-xs" />
+                      <span className="truncate">{isMultiOwner ? `Owners (${ownersList.length})` : 'Owner'}</span>
+                    </div>
+                    <div className="flex-1 min-w-0 px-2.5 py-2 space-y-1.5">
                       {ownersList.map((owner) => {
                         const isSelf = user.id === owner.id;
                         return (
-                          <div key={owner.id} className="flex items-center space-x-1.5 flex-nowrap min-w-0 w-full">
-                            <span className="font-bold text-slate-900 dark:text-slate-200 text-xs sm:text-sm truncate min-w-0" title={`${owner.full_name || owner.username} (${owner.email})`}>
+                          <div key={owner.id} className="flex items-center justify-between gap-1.5 min-w-0 w-full">
+                            <span className="font-bold text-slate-900 dark:text-slate-200 text-xs sm:text-sm truncate min-w-0 flex-1" title={`${owner.full_name || owner.username} (${owner.email})`}>
                               {owner.full_name || owner.username}
                             </span>
-                            <span className="text-xs text-slate-500 dark:text-slate-400 hidden sm:inline truncate">
+                            <span className="text-[11px] text-slate-500 dark:text-slate-400 hidden sm:inline truncate shrink-0">
                               ({owner.email})
                             </span>
                             {isSelf ? (
@@ -540,119 +541,162 @@ export const ProfileModal = ({ open, onClose, user }) => {
                         );
                       })}
                     </div>
-                  </Descriptions.Item>
+                  </div>
                 )}
 
                 {user.role !== 'OWNER' && ownersList.length === 0 && (
-                  <Descriptions.Item label={<span className="font-semibold text-slate-600 dark:text-slate-400 flex items-center text-xs whitespace-nowrap"><CrownOutlined className="mr-1 text-amber-500 shrink-0" />Owner</span>}>
-                    <span className="font-medium text-slate-500 dark:text-slate-400 text-xs italic truncate block">
-                      Workspace Founder
-                    </span>
-                  </Descriptions.Item>
+                  <div className="flex items-center min-w-0 w-full">
+                    <div className="w-[110px] sm:w-[160px] shrink-0 bg-slate-50/80 dark:bg-slate-800/60 px-2.5 py-2 font-semibold text-slate-600 dark:text-slate-400 flex items-center border-r border-slate-200 dark:border-slate-800 self-stretch">
+                      <CrownOutlined className="mr-1.5 text-amber-500 shrink-0 text-xs" />
+                      <span className="truncate">Owner</span>
+                    </div>
+                    <div className="flex-1 min-w-0 px-2.5 py-2 flex items-center">
+                      <span className="font-medium text-slate-500 dark:text-slate-400 text-xs italic truncate block">
+                        Workspace Founder
+                      </span>
+                    </div>
+                  </div>
                 )}
 
-                <Descriptions.Item label={<span className="font-semibold text-slate-600 dark:text-slate-400 flex items-center text-xs whitespace-nowrap"><UserOutlined className="mr-1 text-blue-500 shrink-0" />Username</span>}>
-                  <span className="font-semibold text-slate-900 dark:text-slate-200 text-xs sm:text-sm truncate block" title={user.username}>{user.username}</span>
-                </Descriptions.Item>
-
-                <Descriptions.Item label={<span className="font-semibold text-slate-600 dark:text-slate-400 flex items-center text-xs whitespace-nowrap"><MailOutlined className="mr-1 text-blue-500 shrink-0" />Email<span className="hidden sm:inline"> Address</span></span>}>
-                  <div className="flex items-center justify-between gap-1.5 w-full min-w-0 overflow-hidden">
-                    <span className="font-medium text-slate-900 dark:text-slate-200 text-xs sm:text-sm truncate min-w-0 flex-1" title={user.email}>
-                      {user.email}
+                {/* 3. Username */}
+                <div className="flex items-center min-w-0 w-full">
+                  <div className="w-[110px] sm:w-[160px] shrink-0 bg-slate-50/80 dark:bg-slate-800/60 px-2.5 py-2 font-semibold text-slate-600 dark:text-slate-400 flex items-center border-r border-slate-200 dark:border-slate-800 self-stretch">
+                    <UserOutlined className="mr-1.5 text-blue-500 shrink-0 text-xs" />
+                    <span className="truncate">Username</span>
+                  </div>
+                  <div className="flex-1 min-w-0 px-2.5 py-2 flex items-center">
+                    <span className="font-semibold text-slate-900 dark:text-slate-200 text-xs sm:text-sm truncate block" title={user.username}>
+                      {user.username}
                     </span>
-                    <Button 
-                      type="link" 
-                      size="small"
-                      icon={<SafetyCertificateOutlined className="text-blue-600 text-xs" />}
-                      onClick={() => {
-                        setNewEmail('');
-                        setOtpCode('');
-                        setEmailError('');
-                        setEmailSuccessMsg('');
-                        setEmailStep(1);
-                        emailForm.resetFields();
-                        setShowEmailModal(true);
-                      }}
-                      className="text-[11px] sm:text-xs font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 p-0 shrink-0 whitespace-nowrap flex items-center"
-                    >
-                      Change Email
-                    </Button>
                   </div>
-                </Descriptions.Item>
+                </div>
 
-                <Descriptions.Item label={<span className="font-semibold text-slate-600 dark:text-slate-400 flex items-center text-xs whitespace-nowrap"><IdcardOutlined className="mr-1 text-blue-500 shrink-0" /><span className="hidden sm:inline">Account </span>Role</span>}>
-                  <div className="flex items-center justify-between gap-1.5 w-full min-w-0">
-                    <span className="font-bold text-slate-900 dark:text-slate-200 text-xs sm:text-sm shrink-0">{user.role}</span>
-                    {!isDesktop && (user.role === 'ADMIN' || user.role === 'OWNER') && (
-                      <Button
-                        type="primary"
-                        size="small"
-                        icon={<TeamOutlined />}
-                        onClick={() => {
-                          onClose();
-                          navigate('/admin');
-                        }}
-                        className="md:hidden bg-slate-900 hover:bg-slate-800 text-white font-bold text-[10.5px] rounded-lg border-none shrink-0 h-6 px-2 whitespace-nowrap"
-                      >
-                        Admin Portal →
-                      </Button>
-                    )}
-                    {!isDesktop && user.role === 'MANAGER' && (
-                      <Button
-                        type="primary"
-                        size="small"
-                        icon={<TeamOutlined />}
-                        onClick={() => {
-                          onClose();
-                          navigate('/admin');
-                        }}
-                        className="md:hidden bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-[10.5px] rounded-lg border-none shrink-0 h-6 px-2 whitespace-nowrap"
-                      >
-                        Manager Portal →
-                      </Button>
-                    )}
+                {/* 4. Email Address */}
+                <div className="flex items-center min-w-0 w-full">
+                  <div className="w-[110px] sm:w-[160px] shrink-0 bg-slate-50/80 dark:bg-slate-800/60 px-2.5 py-2 font-semibold text-slate-600 dark:text-slate-400 flex items-center border-r border-slate-200 dark:border-slate-800 self-stretch">
+                    <MailOutlined className="mr-1.5 text-blue-500 shrink-0 text-xs" />
+                    <span className="truncate">Email Address</span>
                   </div>
-                </Descriptions.Item>
-
-                <Descriptions.Item label={<span className="font-semibold text-slate-600 dark:text-slate-400 flex items-center text-xs whitespace-nowrap"><TeamOutlined className="mr-1 text-blue-500 shrink-0" />Department</span>}>
-                  <div className="flex items-center justify-between gap-1.5 w-full min-w-0 overflow-hidden">
-                    <div className="min-w-0 flex-1 truncate">
-                      <span className="font-medium text-slate-900 dark:text-slate-200 text-xs sm:text-sm truncate block" title={user.department || 'General Team'}>
-                        {user.department || 'General Team'}
+                  <div className="flex-1 min-w-0 px-2.5 py-2">
+                    <div className="flex items-center justify-between gap-1.5 min-w-0 w-full">
+                      <span className="font-medium text-slate-900 dark:text-slate-200 text-xs sm:text-sm truncate min-w-0 flex-1" title={user.email}>
+                        {user.email}
                       </span>
-                      {pendingReq && (
-                        <span className="block text-[9.5px] text-amber-600 dark:text-amber-400 font-bold truncate" title={`Pending: ${pendingReq.requested_department}`}>
-                          ⏳ Req: {pendingReq.requested_department}
-                        </span>
+                      <Button 
+                        type="link" 
+                        size="small"
+                        icon={<SafetyCertificateOutlined className="text-blue-600 text-xs" />}
+                        onClick={() => {
+                          setNewEmail('');
+                          setOtpCode('');
+                          setEmailError('');
+                          setEmailSuccessMsg('');
+                          setEmailStep(1);
+                          emailForm.resetFields();
+                          setShowEmailModal(true);
+                        }}
+                        className="text-[11px] sm:text-xs font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 p-0 shrink-0 whitespace-nowrap flex items-center"
+                      >
+                        Change Email
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 5. Account Role */}
+                <div className="flex items-center min-w-0 w-full">
+                  <div className="w-[110px] sm:w-[160px] shrink-0 bg-slate-50/80 dark:bg-slate-800/60 px-2.5 py-2 font-semibold text-slate-600 dark:text-slate-400 flex items-center border-r border-slate-200 dark:border-slate-800 self-stretch">
+                    <IdcardOutlined className="mr-1.5 text-blue-500 shrink-0 text-xs" />
+                    <span className="truncate">Account Role</span>
+                  </div>
+                  <div className="flex-1 min-w-0 px-2.5 py-2">
+                    <div className="flex items-center justify-between gap-1.5 min-w-0 w-full">
+                      <span className="font-bold text-slate-900 dark:text-slate-200 text-xs sm:text-sm shrink-0">{user.role}</span>
+                      {!isDesktop && (user.role === 'ADMIN' || user.role === 'OWNER') && (
+                        <Button
+                          type="primary"
+                          size="small"
+                          icon={<TeamOutlined />}
+                          onClick={() => {
+                            onClose();
+                            navigate('/admin');
+                          }}
+                          className="md:hidden bg-slate-900 hover:bg-slate-800 text-white font-bold text-[10.5px] rounded-lg border-none shrink-0 h-6 px-2 whitespace-nowrap"
+                        >
+                          Admin Portal →
+                        </Button>
+                      )}
+                      {!isDesktop && user.role === 'MANAGER' && (
+                        <Button
+                          type="primary"
+                          size="small"
+                          icon={<TeamOutlined />}
+                          onClick={() => {
+                            onClose();
+                            navigate('/admin');
+                          }}
+                          className="md:hidden bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-[10.5px] rounded-lg border-none shrink-0 h-6 px-2 whitespace-nowrap"
+                        >
+                          Manager Portal →
+                        </Button>
                       )}
                     </div>
-                    <Button
-                      type="link"
-                      size="small"
-                      icon={<TeamOutlined className="text-blue-600 text-xs" />}
-                      onClick={() => {
-                        if (pendingReq) {
-                          setRequestedDept(pendingReq.requested_department || '');
-                          setDeptReason(pendingReq.reason || '');
-                        } else {
-                          setRequestedDept('');
-                          setDeptReason('');
-                        }
-                        setShowDeptModal(true);
-                      }}
-                      className="text-[11px] sm:text-xs font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 p-0 shrink-0 whitespace-nowrap flex items-center"
-                    >
-                      {pendingReq ? 'View Request' : 'Request Change'}
-                    </Button>
                   </div>
-                </Descriptions.Item>
+                </div>
 
-                <Descriptions.Item label={<span className="font-semibold text-slate-600 dark:text-slate-400 flex items-center text-xs whitespace-nowrap"><CalendarOutlined className="mr-1 text-blue-500 shrink-0" /><span className="hidden sm:inline">Member </span>Since</span>}>
-                  <span className="font-medium text-slate-900 dark:text-slate-200 text-xs sm:text-sm whitespace-nowrap">
-                    {user.date_joined ? dayjs(user.date_joined).format('MMMM DD, YYYY') : 'N/A'}
-                  </span>
-                </Descriptions.Item>
-              </Descriptions>
+                {/* 6. Department */}
+                <div className="flex items-center min-w-0 w-full">
+                  <div className="w-[110px] sm:w-[160px] shrink-0 bg-slate-50/80 dark:bg-slate-800/60 px-2.5 py-2 font-semibold text-slate-600 dark:text-slate-400 flex items-center border-r border-slate-200 dark:border-slate-800 self-stretch">
+                    <TeamOutlined className="mr-1.5 text-blue-500 shrink-0 text-xs" />
+                    <span className="truncate">Department</span>
+                  </div>
+                  <div className="flex-1 min-w-0 px-2.5 py-2">
+                    <div className="flex items-center justify-between gap-1.5 min-w-0 w-full">
+                      <div className="min-w-0 flex-1 truncate">
+                        <span className="font-medium text-slate-900 dark:text-slate-200 text-xs sm:text-sm truncate block" title={user.department || 'General Team'}>
+                          {user.department || 'General Team'}
+                        </span>
+                        {pendingReq && (
+                          <span className="block text-[9.5px] text-amber-600 dark:text-amber-400 font-bold truncate" title={`Pending: ${pendingReq.requested_department}`}>
+                            ⏳ Req: {pendingReq.requested_department}
+                          </span>
+                        )}
+                      </div>
+                      <Button
+                        type="link"
+                        size="small"
+                        icon={<TeamOutlined className="text-blue-600 text-xs" />}
+                        onClick={() => {
+                          if (pendingReq) {
+                            setRequestedDept(pendingReq.requested_department || '');
+                            setDeptReason(pendingReq.reason || '');
+                          } else {
+                            setRequestedDept('');
+                            setDeptReason('');
+                          }
+                          setShowDeptModal(true);
+                        }}
+                        className="text-[11px] sm:text-xs font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 p-0 shrink-0 whitespace-nowrap flex items-center"
+                      >
+                        {pendingReq ? 'View Request' : 'Request Change'}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 7. Member Since */}
+                <div className="flex items-center min-w-0 w-full">
+                  <div className="w-[110px] sm:w-[160px] shrink-0 bg-slate-50/80 dark:bg-slate-800/60 px-2.5 py-2 font-semibold text-slate-600 dark:text-slate-400 flex items-center border-r border-slate-200 dark:border-slate-800 self-stretch">
+                    <CalendarOutlined className="mr-1.5 text-blue-500 shrink-0 text-xs" />
+                    <span className="truncate">Member Since</span>
+                  </div>
+                  <div className="flex-1 min-w-0 px-2.5 py-2 flex items-center">
+                    <span className="font-medium text-slate-900 dark:text-slate-200 text-xs sm:text-sm whitespace-nowrap">
+                      {user.date_joined ? dayjs(user.date_joined).format('MMMM DD, YYYY') : 'N/A'}
+                    </span>
+                  </div>
+                </div>
+              </div>
 
               {/* Organization Workspace Membership & Leave Request */}
               {user.role !== 'OWNER' && user.role !== 'UNASSIGNED' && (
