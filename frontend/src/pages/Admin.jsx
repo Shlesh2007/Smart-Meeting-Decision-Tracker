@@ -1580,6 +1580,7 @@ export default function Admin() {
                         <Card
                           key={team.id}
                           className="shadow-xs border border-slate-200 dark:border-slate-700 rounded-2xl dark:bg-slate-900 hover:shadow-md transition-all"
+                          styles={{ body: { paddingTop: 14 } }}
                           title={
                             <div className="flex items-center space-x-2">
                               <TeamOutlined className="text-slate-900 dark:text-slate-100" />
@@ -1613,7 +1614,7 @@ export default function Admin() {
                             </p>
                           )}
 
-                          <div className="space-y-3 pt-2">
+                          <div className="space-y-3">
                             <div>
                               <div className="flex justify-between items-center mb-2">
                                 <span className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400 flex items-center">

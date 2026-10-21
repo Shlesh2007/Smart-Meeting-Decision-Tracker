@@ -12,7 +12,7 @@ import { actionService } from '../services/api.js';
 export const ActionDetailModal = ({
   open,
   onClose,
-  actionItem,
+  actionItem: propActionItem,
   onStatusChange,
   onNavigateMeeting,
   onCompleteRequest,
@@ -22,10 +22,19 @@ export const ActionDetailModal = ({
   const navigate = useNavigate();
   const staticApp = App.useApp ? App.useApp() : null;
   const message = staticApp?.message || staticMessage;
-  const { user, isAdmin, isManager } = useAuth();
+  const { user, isAdmin, isManager, isOwner } = useAuth();
 
   const [updating, setUpdating] = useState(false);
   const [justUpdated, setJustUpdated] = useState(false);
+  const [cachedAction, setCachedAction] = useState(propActionItem);
+
+  useEffect(() => {
+    if (propActionItem) {
+      setCachedAction(propActionItem);
+    }
+  }, [propActionItem]);
+
+  const actionItem = propActionItem || cachedAction;
 
   useEffect(() => {
     if (justUpdated) {
@@ -49,11 +58,26 @@ export const ActionDetailModal = ({
     : [];
 
   const isAssignedToUser = user?.id && assignedIds.includes(user.id);
+  const isCreator = actionItem.created_by === user?.id || actionItem.created_by_detail?.id === user?.id;
+  const isPrivileged = isAdmin || isManager || isOwner;
+  const isTerminal = actionItem.status === 'COMPLETED' || actionItem.status === 'CANCELLED';
+  const canUpdateStatus = isPrivileged || isAssignedToUser || isCreator;
+  const isStatusDisabled = isTerminal || !canUpdateStatus;
   const dependencies = actionItem.dependency_details || [];
   const hasIncompleteDeps = dependencies.some((d) => !d.is_completed);
 
   const handleSelectStatus = async (newStatus) => {
     if (newStatus === actionItem.status) return;
+
+    if (isTerminal) {
+      message.error("Completed or Cancelled action items are locked and cannot be changed back to another status.");
+      return;
+    }
+
+    if (!canUpdateStatus) {
+      message.error("You are not authorized to update this action item's status.");
+      return;
+    }
 
     if (hasIncompleteDeps && ['TODO', 'IN_PROGRESS', 'COMPLETED'].includes(newStatus)) {
       message.error(`Status update to ${newStatus.replace('_', ' ')} is locked until all prerequisites finish.`);
@@ -130,6 +154,7 @@ export const ActionDetailModal = ({
     <Modal
       open={open}
       onCancel={onClose}
+      destroyOnClose
       footer={
         (onEdit || onDelete) ? (
           <div className="flex items-center justify-between w-full pt-1">
@@ -245,38 +270,51 @@ export const ActionDetailModal = ({
               <span className="text-[10px] uppercase font-extrabold text-slate-500 dark:text-slate-400">
                 Status:
               </span>
-              <Select
-                id={`modal_action_status_select_${actionItem.id}`}
-                name={`modal_action_status_select_${actionItem.id}`}
-                value={actionItem.status}
-                loading={updating}
-                onChange={handleSelectStatus}
-                style={{ width: 140, minWidth: 140 }}
-                popupMatchSelectWidth={false}
-                dropdownMatchSelectWidth={false}
-                dropdownStyle={{ minWidth: 200 }}
-                popupClassName="!min-w-[200px]"
-                className="font-bold text-xs shrink-0"
-                options={[
-                  {
-                    label: hasIncompleteDeps ? '🔒 Todo (Locked)' : 'Todo',
-                    value: 'TODO',
-                    disabled: hasIncompleteDeps
-                  },
-                  {
-                    label: hasIncompleteDeps ? '🔒 In Progress (Locked)' : 'In Progress',
-                    value: 'IN_PROGRESS',
-                    disabled: hasIncompleteDeps
-                  },
-                  { label: 'Blocked', value: 'BLOCKED' },
-                  {
-                    label: hasIncompleteDeps ? '🔒 Completed (Locked)' : 'Completed',
-                    value: 'COMPLETED',
-                    disabled: hasIncompleteDeps,
-                  },
-                  { label: 'Cancelled', value: 'CANCELLED' },
-                ]}
-              />
+              <Tooltip
+                title={
+                  isTerminal
+                    ? "Completed or Cancelled action items are locked and cannot be changed back to another status."
+                    : !canUpdateStatus
+                    ? "Read-only: Only assigned members or managers can update status."
+                    : ""
+                }
+              >
+                <div>
+                  <Select
+                    id={`modal_action_status_select_${actionItem.id}`}
+                    name={`modal_action_status_select_${actionItem.id}`}
+                    value={actionItem.status}
+                    disabled={isStatusDisabled}
+                    loading={updating}
+                    onChange={handleSelectStatus}
+                    style={{ width: 140, minWidth: 140 }}
+                    popupMatchSelectWidth={false}
+                    dropdownMatchSelectWidth={false}
+                    dropdownStyle={{ minWidth: 200 }}
+                    popupClassName="!min-w-[200px]"
+                    className="font-bold text-xs shrink-0"
+                    options={[
+                      {
+                        label: hasIncompleteDeps ? '🔒 Todo (Locked)' : 'Todo',
+                        value: 'TODO',
+                        disabled: hasIncompleteDeps
+                      },
+                      {
+                        label: hasIncompleteDeps ? '🔒 In Progress (Locked)' : 'In Progress',
+                        value: 'IN_PROGRESS',
+                        disabled: hasIncompleteDeps
+                      },
+                      { label: 'Blocked', value: 'BLOCKED' },
+                      {
+                        label: hasIncompleteDeps ? '🔒 Completed (Locked)' : 'Completed',
+                        value: 'COMPLETED',
+                        disabled: hasIncompleteDeps,
+                      },
+                      { label: 'Cancelled', value: 'CANCELLED' },
+                    ]}
+                  />
+                </div>
+              </Tooltip>
             </div>
           </div>
 

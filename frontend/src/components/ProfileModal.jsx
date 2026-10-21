@@ -26,6 +26,20 @@ export const ProfileModal = ({ open, onClose, user }) => {
 
   const [loading, setLoading] = useState(false);
 
+  const ownersList = React.useMemo(() => {
+    if (!user) return [];
+    if (Array.isArray(user.organization_owners) && user.organization_owners.length > 0) {
+      return user.organization_owners;
+    }
+    if (user.organization_owner) {
+      return [user.organization_owner];
+    }
+    return [];
+  }, [user]);
+
+  const isMultiOwner = ownersList.length > 1;
+  const ownerLabel = isMultiOwner ? `Organization Owners (${ownersList.length})` : 'Organization Owner';
+
   // Department Request Flow State
   const [showDeptModal, setShowDeptModal] = useState(false);
   const [requestedDept, setRequestedDept] = useState('');
@@ -381,10 +395,10 @@ export const ProfileModal = ({ open, onClose, user }) => {
         closable={!isEditing}
         focusTriggerAfterClose={false}
         title={
-          <div className="flex items-center justify-between pr-6">
-            <div className="flex items-center space-x-2 text-slate-900 dark:text-white">
-              <UserOutlined className="text-blue-600 dark:text-blue-400 text-lg" />
-              <span className="font-bold text-lg">
+          <div className="flex items-center justify-between pr-6 gap-2">
+            <div className="flex items-center space-x-2 text-slate-900 dark:text-white min-w-0">
+              <UserOutlined className="text-blue-600 dark:text-blue-400 text-base sm:text-lg shrink-0" />
+              <span className="font-bold text-base sm:text-lg truncate">
                 {isEditing ? 'Edit Profile Details' : 'User Profile Details'}
               </span>
             </div>
@@ -395,7 +409,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
                 name="profile_header_edit_btn"
                 icon={<EditOutlined className="text-blue-600 dark:text-blue-400" />}
                 onClick={() => setIsEditing(true)}
-                className="text-blue-600 dark:text-blue-400 font-semibold hover:bg-blue-50 dark:hover:bg-slate-800"
+                className="text-blue-600 dark:text-blue-400 font-semibold hover:bg-blue-50 dark:hover:bg-slate-800 text-xs sm:text-sm shrink-0 px-2 sm:px-3"
               >
                 Edit Profile
               </Button>
@@ -448,7 +462,12 @@ export const ProfileModal = ({ open, onClose, user }) => {
         }
 
         width={560}
-        style={{ maxWidth: 'calc(100vw - 24px)', margin: '12px auto' }}
+        style={{ maxWidth: 'calc(100vw - 16px)', margin: '8px auto' }}
+        styles={{
+          body: {
+            padding: isDesktop ? '16px 20px' : '10px 10px',
+          }
+        }}
       >
         <div className="py-1 space-y-2.5">
           {/* Profile Card Banner */}
@@ -481,50 +500,70 @@ export const ProfileModal = ({ open, onClose, user }) => {
                 column={1} 
                 bordered 
                 size="small" 
-                labelStyle={{ width: '165px', minWidth: '150px' }}
-                className="bg-white dark:bg-slate-900 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 [&_.ant-descriptions-item-cell]:!py-1.5 [&_.ant-descriptions-item-cell]:!px-3"
+                labelStyle={{ 
+                  width: isDesktop ? '160px' : '108px', 
+                  minWidth: isDesktop ? '160px' : '108px' 
+                }}
+                contentStyle={{
+                  minWidth: 0,
+                  overflow: 'hidden',
+                }}
+                className="bg-white dark:bg-slate-900 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 w-full [&_table]:!table-layout-fixed [&_table]:!w-full [&_.ant-descriptions-row]:!w-full [&_.ant-descriptions-item-cell]:!py-1.5 [&_.ant-descriptions-item-cell]:!px-2.5 sm:[&_.ant-descriptions-item-cell]:!px-3 [&_.ant-descriptions-item-container]:!min-w-0 [&_.ant-descriptions-item-container]:!w-full [&_.ant-descriptions-item-container]:!overflow-hidden [&_.ant-descriptions-item-content]:!min-w-0 [&_.ant-descriptions-item-content]:!w-full [&_.ant-descriptions-item-content]:!overflow-hidden"
               >
-                <Descriptions.Item label={<span className="font-semibold text-slate-600 dark:text-slate-400 flex items-center text-xs"><BankOutlined className="mr-1.5 text-blue-500" />Organization Workspace</span>}>
-                  <span className="font-bold text-blue-600 dark:text-blue-400 text-xs sm:text-sm">{user.organization_name || 'SmartMeeting Workspace'}</span>
+                <Descriptions.Item label={<span className="font-semibold text-slate-600 dark:text-slate-400 flex items-center text-xs whitespace-nowrap"><BankOutlined className="mr-1 text-blue-500 shrink-0" /><span className="hidden sm:inline">Organization </span>Workspace</span>}>
+                  <span className="font-bold text-blue-600 dark:text-blue-400 text-xs sm:text-sm truncate block" title={user.organization_name || 'SmartMeeting Workspace'}>{user.organization_name || 'SmartMeeting Workspace'}</span>
                 </Descriptions.Item>
 
-                {user.role !== 'OWNER' && (
-                  <Descriptions.Item label={<span className="font-semibold text-slate-600 dark:text-slate-400 flex items-center text-xs"><CrownOutlined className="mr-1.5 text-amber-500" />Organization Owner</span>}>
-                    {user.organization_owner ? (
-                      <div className="flex items-center space-x-1.5 flex-wrap">
-                        <span className="font-bold text-slate-900 dark:text-slate-200 text-xs sm:text-sm">
-                          {user.organization_owner.full_name || user.organization_owner.username}
-                        </span>
-                        <span className="text-xs text-slate-500 dark:text-slate-400">
-                          ({user.organization_owner.email})
-                        </span>
-                        {user.id === user.organization_owner.id && (
-                          <Tag color="gold" className="font-bold text-[9.5px] m-0 px-1 py-0 border-amber-400 text-amber-900">
-                            👑 You (Owner)
-                          </Tag>
-                        )}
-                      </div>
-                    ) : (
-                      <span className="font-medium text-slate-500 dark:text-slate-400 text-xs italic">
-                        System Administrator / Workspace Founder
-                      </span>
-                    )}
+                {Boolean(ownersList.length > 0 && (user.role !== 'OWNER' || isMultiOwner)) && (
+                  <Descriptions.Item label={<span className="font-semibold text-slate-600 dark:text-slate-400 flex items-center text-xs whitespace-nowrap"><CrownOutlined className="mr-1 text-amber-500 shrink-0" />{isMultiOwner ? `Owners (${ownersList.length})` : 'Owner'}</span>}>
+                    <div className="space-y-1 py-0.5 min-w-0 w-full">
+                      {ownersList.map((owner) => {
+                        const isSelf = user.id === owner.id;
+                        return (
+                          <div key={owner.id} className="flex items-center space-x-1.5 flex-nowrap min-w-0 w-full">
+                            <span className="font-bold text-slate-900 dark:text-slate-200 text-xs sm:text-sm truncate min-w-0" title={`${owner.full_name || owner.username} (${owner.email})`}>
+                              {owner.full_name || owner.username}
+                            </span>
+                            <span className="text-xs text-slate-500 dark:text-slate-400 hidden sm:inline truncate">
+                              ({owner.email})
+                            </span>
+                            {isSelf ? (
+                              <Tag color="gold" className="font-bold text-[9px] m-0 px-1 py-0 border-amber-400 text-amber-900 shrink-0">
+                                👑 You
+                              </Tag>
+                            ) : (
+                              <Tag color="gold" className="font-bold text-[9px] m-0 px-1 py-0 border-amber-300 text-amber-800 shrink-0">
+                                👑 {isMultiOwner ? 'Co-Owner' : 'Owner'}
+                              </Tag>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
                   </Descriptions.Item>
                 )}
 
-                <Descriptions.Item label={<span className="font-semibold text-slate-600 dark:text-slate-400 flex items-center text-xs"><UserOutlined className="mr-1.5 text-blue-500" />Username</span>}>
-                  <span className="font-semibold text-slate-900 dark:text-slate-200 text-xs sm:text-sm">{user.username}</span>
+                {user.role !== 'OWNER' && ownersList.length === 0 && (
+                  <Descriptions.Item label={<span className="font-semibold text-slate-600 dark:text-slate-400 flex items-center text-xs whitespace-nowrap"><CrownOutlined className="mr-1 text-amber-500 shrink-0" />Owner</span>}>
+                    <span className="font-medium text-slate-500 dark:text-slate-400 text-xs italic truncate block">
+                      Workspace Founder
+                    </span>
+                  </Descriptions.Item>
+                )}
+
+                <Descriptions.Item label={<span className="font-semibold text-slate-600 dark:text-slate-400 flex items-center text-xs whitespace-nowrap"><UserOutlined className="mr-1 text-blue-500 shrink-0" />Username</span>}>
+                  <span className="font-semibold text-slate-900 dark:text-slate-200 text-xs sm:text-sm truncate block" title={user.username}>{user.username}</span>
                 </Descriptions.Item>
 
-                <Descriptions.Item label={<span className="font-semibold text-slate-600 dark:text-slate-400 flex items-center text-xs"><MailOutlined className="mr-1.5 text-blue-500" />Email Address</span>}>
-                  <div className="flex items-center justify-between gap-2 w-full min-w-0">
-                    <span className="font-medium text-slate-900 dark:text-slate-200 text-xs sm:text-sm truncate" title={user.email}>
+                <Descriptions.Item label={<span className="font-semibold text-slate-600 dark:text-slate-400 flex items-center text-xs whitespace-nowrap"><MailOutlined className="mr-1 text-blue-500 shrink-0" />Email<span className="hidden sm:inline"> Address</span></span>}>
+                  <div className="flex items-center justify-between gap-1.5 w-full min-w-0 overflow-hidden">
+                    <span className="font-medium text-slate-900 dark:text-slate-200 text-xs sm:text-sm truncate min-w-0 flex-1" title={user.email}>
                       {user.email}
                     </span>
                     <Button 
                       type="link" 
                       size="small"
-                      icon={<SafetyCertificateOutlined className="text-blue-600" />}
+                      icon={<SafetyCertificateOutlined className="text-blue-600 text-xs" />}
                       onClick={() => {
                         setNewEmail('');
                         setOtpCode('');
@@ -534,16 +573,16 @@ export const ProfileModal = ({ open, onClose, user }) => {
                         emailForm.resetFields();
                         setShowEmailModal(true);
                       }}
-                      className="text-xs font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 p-0 shrink-0 whitespace-nowrap"
+                      className="text-[11px] sm:text-xs font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 p-0 shrink-0 whitespace-nowrap flex items-center"
                     >
                       Change Email
                     </Button>
                   </div>
                 </Descriptions.Item>
 
-                <Descriptions.Item label={<span className="font-semibold text-slate-600 dark:text-slate-400 flex items-center text-xs"><IdcardOutlined className="mr-1.5 text-blue-500" />Account Role</span>}>
-                  <div className="flex items-center justify-between gap-1 w-full min-w-0">
-                    <span className="font-bold text-slate-900 dark:text-slate-200 text-xs sm:text-sm">{user.role}</span>
+                <Descriptions.Item label={<span className="font-semibold text-slate-600 dark:text-slate-400 flex items-center text-xs whitespace-nowrap"><IdcardOutlined className="mr-1 text-blue-500 shrink-0" /><span className="hidden sm:inline">Account </span>Role</span>}>
+                  <div className="flex items-center justify-between gap-1.5 w-full min-w-0">
+                    <span className="font-bold text-slate-900 dark:text-slate-200 text-xs sm:text-sm shrink-0">{user.role}</span>
                     {!isDesktop && (user.role === 'ADMIN' || user.role === 'OWNER') && (
                       <Button
                         type="primary"
@@ -553,7 +592,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
                           onClose();
                           navigate('/admin');
                         }}
-                        className="md:hidden bg-slate-900 hover:bg-slate-800 text-white font-bold text-[11px] rounded-lg border-none shrink-0"
+                        className="md:hidden bg-slate-900 hover:bg-slate-800 text-white font-bold text-[10.5px] rounded-lg border-none shrink-0 h-6 px-2 whitespace-nowrap"
                       >
                         Admin Portal →
                       </Button>
@@ -567,7 +606,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
                           onClose();
                           navigate('/admin');
                         }}
-                        className="md:hidden bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-[11px] rounded-lg border-none shrink-0"
+                        className="md:hidden bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-[10.5px] rounded-lg border-none shrink-0 h-6 px-2 whitespace-nowrap"
                       >
                         Manager Portal →
                       </Button>
@@ -575,20 +614,22 @@ export const ProfileModal = ({ open, onClose, user }) => {
                   </div>
                 </Descriptions.Item>
 
-                <Descriptions.Item label={<span className="font-semibold text-slate-600 dark:text-slate-400 flex items-center text-xs"><TeamOutlined className="mr-1.5 text-blue-500" />Department</span>}>
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1 w-full min-w-0">
-                    <div>
-                      <span className="font-medium text-slate-900 dark:text-slate-200 text-xs sm:text-sm">{user.department || 'General Team'}</span>
+                <Descriptions.Item label={<span className="font-semibold text-slate-600 dark:text-slate-400 flex items-center text-xs whitespace-nowrap"><TeamOutlined className="mr-1 text-blue-500 shrink-0" />Department</span>}>
+                  <div className="flex items-center justify-between gap-1.5 w-full min-w-0 overflow-hidden">
+                    <div className="min-w-0 flex-1 truncate">
+                      <span className="font-medium text-slate-900 dark:text-slate-200 text-xs sm:text-sm truncate block" title={user.department || 'General Team'}>
+                        {user.department || 'General Team'}
+                      </span>
                       {pendingReq && (
-                        <span className="block text-[10px] text-amber-600 dark:text-amber-400 font-bold mt-0.5">
-                          ⏳ Pending Request: {pendingReq.requested_department}
+                        <span className="block text-[9.5px] text-amber-600 dark:text-amber-400 font-bold truncate" title={`Pending: ${pendingReq.requested_department}`}>
+                          ⏳ Req: {pendingReq.requested_department}
                         </span>
                       )}
                     </div>
                     <Button
                       type="link"
                       size="small"
-                      icon={<TeamOutlined className="text-blue-600" />}
+                      icon={<TeamOutlined className="text-blue-600 text-xs" />}
                       onClick={() => {
                         if (pendingReq) {
                           setRequestedDept(pendingReq.requested_department || '');
@@ -599,15 +640,15 @@ export const ProfileModal = ({ open, onClose, user }) => {
                         }
                         setShowDeptModal(true);
                       }}
-                      className="text-xs font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 p-0 shrink-0 whitespace-nowrap mt-0.5 sm:mt-0"
+                      className="text-[11px] sm:text-xs font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 p-0 shrink-0 whitespace-nowrap flex items-center"
                     >
                       {pendingReq ? 'View Request' : 'Request Change'}
                     </Button>
                   </div>
                 </Descriptions.Item>
 
-                <Descriptions.Item label={<span className="font-semibold text-slate-600 dark:text-slate-400 flex items-center text-xs"><CalendarOutlined className="mr-1.5 text-blue-500" />Member Since</span>}>
-                  <span className="font-medium text-slate-900 dark:text-slate-200 text-xs sm:text-sm">
+                <Descriptions.Item label={<span className="font-semibold text-slate-600 dark:text-slate-400 flex items-center text-xs whitespace-nowrap"><CalendarOutlined className="mr-1 text-blue-500 shrink-0" /><span className="hidden sm:inline">Member </span>Since</span>}>
+                  <span className="font-medium text-slate-900 dark:text-slate-200 text-xs sm:text-sm whitespace-nowrap">
                     {user.date_joined ? dayjs(user.date_joined).format('MMMM DD, YYYY') : 'N/A'}
                   </span>
                 </Descriptions.Item>
@@ -615,20 +656,18 @@ export const ProfileModal = ({ open, onClose, user }) => {
 
               {/* Organization Workspace Membership & Leave Request */}
               {user.role !== 'OWNER' && user.role !== 'UNASSIGNED' && (
-                <div className="bg-amber-50/70 dark:bg-amber-950/20 p-2.5 rounded-xl border border-amber-200 dark:border-amber-900/40 flex items-center justify-between gap-2">
-                  <div className="flex items-center space-x-2 min-w-0 flex-1">
+                <div className="bg-amber-50/70 dark:bg-amber-950/20 p-2 sm:p-2.5 rounded-xl border border-amber-200 dark:border-amber-900/40 flex items-center justify-between gap-2 min-w-0">
+                  <div className="flex items-center space-x-1.5 sm:space-x-2 min-w-0 flex-1">
                     <LogoutOutlined className="text-amber-600 dark:text-amber-400 text-sm shrink-0" />
-                    <div className="min-w-0">
-                      <span className="text-xs font-bold text-amber-950 dark:text-amber-200 block leading-tight">
+                    <div className="min-w-0 flex-1">
+                      <span className="text-xs font-bold text-amber-950 dark:text-amber-200 block leading-tight truncate">
                         Leave Organization
                       </span>
-                      <span className="text-[10px] text-amber-800 dark:text-amber-400 block leading-tight truncate">
+                      <span className="text-[10px] text-amber-800 dark:text-amber-400 block leading-tight truncate" title={pendingLeaveReq ? "Leave Request submitted — Awaiting Admin/Owner approval" : "Request approval from Owner/Admin to leave this workspace."}>
                         {pendingLeaveReq ? (
-                          <span className="font-semibold text-amber-700 dark:text-amber-300">
-                            ⏳ Leave Request submitted ({dayjs(pendingLeaveReq.created_at).format('MMM DD')}) — Awaiting Admin/Owner approval
-                          </span>
+                          '⏳ Awaiting Admin/Owner approval'
                         ) : (
-                          'Request approval from Owner/Admin to leave this workspace.'
+                          'Request approval to leave this workspace.'
                         )}
                       </span>
                     </div>
@@ -642,7 +681,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
                       size="small"
                       icon={<LogoutOutlined />}
                       onClick={() => setShowLeaveModal(true)}
-                      className="text-xs font-semibold shrink-0 px-2.5 py-0.5 h-7 flex items-center justify-center rounded-lg border-amber-300 bg-amber-100 hover:bg-amber-200 text-amber-900 dark:bg-amber-900/40 dark:text-amber-200 dark:border-amber-800"
+                      className="text-[11px] sm:text-xs font-semibold shrink-0 px-2 sm:px-2.5 py-0.5 h-6 sm:h-7 flex items-center justify-center rounded-lg border-amber-300 bg-amber-100 hover:bg-amber-200 text-amber-900 dark:bg-amber-900/40 dark:text-amber-200 dark:border-amber-800 whitespace-nowrap"
                     >
                       Request to Leave
                     </Button>
@@ -651,12 +690,12 @@ export const ProfileModal = ({ open, onClose, user }) => {
               )}
 
               {/* Danger Zone: Account Deletion */}
-              <div className="bg-red-50/70 dark:bg-red-950/20 p-2 sm:p-2.5 rounded-xl border border-red-200 dark:border-red-900/40 flex items-center justify-between gap-2">
-                <div className="flex items-center space-x-2 min-w-0 flex-1">
+              <div className="bg-red-50/70 dark:bg-red-950/20 p-2 sm:p-2.5 rounded-xl border border-red-200 dark:border-red-900/40 flex items-center justify-between gap-2 min-w-0">
+                <div className="flex items-center space-x-1.5 sm:space-x-2 min-w-0 flex-1">
                   <WarningOutlined className="text-red-600 dark:text-red-400 text-sm shrink-0" />
-                  <div className="min-w-0">
-                    <span className="text-xs font-bold text-red-900 dark:text-red-300 block leading-tight">Danger Zone</span>
-                    <span className="text-[10px] text-red-700 dark:text-red-400 block leading-tight truncate">Permanently remove your personal account access.</span>
+                  <div className="min-w-0 flex-1">
+                    <span className="text-xs font-bold text-red-900 dark:text-red-300 block leading-tight truncate">Danger Zone</span>
+                    <span className="text-[10px] text-red-700 dark:text-red-400 block leading-tight truncate">Permanently remove personal account access.</span>
                   </div>
                 </div>
                 <Button
@@ -666,7 +705,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
                   icon={<DeleteOutlined />}
                   loading={deleteCheckLoading}
                   onClick={handleOpenDeleteFlow}
-                  className="delete-account-btn text-xs font-semibold shrink-0 px-2 py-0.5 h-7 flex items-center justify-center rounded-lg"
+                  className="delete-account-btn text-[11px] sm:text-xs font-semibold shrink-0 px-2 sm:px-2.5 py-0.5 h-6 sm:h-7 flex items-center justify-center rounded-lg whitespace-nowrap"
                 >
                   Delete Account
                 </Button>
@@ -687,7 +726,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
               }}
               className="space-y-3 pt-1"
             >
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Form.Item
                   label={<span className="font-semibold text-slate-700 dark:text-slate-300">First Name</span>}
                   name="first_name"
@@ -708,7 +747,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
               {/* Read-only Department display in edit mode */}
               <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 space-y-1">
                 <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Assigned Department (Admin Assigned)</span>
-                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 m-0">{user.department || 'General Team'}</p>
+                <p className="text-sm font-semibold text-slate-800 dark:text-slate-200 m-0 break-words">{user.department || 'General Team'}</p>
               </div>
 
 
@@ -718,13 +757,13 @@ export const ProfileModal = ({ open, onClose, user }) => {
                   <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Email Address (Protected)</span>
                   <Tag icon={<LockOutlined />} color="default" className="m-0 text-[10px]">Verified OTP</Tag>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-slate-800 dark:text-slate-200">{user.email}</span>
+                <div className="flex items-center justify-between gap-2 min-w-0">
+                  <span className="text-sm font-medium text-slate-800 dark:text-slate-200 truncate min-w-0 flex-1" title={user.email}>{user.email}</span>
                   <Button
                     type="link"
                     size="small"
                     onClick={() => setShowEmailModal(true)}
-                    className="text-xs font-semibold text-blue-600 dark:text-blue-400 p-0"
+                    className="text-xs font-semibold text-blue-600 dark:text-blue-400 p-0 shrink-0 whitespace-nowrap"
                   >
                     Change Email
                   </Button>
@@ -773,6 +812,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
           </Button>
         ]}
         width={480}
+        style={{ maxWidth: 'calc(100vw - 24px)', margin: '12px auto' }}
         destroyOnHidden
       >
         <div className="py-2 space-y-3">
@@ -826,6 +866,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
         onCancel={resetEmailFlow}
         footer={null}
         width={460}
+        style={{ maxWidth: 'calc(100vw - 24px)', margin: '12px auto' }}
         destroyOnHidden
         closable={false}
       >
@@ -1022,7 +1063,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
                 </div>
               </div>
 
-              <div className="flex flex-row items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
                 <Button
                   type="primary"
                   icon={<SwapOutlined />}
@@ -1093,6 +1134,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
         }}
         footer={null}
         width={480}
+        style={{ maxWidth: 'calc(100vw - 24px)', margin: '12px auto' }}
         destroyOnHidden
         closable={true}
       >
@@ -1195,6 +1237,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
         onCancel={resetDeleteFlow}
         footer={null}
         width={490}
+        style={{ maxWidth: 'calc(100vw - 24px)', margin: '12px auto' }}
         destroyOnHidden
         closable={false}
         focusTriggerAfterClose={false}
@@ -1300,6 +1343,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
         }}
         footer={null}
         width={500}
+        style={{ maxWidth: 'calc(100vw - 24px)', margin: '12px auto' }}
         destroyOnHidden
         closable={false}
         focusTriggerAfterClose={false}
@@ -1402,6 +1446,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
         onCancel={() => setShowDeptModal(false)}
         footer={null}
         width={480}
+        style={{ maxWidth: 'calc(100vw - 24px)', margin: '12px auto' }}
         destroyOnHidden
         closable={false}
       >

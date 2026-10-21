@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal, Avatar, Tag, Descriptions, Button } from 'antd';
 import { 
   UserOutlined, MailOutlined, IdcardOutlined, CalendarOutlined, 
@@ -7,10 +7,19 @@ import {
 import dayjs from 'dayjs';
 
 export const ParticipantProfileModal = ({ open, onClose, user }) => {
-  if (!user) return null;
+  const [cachedUser, setCachedUser] = useState(user);
 
-  const displayName = user.full_name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.username || 'Participant';
-  const roleName = user.role || 'MEMBER';
+  useEffect(() => {
+    if (user) {
+      setCachedUser(user);
+    }
+  }, [user]);
+
+  const activeUser = user || cachedUser;
+  if (!activeUser) return null;
+
+  const displayName = activeUser.full_name || `${activeUser.first_name || ''} ${activeUser.last_name || ''}`.trim() || activeUser.username || 'Participant';
+  const roleName = activeUser.role || 'MEMBER';
   const isAdminOrOwner = roleName === 'ADMIN' || roleName === 'OWNER';
 
   return (
@@ -27,7 +36,7 @@ export const ParticipantProfileModal = ({ open, onClose, user }) => {
       width={520}
       style={{ maxWidth: 'calc(100vw - 24px)', margin: '12px auto' }}
       centered
-      destroyOnHidden
+      destroyOnClose
     >
       <div className="py-3 space-y-5">
         {/* Profile Banner */}
@@ -36,22 +45,22 @@ export const ParticipantProfileModal = ({ open, onClose, user }) => {
             size={56} 
             className="bg-slate-600 font-extrabold text-xl sm:text-2xl shadow-md ring-2 ring-blue-500/20 text-white shrink-0 flex items-center justify-center"
           >
-            {(user.first_name || user.full_name || user.username || 'P')[0].toUpperCase()}
+            {(activeUser.first_name || activeUser.full_name || activeUser.username || 'P')[0].toUpperCase()}
           </Avatar>
           <div className="flex-1 min-w-0">
             <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white m-0 truncate">
               {displayName}
             </h3>
-            {user.email && (
-              <p className="text-xs text-slate-500 dark:text-slate-400 m-0 truncate">{user.email}</p>
+            {activeUser.email && (
+              <p className="text-xs text-slate-500 dark:text-slate-400 m-0 truncate">{activeUser.email}</p>
             )}
             <div className="mt-1.5 flex items-center space-x-2 flex-wrap gap-y-1">
               <Tag color={roleName === 'OWNER' ? 'gold' : roleName === 'ADMIN' ? 'volcano' : roleName === 'MANAGER' ? 'cyan' : 'blue'} className="font-bold uppercase tracking-wider text-[10px]">
                 {roleName}
               </Tag>
-              {user.department && (
+              {activeUser.department && (
                 <Tag color="geekblue" className="font-medium text-[11px]">
-                  {user.department}
+                  {activeUser.department}
                 </Tag>
               )}
             </div>
@@ -66,15 +75,15 @@ export const ParticipantProfileModal = ({ open, onClose, user }) => {
             size="small" 
             className="bg-white dark:bg-slate-900 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800"
           >
-            {user.username && (
+            {activeUser.username && (
               <Descriptions.Item label={<span className="font-semibold text-slate-600 dark:text-slate-400 flex items-center"><UserOutlined className="mr-2 text-blue-500" />Username</span>}>
-                <span className="font-semibold text-slate-900 dark:text-slate-200">{user.username}</span>
+                <span className="font-semibold text-slate-900 dark:text-slate-200">{activeUser.username}</span>
               </Descriptions.Item>
             )}
 
-            {user.email && (
+            {activeUser.email && (
               <Descriptions.Item label={<span className="font-semibold text-slate-600 dark:text-slate-400 flex items-center"><MailOutlined className="mr-2 text-blue-500" />Email Address</span>}>
-                <span className="font-medium text-slate-900 dark:text-slate-200 break-all text-xs sm:text-sm">{user.email}</span>
+                <span className="font-medium text-slate-900 dark:text-slate-200 break-all text-xs sm:text-sm">{activeUser.email}</span>
               </Descriptions.Item>
             )}
 
@@ -83,12 +92,12 @@ export const ParticipantProfileModal = ({ open, onClose, user }) => {
             </Descriptions.Item>
 
             <Descriptions.Item label={<span className="font-semibold text-slate-600 dark:text-slate-400 flex items-center"><TeamOutlined className="mr-2 text-blue-500" />Department</span>}>
-              <span className="font-medium text-slate-900 dark:text-slate-200">{user.department || 'General Team'}</span>
+              <span className="font-medium text-slate-900 dark:text-slate-200">{activeUser.department || 'General Team'}</span>
             </Descriptions.Item>
 
             <Descriptions.Item label={<span className="font-semibold text-slate-600 dark:text-slate-400 flex items-center"><CalendarOutlined className="mr-2 text-blue-500" />Member Since</span>}>
               <span className="font-medium text-slate-900 dark:text-slate-200">
-                {user.date_joined ? dayjs(user.date_joined).format('MMMM DD, YYYY') : 'N/A'}
+                {activeUser.date_joined ? dayjs(activeUser.date_joined).format('MMMM DD, YYYY') : 'N/A'}
               </span>
             </Descriptions.Item>
           </Descriptions>

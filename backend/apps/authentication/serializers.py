@@ -17,6 +17,7 @@ class UserSerializer(serializers.ModelSerializer):
     has_organization = serializers.BooleanField(read_only=True)
     organization_name = serializers.SerializerMethodField()
     organization_owner = serializers.SerializerMethodField()
+    organization_owners = serializers.SerializerMethodField()
     unacknowledged_decision = serializers.SerializerMethodField()
     pending_request = serializers.SerializerMethodField()
 
@@ -24,7 +25,7 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = (
             'id', 'username', 'email', 'first_name', 'last_name', 'full_name', 'role', 'department',
-            'organization_name', 'organization_owner', 'date_joined', 'is_oauth_user', 'has_organization',
+            'organization_name', 'organization_owner', 'organization_owners', 'date_joined', 'is_oauth_user', 'has_organization',
             'unacknowledged_decision', 'pending_request'
         )
         read_only_fields = (
@@ -45,50 +46,61 @@ class UserSerializer(serializers.ModelSerializer):
         except Exception:
             return 'SmartMeeting Workspace'
 
-    def get_organization_owner(self, obj):
+    def get_organization_owners(self, obj):
         try:
             if not obj.has_organization:
-                return None
+                return []
             from django.db import connection
             tables = set(connection.introspection.table_names())
 
-            owner = None
-            if getattr(obj, 'role', None) == User.Role.OWNER:
-                owner = obj
+            owners_qs = User.objects.none()
 
-            if not owner and 'authentication_organization' in tables:
-                from .models import Organization
-                owned_org = Organization.objects.filter(owner=obj).first()
-                if owned_org:
-                    owner = obj
-
-            if not owner and 'authentication_organizationmembership' in tables:
-                from .models import OrganizationMembership
+            if 'authentication_organizationmembership' in tables and 'authentication_organization' in tables:
+                from .models import Organization, OrganizationMembership
+                user_org = None
                 mem = OrganizationMembership.objects.filter(user=obj, is_active=True).first()
-                if mem and mem.organization and mem.organization.owner:
-                    owner = mem.organization.owner
+                if mem and mem.organization:
+                    user_org = mem.organization
+                elif getattr(obj, 'role', None) == User.Role.OWNER:
+                    user_org = Organization.objects.filter(owner=obj).first()
 
-            if not owner and 'authentication_organization' in tables:
-                from .models import Organization
-                if Organization.objects.count() == 1:
-                    first_org = Organization.objects.first()
-                    if first_org and first_org.owner:
-                        owner = first_org.owner
+                if not user_org and Organization.objects.count() == 1:
+                    user_org = Organization.objects.first()
 
-            if not owner:
-                owner = User.objects.filter(role=User.Role.OWNER).first()
+                if user_org:
+                    owner_ids = set(
+                        OrganizationMembership.objects.filter(
+                            organization=user_org, is_active=True, role=User.Role.OWNER
+                        ).values_list('user_id', flat=True)
+                    )
+                    if user_org.owner_id:
+                        owner_ids.add(user_org.owner_id)
 
-            if owner:
-                return {
+                    owner_ids.update(
+                        User.objects.filter(role=User.Role.OWNER, id__in=owner_ids).values_list('id', flat=True)
+                    )
+                    if owner_ids:
+                        owners_qs = User.objects.filter(id__in=owner_ids)
+
+            if not owners_qs.exists():
+                owners_qs = User.objects.filter(role=User.Role.OWNER)
+
+            return [
+                {
                     'id': owner.id,
                     'full_name': owner.get_full_name() or owner.username,
                     'username': owner.username,
                     'email': owner.email,
                     'role': owner.role
                 }
+                for owner in owners_qs.order_by('id')
+            ]
         except Exception:
-            pass
-        return None
+            return []
+
+    def get_organization_owner(self, obj):
+        owners = self.get_organization_owners(obj)
+        return owners[0] if owners else None
 
     def get_unacknowledged_decision(self, obj):
         try:

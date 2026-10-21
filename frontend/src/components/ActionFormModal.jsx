@@ -4,11 +4,14 @@ import { Modal, Form, Input, Select, DatePicker, message as staticMessage, Alert
 import dayjs from 'dayjs';
 import { actionService, userService, meetingService, discussionService, decisionService } from '../services/api.js';
 import { getErrorMessage } from '../utils/errorHandler.js';
+import { useAuth } from '../context/AuthContext.jsx';
 
 export const ActionFormModal = ({
   open, onClose, decisionId, meetingId, existingAction, availableActions = [], onSuccess
 }) => {
   const navigate = useNavigate();
+  const { user, isAdmin, isManager, isOwner } = useAuth();
+  const isPrivileged = isAdmin || isManager || isOwner;
   const staticApp = App.useApp ? App.useApp() : null;
   const message = staticApp?.message || staticMessage;
   const [form] = Form.useForm();
@@ -77,6 +80,9 @@ export const ActionFormModal = ({
         if (decisionId) {
           form.setFieldsValue({ decision: decisionId });
         }
+        if (!isPrivileged && user?.id) {
+          form.setFieldsValue({ assigned_to: [user.id] });
+        }
       }
     } else {
       setSelectedMeetingId(null);
@@ -84,7 +90,7 @@ export const ActionFormModal = ({
       setMeetingParticipants([]);
       setPrereqActions([]);
     }
-  }, [open, existingAction, meetingId, decisionId, form]);
+  }, [open, existingAction, meetingId, decisionId, form, isPrivileged, user]);
 
   const loadMeetingPrereqs = async (mId) => {
     if (!mId) return;
@@ -129,7 +135,7 @@ export const ActionFormModal = ({
   const handleMeetingChange = (mId) => {
     setSelectedMeetingId(mId);
     setDecisionsList([]);
-    form.setFieldsValue({ decision: undefined, dependency_ids: [], assigned_to: [] });
+    form.setFieldsValue({ decision: undefined, dependency_ids: [], assigned_to: !isPrivileged && user?.id ? [user.id] : [] });
     if (mId) {
       loadMeetingPrereqs(mId);
     }
@@ -221,12 +227,12 @@ export const ActionFormModal = ({
     return true;
   });
 
-  const availableAssignees = (currentMeetingId && meetingParticipants.length > 0)
-    ? meetingParticipants
-    : users;
+  const availableAssignees = isPrivileged
+    ? ((currentMeetingId && meetingParticipants.length > 0) ? meetingParticipants : users)
+    : (user ? [user] : []);
 
   const assigneeOptionsList = [...availableAssignees];
-  if (existingAction?.assigned_to) {
+  if (isPrivileged && existingAction?.assigned_to) {
     const existingIds = Array.isArray(existingAction.assigned_to)
       ? existingAction.assigned_to.map(u => typeof u === 'object' ? u.id : u)
       : [typeof existingAction.assigned_to === 'object' ? existingAction.assigned_to.id : existingAction.assigned_to];
@@ -382,6 +388,13 @@ export const ActionFormModal = ({
             name="assigned_to"
             label="Assignees / Participants"
             rules={[{ required: true, message: 'Please assign to at least one team member' }]}
+            extra={
+              !isPrivileged ? (
+                <span className="text-[11px] text-blue-600 dark:text-blue-400 font-semibold block mt-1">
+                  💡 MEMBER role: Tasks are self-assigned to yourself.
+                </span>
+              ) : null
+            }
             className="!mb-0"
           >
             <Select
@@ -389,9 +402,10 @@ export const ActionFormModal = ({
               name="assigned_to"
               mode="multiple"
               showSearch
-              placeholder={currentMeetingId && meetingParticipants.length > 0 ? "Select meeting participant(s)" : "Select team member(s)"}
+              disabled={!isPrivileged}
+              placeholder={!isPrivileged ? "Self-assigned to you" : (currentMeetingId && meetingParticipants.length > 0 ? "Select meeting participant(s)" : "Select team member(s)")}
               optionFilterProp="children"
-              options={assigneeOptionsList.map(u => ({ label: `${u.full_name} • ${u.email} (${u.role})`, value: u.id }))}
+              options={assigneeOptionsList.map(u => ({ label: `${u.full_name || u.username} • ${u.email} (${u.role || 'Member'})`, value: u.id }))}
               className="w-full"
             />
           </Form.Item>
