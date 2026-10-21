@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Modal, Form, Input, message, Alert } from 'antd';
 import { decisionService } from '../services/api.js';
 import { getErrorMessage } from '../utils/errorHandler.js';
@@ -9,6 +9,8 @@ export const DecisionModal = ({
 }) => {
   const [form] = Form.useForm();
   const [submitting, setSubmitting] = useState(false);
+  const prevOpenRef = useRef(false);
+  const prevDecisionKeyRef = useRef(null);
 
   const isRealExisting = Boolean(
     existingDecision && existingDecision.status && existingDecision.status !== 'NO_DECISION'
@@ -19,7 +21,18 @@ export const DecisionModal = ({
   );
 
   useEffect(() => {
-    if (open) {
+    const isFirstOpen = open && !prevOpenRef.current;
+    const currentDecisionKey = existingDecision ? `${existingDecision.id || 'dec'}_${existingDecision.status}` : null;
+    const isDecisionChanged = open && currentDecisionKey !== prevDecisionKeyRef.current;
+
+    prevOpenRef.current = open;
+    prevDecisionKeyRef.current = currentDecisionKey;
+
+    if (!open) {
+      return;
+    }
+
+    if (isFirstOpen || isDecisionChanged) {
       if (isRealExisting) {
         const stat = existingDecision.status || initialStatus;
         form.setFieldsValue({
@@ -111,6 +124,7 @@ export const DecisionModal = ({
       }}
       width={480}
       style={{ maxWidth: 'calc(100vw - 24px)', margin: '12px auto' }}
+      destroyOnClose
     >
       {isRealExisting && (
         <Alert

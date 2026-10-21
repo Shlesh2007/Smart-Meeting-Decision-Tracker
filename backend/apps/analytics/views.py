@@ -27,40 +27,68 @@ class DashboardAnalyticsView(APIView):
                 '30d'
             ).lower().strip()
 
-            # Filter meetings and actions based on role hierarchy
+            try:
+                from apps.authentication.views import get_organization_member_ids
+                member_ids = get_organization_member_ids(user, request=request)
+            except Exception:
+                member_ids = {user.id}
+
+            # Filter meetings and actions based on role hierarchy and organization scoping
             try:
                 if user.is_admin_role:
-                    base_meetings_qs = Meeting.objects.all()
-                    base_actions_qs = ActionItem.objects.all()
-                elif user.is_manager_role:
                     base_meetings_qs = Meeting.objects.filter(
-                        Q(created_by=user) | Q(participants=user) | Q(team__members=user)
+                        Q(created_by_id__in=member_ids) | Q(participants__id__in=member_ids)
                     ).distinct()
                     base_actions_qs = ActionItem.objects.filter(
-                        Q(assigned_to=user) | Q(created_by=user) |
-                        Q(decision__discussion__meeting__created_by=user) |
-                        Q(decision__discussion__meeting__team__members=user)
+                        Q(created_by_id__in=member_ids) | Q(assigned_to__id__in=member_ids) |
+                        Q(decision__discussion__meeting__created_by_id__in=member_ids)
+                    ).distinct()
+                elif user.is_manager_role:
+                    base_meetings_qs = Meeting.objects.filter(
+                        (Q(created_by=user) | Q(participants=user) | Q(team__members=user)) &
+                        (Q(created_by_id__in=member_ids) | Q(participants__id__in=member_ids))
+                    ).distinct()
+                    base_actions_qs = ActionItem.objects.filter(
+                        (Q(assigned_to=user) | Q(created_by=user) |
+                         Q(decision__discussion__meeting__created_by=user) |
+                         Q(decision__discussion__meeting__team__members=user)) &
+                        (Q(created_by_id__in=member_ids) | Q(assigned_to__id__in=member_ids) |
+                         Q(decision__discussion__meeting__created_by_id__in=member_ids))
                     ).distinct()
                 else:
                     # MEMBER role: strictly personal metrics
                     base_meetings_qs = Meeting.objects.filter(
                         Q(created_by=user) | Q(participants=user) | Q(team__members=user)
+                    ).filter(
+                        Q(created_by_id__in=member_ids) | Q(participants__id__in=member_ids)
                     ).distinct()
                     base_actions_qs = ActionItem.objects.filter(
                         Q(assigned_to=user) | Q(created_by=user)
+                    ).filter(
+                        Q(created_by_id__in=member_ids) | Q(assigned_to__id__in=member_ids) |
+                        Q(decision__discussion__meeting__created_by_id__in=member_ids)
                     ).distinct()
                 # Test query execution to ensure assigned_to table exists
                 _ = base_actions_qs.count()
             except Exception:
                 # Fallback if assigned_to ManyToMany table has not been migrated yet in DB
                 if user.is_admin_role:
-                    base_meetings_qs = Meeting.objects.all()
-                    base_actions_qs = ActionItem.objects.all()
+                    base_meetings_qs = Meeting.objects.filter(
+                        Q(created_by_id__in=member_ids) | Q(participants__id__in=member_ids)
+                    ).distinct()
+                    base_actions_qs = ActionItem.objects.filter(
+                        Q(created_by_id__in=member_ids) |
+                        Q(decision__discussion__meeting__created_by_id__in=member_ids)
+                    ).distinct()
                 else:
                     base_meetings_qs = Meeting.objects.filter(
                         Q(created_by=user) | Q(participants=user) | Q(team__members=user)
+                    ).filter(
+                        Q(created_by_id__in=member_ids) | Q(participants__id__in=member_ids)
                     ).distinct()
-                    base_actions_qs = ActionItem.objects.filter(created_by=user).distinct()
+                    base_actions_qs = ActionItem.objects.filter(created_by=user).filter(
+                        Q(created_by_id__in=member_ids)
+                    ).distinct()
 
             meetings_qs = base_meetings_qs
             actions_qs = base_actions_qs

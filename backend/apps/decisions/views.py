@@ -3,14 +3,29 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied
 from django.utils import timezone
+from django.db.models import Q
 from .models import Decision, DecisionHistory
 from .serializers import DecisionSerializer, DecisionHistorySerializer
 
 class DecisionViewSet(viewsets.ModelViewSet):
-    queryset = Decision.objects.all().select_related('discussion', 'decided_by').prefetch_related('history')
     serializer_class = DecisionSerializer
     permission_classes = (permissions.IsAuthenticated,)
     filterset_fields = ('discussion', 'status', 'decided_by')
+
+    def get_queryset(self):
+        user = self.request.user
+        if not user.is_authenticated:
+            return Decision.objects.none()
+        try:
+            from apps.authentication.views import get_organization_member_ids
+            member_ids = get_organization_member_ids(user, request=self.request)
+            return Decision.objects.filter(
+                Q(decided_by_id__in=member_ids) |
+                Q(discussion__meeting__created_by_id__in=member_ids) |
+                Q(discussion__meeting__participants__id__in=member_ids)
+            ).distinct().select_related('discussion', 'decided_by').prefetch_related('history')
+        except Exception:
+            return Decision.objects.all().select_related('discussion', 'decided_by').prefetch_related('history')
 
     def perform_create(self, serializer):
         user = self.request.user

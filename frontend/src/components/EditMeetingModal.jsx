@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { Modal, Form, Input, Select, DatePicker, TimePicker, message, Popover, Tag, Checkbox } from 'antd';
 import { TeamOutlined, SyncOutlined } from '@ant-design/icons';
 import { meetingService, userService, teamService } from '../services/api.js';
@@ -11,9 +11,19 @@ export const EditMeetingModal = ({ open, onClose, meeting, onSuccess }) => {
   const [users, setUsers] = useState([]);
   const [teams, setTeams] = useState([]);
   const [submitting, setSubmitting] = useState(false);
+  const prevDataOpenRef = useRef(false);
+  const prevFormOpenRef = useRef(false);
+  const prevMeetingIdRef = useRef(null);
 
   useEffect(() => {
-    if (open) {
+    const isFirstOpen = open && !prevDataOpenRef.current;
+    prevDataOpenRef.current = open;
+
+    if (!open) {
+      return;
+    }
+
+    if (isFirstOpen) {
       // Pre-seed known users from existing meeting details immediately
       const initialMap = new Map();
       if (Array.isArray(meeting?.participants_detail)) {
@@ -139,7 +149,18 @@ export const EditMeetingModal = ({ open, onClose, meeting, onSuccess }) => {
   }, [users, meeting, teams, selectedParticipantIdSet, teamMemberIds]);
 
   useEffect(() => {
-    if (meeting && open) {
+    const isFirstOpen = open && !prevFormOpenRef.current;
+    const currentMeetingId = meeting ? meeting.id : null;
+    const isMeetingChanged = open && currentMeetingId !== prevMeetingIdRef.current;
+
+    prevFormOpenRef.current = open;
+    prevMeetingIdRef.current = currentMeetingId;
+
+    if (!open) {
+      return;
+    }
+
+    if (meeting && (isFirstOpen || isMeetingChanged)) {
       const startTime = meeting.start_time ? dayjs(meeting.start_time, 'HH:mm:ss') : dayjs();
       const endTime = meeting.end_time ? dayjs(meeting.end_time, 'HH:mm:ss') : dayjs().add(1, 'hour');
 

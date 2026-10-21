@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Modal, Form, Input, Select, DatePicker, message as staticMessage, Alert, App, Button } from 'antd';
 import dayjs from 'dayjs';
@@ -22,73 +22,90 @@ export const ActionFormModal = ({
   const [prereqActions, setPrereqActions] = useState([]);
   const [selectedMeetingId, setSelectedMeetingId] = useState(meetingId || null);
   const [submitting, setSubmitting] = useState(false);
+  const prevOpenRef = useRef(false);
+  const prevActionIdRef = useRef(null);
 
   useEffect(() => {
-    if (open) {
-      const targetMId = meetingId || existingAction?.meeting_id || null;
-      setSelectedMeetingId(targetMId);
-      setDecisionsList([]);
-      setMeetingParticipants([]);
-      setPrereqActions([]);
+    const isFirstOpen = open && !prevOpenRef.current;
+    const currentActionId = existingAction ? (existingAction.id ?? 'existing') : null;
+    const isActionChanged = open && currentActionId !== prevActionIdRef.current;
 
-      userService.getUsers()
-        .then((res) => {
-          const list = res.results || res || [];
-          const uniqueMap = new Map();
-          list.forEach(u => uniqueMap.set(u.id, u));
-          setUsers(Array.from(uniqueMap.values()));
-        })
-        .catch(() => setUsers([]));
+    prevOpenRef.current = open;
+    prevActionIdRef.current = currentActionId;
 
-      if (targetMId) {
-        loadMeetingPrereqs(targetMId);
-      } else {
-        meetingService.getMeetings()
-          .then((res) => {
-            const list = res.results || res || [];
-            const activeMeetings = list.filter(m => String(m.status).toUpperCase() !== 'CANCELLED');
-            setMeetings(activeMeetings);
-          })
-          .catch(() => setMeetings([]));
-      }
-
-      if (existingAction) {
-        let initialAssignedTo = [];
-        if (Array.isArray(existingAction.assigned_to)) {
-          initialAssignedTo = existingAction.assigned_to.map(u => typeof u === 'object' ? u.id : u);
-        } else if (existingAction.assigned_to) {
-          initialAssignedTo = [typeof existingAction.assigned_to === 'object' ? existingAction.assigned_to.id : existingAction.assigned_to];
-        }
-
-        form.setFieldsValue({
-          title: existingAction.title,
-          description: existingAction.description,
-          completion_notes: existingAction.completion_notes || '',
-          assigned_to: initialAssignedTo,
-          priority: existingAction.priority,
-          due_date: existingAction.due_date ? dayjs(existingAction.due_date) : null,
-          status: existingAction.status,
-          dependency_ids: existingAction.dependencies || [],
-          meeting_id: existingAction.meeting_id,
-          decision: existingAction.decision
-        });
-      } else {
-        form.resetFields();
-        if (targetMId) {
-          form.setFieldsValue({ meeting_id: targetMId });
-        }
-        if (decisionId) {
-          form.setFieldsValue({ decision: decisionId });
-        }
-        if (!isPrivileged && user?.id) {
-          form.setFieldsValue({ assigned_to: [user.id] });
-        }
-      }
-    } else {
+    if (!open) {
       setSelectedMeetingId(null);
       setDecisionsList([]);
       setMeetingParticipants([]);
       setPrereqActions([]);
+      return;
+    }
+
+    // Modal is already open and action being edited hasn't changed; avoid re-initializing or resetting form
+    if (!isFirstOpen && !isActionChanged) {
+      return;
+    }
+
+    const targetMId = meetingId || existingAction?.meeting_id || null;
+    setSelectedMeetingId(targetMId);
+    setDecisionsList([]);
+    setMeetingParticipants([]);
+    setPrereqActions([]);
+
+    userService.getUsers()
+      .then((res) => {
+        const list = res.results || res || [];
+        const uniqueMap = new Map();
+        list.forEach(u => uniqueMap.set(u.id, u));
+        setUsers(Array.from(uniqueMap.values()));
+      })
+      .catch(() => setUsers([]));
+
+    if (targetMId) {
+      loadMeetingPrereqs(targetMId);
+    } else {
+      meetingService.getMeetings()
+        .then((res) => {
+          const list = res.results || res || [];
+          const activeMeetings = list.filter(m => String(m.status).toUpperCase() !== 'CANCELLED');
+          setMeetings(activeMeetings);
+        })
+        .catch(() => setMeetings([]));
+    }
+
+    if (existingAction) {
+      let initialAssignedTo = [];
+      if (Array.isArray(existingAction.assigned_to)) {
+        initialAssignedTo = existingAction.assigned_to.map(u => typeof u === 'object' ? u.id : u);
+      } else if (existingAction.assigned_to) {
+        initialAssignedTo = [typeof existingAction.assigned_to === 'object' ? existingAction.assigned_to.id : existingAction.assigned_to];
+      }
+
+      form.setFieldsValue({
+        title: existingAction.title,
+        description: existingAction.description,
+        completion_notes: existingAction.completion_notes || '',
+        assigned_to: initialAssignedTo,
+        priority: existingAction.priority,
+        due_date: existingAction.due_date ? dayjs(existingAction.due_date) : null,
+        status: existingAction.status,
+        dependency_ids: existingAction.dependencies || [],
+        dependency_rule: existingAction.dependency_rule || 'ALL',
+        meeting_id: existingAction.meeting_id,
+        decision: existingAction.decision
+      });
+    } else {
+      form.resetFields();
+      form.setFieldsValue({ dependency_rule: 'ALL' });
+      if (targetMId) {
+        form.setFieldsValue({ meeting_id: targetMId });
+      }
+      if (decisionId) {
+        form.setFieldsValue({ decision: decisionId });
+      }
+      if (!isPrivileged && user?.id) {
+        form.setFieldsValue({ assigned_to: [user.id] });
+      }
     }
   }, [open, existingAction, meetingId, decisionId, form, isPrivileged, user]);
 
@@ -186,7 +203,8 @@ export const ActionFormModal = ({
       completion_notes: values.completion_notes || '',
       assigned_to: Array.isArray(values.assigned_to) ? values.assigned_to : (values.assigned_to ? [values.assigned_to] : []),
       priority: values.priority,
-      dependency_ids: values.dependency_ids || []
+      dependency_ids: values.dependency_ids || [],
+      dependency_rule: values.dependency_rule || 'ALL'
     };
 
     if (values.due_date) {
@@ -257,6 +275,7 @@ export const ActionFormModal = ({
       cancelButtonProps={{ className: 'font-semibold border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 h-9 px-4 rounded-lg' }}
       okText={existingAction ? 'Update Action' : 'Create Action'}
       width={600}
+      destroyOnClose
     >
 
       <Form
@@ -460,24 +479,63 @@ export const ActionFormModal = ({
         </div>
 
         {filterableDeps.length > 0 && (
-          <Form.Item
-            name="dependency_ids"
-            label="Depends On Action(s) (Prerequisites)"
-            help="Prerequisite tasks that must be completed before this action item can be marked completed."
-            className="!mb-0"
-          >
-            <Select
-              id="dependency_ids"
+          <div className="space-y-3">
+            <Form.Item
               name="dependency_ids"
-              mode="multiple"
-              placeholder="Select prerequisite actions"
-              options={filterableDeps.map(dep => ({
-                label: `${dep.title} [Status: ${dep.status}]`,
-                value: dep.id
-              }))}
-              className="w-full"
-            />
-          </Form.Item>
+              label="Depends On Action(s) (Prerequisites)"
+              help="Prerequisite tasks that must be completed before this action item can be marked completed."
+              className="!mb-0"
+            >
+              <Select
+                id="dependency_ids"
+                name="dependency_ids"
+                mode="multiple"
+                placeholder="Select prerequisite actions"
+                options={filterableDeps.map(dep => ({
+                  label: `${dep.title} [Status: ${dep.status}]`,
+                  value: dep.id
+                }))}
+                className="w-full"
+              />
+            </Form.Item>
+
+            <Form.Item
+              noStyle
+              shouldUpdate={(prev, curr) => (prev.dependency_ids?.length || 0) !== (curr.dependency_ids?.length || 0)}
+            >
+              {({ getFieldValue }) => {
+                const depIds = getFieldValue('dependency_ids') || [];
+                if (depIds.length > 1) {
+                  return (
+                    <Form.Item
+                      name="dependency_rule"
+                      label="Multiple Prerequisite Requirement Rule"
+                      initialValue="ALL"
+                      help="Determine whether all prerequisites are required, or if completing any one alternative is sufficient."
+                      className="!mb-0"
+                    >
+                      <Select
+                        id="dependency_rule"
+                        name="dependency_rule"
+                        options={[
+                          {
+                            label: 'Require ALL Prerequisites (AND) — Invalidated if any prerequisite is cancelled',
+                            value: 'ALL'
+                          },
+                          {
+                            label: 'Require ANY Prerequisite (OR / Alternative) — Remains active if at least one alternative is viable',
+                            value: 'ANY'
+                          }
+                        ]}
+                        className="w-full"
+                      />
+                    </Form.Item>
+                  );
+                }
+                return null;
+              }}
+            </Form.Item>
+          </div>
         )}
 
         <Form.Item name="description" label="Detailed Instructions" className="!mb-0">

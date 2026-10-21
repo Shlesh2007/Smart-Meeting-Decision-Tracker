@@ -381,6 +381,43 @@ def get_user_active_organization(user, request=None):
     return None
 
 
+def get_organization_member_ids(user, request=None):
+    """
+    Returns the set of user IDs that belong to the user's currently active organization.
+    If the database only has 1 organization, returns all assigned user IDs.
+    If multi-organization, returns only members/owners of target_org.
+    """
+    if not user or not user.is_authenticated:
+        return set()
+
+    from .models import Organization, OrganizationMembership
+    tables = set(connection.introspection.table_names())
+    if 'authentication_organization' not in tables:
+        return set(User.objects.exclude(role=User.Role.UNASSIGNED).values_list('id', flat=True))
+
+    org_count = Organization.objects.count()
+    if org_count <= 1:
+        return set(User.objects.exclude(role=User.Role.UNASSIGNED).values_list('id', flat=True))
+
+    target_org = get_user_active_organization(user, request=request)
+    if not target_org:
+        return {user.id}
+
+    member_user_ids = set()
+    if 'authentication_organizationmembership' in tables:
+        member_user_ids.update(
+            OrganizationMembership.objects.filter(organization=target_org, is_active=True)
+            .values_list('user_id', flat=True)
+        )
+    if target_org.owner_id:
+        member_user_ids.add(target_org.owner_id)
+
+    if not member_user_ids:
+        member_user_ids.add(user.id)
+
+    return member_user_ids
+
+
 class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     permission_classes = (CanManageUsersPermission,)

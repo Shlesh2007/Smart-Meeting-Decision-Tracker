@@ -356,7 +356,7 @@ export default function Admin() {
           type="error"
           showIcon
           icon={<LockOutlined className="text-2xl" />}
-          message="Access Restricted (Admin / Manager Only)"
+          message="Access Restricted (Admin / Manager /Owner Only)"
           description="You must have an Admin, Manager, or Owner role to access the Management Portal."
         />
       </div>
@@ -976,13 +976,13 @@ export default function Admin() {
                           value={userRoleFilter}
                           onChange={setUserRoleFilter}
                           size="small"
-                          className="flex-1 sm:w-28 text-xs font-medium h-8 min-w-0"
+                          className="flex-1 sm:w-28 text-xs font-medium h-8 min-w-0 text-center"
                           options={[
                             { label: 'All Roles', value: 'ALL' },
-                            { label: '👑 Owner', value: 'OWNER' },
-                            { label: '⚡ Admin', value: 'ADMIN' },
-                            { label: '🛡️ Manager', value: 'MANAGER' },
-                            { label: '👤 Member', value: 'MEMBER' },
+                            { label: 'Owner', value: 'OWNER' },
+                            { label: 'Admin', value: 'ADMIN' },
+                            { label: 'Manager', value: 'MANAGER' },
+                            { label: 'Member', value: 'MEMBER' },
                           ]}
                         />
 
@@ -992,7 +992,7 @@ export default function Admin() {
                           value={userDeptFilter}
                           onChange={setUserDeptFilter}
                           size="small"
-                          className="flex-1 sm:w-40 text-xs font-medium h-8 min-w-0"
+                          className="flex-1 sm:w-40 text-xs font-medium h-8 min-w-0 text-center"
                           options={[
                             { label: 'All Departments', value: 'ALL' },
                             { label: 'Executive & Strategy', value: 'Executive & Strategy' },

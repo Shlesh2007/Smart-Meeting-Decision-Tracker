@@ -153,6 +153,31 @@ export default function MyActions() {
       setCompletionNotesInput(actionItem.completion_notes || '');
       return;
     }
+
+    if (newStatus === 'CANCELLED') {
+      Modal.confirm({
+        title: 'Cancel Action Item',
+        content: 'Cancelling this action will automatically cancel all downstream actions that strictly depend on it. Are you sure you want to proceed?',
+        okText: 'Yes, Cancel Action',
+        okButtonProps: { danger: true },
+        cancelText: 'Keep Active',
+        onOk: async () => {
+          setUpdatingId(actionItem.id);
+          try {
+            await actionService.updateActionStatus(actionItem.id, newStatus);
+            message.success(`Status updated to ${newStatus}`);
+            fetchMyActions();
+          } catch (err) {
+            const errMsg = err.response?.data?.status?.[0] || err.response?.data?.detail || 'Failed to update action status.';
+            message.error(errMsg);
+          } finally {
+            setUpdatingId(null);
+          }
+        }
+      });
+      return;
+    }
+
     setUpdatingId(actionItem.id);
     try {
       await actionService.updateActionStatus(actionItem.id, newStatus);
@@ -258,8 +283,16 @@ export default function MyActions() {
             </span>
           )}
           {record.completion_notes && (
-            <div className="mt-1 p-1.5 rounded-lg bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-900/60 text-xs text-emerald-900 dark:text-emerald-200">
-              <strong className="font-bold block text-emerald-700 dark:text-emerald-300 mb-0.5">✅ Work Done / Delivered Outcome:</strong>
+            <div className={`mt-1 p-1.5 rounded-lg border text-xs ${
+              record.status === 'CANCELLED'
+                ? 'bg-rose-50/80 dark:bg-rose-950/40 border-rose-200/80 dark:border-rose-900/60 text-rose-900 dark:text-rose-200'
+                : 'bg-emerald-50/80 dark:bg-emerald-950/40 border-emerald-200/80 dark:border-emerald-900/60 text-emerald-900 dark:text-emerald-200'
+            }`}>
+              <strong className={`font-bold block mb-0.5 ${
+                record.status === 'CANCELLED' ? 'text-rose-700 dark:text-rose-300' : 'text-emerald-700 dark:text-emerald-300'
+              }`}>
+                {record.status === 'CANCELLED' ? '🚫 Cancellation Reason / Audit:' : '✅ Work Done / Delivered Outcome:'}
+              </strong>
               <span className="leading-relaxed">{record.completion_notes}</span>
             </div>
           )}

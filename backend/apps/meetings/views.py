@@ -54,13 +54,26 @@ class MeetingViewSet(viewsets.ModelViewSet):
         auto_update_meeting_statuses()
 
         user = self.request.user
-        # Admins can view ALL meetings across the organization
+        if not user.is_authenticated:
+            return Meeting.objects.none()
+
+        try:
+            from apps.authentication.views import get_organization_member_ids
+            member_ids = get_organization_member_ids(user, request=self.request)
+        except Exception:
+            member_ids = {user.id}
+
+        # Admins and Owners can view all meetings within their organization
         if user.is_admin_role:
-            return Meeting.objects.all().select_related('created_by', 'team').prefetch_related('participants', 'discussions')
+            return Meeting.objects.filter(
+                Q(created_by_id__in=member_ids) | Q(participants__id__in=member_ids)
+            ).distinct().select_related('created_by', 'team').prefetch_related('participants', 'discussions')
         
         # Members can ONLY view meetings they created, are invited participants of, or belong to their assigned Team
         return Meeting.objects.filter(
             Q(created_by=user) | Q(participants=user) | Q(team__members=user)
+        ).filter(
+            Q(created_by_id__in=member_ids) | Q(participants__id__in=member_ids)
         ).distinct().select_related('created_by', 'team').prefetch_related('participants', 'discussions')
 
     def perform_create(self, serializer):

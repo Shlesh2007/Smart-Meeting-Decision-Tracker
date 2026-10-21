@@ -461,7 +461,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
           ] : null)
         }
 
-        width={560}
+        width={620}
         style={{ maxWidth: 'calc(100vw - 16px)', margin: '8px auto' }}
         styles={{
           body: {
@@ -499,7 +499,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
               <div className="bg-white dark:bg-slate-900 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 divide-y divide-slate-200 dark:divide-slate-800 text-xs w-full shadow-xs">
                 {/* 1. Workspace */}
                 <div className="flex items-center min-w-0 w-full">
-                  <div className="w-[110px] sm:w-[160px] shrink-0 bg-slate-50/80 dark:bg-slate-800/60 px-2.5 py-2 font-semibold text-slate-600 dark:text-slate-400 flex items-center border-r border-slate-200 dark:border-slate-800 self-stretch">
+                  <div className="w-[110px] sm:w-[145px] shrink-0 bg-slate-50/80 dark:bg-slate-800/60 px-2.5 py-2 font-semibold text-slate-600 dark:text-slate-400 flex items-center border-r border-slate-200 dark:border-slate-800 self-stretch">
                     <BankOutlined className="mr-1.5 text-blue-500 shrink-0 text-xs" />
                     <span className="truncate">Workspace</span>
                   </div>
@@ -513,7 +513,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
                 {/* 2. Organization Owners */}
                 {Boolean(ownersList.length > 0 && (user.role !== 'OWNER' || isMultiOwner)) && (
                   <div className="flex min-w-0 w-full">
-                    <div className="w-[110px] sm:w-[160px] shrink-0 bg-slate-50/80 dark:bg-slate-800/60 px-2.5 py-2 font-semibold text-slate-600 dark:text-slate-400 flex items-center border-r border-slate-200 dark:border-slate-800 self-stretch">
+                    <div className="w-[110px] sm:w-[145px] shrink-0 bg-slate-50/80 dark:bg-slate-800/60 px-2.5 py-2 font-semibold text-slate-600 dark:text-slate-400 flex items-center border-r border-slate-200 dark:border-slate-800 self-stretch">
                       <CrownOutlined className="mr-1.5 text-amber-500 shrink-0 text-xs" />
                       <span className="truncate">{isMultiOwner ? `Owners (${ownersList.length})` : 'Owner'}</span>
                     </div>
@@ -521,13 +521,15 @@ export const ProfileModal = ({ open, onClose, user }) => {
                       {ownersList.map((owner) => {
                         const isSelf = user.id === owner.id;
                         return (
-                          <div key={owner.id} className="flex items-center justify-between gap-1.5 min-w-0 w-full">
-                            <span className="font-bold text-slate-900 dark:text-slate-200 text-xs sm:text-sm truncate min-w-0 flex-1" title={`${owner.full_name || owner.username} (${owner.email})`}>
-                              {owner.full_name || owner.username}
-                            </span>
-                            <span className="text-[11px] text-slate-500 dark:text-slate-400 hidden sm:inline truncate shrink-0">
-                              ({owner.email})
-                            </span>
+                          <div key={owner.id} className="flex items-center justify-between gap-2 min-w-0 w-full">
+                            <div className="flex items-center space-x-1.5 min-w-0 flex-1">
+                              <span className="font-bold text-slate-900 dark:text-slate-200 text-xs sm:text-sm shrink-0" title={owner.full_name || owner.username}>
+                                {owner.full_name || owner.username}
+                              </span>
+                              <span className="text-[11px] text-slate-500 dark:text-slate-400 hidden sm:inline truncate min-w-0 flex-1" title={owner.email}>
+                                ({owner.email})
+                              </span>
+                            </div>
                             {isSelf ? (
                               <Tag color="gold" className="font-bold text-[9px] m-0 px-1 py-0 border-amber-400 text-amber-900 shrink-0">
                                 👑 You
@@ -546,7 +548,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
 
                 {user.role !== 'OWNER' && ownersList.length === 0 && (
                   <div className="flex items-center min-w-0 w-full">
-                    <div className="w-[110px] sm:w-[160px] shrink-0 bg-slate-50/80 dark:bg-slate-800/60 px-2.5 py-2 font-semibold text-slate-600 dark:text-slate-400 flex items-center border-r border-slate-200 dark:border-slate-800 self-stretch">
+                    <div className="w-[110px] sm:w-[145px] shrink-0 bg-slate-50/80 dark:bg-slate-800/60 px-2.5 py-2 font-semibold text-slate-600 dark:text-slate-400 flex items-center border-r border-slate-200 dark:border-slate-800 self-stretch">
                       <CrownOutlined className="mr-1.5 text-amber-500 shrink-0 text-xs" />
                       <span className="truncate">Owner</span>
                     </div>
@@ -560,7 +562,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
 
                 {/* 3. Username */}
                 <div className="flex items-center min-w-0 w-full">
-                  <div className="w-[110px] sm:w-[160px] shrink-0 bg-slate-50/80 dark:bg-slate-800/60 px-2.5 py-2 font-semibold text-slate-600 dark:text-slate-400 flex items-center border-r border-slate-200 dark:border-slate-800 self-stretch">
+                  <div className="w-[110px] sm:w-[145px] shrink-0 bg-slate-50/80 dark:bg-slate-800/60 px-2.5 py-2 font-semibold text-slate-600 dark:text-slate-400 flex items-center border-r border-slate-200 dark:border-slate-800 self-stretch">
                     <UserOutlined className="mr-1.5 text-blue-500 shrink-0 text-xs" />
                     <span className="truncate">Username</span>
                   </div>
@@ -573,7 +575,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
 
                 {/* 4. Email Address */}
                 <div className="flex items-center min-w-0 w-full">
-                  <div className="w-[110px] sm:w-[160px] shrink-0 bg-slate-50/80 dark:bg-slate-800/60 px-2.5 py-2 font-semibold text-slate-600 dark:text-slate-400 flex items-center border-r border-slate-200 dark:border-slate-800 self-stretch">
+                  <div className="w-[110px] sm:w-[145px] shrink-0 bg-slate-50/80 dark:bg-slate-800/60 px-2.5 py-2 font-semibold text-slate-600 dark:text-slate-400 flex items-center border-r border-slate-200 dark:border-slate-800 self-stretch">
                     <MailOutlined className="mr-1.5 text-blue-500 shrink-0 text-xs" />
                     <span className="truncate">Email Address</span>
                   </div>
@@ -605,7 +607,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
 
                 {/* 5. Account Role */}
                 <div className="flex items-center min-w-0 w-full">
-                  <div className="w-[110px] sm:w-[160px] shrink-0 bg-slate-50/80 dark:bg-slate-800/60 px-2.5 py-2 font-semibold text-slate-600 dark:text-slate-400 flex items-center border-r border-slate-200 dark:border-slate-800 self-stretch">
+                  <div className="w-[110px] sm:w-[145px] shrink-0 bg-slate-50/80 dark:bg-slate-800/60 px-2.5 py-2 font-semibold text-slate-600 dark:text-slate-400 flex items-center border-r border-slate-200 dark:border-slate-800 self-stretch">
                     <IdcardOutlined className="mr-1.5 text-blue-500 shrink-0 text-xs" />
                     <span className="truncate">Account Role</span>
                   </div>
@@ -646,7 +648,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
 
                 {/* 6. Department */}
                 <div className="flex items-center min-w-0 w-full">
-                  <div className="w-[110px] sm:w-[160px] shrink-0 bg-slate-50/80 dark:bg-slate-800/60 px-2.5 py-2 font-semibold text-slate-600 dark:text-slate-400 flex items-center border-r border-slate-200 dark:border-slate-800 self-stretch">
+                  <div className="w-[110px] sm:w-[145px] shrink-0 bg-slate-50/80 dark:bg-slate-800/60 px-2.5 py-2 font-semibold text-slate-600 dark:text-slate-400 flex items-center border-r border-slate-200 dark:border-slate-800 self-stretch">
                     <TeamOutlined className="mr-1.5 text-blue-500 shrink-0 text-xs" />
                     <span className="truncate">Department</span>
                   </div>
@@ -686,7 +688,7 @@ export const ProfileModal = ({ open, onClose, user }) => {
 
                 {/* 7. Member Since */}
                 <div className="flex items-center min-w-0 w-full">
-                  <div className="w-[110px] sm:w-[160px] shrink-0 bg-slate-50/80 dark:bg-slate-800/60 px-2.5 py-2 font-semibold text-slate-600 dark:text-slate-400 flex items-center border-r border-slate-200 dark:border-slate-800 self-stretch">
+                  <div className="w-[110px] sm:w-[145px] shrink-0 bg-slate-50/80 dark:bg-slate-800/60 px-2.5 py-2 font-semibold text-slate-600 dark:text-slate-400 flex items-center border-r border-slate-200 dark:border-slate-800 self-stretch">
                     <CalendarOutlined className="mr-1.5 text-blue-500 shrink-0 text-xs" />
                     <span className="truncate">Member Since</span>
                   </div>

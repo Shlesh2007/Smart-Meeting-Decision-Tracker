@@ -91,6 +91,37 @@ export const ActionDetailModal = ({
       }
     }
 
+    if (newStatus === 'CANCELLED') {
+      Modal.confirm({
+        title: 'Cancel Action Item',
+        content: 'Cancelling this action will automatically cancel all downstream actions that strictly depend on it. Are you sure you want to proceed?',
+        okText: 'Yes, Cancel Action',
+        okButtonProps: { danger: true },
+        cancelText: 'Keep Active',
+        onOk: async () => {
+          setUpdating(true);
+          try {
+            if (onStatusChange) {
+              await onStatusChange(actionItem, newStatus);
+            } else {
+              await actionService.updateActionStatus(actionItem.id, newStatus);
+              message.success(`Status updated to ${newStatus}`);
+            }
+            setJustUpdated(true);
+          } catch (err) {
+            const errMsg =
+              err.response?.data?.status?.[0] ||
+              err.response?.data?.detail ||
+              'Failed to update action status.';
+            message.error(errMsg);
+          } finally {
+            setUpdating(false);
+          }
+        }
+      });
+      return;
+    }
+
     setUpdating(true);
     try {
       if (onStatusChange) {
@@ -414,13 +445,25 @@ export const ActionDetailModal = ({
           </div>
         </div>
 
-        {/* Work Done / Delivered Outcome (If completed or has notes) */}
+        {/* Work Done / Cancellation Audit Trail */}
         {actionItem.completion_notes && (
-          <div className="p-2.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-900/60 rounded-xl space-y-1">
-            <strong className="font-extrabold block text-emerald-800 dark:text-emerald-300 text-[11px]">
-              ✅ Work Done / Delivered Outcome:
+          <div className={`p-2.5 rounded-xl space-y-1 border ${
+            actionItem.status === 'CANCELLED'
+              ? 'bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-900/60'
+              : 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-900/60'
+          }`}>
+            <strong className={`font-extrabold block text-[11px] ${
+              actionItem.status === 'CANCELLED'
+                ? 'text-rose-800 dark:text-rose-300'
+                : 'text-emerald-800 dark:text-emerald-300'
+            }`}>
+              {actionItem.status === 'CANCELLED' ? '🚫 Cancellation Reason / Audit Log:' : '✅ Work Done / Delivered Outcome:'}
             </strong>
-            <p className="text-xs text-emerald-900 dark:text-emerald-200 m-0 leading-relaxed whitespace-pre-wrap">
+            <p className={`text-xs m-0 leading-relaxed whitespace-pre-wrap ${
+              actionItem.status === 'CANCELLED'
+                ? 'text-rose-900 dark:text-rose-200 font-medium'
+                : 'text-emerald-900 dark:text-emerald-200'
+            }`}>
               {actionItem.completion_notes}
             </p>
           </div>
@@ -433,11 +476,18 @@ export const ActionDetailModal = ({
               <span className="text-[9.5px] font-extrabold text-amber-800 dark:text-amber-400 uppercase tracking-wider shrink-0">
                 Prerequisite Dependencies ({dependencies.length})
               </span>
-              {hasIncompleteDeps && (
-                <Tag color="warning" className="text-[9px] font-bold m-0 px-1.5 py-0 shrink-0">
-                  Prereqs Incomplete
-                </Tag>
-              )}
+              <div className="flex items-center gap-1.5 shrink-0">
+                {dependencies.length > 1 && (
+                  <Tag color={actionItem.dependency_rule === 'ANY' ? 'blue' : 'purple'} className="text-[9px] font-bold m-0 px-1.5 py-0">
+                    Rule: {actionItem.dependency_rule === 'ANY' ? 'Require ANY (OR)' : 'Require ALL (AND)'}
+                  </Tag>
+                )}
+                {hasIncompleteDeps && (
+                  <Tag color="warning" className="text-[9px] font-bold m-0 px-1.5 py-0 shrink-0">
+                    Prereqs Incomplete
+                  </Tag>
+                )}
+              </div>
             </div>
 
             <div className="space-y-1 min-w-0 max-w-full overflow-hidden">
@@ -448,14 +498,14 @@ export const ActionDetailModal = ({
                 >
                   <div className="flex items-center space-x-2 min-w-0 flex-1 overflow-hidden">
                     <span className="text-xs shrink-0">
-                      {dep.is_completed ? '✓' : '🔒'}
+                      {dep.status === 'CANCELLED' ? '🚫' : dep.is_completed ? '✓' : '🔒'}
                     </span>
                     <span className="font-semibold text-slate-800 dark:text-slate-200 truncate block min-w-0 flex-1" title={dep.title}>
                       {dep.title}
                     </span>
                   </div>
                   <Tag
-                    color={dep.is_completed ? 'success' : 'error'}
+                    color={dep.status === 'CANCELLED' ? 'default' : dep.is_completed ? 'success' : 'error'}
                     className="text-[9.5px] font-extrabold m-0 shrink-0 uppercase"
                   >
                     {dep.status || (dep.is_completed ? 'COMPLETED' : 'BLOCKED')}
@@ -468,7 +518,7 @@ export const ActionDetailModal = ({
               <div className="pt-1 border-t border-amber-200 dark:border-amber-900/50 flex items-center space-x-1.5 text-amber-800 dark:text-amber-300 font-bold text-[10px] leading-tight min-w-0 max-w-full overflow-hidden">
                 <LockOutlined className="shrink-0 text-xs text-amber-600" />
                 <span className="min-w-0 flex-1">
-                  Status update to Completed is locked until all prerequisites finish.
+                  Status update to Completed is locked until {actionItem.dependency_rule === 'ANY' ? 'at least one prerequisite finishes' : 'all prerequisites finish'}.
                 </span>
               </div>
             )}

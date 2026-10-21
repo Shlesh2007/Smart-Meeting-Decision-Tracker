@@ -28,13 +28,18 @@ class ActionItemSerializer(serializers.ModelSerializer):
     discussion_id = serializers.SerializerMethodField()
     discussion_title = serializers.SerializerMethodField()
     completion_notes = serializers.CharField(allow_blank=True, allow_null=True, required=False)
+    dependency_rule = serializers.ChoiceField(
+        choices=ActionItem.DependencyRule.choices,
+        default=ActionItem.DependencyRule.ALL,
+        required=False
+    )
 
     class Meta:
         model = ActionItem
         fields = (
             'id', 'decision', 'meeting_id', 'meeting_title', 'discussion_id', 'discussion_title', 'title', 'description', 'completion_notes', 'assigned_to', 'assigned_to_detail',
             'priority', 'due_date', 'status', 'is_overdue', 'dependencies', 'dependency_details',
-            'dependency_ids', 'created_by', 'created_by_detail', 'created_at', 'updated_at'
+            'dependency_ids', 'dependency_rule', 'created_by', 'created_by_detail', 'created_at', 'updated_at'
         )
         read_only_fields = ('id', 'meeting_id', 'meeting_title', 'discussion_id', 'discussion_title', 'dependencies', 'created_by', 'created_at', 'updated_at')
 
@@ -84,6 +89,9 @@ class ActionItemSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         ret = super().to_representation(instance)
+        ret['dependency_rule'] = getattr(instance, 'dependency_rule', ActionItem.DependencyRule.ALL)
+        if ret.get('description'):
+            ret['description'] = ret['description'].replace('\n[DEPENDENCY_RULE:ANY]', '').replace('[DEPENDENCY_RULE:ANY]', '').strip()
         # If assigned_to_detail is empty, fallback to created_by_detail so action items never show as unassigned
         try:
             if not ret.get('assigned_to_detail') and ret.get('created_by_detail'):
@@ -116,7 +124,8 @@ class ActionItemSerializer(serializers.ModelSerializer):
                     'id': dep.id,
                     'title': dep.title,
                     'status': dep.status,
-                    'is_completed': dep.status == ActionItem.Status.COMPLETED
+                    'is_completed': dep.status == ActionItem.Status.COMPLETED,
+                    'is_cancelled': dep.status == ActionItem.Status.CANCELLED
                 }
                 for dep in obj.dependencies.all()
             ]
@@ -164,12 +173,18 @@ class ActionItemSerializer(serializers.ModelSerializer):
             if self.instance and self.instance in proposed_deps:
                 raise serializers.ValidationError({"dependencies": "An action item cannot depend on itself."})
 
-            # Check incomplete dependencies
-            incomplete_deps = [dep for dep in proposed_deps if getattr(dep, 'status', None) != ActionItem.Status.COMPLETED]
+            # Check rule
+            rule = attrs.get('dependency_rule') or (getattr(self.instance, 'dependency_rule', ActionItem.DependencyRule.ALL) if self.instance else ActionItem.DependencyRule.ALL)
 
-            # 1. On creation: If incomplete dependencies exist, automatically set status to BLOCKED; otherwise default to TODO
+            # Check if prerequisites are satisfied
+            if rule == ActionItem.DependencyRule.ANY:
+                is_satisfied = any(getattr(dep, 'status', None) == ActionItem.Status.COMPLETED for dep in proposed_deps) if proposed_deps else True
+            else:
+                is_satisfied = all(getattr(dep, 'status', None) == ActionItem.Status.COMPLETED for dep in proposed_deps) if proposed_deps else True
+
+            # 1. On creation: If dependencies are not satisfied, automatically set status to BLOCKED; otherwise default to TODO
             if not self.instance:
-                if incomplete_deps and attrs.get('status') != ActionItem.Status.CANCELLED:
+                if not is_satisfied and attrs.get('status') != ActionItem.Status.CANCELLED:
                     attrs['status'] = ActionItem.Status.BLOCKED
                 elif 'status' not in attrs:
                     attrs['status'] = ActionItem.Status.TODO
@@ -177,11 +192,13 @@ class ActionItemSerializer(serializers.ModelSerializer):
             target_status = attrs.get('status', getattr(self.instance, 'status', ActionItem.Status.TODO) if self.instance else ActionItem.Status.TODO)
 
             # 2. On update / manual status change: Cannot change status to TODO, IN_PROGRESS, or COMPLETED while prerequisites are incomplete
-            if incomplete_deps and self.instance and 'status' in attrs and attrs['status'] in [ActionItem.Status.TODO, ActionItem.Status.IN_PROGRESS, ActionItem.Status.COMPLETED]:
+            if not is_satisfied and self.instance and 'status' in attrs and attrs['status'] in [ActionItem.Status.TODO, ActionItem.Status.IN_PROGRESS, ActionItem.Status.COMPLETED]:
+                incomplete_deps = [dep for dep in proposed_deps if getattr(dep, 'status', None) != ActionItem.Status.COMPLETED]
                 titles = ", ".join([f"'{getattr(dep, 'title', str(dep))}' ({getattr(dep, 'status', 'Unknown')})" for dep in incomplete_deps])
                 status_label = "Todo" if target_status == ActionItem.Status.TODO else ("In Progress" if target_status == ActionItem.Status.IN_PROGRESS else "Completed")
+                rule_desc = "At least one prerequisite must be completed" if rule == ActionItem.DependencyRule.ANY else "All prerequisite dependencies must be completed"
                 raise serializers.ValidationError({
-                    "status": f"Cannot set status to {status_label}. Outstanding incomplete prerequisite dependencies: {titles}."
+                    "status": f"Cannot set status to {status_label}. {rule_desc}. Incomplete prerequisites: {titles}."
                 })
         except serializers.ValidationError:
             raise
@@ -191,6 +208,7 @@ class ActionItemSerializer(serializers.ModelSerializer):
         return attrs
 
     def create(self, validated_data):
+        rule = validated_data.pop('dependency_rule', ActionItem.DependencyRule.ALL)
         dependencies = validated_data.pop('dependencies', [])
         assigned_to_users = validated_data.pop('assigned_to', [])
         
@@ -205,15 +223,27 @@ class ActionItemSerializer(serializers.ModelSerializer):
         if req and 'completion_notes' in req.data and 'completion_notes' not in validated_data:
             validated_data['completion_notes'] = req.data['completion_notes']
 
-        # Auto-set status to BLOCKED if created with incomplete dependencies
+        # Persist rule in description metadata if ANY
+        if rule == ActionItem.DependencyRule.ANY:
+            desc = validated_data.get('description') or ''
+            if '[DEPENDENCY_RULE:ANY]' not in desc:
+                desc = (desc + '\n[DEPENDENCY_RULE:ANY]').strip()
+                validated_data['description'] = desc
+
+        # Auto-set status to BLOCKED if created with unsatisfied dependencies
         try:
-            has_incomplete = any(getattr(dep, 'status', None) != ActionItem.Status.COMPLETED for dep in dependencies)
-            if has_incomplete and validated_data.get('status') != ActionItem.Status.CANCELLED:
+            if rule == ActionItem.DependencyRule.ANY:
+                is_satisfied = any(getattr(dep, 'status', None) == ActionItem.Status.COMPLETED for dep in dependencies) if dependencies else True
+            else:
+                is_satisfied = all(getattr(dep, 'status', None) == ActionItem.Status.COMPLETED for dep in dependencies) if dependencies else True
+
+            if not is_satisfied and validated_data.get('status') != ActionItem.Status.CANCELLED:
                 validated_data['status'] = ActionItem.Status.BLOCKED
         except Exception:
             pass
 
         action = ActionItem.objects.create(**validated_data)
+        action.dependency_rule = rule
         
         if dependencies:
             try:
@@ -230,8 +260,20 @@ class ActionItemSerializer(serializers.ModelSerializer):
         return action
 
     def update(self, instance, validated_data):
+        rule = validated_data.pop('dependency_rule', None)
         dependencies = validated_data.pop('dependencies', None)
         assigned_to_users = validated_data.pop('assigned_to', None)
+
+        if rule is not None:
+            instance.dependency_rule = rule
+            desc = validated_data.get('description', instance.description) or ''
+            if rule == ActionItem.DependencyRule.ANY:
+                if '[DEPENDENCY_RULE:ANY]' not in desc:
+                    desc = (desc + '\n[DEPENDENCY_RULE:ANY]').strip()
+                    validated_data['description'] = desc
+            else:
+                desc = desc.replace('\n[DEPENDENCY_RULE:ANY]', '').replace('[DEPENDENCY_RULE:ANY]', '').strip()
+                validated_data['description'] = desc
 
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
@@ -260,18 +302,29 @@ class ActionItemSerializer(serializers.ModelSerializer):
         # Re-evaluate instance status against its dependencies
         try:
             current_deps = instance.dependencies.all()
-            has_incomplete = any(getattr(dep, 'status', None) != ActionItem.Status.COMPLETED for dep in current_deps)
-            if has_incomplete and instance.status not in [ActionItem.Status.CANCELLED, ActionItem.Status.BLOCKED]:
+            effective_rule = getattr(instance, 'dependency_rule', ActionItem.DependencyRule.ALL)
+            if effective_rule == ActionItem.DependencyRule.ANY:
+                is_satisfied = any(getattr(dep, 'status', None) == ActionItem.Status.COMPLETED for dep in current_deps) if current_deps.exists() else True
+            else:
+                is_satisfied = all(getattr(dep, 'status', None) == ActionItem.Status.COMPLETED for dep in current_deps) if current_deps.exists() else True
+
+            if not is_satisfied and instance.status not in [ActionItem.Status.CANCELLED, ActionItem.Status.BLOCKED]:
                 instance.status = ActionItem.Status.BLOCKED
         except Exception:
             pass
 
         instance.save()
 
-        # Trigger auto-unblocking for all dependent actions
-        try:
-            instance.unblock_dependents()
-        except Exception:
-            pass
+        # Trigger cascading cancellation or auto-unblocking
+        if instance.status == ActionItem.Status.CANCELLED:
+            try:
+                instance.cascade_cancellation()
+            except Exception:
+                pass
+        else:
+            try:
+                instance.unblock_dependents()
+            except Exception:
+                pass
 
         return instance

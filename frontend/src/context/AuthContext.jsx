@@ -12,10 +12,21 @@ export const AuthProvider = ({ children }) => {
   const location = useLocation();
   const pathname = location.pathname;
 
+  const updateProfileIfChanged = (profile) => {
+    if (!profile) return;
+    setUser((prev) => {
+      if (!prev) return profile;
+      if (JSON.stringify(prev) === JSON.stringify(profile)) {
+        return prev;
+      }
+      return profile;
+    });
+  };
+
   const refreshUser = async () => {
     try {
       const profile = await authService.getProfile();
-      setUser(profile);
+      updateProfileIfChanged(profile);
       return profile;
     } catch (err) {
       setUser(null);
@@ -36,7 +47,7 @@ export const AuthProvider = ({ children }) => {
         const currentToken = localStorage.getItem('access_token');
         if (currentToken) {
           authService.getProfile()
-            .then((profile) => setUser(profile))
+            .then(updateProfileIfChanged)
             .catch(() => {});
         }
       }, 10000);
@@ -45,7 +56,7 @@ export const AuthProvider = ({ children }) => {
         const currentToken = localStorage.getItem('access_token');
         if (currentToken) {
           authService.getProfile()
-            .then((profile) => setUser(profile))
+            .then(updateProfileIfChanged)
             .catch(() => {});
         }
       };

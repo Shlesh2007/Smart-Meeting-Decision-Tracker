@@ -65,19 +65,31 @@ class ActionItemViewSet(viewsets.ModelViewSet):
             return ActionItem.objects.none()
 
         try:
+            from apps.authentication.views import get_organization_member_ids
+            member_ids = get_organization_member_ids(user, request=self.request)
+        except Exception:
+            member_ids = {user.id}
+
+        try:
             # OWNER and ADMIN view all org action items
             if user.is_admin_role:
-                qs = ActionItem.objects.all()
+                qs = ActionItem.objects.filter(
+                    Q(created_by_id__in=member_ids) | Q(assigned_to__id__in=member_ids) |
+                    Q(decision__discussion__meeting__created_by_id__in=member_ids)
+                ).distinct()
             elif user.is_manager_role:
                 qs = ActionItem.objects.filter(
-                    Q(created_by=user) |
-                    Q(assigned_to=user) |
-                    Q(decision__discussion__meeting__created_by=user) |
-                    Q(decision__discussion__meeting__team__members=user)
+                    (Q(created_by=user) |
+                     Q(assigned_to=user) |
+                     Q(decision__discussion__meeting__created_by=user) |
+                     Q(decision__discussion__meeting__team__members=user)) &
+                    (Q(created_by_id__in=member_ids) | Q(assigned_to__id__in=member_ids) |
+                     Q(decision__discussion__meeting__created_by_id__in=member_ids))
                 ).distinct()
             else:
                 qs = ActionItem.objects.filter(
-                    Q(assigned_to=user) | Q(created_by=user)
+                    (Q(assigned_to=user) | Q(created_by=user)) &
+                    (Q(created_by_id__in=member_ids) | Q(assigned_to__id__in=member_ids))
                 ).distinct()
 
             # Execute query to test if assigned_to table exists
@@ -86,9 +98,14 @@ class ActionItemViewSet(viewsets.ModelViewSet):
         except Exception:
             # Fallback if assigned_to ManyToMany table has not been migrated yet in database
             if user.is_admin_role:
-                qs = ActionItem.objects.all()
+                qs = ActionItem.objects.filter(
+                    Q(created_by_id__in=member_ids) |
+                    Q(decision__discussion__meeting__created_by_id__in=member_ids)
+                ).distinct()
             else:
-                qs = ActionItem.objects.filter(created_by=user).distinct()
+                qs = ActionItem.objects.filter(created_by=user).filter(
+                    Q(created_by_id__in=member_ids)
+                ).distinct()
             return qs.select_related('created_by', 'decision__discussion__meeting').prefetch_related('dependencies')
 
     def perform_create(self, serializer):
