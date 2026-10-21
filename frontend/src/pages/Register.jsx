@@ -453,9 +453,10 @@ export default function Register() {
                     normalize={(val) => (val ? val.replace(/\s/g, '') : val)}
                     className="mb-3"
                   >
-                    <Input.Password
+                    <Input
                       id="password_confirm"
                       name="password_confirm"
+                      type="text"
                       prefix={<LockOutlined className="text-slate-400 mr-1.5" />}
                       placeholder="Confirm password"
                       onKeyDown={(e) => {

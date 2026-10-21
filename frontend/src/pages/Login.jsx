@@ -743,15 +743,25 @@ export default function Login() {
               <Form.Item
                 name="confirm_password"
                 label="Confirm New Password"
+                dependencies={['new_password']}
                 rules={[
                   { required: true, message: 'Please enter confirm new password' },
-                  { pattern: /^\S+$/, message: 'Password cannot contain spaces' }
+                  { pattern: /^\S+$/, message: 'Password cannot contain spaces' },
+                  ({ getFieldValue }) => ({
+                    validator(_, value) {
+                      if (!value || getFieldValue('new_password') === value) {
+                        return Promise.resolve();
+                      }
+                      return Promise.reject(new Error('Passwords do not match!'));
+                    },
+                  }),
                 ]}
                 normalize={(val) => (val ? val.replace(/\s/g, '') : val)}
               >
-                <Input.Password
+                <Input
                   id="confirm_password"
                   name="confirm_password"
+                  type="text"
                   prefix={<LockOutlined className="text-slate-400" />}
                   placeholder="Confirm new password"
                   onKeyDown={(e) => {
