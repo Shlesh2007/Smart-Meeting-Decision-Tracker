@@ -246,7 +246,14 @@ export const DashboardHeader = ({
               id="header_time_period"
               name="time_period"
               value={period || 'today'}
-              onChange={onPeriodChange}
+              onChange={(val) => {
+                onPeriodChange(val);
+                setTimeout(() => {
+                  if (document.activeElement instanceof HTMLElement) {
+                    document.activeElement.blur();
+                  }
+                }, 0);
+              }}
               className="w-28 xs:w-32 sm:w-36 font-semibold text-xs h-9 !rounded-xl [&_.ant-select-selector]:!h-9 [&_.ant-select-selector]:!items-center [&_.ant-select-selector]:!rounded-xl [&_.ant-select-selection-item]:!leading-[34px]"
               size="middle"
               popupMatchSelectWidth={false}

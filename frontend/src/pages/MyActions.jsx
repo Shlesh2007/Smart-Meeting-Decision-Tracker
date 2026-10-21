@@ -438,15 +438,14 @@ export default function MyActions() {
                 cancelText="No"
                 okButtonProps={{ danger: true }}
               >
-                <Tooltip title="Delete Action Item">
-                  <Button
-                    size="small"
-                    danger
-                    type="text"
-                    icon={<DeleteOutlined className="text-rose-500 text-xs" />}
-                    className="h-7 w-7 p-0 flex items-center justify-center hover:bg-rose-50 dark:hover:bg-slate-700 rounded-lg"
-                  />
-                </Tooltip>
+                <Button
+                  size="small"
+                  danger
+                  type="text"
+                  title="Delete Action Item"
+                  icon={<DeleteOutlined className="text-rose-500 text-xs" />}
+                  className="h-7 w-7 p-0 flex items-center justify-center hover:bg-rose-50 dark:hover:bg-slate-700 rounded-lg"
+                />
               </Popconfirm>
             )}
           </div>

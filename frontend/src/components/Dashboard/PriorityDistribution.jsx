@@ -162,7 +162,7 @@ export const PriorityDistribution = ({ priorityDistribution = {} }) => {
               <button
                 type="button"
                 onClick={handleCloseTooltip}
-                className="text-slate-400 hover:text-white text-xs font-extrabold px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 cursor-pointer shrink-0 leading-none"
+                className="block sm:hidden text-slate-400 hover:text-white text-xs font-extrabold px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 cursor-pointer shrink-0 leading-none"
                 title="Close details"
               >
                 ✕

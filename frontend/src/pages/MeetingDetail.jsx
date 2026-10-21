@@ -771,15 +771,14 @@ export default function MeetingDetail() {
                                       cancelText="No"
                                       okButtonProps={{ danger: true }}
                                     >
-                                      <Tooltip title="Delete Action Item">
-                                        <Button
-                                          size="small"
-                                          danger
-                                          type="text"
-                                          icon={<DeleteOutlined />}
-                                          className="text-slate-400 hover:text-rose-600"
-                                        />
-                                      </Tooltip>
+                                      <Button
+                                        size="small"
+                                        danger
+                                        type="text"
+                                        title="Delete Action Item"
+                                        icon={<DeleteOutlined />}
+                                        className="text-slate-400 hover:text-rose-600"
+                                      />
                                     </Popconfirm>
                                   )}
                                 </div>

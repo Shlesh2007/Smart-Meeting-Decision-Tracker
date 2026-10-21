@@ -4,10 +4,11 @@ import { useAuth } from '../context/AuthContext.jsx';
 import { Logo } from '../components/Logo.jsx';
 import { getErrorMessage } from '../utils/errorHandler.js';
 import { authService } from '../services/api.js';
-import { Form, Input, Select, Button, Card, Alert, App, ConfigProvider, theme as antdTheme } from 'antd';
+import { Form, Input, Select, Button, Card, Alert, App, ConfigProvider, theme as antdTheme, Tag } from 'antd';
 import {
   BankOutlined, UsergroupAddOutlined, PlusOutlined,
-  CheckCircleOutlined, RightOutlined, LogoutOutlined, InfoCircleOutlined
+  CheckCircleOutlined, RightOutlined, LogoutOutlined, InfoCircleOutlined,
+  ClockCircleOutlined, SyncOutlined, TeamOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 
@@ -141,74 +142,121 @@ export default function Onboarding() {
               Welcome, {user?.first_name || user?.full_name || user?.username}!
             </h1>
             <p className="text-xs sm:text-sm text-slate-600 m-0 max-w-md mx-auto">
-              You do not currently belong to an active organization workspace. Select an existing organization to request access or create your own.
+              {orgStatus?.user_pending_request
+                ? "Your workspace join request has been submitted and is currently under review."
+                : "You do not currently belong to an active organization workspace. Select an existing organization to request access or create your own."}
             </p>
           </div>
 
-          {/* Live Confirmation Banner after submitting request */}
-          {confirmationMessage && (
-            <Alert
-              type="info"
-              showIcon
-              icon={<CheckCircleOutlined className="text-blue-600 text-lg" />}
-              message={<span className="font-bold text-sm text-blue-900">Request Submitted</span>}
-              description={<span className="text-xs text-blue-800">{confirmationMessage}</span>}
-              className="rounded-2xl border-blue-200 bg-blue-50/90 shadow-sm"
-            />
-          )}
-
-          {/* Live System Organization Status Banner */}
-          {!loadingStatus && orgStatus && (
-            <div className="w-full space-y-3">
-              {orgStatus.user_pending_request && (
-                <Alert
-                  type="warning"
-                  showIcon
-                  icon={<InfoCircleOutlined className="text-amber-600 text-lg" />}
-                  message={<span className="font-bold text-sm text-amber-900">⏳ Join Request Pending Review</span>}
-                  description={
-                    <div className="text-xs space-y-1 text-amber-800">
-                      <p className="m-0">
-                        Your request to join <strong>{orgStatus.user_pending_request.organization_name}</strong> (Department: <strong>{orgStatus.user_pending_request.requested_department}</strong>) has been submitted.
-                      </p>
-                      <p className="m-0 font-semibold">
-                        You will receive an email notification once your request is reviewed and accepted by an Administrator or Owner.
-                      </p>
-                    </div>
-                  }
-                  className="rounded-2xl border-amber-300 bg-amber-50/90 shadow-sm"
-                />
-              )}
-            </div>
-          )}
-
-          {/* Main Onboarding Card wrapped in light ConfigProvider to always stay pure white */}
+          {/* Main Onboarding Card (Single Unified Dialog Box) */}
           <div className="w-full bg-white shadow-xl shadow-slate-400/15 rounded-[24px] p-6 sm:p-7 border border-slate-100 auth-card">
-            <div className="pt-1 space-y-4">
-              <div className="flex items-center space-x-2 pb-3 border-b border-slate-100">
-                <UsergroupAddOutlined className="text-blue-500 text-lg" />
-                <h2 className="text-base font-bold text-slate-800 m-0">
-                  Request an Organization to Join
-                </h2>
-              </div>
+            {orgStatus?.user_pending_request ? (
+              <div className="space-y-4">
+                {/* Live Success Notice if submitted in this session */}
+                {confirmationMessage && (
+                  <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-xl flex items-center space-x-2 text-left">
+                    <CheckCircleOutlined className="text-emerald-600 text-base shrink-0" />
+                    <div>
+                      <p className="font-bold m-0 text-emerald-900">Request Submitted Successfully</p>
+                      <p className="m-0 text-emerald-700 text-[11px]">{confirmationMessage}</p>
+                    </div>
+                  </div>
+                )}
 
-              {orgStatus?.user_pending_request ? (
-                <div className="p-5 bg-amber-50/90 rounded-2xl border border-amber-200 space-y-3 text-center">
-                  <InfoCircleOutlined className="text-3xl text-amber-600" />
+                {/* Status Header */}
+                <div className="text-center pt-1 space-y-2">
+                  <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-amber-100 text-amber-600 text-2xl shadow-sm border border-amber-200">
+                    <ClockCircleOutlined />
+                  </div>
                   <div>
-                    <h3 className="text-base font-bold text-amber-900 m-0">Join Request Under Review</h3>
-                    <p className="text-xs text-amber-800 mt-1 m-0">
-                      Your request to join <strong>{orgStatus.user_pending_request.organization_name}</strong> was submitted on {dayjs(orgStatus.user_pending_request.created_at).format('MMM DD, YYYY')}.
+                    <h2 className="text-lg sm:text-xl font-extrabold text-slate-900 m-0">
+                      Join Request Under Review
+                    </h2>
+                    <p className="text-xs text-slate-500 mt-1 m-0">
+                      Your request to join the workspace has been recorded and is currently awaiting approval.
                     </p>
                   </div>
-                  <Alert
-                    type="info"
-                    message={<span className="text-blue-900 font-semibold">What happens next?</span>}
-                    description={<span className="text-blue-800">An Organization Owner or Administrator will review your request. You will receive an email notification once accepted.</span>}
-                    className="text-left text-xs rounded-xl bg-blue-50/80 border-blue-200"
-                  />
                 </div>
-              ) : !hasEligibleOrgs && !loadingStatus ? (
+
+                {/* Organization & Department Details Box */}
+                <div className="p-4 sm:p-5 rounded-2xl bg-amber-50/80 border border-amber-200/90 space-y-3">
+                  <div className="flex items-center justify-between pb-2.5 border-b border-amber-200">
+                    <div className="flex items-center space-x-2 min-w-0">
+                      <BankOutlined className="text-amber-700 text-base shrink-0" />
+                      <span className="font-bold text-sm text-slate-900 truncate">
+                        {orgStatus.user_pending_request.organization_name}
+                      </span>
+                    </div>
+                    <Tag color="warning" className="font-bold uppercase tracking-wider text-[10px] px-2.5 py-0.5 rounded-full border-none bg-amber-500 text-white shrink-0 m-0">
+                      Pending Review
+                    </Tag>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-700 pt-0.5">
+                    <div className="flex items-center space-x-1.5">
+                      <TeamOutlined className="text-amber-700 text-xs shrink-0" />
+                      <span className="text-slate-500 font-medium">Department:</span>
+                      <strong className="text-slate-800 truncate">
+                        {orgStatus.user_pending_request.requested_department || 'General Team'}
+                      </strong>
+                    </div>
+                    <div className="flex items-center space-x-1.5 sm:justify-end">
+                      <ClockCircleOutlined className="text-amber-700 text-xs shrink-0" />
+                      <span className="text-slate-500 font-medium">Submitted:</span>
+                      <strong className="text-slate-800">
+                        {dayjs(orgStatus.user_pending_request.created_at).format('MMM DD, YYYY')}
+                      </strong>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Next Steps Guidance */}
+                <div className="p-4 rounded-2xl bg-blue-50/80 border border-blue-200/80 space-y-2 text-left">
+                  <div className="flex items-center space-x-2">
+                    <InfoCircleOutlined className="text-blue-600 text-sm shrink-0" />
+                    <h4 className="font-bold text-xs text-blue-950 m-0">What happens next?</h4>
+                  </div>
+                  <ul className="text-xs text-blue-900/90 space-y-1.5 m-0 pl-5 list-disc leading-relaxed">
+                    <li>
+                      An <strong>Organization Owner or Administrator</strong> will review your request.
+                    </li>
+                    <li>
+                      You will receive an <strong>email notification</strong> once your request is reviewed and accepted.
+                    </li>
+                    <li>
+                      This page automatically refreshes and will grant workspace access as soon as approved.
+                    </li>
+                  </ul>
+                </div>
+
+                {/* Live Auto-Sync Status Bar */}
+                <div className="flex items-center justify-between pt-1 text-xs">
+                  <div className="flex items-center space-x-2 text-slate-500">
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                    <span className="text-[11px] font-medium text-slate-500">Auto-refreshing status...</span>
+                  </div>
+                  <Button
+                    type="text"
+                    size="small"
+                    icon={<SyncOutlined spin={loadingStatus} />}
+                    onClick={() => fetchOrgStatus(true)}
+                    className="text-xs text-blue-600 hover:text-blue-700 font-semibold p-0 h-auto"
+                  >
+                    Refresh Status
+                  </Button>
+                </div>
+              </div>
+            ) : !hasEligibleOrgs && !loadingStatus ? (
+              <div className="pt-1 space-y-4">
+                <div className="flex items-center space-x-2 pb-3 border-b border-slate-100">
+                  <UsergroupAddOutlined className="text-blue-500 text-lg" />
+                  <h2 className="text-base font-bold text-slate-800 m-0">
+                    Request an Organization to Join
+                  </h2>
+                </div>
                 <div className="text-center py-6 space-y-3">
                   <BankOutlined className="text-4xl text-slate-300" />
                   <div>
@@ -226,75 +274,82 @@ export default function Onboarding() {
                     Create New Organization
                   </Button>
                 </div>
-              ) : (
-                <>
-                  <Alert
-                    type="info"
-                    showIcon
-                    icon={<CheckCircleOutlined className="text-blue-600" />}
-                    message={<span className="font-semibold text-xs sm:text-sm text-blue-900">Select an Organization to Join</span>}
-                    description={<span className="text-xs text-blue-800">Choose an existing organization from the database and select your department. An Organization Owner or Admin must approve your join request.</span>}
-                    className="rounded-2xl border-blue-200 bg-blue-50/60"
-                  />
+              </div>
+            ) : (
+              <div className="pt-1 space-y-4">
+                <div className="flex items-center space-x-2 pb-3 border-b border-slate-100">
+                  <UsergroupAddOutlined className="text-blue-500 text-lg" />
+                  <h2 className="text-base font-bold text-slate-800 m-0">
+                    Request an Organization to Join
+                  </h2>
+                </div>
 
-                  <Form form={joinForm} layout="vertical" onFinish={handleJoinOrg} disabled={submitting} size="middle">
-                    <Form.Item
+                <Alert
+                  type="info"
+                  showIcon
+                  icon={<CheckCircleOutlined className="text-blue-600" />}
+                  message={<span className="font-semibold text-xs sm:text-sm text-blue-900">Select an Organization to Join</span>}
+                  description={<span className="text-xs text-blue-800">Choose an existing organization from the database and select your department. An Organization Owner or Admin must approve your join request.</span>}
+                  className="rounded-2xl border-blue-200 bg-blue-50/60"
+                />
+
+                <Form form={joinForm} layout="vertical" onFinish={handleJoinOrg} disabled={submitting} size="middle">
+                  <Form.Item
+                    name="organization_id"
+                    label={<span className="font-semibold text-xs uppercase tracking-wider text-slate-700">Select Organization</span>}
+                    rules={[{ required: true, message: 'Please select an organization from the list' }]}
+                    initialValue={organizationsList[0]?.id || organizationsList[0]?.name}
+                  >
+                    <Select
+                      id="join_org_select"
                       name="organization_id"
-                      label={<span className="font-semibold text-xs uppercase tracking-wider text-slate-700">Select Organization</span>}
-                      rules={[{ required: true, message: 'Please select an organization from the list' }]}
-                      initialValue={organizationsList[0]?.id || organizationsList[0]?.name}
-                    >
-                      <Select
-                        id="join_org_select"
-                        name="organization_id"
-                        className="rounded-xl text-sm font-semibold"
-                        popupClassName="auth-select-dropdown"
-                        placeholder="Select an organization..."
-                        loading={loadingStatus}
-                        options={organizationsList.map((org) => ({
-                          label: `${org.name}${org.owner_name ? ` (Owner: ${org.owner_name})` : ''}`,
-                          value: org.id || org.name
-                        }))}
-                      />
-                    </Form.Item>
+                      className="rounded-xl text-sm font-semibold"
+                      popupClassName="auth-select-dropdown"
+                      placeholder="Select an organization..."
+                      loading={loadingStatus}
+                      options={organizationsList.map((org) => ({
+                        label: `${org.name}${org.owner_name ? ` (Owner: ${org.owner_name})` : ''}`,
+                        value: org.id || org.name
+                      }))}
+                    />
+                  </Form.Item>
 
-                    <Form.Item
+                  <Form.Item
+                    name="department"
+                    label={<span className="font-semibold text-xs uppercase tracking-wider text-slate-700">Select Your Department</span>}
+                    rules={[{ required: true, message: 'Please select or enter your department' }]}
+                    initialValue={orgStatus?.existing_departments?.[0] || "General Team"}
+                  >
+                    <Select
+                      id="join_dept"
                       name="department"
-                      label={<span className="font-semibold text-xs uppercase tracking-wider text-slate-700">Select Your Department</span>}
-                      rules={[{ required: true, message: 'Please select or enter your department' }]}
-                      initialValue={orgStatus?.existing_departments?.[0] || "General Team"}
-                    >
-                      <Select
-                        id="join_dept"
-                        name="department"
-                        className="rounded-xl text-sm"
-                        popupClassName="auth-select-dropdown"
-                        options={Array.from(new Set([
-                          ...(orgStatus?.existing_departments || []),
-                          'Executive & Strategy', 'Engineering & Tech Lead', 'Operations & Governance',
-                          'Backend Infrastructure', 'Frontend & Mobile Guild', 'DevOps & Cloud Systems',
-                          'QA & Security Assurance', 'Product & Analytics', 'General Team'
-                        ])).map(d => ({
-                          label: d,
-                          value: d
-                        }))}
-                      />
-                    </Form.Item>
+                      className="rounded-xl text-sm"
+                      popupClassName="auth-select-dropdown"
+                      options={Array.from(new Set([
+                        ...(orgStatus?.existing_departments || []),
+                        'Executive & Strategy', 'Engineering & Tech Lead', 'Operations & Governance',
+                        'Backend Infrastructure', 'Frontend & Mobile Guild', 'DevOps & Cloud Systems',
+                        'QA & Security Assurance', 'Product & Analytics', 'General Team'
+                      ])).map(d => ({
+                        label: d,
+                        value: d
+                      }))}
+                    />
+                  </Form.Item>
 
-                    <Button
-                      type="primary"
-                      htmlType="submit"
-                      loading={submitting}
-                      block
-                      icon={<RightOutlined />}
-                      className="font-semibold rounded-xl bg-slate-900 hover:bg-slate-800 text-white h-10 border-none shadow-sm transition-colors text-sm"
-                    >
-                      Request to Join
-                    </Button>
-                  </Form>
-                </>
-              )}
-            </div>
+                  <Button
+                    type="primary"
+                    htmlType="submit"
+                    loading={submitting}
+                    block
+                    icon={<RightOutlined />}
+                    className="font-semibold rounded-xl bg-slate-900 hover:bg-slate-800 text-white h-10 border-none shadow-sm transition-colors text-sm"
+                  >
+                    Request to Join
+                  </Button>
+                </Form>
+              </div>
+            )}
           </div>
 
         {/* Subtle Text Link at Bottom */}

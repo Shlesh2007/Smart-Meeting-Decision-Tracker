@@ -522,15 +522,14 @@ export default function Admin() {
                 okText="Yes, Remove"
                 okButtonProps={{ danger: true }}
               >
-                <Tooltip title="Remove member from organization">
-                  <Button
-                    size="small"
-                    danger
-                    icon={<UserDeleteOutlined />}
-                    loading={actionLoadingId === `remove_${u.id}`}
-                    className="h-8 w-8 p-0 flex items-center justify-center shrink-0"
-                  />
-                </Tooltip>
+                <Button
+                  size="small"
+                  danger
+                  title="Remove member from organization"
+                  icon={<UserDeleteOutlined />}
+                  loading={actionLoadingId === `remove_${u.id}`}
+                  className="h-8 w-8 p-0 flex items-center justify-center shrink-0"
+                />
               </Popconfirm>
             )}
           </div>
