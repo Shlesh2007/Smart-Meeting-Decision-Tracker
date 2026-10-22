@@ -837,16 +837,6 @@ export const ProfileModal = ({ open, onClose, user }) => {
         }}
         footer={[
           <Button
-            key="cancel"
-            onClick={() => {
-              setShowLeaveModal(false);
-              setLeaveReason('');
-            }}
-            disabled={leaveLoading}
-          >
-            Cancel
-          </Button>,
-          <Button
             key="submit"
             type="primary"
             danger
