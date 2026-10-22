@@ -31,55 +31,45 @@ export const RecentCompletedActions = () => {
   }, [isAdmin, isOwner]);
 
   return (
-    <Card
-      className="rounded-xl border-slate-200 dark:border-slate-800 shadow-xs h-full flex flex-col justify-between dark:bg-slate-900"
-      styles={{
-        body: {
-          padding: '12px',
-          height: '100%',
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
-        },
-      }}
-      title={
-        <Flex align="center" justify="space-between" className="w-full">
-          <Space align="center" size={8}>
-            <Avatar
-              shape="square"
-              size={26}
-              icon={<CheckCircleOutlined />}
-              className="bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border-none rounded-lg flex items-center justify-center text-xs"
-            />
-            <Title level={5} className="!m-0 !text-xs !font-extrabold text-slate-900 dark:text-slate-100">
-              Recent Completed Actions
-            </Title>
-          </Space>
-          <Link to="/my-actions?tab=COMPLETED" className="no-underline">
-            <Button type="link" size="small" className="text-[11px] text-blue-600 dark:text-blue-400 font-bold p-0 flex items-center gap-1">
-              <span>View All</span>
-              <ArrowRightOutlined className="text-[9px]" />
-            </Button>
-          </Link>
-        </Flex>
-      }
-    >
-      <div className="my-1 max-h-[330px] overflow-y-auto flex-1">
+    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 sm:p-4 shadow-xs transition-all h-full flex flex-col justify-between">
+      {/* Header */}
+      <div className="flex items-center justify-between pb-2.5 border-b border-slate-100 dark:border-slate-800">
+        <div className="flex items-center space-x-2">
+          <Avatar
+            shape="square"
+            size={26}
+            icon={<CheckCircleOutlined />}
+            className="bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border-none rounded-lg flex items-center justify-center text-xs"
+          />
+          <h3 className="m-0 text-xs font-extrabold text-slate-900 dark:text-slate-100">
+            Recent Completed Actions
+          </h3>
+        </div>
+        <Link to="/my-actions?tab=COMPLETED" className="no-underline">
+          <Button type="link" size="small" className="text-[11px] text-blue-600 dark:text-blue-400 font-bold p-0 flex items-center gap-1">
+            <span>View All</span>
+            <ArrowRightOutlined className="text-[9px]" />
+          </Button>
+        </Link>
+      </div>
+
+      <div className="my-1 max-h-[330px] overflow-y-auto flex-1 flex flex-col">
         {loading ? (
-          <Flex justify="center" align="center" className="py-6">
+          <Flex justify="center" align="center" className="my-auto py-6">
             <Spin size="small" tip="Loading completed items..." />
           </Flex>
         ) : completedActions.length === 0 ? (
-          <Empty
-            image={Empty.PRESENTED_IMAGE_SIMPLE}
-            description={
-              <Text type="secondary" className="text-[10px] block max-w-xs mx-auto">
-                No completed action items logged yet.
-              </Text>
-            }
-            className="my-auto py-2"
-          />
+          <div className="my-auto py-6 flex flex-col items-center justify-center w-full">
+            <Empty
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+              description={
+                <Text type="secondary" className="text-[11px] block max-w-xs mx-auto">
+                  No completed action items logged yet.
+                </Text>
+              }
+              className="m-0"
+            />
+          </div>
         ) : (
           <List
             itemLayout="horizontal"
@@ -146,6 +136,6 @@ export const RecentCompletedActions = () => {
           {completedActions.length} Resolutions Logged
         </Text>
       </Flex>
-    </Card>
+    </div>
   );
 };

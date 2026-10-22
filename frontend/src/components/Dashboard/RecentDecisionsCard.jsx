@@ -77,56 +77,47 @@ export const RecentDecisionsCard = () => {
 
   return (
     <>
-      <Card
-        className="rounded-2xl border-slate-200 dark:border-slate-800 shadow-xs h-full flex flex-col justify-between dark:bg-slate-900"
-        styles={{
-          body: {
-            padding: '12px',
-            height: '100%',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
-          },
-        }}
-        title={
-          <Flex align="center" justify="space-between" className="w-full">
-            <Space align="center" size={8}>
-              <Avatar
-                shape="square"
-                size={26}
-                icon={<FileTextOutlined />}
-                className="bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border-none rounded-lg flex items-center justify-center text-xs"
-              />
-              <Title level={5} className="!m-0 !text-xs !font-extrabold text-slate-900 dark:text-slate-100">
-                Recent Key Decisions
-              </Title>
-            </Space>
-            <Tag color="indigo" className="!mr-0 font-bold text-[10px] rounded-md border-indigo-200">
-              Audit Feed
-            </Tag>
-          </Flex>
-        }
-      >
-        <div className="my-1 max-h-[330px] flex-1 overflow-y-auto">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 sm:p-4 shadow-xs transition-all h-full flex flex-col justify-between">
+        {/* Header */}
+        <div className="flex items-center justify-between pb-2.5 border-b border-slate-100 dark:border-slate-800">
+          <div className="flex items-center space-x-2">
+            <Avatar
+              shape="square"
+              size={26}
+              icon={<FileTextOutlined />}
+              className="bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border-none rounded-lg flex items-center justify-center text-xs"
+            />
+            <h3 className="m-0 text-xs font-extrabold text-slate-900 dark:text-slate-100">
+              Recent Key Decisions
+            </h3>
+          </div>
+          <Tag color="indigo" className="!mr-0 font-bold text-[10px] rounded-md border-indigo-200">
+            Audit Feed
+          </Tag>
+        </div>
+
+        <div className="my-1 max-h-[330px] flex-1 overflow-y-auto flex flex-col">
           {loading ? (
-            <Flex justify="center" align="center" className="py-8">
+            <Flex justify="center" align="center" className="my-auto py-8">
               <Spin size="small" tip="Loading decisions..." />
             </Flex>
           ) : decisions.length === 0 ? (
-            <Empty
-              image={Empty.PRESENTED_IMAGE_SIMPLE}
-              description={
-                <div className="text-center space-y-1 py-2">
-                  <Text className="text-xs font-bold text-slate-700 dark:text-slate-300 block">
-                    No decisions logged yet
-                  </Text>
-                  <Text type="secondary" className="text-[11px] block">
-                    Decisions recorded in meetings will appear here.
-                  </Text>
-                </div>
-              }
-              className="my-auto py-3"
-            />
+            <div className="my-auto py-6 flex flex-col items-center justify-center w-full">
+              <Empty
+                image={Empty.PRESENTED_IMAGE_SIMPLE}
+                description={
+                  <div className="text-center space-y-1 py-1">
+                    <Text className="text-xs font-bold text-slate-700 dark:text-slate-300 block">
+                      No decisions logged yet
+                    </Text>
+                    <Text type="secondary" className="text-[11px] block">
+                      Decisions recorded in meetings will appear here.
+                    </Text>
+                  </div>
+                }
+                className="m-0"
+              />
+            </div>
           ) : (
             <List
               itemLayout="horizontal"
@@ -196,7 +187,7 @@ export const RecentDecisionsCard = () => {
             <RightOutlined className="text-[8px]" />
           </Link>
         </Flex>
-      </Card>
+      </div>
 
       {/* Decision Audit Detail & Version History Modal */}
       <Modal
