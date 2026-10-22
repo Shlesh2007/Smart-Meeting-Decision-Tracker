@@ -53,7 +53,12 @@ export default function Meetings() {
     }
   }, [searchParams]);
 
+  const inFlightRef = useRef(false);
+
   const fetchMeetings = useCallback((showSpinner = true) => {
+    if (inFlightRef.current && !showSpinner) return;
+    inFlightRef.current = true;
+
     if (showSpinner) {
       setLoading(true);
       setError(false);
@@ -81,6 +86,7 @@ export default function Meetings() {
         if (showSpinner) setError(true);
       })
       .finally(() => {
+        inFlightRef.current = false;
         if (showSpinner) setLoading(false);
       });
   }, [page, pageSize, search, meetingType, status, dateRange, viewMode]);
@@ -94,13 +100,17 @@ export default function Meetings() {
       fetchMeetings(true);
     }
 
-    // Live Sync: Background refresh every 6 seconds and on window focus
+    // Live Sync: Background refresh every 15 seconds and on window focus
     const pollTimer = setInterval(() => {
-      fetchMeetings(false);
-    }, 6000);
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        fetchMeetings(false);
+      }
+    }, 15000);
 
     const handleFocus = () => {
-      fetchMeetings(false);
+      if (typeof document !== 'undefined' && document.visibilityState === 'visible') {
+        fetchMeetings(false);
+      }
     };
 
     window.addEventListener('focus', handleFocus);
@@ -350,7 +360,7 @@ export default function Meetings() {
 
         </div>
 
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pt-2 text-xs text-slate-500 dark:text-slate-400">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pl-2 text-xs text-slate-500 dark:text-slate-400">
           <div className="flex items-center gap-2 flex-wrap">
             <span>
               {search || meetingType || status || (dateRange && dateRange[0] && dateRange[1]) ? (

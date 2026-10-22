@@ -4,12 +4,62 @@ import re
 
 User = get_user_model()
 
+_EXISTING_TABLES = None
+def get_existing_tables():
+    global _EXISTING_TABLES
+    if _EXISTING_TABLES is None:
+        try:
+            from django.db import connection
+            _EXISTING_TABLES = set(connection.introspection.table_names())
+        except Exception:
+            _EXISTING_TABLES = set()
+    return _EXISTING_TABLES
+
 HUMAN_NAME_REGEX = re.compile(r"^[a-zA-Z\s'\-]{2,50}$")
 USERNAME_REGEX = re.compile(r"^[a-zA-Z0-9_-]{3,30}$")
 SQL_DANGEROUS_REGEX = re.compile(
     r'(\b(select|delete|insert|update|drop|alter|create|truncate|exec|union|table|from|where|into)\b)|([;*<>\\/{}="`]|--)',
     re.IGNORECASE
 )
+
+class CompactUserSerializer(serializers.ModelSerializer):
+    """
+    Ultra-fast lightweight user serializer for lists, meeting participants, and avatars.
+    Excludes expensive recursive organization queries, unacknowledged decision calculations,
+    and repeated table introspection checks.
+    """
+    full_name = serializers.SerializerMethodField()
+    has_organization = serializers.BooleanField(read_only=True)
+    organization_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = (
+            'id', 'username', 'email', 'first_name', 'last_name', 'full_name',
+            'role', 'department', 'date_joined', 'has_organization', 'organization_name'
+        )
+        read_only_fields = fields
+
+    def get_full_name(self, obj):
+        fn = (obj.first_name or '').strip()
+        if fn.startswith('Org:'):
+            fn = ''
+        ln = (obj.last_name or '').strip()
+        full = f"{fn} {ln}".strip()
+        return full or obj.username
+
+    def get_organization_name(self, obj):
+        return getattr(obj, '_cached_org_name', None) or 'SmartMeeting Workspace'
+
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        if ret.get('first_name', '').startswith('Org:'):
+            ret['first_name'] = ''
+            ret['full_name'] = (ret.get('last_name') or '').strip() or instance.username
+        if not ret.get('department') or not str(ret.get('department')).strip():
+            ret['department'] = 'General Team'
+        return ret
+
 
 class UserSerializer(serializers.ModelSerializer):
     full_name = serializers.SerializerMethodField()
@@ -47,11 +97,13 @@ class UserSerializer(serializers.ModelSerializer):
             return 'SmartMeeting Workspace'
 
     def get_organization_owners(self, obj):
+        if hasattr(obj, '_cached_org_owners'):
+            return obj._cached_org_owners
         try:
             if not obj.has_organization:
+                obj._cached_org_owners = []
                 return []
-            from django.db import connection
-            tables = set(connection.introspection.table_names())
+            tables = get_existing_tables()
 
             owners_qs = User.objects.none()
 
@@ -85,7 +137,7 @@ class UserSerializer(serializers.ModelSerializer):
             if not owners_qs.exists():
                 owners_qs = User.objects.filter(role=User.Role.OWNER)
 
-            return [
+            res = [
                 {
                     'id': owner.id,
                     'full_name': owner.get_full_name() or owner.username,
@@ -95,7 +147,10 @@ class UserSerializer(serializers.ModelSerializer):
                 }
                 for owner in owners_qs.order_by('id')
             ]
+            obj._cached_org_owners = res
+            return res
         except Exception:
+            obj._cached_org_owners = []
             return []
 
     def get_organization_owner(self, obj):
@@ -104,8 +159,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_unacknowledged_decision(self, obj):
         try:
-            from django.db import connection
-            tables = set(connection.introspection.table_names())
+            tables = get_existing_tables()
             if 'authentication_organizationjoinrequest' in tables:
                 from .models import OrganizationJoinRequest
                 unack_qs = OrganizationJoinRequest.objects.filter(
@@ -134,8 +188,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_pending_request(self, obj):
         try:
-            from django.db import connection
-            tables = set(connection.introspection.table_names())
+            tables = get_existing_tables()
             if 'authentication_organizationjoinrequest' in tables:
                 from .models import OrganizationJoinRequest
                 pending_obj = OrganizationJoinRequest.objects.filter(

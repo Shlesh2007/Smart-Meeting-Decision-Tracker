@@ -909,7 +909,7 @@ export default function Admin() {
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 m-0 mt-1">
             {isManager && !isAdmin
               ? 'Review employee department change requests, manage organization join/leave requests, and view teams.'
-              : 'Manage organization users, role hierarchy (Owner, Admin, Manager, Member), and teams.'}
+              : 'Manage organization users, role hierarchy (Owner, Admin, Manager, Member) and teams.'}
           </p>
         </div>
         {isAdmin && (

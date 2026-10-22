@@ -1,5 +1,15 @@
 from django.contrib.auth.models import AbstractUser
-from django.db import models
+from django.db import models, connection
+
+_EXISTING_TABLES = None
+def get_existing_tables():
+    global _EXISTING_TABLES
+    if _EXISTING_TABLES is None:
+        try:
+            _EXISTING_TABLES = set(connection.introspection.table_names())
+        except Exception:
+            _EXISTING_TABLES = set()
+    return _EXISTING_TABLES
 
 class Organization(models.Model):
     name = models.CharField(max_length=150, default='SmartMeeting Workspace')
@@ -60,18 +70,22 @@ class User(AbstractUser):
         if self.role == self.Role.UNASSIGNED:
             return ''
 
+        if hasattr(self, '_cached_org_name'):
+            return self._cached_org_name
+
         try:
-            from django.db import connection
-            tables = connection.introspection.table_names()
+            tables = get_existing_tables()
             if 'authentication_organization' in tables:
                 org = Organization.objects.filter(owner=self).first()
                 if org and org.name:
+                    self._cached_org_name = org.name
                     return org.name
 
                 if 'authentication_organizationmembership' in tables:
                     from .models import OrganizationMembership
                     mem = OrganizationMembership.objects.filter(user=self, is_active=True).first()
                     if mem and mem.organization and mem.organization.name:
+                        self._cached_org_name = mem.organization.name
                         return mem.organization.name
 
                 if 'authentication_organizationjoinrequest' in tables:
@@ -80,15 +94,18 @@ class User(AbstractUser):
                         user=self, status=OrganizationJoinRequest.Status.APPROVED
                     ).order_by('-updated_at').first()
                     if approved_req and approved_req.organization_name:
+                        self._cached_org_name = approved_req.organization_name
                         return approved_req.organization_name
 
                 if Organization.objects.count() == 1:
                     first_org = Organization.objects.first()
                     if first_org and first_org.name:
+                        self._cached_org_name = first_org.name
                         return first_org.name
         except Exception:
             pass
 
+        self._cached_org_name = 'SmartMeeting Workspace'
         return 'SmartMeeting Workspace'
 
     @property
@@ -96,8 +113,7 @@ class User(AbstractUser):
         if self.role != self.Role.UNASSIGNED:
             return True
         try:
-            from django.db import connection
-            tables = connection.introspection.table_names()
+            tables = get_existing_tables()
             if 'authentication_organizationmembership' in tables:
                 if self.organization_memberships.filter(is_active=True).exists():
                     return True

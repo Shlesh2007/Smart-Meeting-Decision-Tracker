@@ -217,9 +217,7 @@ export const ActionDetailModal = ({
                   Edit Details
                 </Button>
               )}
-              <Button size="small" onClick={onClose}>
-                Close
-              </Button>
+              
             </div>
           </div>
         ) : null

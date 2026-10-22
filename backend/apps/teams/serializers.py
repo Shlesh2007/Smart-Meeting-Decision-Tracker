@@ -1,13 +1,13 @@
 from rest_framework import serializers
 from .models import Team
-from apps.authentication.serializers import UserSerializer
+from apps.authentication.serializers import UserSerializer, CompactUserSerializer
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
 class TeamSerializer(serializers.ModelSerializer):
-    created_by_detail = UserSerializer(source='created_by', read_only=True)
-    members_detail = UserSerializer(source='members', many=True, read_only=True)
+    created_by_detail = CompactUserSerializer(source='created_by', read_only=True)
+    members_detail = CompactUserSerializer(source='members', many=True, read_only=True)
     member_ids = serializers.PrimaryKeyRelatedField(
         queryset=User.objects.all(),
         many=True,

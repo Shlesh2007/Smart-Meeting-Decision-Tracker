@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework.exceptions import PermissionDenied
 from django_filters.rest_framework import DjangoFilterBackend
 import django_filters
-from django.db.models import Q
+from django.db.models import Q, Count
 from datetime import date
 import random
 import logging
@@ -63,18 +63,22 @@ class MeetingViewSet(viewsets.ModelViewSet):
         except Exception:
             member_ids = {user.id}
 
+        base_qs = Meeting.objects.annotate(
+            annotated_discussions_count=Count('discussions', distinct=True)
+        ).select_related('created_by', 'team').prefetch_related('participants', 'team__members')
+
         # Admins and Owners can view all meetings within their organization
         if user.is_admin_role:
-            return Meeting.objects.filter(
+            return base_qs.filter(
                 Q(created_by_id__in=member_ids) | Q(participants__id__in=member_ids)
-            ).distinct().select_related('created_by', 'team').prefetch_related('participants', 'discussions')
+            ).distinct()
         
         # Members can ONLY view meetings they created, are invited participants of, or belong to their assigned Team
-        return Meeting.objects.filter(
+        return base_qs.filter(
             Q(created_by=user) | Q(participants=user) | Q(team__members=user)
         ).filter(
             Q(created_by_id__in=member_ids) | Q(participants__id__in=member_ids)
-        ).distinct().select_related('created_by', 'team').prefetch_related('participants', 'discussions')
+        ).distinct()
 
     def perform_create(self, serializer):
         meeting = serializer.save(created_by=self.request.user, status=Meeting.Status.SCHEDULED)

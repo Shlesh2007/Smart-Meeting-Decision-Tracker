@@ -3,14 +3,14 @@ from datetime import date, datetime, timedelta
 from django.utils import timezone
 from rest_framework import serializers
 from .models import Meeting
-from apps.authentication.serializers import UserSerializer
+from apps.authentication.serializers import UserSerializer, CompactUserSerializer
 from apps.teams.serializers import TeamSerializer
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
 class MeetingSerializer(serializers.ModelSerializer):
-    created_by_detail = UserSerializer(source='created_by', read_only=True)
+    created_by_detail = CompactUserSerializer(source='created_by', read_only=True)
     participants_detail = serializers.SerializerMethodField()
     team_detail = TeamSerializer(source='team', read_only=True)
     participant_ids = serializers.PrimaryKeyRelatedField(
@@ -36,16 +36,18 @@ class MeetingSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         ret = super().to_representation(instance)
-        ret['status'] = instance.get_calculated_status(save_if_changed=True)
+        ret['status'] = instance.get_calculated_status(save_if_changed=False)
         return ret
 
     def get_participants_detail(self, obj):
         parts = list(obj.participants.all())
         if not parts and obj.created_by:
             parts = [obj.created_by]
-        return UserSerializer(parts, many=True).data
+        return CompactUserSerializer(parts, many=True).data
 
     def get_discussions_count(self, obj):
+        if hasattr(obj, 'annotated_discussions_count'):
+            return obj.annotated_discussions_count
         return obj.discussions.count()
 
 
