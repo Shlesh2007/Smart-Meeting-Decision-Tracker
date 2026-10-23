@@ -1,6 +1,7 @@
 import React from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
-import { PieChartOutlined } from '@ant-design/icons';
+import { PieChartOutlined, InfoCircleOutlined } from '@ant-design/icons';
+import { Tooltip as AntdTooltip } from 'antd';
 import { useScrollAnimation } from '../../hooks/useScrollAnimation.js';
 
 const STATUS_CONFIG = [
@@ -227,9 +228,14 @@ export const ActionStatusChart = ({ statusDistribution = {} }) => {
 
       {/* Progress Footer */}
       <div className="pt-2 border-t border-slate-100 dark:border-slate-800 text-[10px] flex items-center justify-between">
-        <span className="font-semibold text-slate-600 dark:text-slate-300">Completed</span>
+        <AntdTooltip title={`${completionCount} completed out of ${totalActions} total action items in this period (${completionRate}%)`}>
+          <span className="font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1 cursor-help">
+            <span>Completed Tasks</span>
+            <InfoCircleOutlined className="text-[9px] text-slate-400" />
+          </span>
+        </AntdTooltip>
         <span className="font-extrabold text-slate-900 dark:text-slate-100">
-          {completionCount} / {totalActions} Tasks
+          {completionCount} of {totalActions} Done ({completionRate}%)
         </span>
       </div>
     </div>

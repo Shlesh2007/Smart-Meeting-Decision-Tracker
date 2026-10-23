@@ -1,6 +1,7 @@
 import React from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
-import { BarChartOutlined } from '@ant-design/icons';
+import { BarChartOutlined, InfoCircleOutlined } from '@ant-design/icons';
+import { Tooltip } from 'antd';
 import { useScrollAnimation } from '../../hooks/useScrollAnimation.js';
 
 const PRIORITIES = [
@@ -222,9 +223,14 @@ export const PriorityDistribution = ({ priorityDistribution = {} }) => {
 
       {/* Footer Summary */}
       <div className="pt-2 border-t border-slate-100 dark:border-slate-800 text-[10px] flex items-center justify-between">
-        <span className="font-semibold text-slate-600 dark:text-slate-300">Urgent Priority</span>
-        <span className="font-extrabold text-red-600 dark:text-rose-400">
-          {(priorityDistribution.CRITICAL || 0) + (priorityDistribution.HIGH || 0)} Items
+        <Tooltip title="Combined total of Critical and High priority tasks requiring immediate attention">
+          <span className="font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1 cursor-help">
+            <span>Critical & High</span>
+            <InfoCircleOutlined className="text-[9px] text-slate-400" />
+          </span>
+        </Tooltip>
+        <span className="font-extrabold text-rose-600 dark:text-rose-400">
+          {(priorityDistribution.CRITICAL || 0) + (priorityDistribution.HIGH || 0)} Urgent Tasks
         </span>
       </div>
     </div>
